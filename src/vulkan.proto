@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+message PInputTransaction
+{
+  bytes transaction = 1;
+  int32 txout_index = 2;
+  bytes signature = 3;
+  bytes public_key = 4;
+}
+
+message POutputTransaction
+{
+  int32 amount = 1;
+  bytes address = 2;
+}
+
+message PTransaction {
+  bytes id = 1;
+  repeated PInputTransaction txins = 2;
+  repeated POutputTransaction txouts = 3;
+}
+
+message PUnspentOutputTransaction
+{
+  int32 amount = 1;
+  bytes address = 2;
+  bool spent = 3;
+}
+
+message PUnspentTransaction
+{
+  bytes id = 1;
+  bool coinbase = 2;
+  repeated PUnspentOutputTransaction unspent_txouts = 3;
+}
+
+message PBlock
+{
+  int32 version = 1;
+  int32 bits = 2;
+
+  bytes previous_hash = 3;
+  bytes hash = 4;
+
+  int32 timestamp = 5;
+  int32 nonce = 6;
+
+  bytes merkle_root = 7;
+
+  repeated PTransaction transactions = 9;
+}
+
+message PWallet
+{
+  bytes secret_key = 1;
+  bytes public_key = 2;
+  bytes address = 3;
+  int32 balance = 4;
+}
+
+message PEmpty
+{
+
+}
+
+message PSendTransactionRequest
+{
+  PTransaction transaction = 1;
+}
+
+message PSendTransactionResponse
+{
+  bytes transaction_id = 1;
+}
+
+service PInternal
+{
+  rpc GetWallet (PEmpty) returns (PWallet);
+  rpc SendTransaction (PSendTransactionRequest) returns (PSendTransactionResponse);
+}

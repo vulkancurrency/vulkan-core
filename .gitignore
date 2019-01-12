@@ -50,3 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Mac OS
+*.DS_Store
+
+# Build
+bin/
+build/
+deps/
+wallet/
+blockchain/
+!test/deps
