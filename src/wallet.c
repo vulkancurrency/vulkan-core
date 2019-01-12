@@ -173,7 +173,6 @@ int valid_address(uint8_t *address)
     case TESTNET_ADDRESS_ID:
     {
       return 1;
-      break;
     }
     default:
     {
