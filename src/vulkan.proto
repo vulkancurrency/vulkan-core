@@ -14,7 +14,8 @@ message POutputTransaction
   bytes address = 2;
 }
 
-message PTransaction {
+message PTransaction
+{
   bytes id = 1;
   repeated PInputTransaction txins = 2;
   repeated POutputTransaction txouts = 3;
