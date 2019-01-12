@@ -44,8 +44,24 @@ set(PITTACUS_STATIC ON)
 
 if(NOT WIN32)
   include(CheckIncludeFile)
+
   check_include_file("sys/uio.h" HAVE_SYS_UIO_H)
-  add_compile_definitions(HAVE_SYS_UIO_H)
+  check_include_file("sys/poll.h" HAVE_SYS_POLL_H)
+  check_include_file("sys/select.h" HAVE_SYS_SELECT_H)
+
+  if(HAVE_SYS_UIO_H)
+    add_compile_definitions(HAVE_SYS_UIO_H)
+  else()
+    message(FATAL_ERROR "Failed to find required header <sys/uio.h>!")
+  endif()
+
+  if(HAVE_SYS_POLL_H)
+    add_compile_definitions(HAVE_SYS_POLL_H)
+  elseif(HAVE_SYS_SELECT_H)
+    add_compile_definitions(HAVE_SYS_SELECT_H)
+  else()
+    message(FATAL_ERROR "Failed to find required header <sys/poll.h, sys/select.h>!")
+  endif()
 endif()
 
 find_package(Threads QUIET)
