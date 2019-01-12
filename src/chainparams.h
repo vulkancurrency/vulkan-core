@@ -69,3 +69,21 @@
 
 // HALVE_SUBSIDY_AFTER_BLOCKS_NUM: When the block reward will half
 #define HALVE_SUBSIDY_AFTER_BLOCKS_NUM 200000
+
+// P2P_PORT: peer-to-peer connection port
+#define P2P_PORT 9899
+
+// RPC_PORT: rpc connection port
+#define RPC_PORT 9898
+
+typedef struct SeedNodeEntry
+{
+  const char *address;
+  int port;
+} seed_node_entry_t;
+
+static seed_node_entry_t SEED_NODES[] = {
+
+};
+
+#define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))

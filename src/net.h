@@ -25,5 +25,16 @@
 
 #pragma once
 
-int start_server();
-void stop_server();
+#include <stdlib.h>
+#include <stdint.h>
+
+#include <gossip.h>
+
+void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+void net_send_data(const uint8_t *data, int data_size);
+
+int net_connect(const char *address, int port);
+int net_open_connection(void);
+
+int net_start_server(void);
+void net_stop_server(void);

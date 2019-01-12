@@ -23,89 +23,210 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <sodium.h>
-#include <protobuf-c-rpc/protobuf-c-rpc.h>
+#include <errno.h>
+#include <poll.h>
+#include <time.h>
 
-#include "vulkan.pb-c.h"
-#include "wallet.h"
-#include "transaction.h"
-#include "chain.h"
+#include <gossip.h>
+#include <config.h>
+
+#include "chainparams.h"
 
 static int g_net_server_running = 0;
+static pittacus_gossip_t *g_net_gossip = NULL;
 
-static void internal_rpc__get_wallet(PInternal_Service *server,
-                                     const PEmpty *input,
-                                     PWallet_Closure closure,
-                                     void *closure_data)
+void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  PWallet *wallet = get_wallet();
-  free(wallet->secret_key.data);
-  wallet->secret_key.len = 0;
-  wallet->secret_key.data = NULL;
-  wallet->balance = get_balance_for_address(wallet->address.data);
-  closure(wallet, closure_data);
+
 }
 
-static void internal_rpc__send_transaction(PInternal_Service *service,
-                                           const PSendTransactionRequest *input,
-                                           PSendTransactionResponse_Closure closure,
-                                           void *closure_data)
+void net_send_data(const uint8_t *data, int data_size)
 {
-  if (input == NULL || input->transaction == NULL)
-  {
-    closure(NULL, closure_data);
-  }
-  else
-  {
-    PTransaction *proto_tx = input->transaction;
-    transaction_t *tx = transaction_from_proto(proto_tx);
-    PSendTransactionResponse response = PSEND_TRANSACTION_RESPONSE__INIT;
-
-    if (valid_transaction(tx))
-    {
-      response.transaction_id.len = 32;
-      response.transaction_id.data = malloc(sizeof(uint8_t) * 32);
-      compute_tx_id(response.transaction_id.data, tx);
-    }
-    else
-    {
-      response.transaction_id.len = 0;
-    }
-
-    closure(&response, closure_data);
-  }
+  pittacus_gossip_send_data(g_net_gossip, data, data_size);
 }
 
-static PInternal_Service internal_service = PINTERNAL__INIT(internal_rpc__);
-
-int start_server()
+int net_connect(const char *address, int port)
 {
-  if (g_net_server_running)
+  struct sockaddr_in self_in;
+  self_in.sin_family = AF_INET;
+  self_in.sin_port = P2P_PORT;
+  inet_aton("0.0.0.0", &self_in.sin_addr);
+
+  pittacus_addr_t self_addr = {
+    .addr = (const pt_sockaddr *) &self_in,
+    .addr_len = sizeof(struct sockaddr_in)
+  };
+
+  pittacus_gossip_t *gossip = pittacus_gossip_create(&self_addr, &net_receive_data, NULL);
+  if (gossip == NULL)
   {
+    fprintf(stderr, "Gossip initialization failed: %s\n", strerror(errno));
     return 1;
   }
-  g_net_server_running = 1;
 
-  ProtobufC_RPC_Server *server;
-  ProtobufC_RPC_AddressType address_type = 0;
+  struct sockaddr_in seed_node_in;
+  seed_node_in.sin_family = AF_INET;
+  seed_node_in.sin_port = htons(port);
+  inet_aton(address, &seed_node_in.sin_addr);
 
-  server = protobuf_c_rpc_server_new(address_type, "9898", (ProtobufCService *) &internal_service, NULL);
-  printf("Internal RPC Server started on port: 9898\n");
+  pittacus_addr_t seed_node_addr = {
+    .addr = (const pt_sockaddr *) &seed_node_in,
+    .addr_len = sizeof(struct sockaddr_in)
+  };
 
-  while (g_net_server_running)
+  int result = pittacus_gossip_join(gossip, &seed_node_addr, 1);
+  if (result < 0)
   {
-    protobuf_c_rpc_dispatch_run(protobuf_c_rpc_dispatch_default());
+    fprintf(stderr, "Gossip join failed: %d\n", result);
+    pittacus_gossip_destroy(gossip);
+    return 1;
   }
 
+  g_net_gossip = gossip;
   return 0;
 }
 
-void stop_server()
+int net_open_connection(void)
 {
-  if (!g_net_server_running)
+  struct sockaddr_in self_in;
+  self_in.sin_family = AF_INET;
+  self_in.sin_port = P2P_PORT;
+  inet_aton("0.0.0.0", &self_in.sin_addr);
+
+  pittacus_addr_t self_addr = {
+    .addr = (const pt_sockaddr *) &self_in,
+    .addr_len = sizeof(struct sockaddr_in)
+  };
+
+  pittacus_gossip_t *gossip = pittacus_gossip_create(&self_addr, &net_receive_data, NULL);
+  if (gossip == NULL)
+  {
+    fprintf(stderr, "Gossip initialization failed: %s\n", strerror(errno));
+    return 1;
+  }
+
+  int result = pittacus_gossip_join(gossip, NULL, 0);
+  if (result < 0)
+  {
+    fprintf(stderr, "Gossip join failed: %d\n", result);
+    pittacus_gossip_destroy(gossip);
+    return 1;
+  }
+
+  g_net_gossip = gossip;
+  return 0;
+}
+
+int net_start_server(void)
+{
+  if(g_net_server_running)
+  {
+    return 1;
+  }
+
+  int is_seed_node = NUM_SEED_NODES == 0;
+  if (is_seed_node)
+  {
+    if (net_open_connection())
+    {
+      fprintf(stderr, "Failed to open seed node connection!");
+      return 1;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < NUM_SEED_NODES; i++)
+    {
+      seed_node_entry_t seed_node_entry = SEED_NODES[i];
+      if (net_connect(seed_node_entry.address, seed_node_entry.port))
+      {
+        fprintf(stderr, "Failed to connect to seed with address: %s:%d!\n", seed_node_entry.address, seed_node_entry.port);
+        return 1;
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
+
+  if (pittacus_gossip_process_send(g_net_gossip) < 0)
+  {
+    fprintf(stderr, "Failed to send hello message to a cluster.\n");
+    pittacus_gossip_destroy(g_net_gossip);
+    return 0;
+  }
+
+  pt_socket_fd gossip_fd = pittacus_gossip_socket_fd(g_net_gossip);
+  struct pollfd gossip_poll_fd = {
+    .fd = gossip_fd,
+    .events = POLLIN,
+    .revents = 0
+  };
+
+  int poll_interval = GOSSIP_TICK_INTERVAL;
+  int recv_result = 0;
+  int send_result = 0;
+  int poll_result = 0;
+  time_t previous_data_msg_ts = time(NULL);
+
+  g_net_server_running = 1;
+  while (g_net_server_running)
+  {
+    gossip_poll_fd.revents = 0;
+    poll_result = poll(&gossip_poll_fd, 1, poll_interval);
+    if (poll_result > 0)
+    {
+      if (gossip_poll_fd.revents & POLLERR)
+      {
+        fprintf(stderr, "Gossip socket failure: %s\n", strerror(errno));
+        pittacus_gossip_destroy(g_net_gossip);
+        return 1;
+      }
+      else if (gossip_poll_fd.revents & POLLIN)
+      {
+        recv_result = pittacus_gossip_process_receive(g_net_gossip);
+        if (recv_result < 0)
+        {
+          fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
+          pittacus_gossip_destroy(g_net_gossip);
+          return 1;
+        }
+      }
+    }
+    else if (poll_result < 0)
+    {
+      fprintf(stderr, "Poll failed: %s\n", strerror(errno));
+      pittacus_gossip_destroy(g_net_gossip);
+      return 1;
+    }
+
+    poll_interval = pittacus_gossip_tick(g_net_gossip);
+    if (poll_interval < 0)
+    {
+      fprintf(stderr, "Gossip tick failed: %d\n", poll_interval);
+      return 1;
+    }
+
+    send_result = pittacus_gossip_process_send(g_net_gossip);
+    if (send_result < 0)
+    {
+      fprintf(stderr, "Gossip send failed: %d, %s\n", send_result, strerror(errno));
+      pittacus_gossip_destroy(g_net_gossip);
+      return 1;
+    }
+  }
+
+  pittacus_gossip_destroy(g_net_gossip);
+  return 0;
+}
+
+void net_stop_server(void)
+{
+  if(!g_net_server_running)
   {
     return;
   }
