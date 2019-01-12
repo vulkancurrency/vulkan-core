@@ -33,7 +33,7 @@
 #include "transaction.h"
 #include "wallet.h"
 
-uint8_t zero_hash[32] = {
+static uint8_t zero_hash[32] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
@@ -119,13 +119,7 @@ int valid_transaction(transaction_t *tx)
 {
   if (tx->txin_count > 0 && tx->txout_count > 0)
   {
-    return (
-      is_generation_tx(tx) || (
-        tx->txin_count > 0 &&
-        tx->txout_count > 0 &&
-        do_txins_reference_unspent_txouts(tx)
-      )
-    );
+    return (is_generation_tx(tx) || (tx->txin_count > 0 && tx->txout_count > 0 && do_txins_reference_unspent_txouts(tx)));
   }
   else
   {
