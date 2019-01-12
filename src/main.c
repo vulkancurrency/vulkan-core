@@ -114,7 +114,6 @@ int command(char *cmd_string)
   return CMD_NONE;
 }
 
-#ifndef VULKAN_TEST
 int main(int argc, char **argv)
 {
   if (sodium_init() == -1)
@@ -215,4 +214,3 @@ int main(int argc, char **argv)
   close_blockchain();
   return 0;
 }
-#endif

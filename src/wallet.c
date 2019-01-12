@@ -164,9 +164,14 @@ int public_key_to_address(uint8_t *address, uint8_t *pk)
   return 0;
 }
 
+uint8_t get_address_id(uint8_t *address)
+{
+  return address[0];
+}
+
 int valid_address(uint8_t *address)
 {
-  uint8_t address_id = address[0];
+  uint8_t address_id = get_address_id(address);
   switch(address_id)
   {
     case MAINNET_ADDRESS_ID:
@@ -179,9 +184,4 @@ int valid_address(uint8_t *address)
       return 0;
     }
   }
-}
-
-uint8_t get_address_id(uint8_t *address)
-{
-  return address[0];
 }
