@@ -85,7 +85,7 @@ int start_server()
 {
   if (g_net_server_running)
   {
-    return;
+    return 1;
   }
   g_net_server_running = 1;
 

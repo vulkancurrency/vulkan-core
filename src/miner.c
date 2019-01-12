@@ -38,12 +38,13 @@ int start_mining()
 {
   if (g_miner_is_mining)
   {
-    return;
+    return 1;
   }
   g_miner_is_mining = 1;
   printf("Started mining...\n");
 
-  while (g_miner_is_mining) {
+  while (g_miner_is_mining)
+  {
     uint8_t *previous_hash = get_current_block_hash();
     block_t *block = compute_next_block(previous_hash);
     insert_block_into_blockchain(block);
@@ -54,6 +55,8 @@ int start_mining()
     set_current_block_hash(block->hash);
     free(block);
   }
+
+  return 0;
 }
 
 void stop_mining()

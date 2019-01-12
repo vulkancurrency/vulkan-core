@@ -31,7 +31,7 @@
 
 #include "chainparams.h"
 #include "block.h"
-#include "opal.pb-c.h"
+#include "vulkan.pb-c.h"
 
 #include "merkle.h"
 

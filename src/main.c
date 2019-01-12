@@ -32,7 +32,6 @@
 
 #include "chainparams.h"
 #include "version.h"
-#include "main.h"
 #include "block.h"
 #include "wallet.h"
 #include "net.h"
@@ -40,13 +39,13 @@
 #include "miner.h"
 #include "client.h"
 
-struct vulkan_command
+typedef struct VulkanCommand
 {
   char *key;
   int val;
-};
+} vulkan_command_t;
 
-enum command
+typedef enum CommandType
 {
   CMD_NONE,
   CMD_HELP,
@@ -57,9 +56,9 @@ enum command
   CMD_SERVER,
   CMD_BLOCKHEIGHT,
   CMD_MINE
-};
+} command_type_t;
 
-static struct vulkan_command commands[] = {
+static vulkan_command_t commands[] = {
   {"none", CMD_NONE},
   {"help", CMD_HELP},
   {"version", CMD_VERSION},
@@ -71,7 +70,7 @@ static struct vulkan_command commands[] = {
   {"mine", CMD_MINE},
 };
 
-#define MAX_COMMANDS (sizeof(commands) / sizeof(struct vulkan_command))
+#define MAX_COMMANDS (sizeof(commands) / sizeof(vulkan_command_t))
 
 void make_hash(char *digest, unsigned char *string)
 {
@@ -89,6 +88,30 @@ void perform_shutdown(int test)
 {
   close_blockchain();
   exit(1);
+}
+
+void print_help()
+{
+  printf("Usage: %s <command> [<args>]\n", APPLICATION_NAME);
+}
+
+void print_version()
+{
+  printf("%s|%s - %s\n", APPLICATION_NAME, APPLICATION_RELEASE_NAME, APPLICATION_VERSION);
+}
+
+int command(char *cmd_string)
+{
+  for (int i = 0; i < MAX_COMMANDS; i++)
+  {
+    vulkan_command_t cmd = commands[i];
+    if (strcmp(cmd.key, cmd_string) == 0)
+    {
+      return cmd.val;
+    }
+  }
+
+  return CMD_NONE;
 }
 
 #ifndef VULKAN_TEST
@@ -193,27 +216,3 @@ int main(int argc, char **argv)
   return 0;
 }
 #endif
-
-int command(char *cmd_string)
-{
-  for (int i = 0; i < MAX_COMMANDS; i++)
-  {
-    struct vulkan_command cmd = commands[i];
-    if (strcmp(cmd.key, cmd_string) == 0)
-    {
-      return cmd.val;
-    }
-  }
-
-  return CMD_NONE;
-}
-
-void print_help()
-{
-  printf("Usage: %s <command> [<args>]\n", APPLICATION_NAME);
-}
-
-void print_version()
-{
-  printf("%s|%s - %s\n", APPLICATION_NAME, APPLICATION_RELEASE_NAME, APPLICATION_VERSION);
-}
