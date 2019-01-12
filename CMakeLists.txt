@@ -40,6 +40,7 @@ set(CMAKE_C_FLAGS "-Wall -Wno-unused-variable")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+set(UPNPC_STATIC ON)
 set(PITTACUS_STATIC ON)
 
 if(NOT WIN32)
@@ -81,6 +82,9 @@ endif()
 
 include_directories(${SODIUM_INCLUDE_DIR})
 include_directories(${ROCKSDB_INCLUDE_DIR})
+
+add_subdirectory(external/miniupnp/miniupnpc)
+include_directories(external/miniupnp/miniupnpc)
 
 add_subdirectory(external/protobuf-c)
 include_directories(external/protobuf-c)

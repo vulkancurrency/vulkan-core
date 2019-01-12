@@ -80,6 +80,18 @@ target_link_libraries(
   ${ROCKSDB_LIBRARIES}
 )
 
+if(UPNPC_STATIC)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    libminiupnpc-static
+  )
+else()
+  target_link_libraries(
+    ${PROJECT_NAME}
+    libminiupnpc
+  )
+endif()
+
 target_link_libraries(
   ${PROJECT_NAME}
   protobuf-c
