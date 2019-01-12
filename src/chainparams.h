@@ -25,6 +25,9 @@
 
 #pragma once
 
+// BLOCK_VERSION: Blockchain protocol version
+#define BLOCK_VERSION 0x01
+
 // MAX_BLOCK_SIZE: Max serialized size of a block (1MB)
 #define MAX_BLOCK_SIZE 1000000
 
@@ -40,8 +43,17 @@
 // MAX_MONEY: Maximum number of coins/units that will ever exist
 #define MAX_MONEY (COIN * TOTAL_SUPPLY)
 
+// MAINNET_ADDRESS_ID: Mainnet address prefix
 #define MAINNET_ADDRESS_ID 0x01
-#define TESTNET_ADDRESS_ID 0x03
+
+// TESTNET_ADDRESS_ID: Testnet address prefix
+#define TESTNET_ADDRESS_ID 0x02
+
+// GENESIS_NONCE: Genesis block nonce
+#define GENESIS_NONCE 10000
+
+// GENESIS_TIMESTAMP: Genesis block UNIX EPOCH timestamp
+#define GENESIS_TIMESTAMP 1547319656
 
 // TIME_BETWEEN_BLOCKS_IN_SECS_TARGET: Target duration between blocks being mined (secs)
 #define TIME_BETWEEN_BLOCKS_IN_SECS_TARGET (1 * 60)
@@ -52,6 +64,8 @@
 // DIFFICULTY_PERIOD_IN_BLOCKS_TARGET: How long difficulty should last (blocks)
 #define DIFFICULTY_PERIOD_IN_BLOCKS_TARGET (DIFFICULTY_PERIOD_IN_SECS_TARGET / TIME_BETWEEN_BLOCKS_IN_SECS_TARGET)
 
+// INITIAL_DIFFICULTY_BITS: The starting difficulty
 #define INITIAL_DIFFICULTY_BITS 85
 
+// HALVE_SUBSIDY_AFTER_BLOCKS_NUM: When the block reward will half
 #define HALVE_SUBSIDY_AFTER_BLOCKS_NUM 200000

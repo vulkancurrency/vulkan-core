@@ -32,7 +32,6 @@
 #include "vulkan.pb-c.h"
 
 #define BLOCK_HEADER_SIZE (32 + 32 + 4 + 4 + 1 + 1)
-#define BLOCK_VERSION 0x01
 
 typedef struct Block
 {
@@ -54,8 +53,8 @@ block_t *make_block();
 
 static block_t genesis_block = {
   .version = BLOCK_VERSION,
-  .nonce = 0,
-  .timestamp = 1504395525,
+  .nonce = GENESIS_NONCE,
+  .timestamp = GENESIS_TIMESTAMP,
   .bits = INITIAL_DIFFICULTY_BITS,
   .previous_hash = {
     0x00, 0x00, 0x00, 0x00,
