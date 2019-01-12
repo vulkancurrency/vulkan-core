@@ -40,6 +40,8 @@ set(CMAKE_C_FLAGS "-Wall -Wno-unused-variable")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+set(PITTACUS_STATIC ON)
+
 if(NOT WIN32)
   include(CheckIncludeFile)
   check_include_file("sys/uio.h" HAVE_SYS_UIO_H)
@@ -70,7 +72,7 @@ include_directories(external/protobuf-c)
 add_subdirectory(external/protobuf-c-rpc)
 include_directories(external/protobuf-c-rpc)
 
-#add_subdirectory(external/rocksdb)
-#include_directories(external/rocksdb)
+add_subdirectory(external/pittacus)
+include_directories(external/pittacus/src)
 
 add_subdirectory(src)

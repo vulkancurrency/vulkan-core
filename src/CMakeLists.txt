@@ -90,7 +90,14 @@ target_link_libraries(
   protobuf-c-rpc
 )
 
-#target_link_libraries(
-#  ${PROJECT_NAME}
-#  rocksdb
-#)
+if(PITTACUS_STATIC)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    pittacus_static
+  )
+else()
+  target_link_libraries(
+    ${PROJECT_NAME}
+    pittacus
+  )
+endif()

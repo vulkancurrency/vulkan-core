@@ -30,4 +30,6 @@
 #include "block.h"
 
 int start_mining();
+void stop_mining();
+
 block_t *compute_next_block(uint8_t *prev_block_hash);

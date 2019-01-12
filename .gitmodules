@@ -7,3 +7,6 @@
 [submodule "external/rocksdb"]
 	path = external/rocksdb
 	url = https://github.com/facebook/rocksdb.git
+[submodule "external/pittacus"]
+	path = external/pittacus
+	url = https://github.com/izeigerman/pittacus.git
