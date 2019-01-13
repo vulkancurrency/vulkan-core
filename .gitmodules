@@ -10,3 +10,6 @@
 [submodule "external/pittacus"]
 	path = external/pittacus
 	url = https://github.com/izeigerman/pittacus.git
+[submodule "external/miniupnp"]
+	path = external/miniupnp
+	url = https://github.com/vulkancurrency/miniupnp.git
