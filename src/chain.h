@@ -30,6 +30,11 @@
 #include "block.h"
 #include "transaction.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int open_blockchain();
 int close_blockchain();
 int init_blockchain();
@@ -58,3 +63,7 @@ int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_block_key(uint8_t *buffer, uint8_t *block_hash);
 
 uint32_t get_balance_for_address(uint8_t *address);
+
+#ifdef __cplusplus
+}
+#endif

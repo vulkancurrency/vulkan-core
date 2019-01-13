@@ -25,6 +25,15 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define APPLICATION_NAME "vulkan"
 #define APPLICATION_VERSION "1.0.0"
 #define APPLICATION_RELEASE_NAME "electrum"
+
+#ifdef __cplusplus
+}
+#endif

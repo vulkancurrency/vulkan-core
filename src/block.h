@@ -31,6 +31,11 @@
 #include "transaction.h"
 #include "vulkan.pb-c.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define BLOCK_HEADER_SIZE (32 + 32 + 4 + 4 + 1 + 1)
 
 typedef struct Block
@@ -106,3 +111,7 @@ int free_proto_block(PBlock *proto_block);
 int block_to_serialized(uint8_t **buffer, uint32_t *buffer_len, block_t *block);
 block_t *block_from_proto(PBlock *proto_block);
 block_t *block_from_serialized(uint8_t *buffer, uint32_t buffer_len);
+
+#ifdef __cplusplus
+}
+#endif

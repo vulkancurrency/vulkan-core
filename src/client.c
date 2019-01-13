@@ -52,7 +52,7 @@ static void handle_get_wallet(const PWallet *wallet, void *closure_data)
 
 int rpc_get_wallet()
 {
-  ProtobufCService *service;
+  /*ProtobufCService *service;
   ProtobufC_RPC_Client *client;
   ProtobufC_RPC_AddressType address_type = 0;
 
@@ -80,7 +80,7 @@ int rpc_get_wallet()
   while (!is_done)
   {
     protobuf_c_rpc_dispatch_run(protobuf_c_rpc_dispatch_default());
-  }
+  }*/
 
   return 0;
 }

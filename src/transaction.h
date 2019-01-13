@@ -49,6 +49,11 @@
 
 #include "wallet.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define TXIN_HEADER_SIZE (32 + 4)
 #define TXOUT_HEADER_SIZE (32 + 4)
 
@@ -107,3 +112,7 @@ PUnspentTransaction *unspent_transaction_from_serialized(uint8_t *buffer, uint32
 int free_proto_transaction(PTransaction *proto_transaction);
 int free_proto_unspent_transaction(PUnspentTransaction *proto_unspent_tx);
 int free_transaction(transaction_t *tx);
+
+#ifdef __cplusplus
+}
+#endif

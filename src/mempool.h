@@ -29,6 +29,11 @@
 
 #include "transaction.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct Mempool
 {
   uint32_t size;
@@ -41,3 +46,7 @@ int stop_mempool();
 int push_tx_to_mempool(transaction_t *tx);
 transaction_t *pop_tx_from_mempool();
 int get_number_of_tx_from_mempool();
+
+#ifdef __cplusplus
+}
+#endif

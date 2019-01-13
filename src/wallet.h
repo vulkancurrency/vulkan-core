@@ -31,6 +31,11 @@
 #include "chainparams.h"
 #include "vulkan.pb-c.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
 rocksdb_t *open_wallet();
@@ -40,3 +45,7 @@ PWallet *get_wallet();
 int public_key_to_address(unsigned char *address, unsigned char *pk);
 uint8_t get_address_id(uint8_t *address);
 int valid_address(uint8_t *address);
+
+#ifdef __cplusplus
+}
+#endif

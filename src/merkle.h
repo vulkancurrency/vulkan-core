@@ -27,6 +27,11 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct MerkleNode merkle_node_t;
 typedef struct MerkleNode
 {
@@ -48,3 +53,7 @@ int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
 
 int free_merkle_tree(merkle_tree_t *tree);
 int free_merkle_node(merkle_node_t *node);
+
+#ifdef __cplusplus
+}
+#endif

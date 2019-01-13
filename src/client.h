@@ -25,4 +25,13 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int rpc_get_wallet();
+
+#ifdef __cplusplus
+}
+#endif

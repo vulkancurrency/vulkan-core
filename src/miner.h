@@ -29,7 +29,16 @@
 
 #include "block.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int start_mining();
 void stop_mining();
 
 block_t *compute_next_block(uint8_t *prev_block_hash);
+
+#ifdef __cplusplus
+}
+#endif
