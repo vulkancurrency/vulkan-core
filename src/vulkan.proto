@@ -99,8 +99,18 @@ message PSendTransactionResponse
   bytes transaction_id = 1;
 }
 
+message PSendBlockRequest
+{
+  uint64 height = 1;
+}
+
+message PSendBlockResponse
+{
+  PBlock block = 1;
+}
+
 service PInternal
 {
-  rpc GetWallet (PEmpty) returns (PWallet);
+  rpc SendBlock (PSendBlockRequest) returns (PSendBlockResponse);
   rpc SendTransaction (PSendTransactionRequest) returns (PSendTransactionResponse);
 }

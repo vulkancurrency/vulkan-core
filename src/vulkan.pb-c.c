@@ -457,6 +457,96 @@ void   psend_transaction_response__free_unpacked
   assert(message->base.descriptor == &psend_transaction_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   psend_block_request__init
+                     (PSendBlockRequest         *message)
+{
+  static const PSendBlockRequest init_value = PSEND_BLOCK_REQUEST__INIT;
+  *message = init_value;
+}
+size_t psend_block_request__get_packed_size
+                     (const PSendBlockRequest *message)
+{
+  assert(message->base.descriptor == &psend_block_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t psend_block_request__pack
+                     (const PSendBlockRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &psend_block_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t psend_block_request__pack_to_buffer
+                     (const PSendBlockRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &psend_block_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+PSendBlockRequest *
+       psend_block_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (PSendBlockRequest *)
+     protobuf_c_message_unpack (&psend_block_request__descriptor,
+                                allocator, len, data);
+}
+void   psend_block_request__free_unpacked
+                     (PSendBlockRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &psend_block_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   psend_block_response__init
+                     (PSendBlockResponse         *message)
+{
+  static const PSendBlockResponse init_value = PSEND_BLOCK_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t psend_block_response__get_packed_size
+                     (const PSendBlockResponse *message)
+{
+  assert(message->base.descriptor == &psend_block_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t psend_block_response__pack
+                     (const PSendBlockResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &psend_block_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t psend_block_response__pack_to_buffer
+                     (const PSendBlockResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &psend_block_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+PSendBlockResponse *
+       psend_block_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (PSendBlockResponse *)
+     protobuf_c_message_unpack (&psend_block_response__descriptor,
+                                allocator, len, data);
+}
+void   psend_block_response__free_unpacked
+                     (PSendBlockResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &psend_block_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 static const ProtobufCFieldDescriptor pinput_transaction__field_descriptors[4] =
 {
   {
@@ -1078,13 +1168,89 @@ const ProtobufCMessageDescriptor psend_transaction_response__descriptor =
   (ProtobufCMessageInit) psend_transaction_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
+static const ProtobufCFieldDescriptor psend_block_request__field_descriptors[1] =
+{
+  {
+    "height",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT64,
+    0,   /* quantifier_offset */
+    offsetof(PSendBlockRequest, height),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned psend_block_request__field_indices_by_name[] = {
+  0,   /* field[0] = height */
+};
+static const ProtobufCIntRange psend_block_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor psend_block_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "PSendBlockRequest",
+  "PSendBlockRequest",
+  "PSendBlockRequest",
+  "",
+  sizeof(PSendBlockRequest),
+  1,
+  psend_block_request__field_descriptors,
+  psend_block_request__field_indices_by_name,
+  1,  psend_block_request__number_ranges,
+  (ProtobufCMessageInit) psend_block_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor psend_block_response__field_descriptors[1] =
+{
+  {
+    "block",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(PSendBlockResponse, block),
+    &pblock__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned psend_block_response__field_indices_by_name[] = {
+  0,   /* field[0] = block */
+};
+static const ProtobufCIntRange psend_block_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor psend_block_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "PSendBlockResponse",
+  "PSendBlockResponse",
+  "PSendBlockResponse",
+  "",
+  sizeof(PSendBlockResponse),
+  1,
+  psend_block_response__field_descriptors,
+  psend_block_response__field_indices_by_name,
+  1,  psend_block_response__number_ranges,
+  (ProtobufCMessageInit) psend_block_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCMethodDescriptor pinternal__method_descriptors[2] =
 {
-  { "GetWallet", &pempty__descriptor, &pwallet__descriptor },
+  { "SendBlock", &psend_block_request__descriptor, &psend_block_response__descriptor },
   { "SendTransaction", &psend_transaction_request__descriptor, &psend_transaction_response__descriptor },
 };
 const unsigned pinternal__method_indices_by_name[] = {
-  0,        /* GetWallet */
+  0,        /* SendBlock */
   1         /* SendTransaction */
 };
 const ProtobufCServiceDescriptor pinternal__descriptor =
@@ -1098,9 +1264,9 @@ const ProtobufCServiceDescriptor pinternal__descriptor =
   pinternal__method_descriptors,
   pinternal__method_indices_by_name
 };
-void pinternal__get_wallet(ProtobufCService *service,
-                           const PEmpty *input,
-                           PWallet_Closure closure,
+void pinternal__send_block(ProtobufCService *service,
+                           const PSendBlockRequest *input,
+                           PSendBlockResponse_Closure closure,
                            void *closure_data)
 {
   assert(service->descriptor == &pinternal__descriptor);

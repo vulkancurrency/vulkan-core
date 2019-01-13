@@ -25,6 +25,8 @@ typedef struct _PWallet PWallet;
 typedef struct _PEmpty PEmpty;
 typedef struct _PSendTransactionRequest PSendTransactionRequest;
 typedef struct _PSendTransactionResponse PSendTransactionResponse;
+typedef struct _PSendBlockRequest PSendBlockRequest;
+typedef struct _PSendBlockResponse PSendBlockResponse;
 
 
 /* --- enums --- */
@@ -153,6 +155,26 @@ struct  _PSendTransactionResponse
 #define PSEND_TRANSACTION_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&psend_transaction_response__descriptor) \
     , {0,NULL} }
+
+
+struct  _PSendBlockRequest
+{
+  ProtobufCMessage base;
+  uint64_t height;
+};
+#define PSEND_BLOCK_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&psend_block_request__descriptor) \
+    , 0 }
+
+
+struct  _PSendBlockResponse
+{
+  ProtobufCMessage base;
+  PBlock *block;
+};
+#define PSEND_BLOCK_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&psend_block_response__descriptor) \
+    , NULL }
 
 
 /* PInputTransaction methods */
@@ -345,6 +367,44 @@ PSendTransactionResponse *
 void   psend_transaction_response__free_unpacked
                      (PSendTransactionResponse *message,
                       ProtobufCAllocator *allocator);
+/* PSendBlockRequest methods */
+void   psend_block_request__init
+                     (PSendBlockRequest         *message);
+size_t psend_block_request__get_packed_size
+                     (const PSendBlockRequest   *message);
+size_t psend_block_request__pack
+                     (const PSendBlockRequest   *message,
+                      uint8_t             *out);
+size_t psend_block_request__pack_to_buffer
+                     (const PSendBlockRequest   *message,
+                      ProtobufCBuffer     *buffer);
+PSendBlockRequest *
+       psend_block_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   psend_block_request__free_unpacked
+                     (PSendBlockRequest *message,
+                      ProtobufCAllocator *allocator);
+/* PSendBlockResponse methods */
+void   psend_block_response__init
+                     (PSendBlockResponse         *message);
+size_t psend_block_response__get_packed_size
+                     (const PSendBlockResponse   *message);
+size_t psend_block_response__pack
+                     (const PSendBlockResponse   *message,
+                      uint8_t             *out);
+size_t psend_block_response__pack_to_buffer
+                     (const PSendBlockResponse   *message,
+                      ProtobufCBuffer     *buffer);
+PSendBlockResponse *
+       psend_block_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   psend_block_response__free_unpacked
+                     (PSendBlockResponse *message,
+                      ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*PInputTransaction_Closure)
@@ -377,6 +437,12 @@ typedef void (*PSendTransactionRequest_Closure)
 typedef void (*PSendTransactionResponse_Closure)
                  (const PSendTransactionResponse *message,
                   void *closure_data);
+typedef void (*PSendBlockRequest_Closure)
+                 (const PSendBlockRequest *message,
+                  void *closure_data);
+typedef void (*PSendBlockResponse_Closure)
+                 (const PSendBlockResponse *message,
+                  void *closure_data);
 
 /* --- services --- */
 
@@ -384,9 +450,9 @@ typedef struct _PInternal_Service PInternal_Service;
 struct _PInternal_Service
 {
   ProtobufCService base;
-  void (*get_wallet)(PInternal_Service *service,
-                     const PEmpty *input,
-                     PWallet_Closure closure,
+  void (*send_block)(PInternal_Service *service,
+                     const PSendBlockRequest *input,
+                     PSendBlockResponse_Closure closure,
                      void *closure_data);
   void (*send_transaction)(PInternal_Service *service,
                            const PSendTransactionRequest *input,
@@ -400,11 +466,11 @@ void pinternal__init (PInternal_Service *service,
     { &pinternal__descriptor, protobuf_c_service_invoke_internal, NULL }
 #define PINTERNAL__INIT(function_prefix__) \
     { PINTERNAL__BASE_INIT,\
-      function_prefix__ ## get_wallet,\
+      function_prefix__ ## send_block,\
       function_prefix__ ## send_transaction  }
-void pinternal__get_wallet(ProtobufCService *service,
-                           const PEmpty *input,
-                           PWallet_Closure closure,
+void pinternal__send_block(ProtobufCService *service,
+                           const PSendBlockRequest *input,
+                           PSendBlockResponse_Closure closure,
                            void *closure_data);
 void pinternal__send_transaction(ProtobufCService *service,
                                  const PSendTransactionRequest *input,
@@ -423,6 +489,8 @@ extern const ProtobufCMessageDescriptor pwallet__descriptor;
 extern const ProtobufCMessageDescriptor pempty__descriptor;
 extern const ProtobufCMessageDescriptor psend_transaction_request__descriptor;
 extern const ProtobufCMessageDescriptor psend_transaction_response__descriptor;
+extern const ProtobufCMessageDescriptor psend_block_request__descriptor;
+extern const ProtobufCMessageDescriptor psend_block_response__descriptor;
 extern const ProtobufCServiceDescriptor pinternal__descriptor;
 
 PROTOBUF_C__END_DECLS
