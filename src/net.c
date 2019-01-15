@@ -52,7 +52,7 @@ int net_connect(const char *address, int port)
 {
   struct sockaddr_in self_in;
   self_in.sin_family = AF_INET;
-  self_in.sin_port = P2P_PORT;
+  self_in.sin_port = htons(P2P_PORT);
   inet_aton("0.0.0.0", &self_in.sin_addr);
 
   pittacus_addr_t self_addr = {
@@ -77,10 +77,10 @@ int net_connect(const char *address, int port)
     .addr_len = sizeof(struct sockaddr_in)
   };
 
-  int result = pittacus_gossip_join(gossip, &seed_node_addr, 1);
-  if (result < 0)
+  int join_result = pittacus_gossip_join(gossip, &seed_node_addr, 1);
+  if (join_result < 0)
   {
-    fprintf(stderr, "Gossip join failed: %d\n", result);
+    fprintf(stderr, "Gossip join failed: %d\n", join_result);
     pittacus_gossip_destroy(gossip);
     return 1;
   }
@@ -93,7 +93,7 @@ int net_open_connection(void)
 {
   struct sockaddr_in self_in;
   self_in.sin_family = AF_INET;
-  self_in.sin_port = P2P_PORT;
+  self_in.sin_port = htons(P2P_PORT);
   inet_aton("0.0.0.0", &self_in.sin_addr);
 
   pittacus_addr_t self_addr = {
@@ -108,10 +108,10 @@ int net_open_connection(void)
     return 1;
   }
 
-  int result = pittacus_gossip_join(gossip, NULL, 0);
-  if (result < 0)
+  int join_result = pittacus_gossip_join(gossip, NULL, 0);
+  if (join_result < 0)
   {
-    fprintf(stderr, "Gossip join failed: %d\n", result);
+    fprintf(stderr, "Gossip join failed: %d\n", join_result);
     pittacus_gossip_destroy(gossip);
     return 1;
   }
