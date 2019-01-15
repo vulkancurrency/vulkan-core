@@ -43,9 +43,9 @@ void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *d
 
 }
 
-void net_send_data(const uint8_t *data, int data_size)
+void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, int data_size)
 {
-  pittacus_gossip_send_data(g_net_gossip, data, data_size);
+  pittacus_gossip_send_data(gossip, data, data_size);
 }
 
 int net_connect(const char *address, int port)
