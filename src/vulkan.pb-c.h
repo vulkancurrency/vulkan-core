@@ -23,10 +23,15 @@ typedef struct _PUnspentTransaction PUnspentTransaction;
 typedef struct _PBlock PBlock;
 typedef struct _PWallet PWallet;
 typedef struct _PEmpty PEmpty;
-typedef struct _PSendTransactionRequest PSendTransactionRequest;
-typedef struct _PSendTransactionResponse PSendTransactionResponse;
-typedef struct _PSendBlockRequest PSendBlockRequest;
-typedef struct _PSendBlockResponse PSendBlockResponse;
+typedef struct _PPacket PPacket;
+typedef struct _MIncomingBlock MIncomingBlock;
+typedef struct _MIncomingTransaction MIncomingTransaction;
+typedef struct _MGetBlockHeightRequest MGetBlockHeightRequest;
+typedef struct _MGetBlockHeightResponse MGetBlockHeightResponse;
+typedef struct _MGetBlockRequest MGetBlockRequest;
+typedef struct _MGetBlockResponse MGetBlockResponse;
+typedef struct _MGetTransactionRequest MGetTransactionRequest;
+typedef struct _MGetTransactionResponse MGetTransactionResponse;
 
 
 /* --- enums --- */
@@ -137,44 +142,102 @@ struct  _PEmpty
      }
 
 
-struct  _PSendTransactionRequest
+struct  _PPacket
 {
   ProtobufCMessage base;
-  PTransaction *transaction;
+  int32_t id;
+  int64_t message_size;
+  ProtobufCBinaryData message;
 };
-#define PSEND_TRANSACTION_REQUEST__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&psend_transaction_request__descriptor) \
-    , NULL }
+#define PPACKET__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&ppacket__descriptor) \
+    , 0, 0, {0,NULL} }
 
 
-struct  _PSendTransactionResponse
+struct  _MIncomingBlock
 {
   ProtobufCMessage base;
-  ProtobufCBinaryData transaction_id;
+  size_t n_block;
+  PBlock **block;
 };
-#define PSEND_TRANSACTION_RESPONSE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&psend_transaction_response__descriptor) \
-    , {0,NULL} }
+#define MINCOMING_BLOCK__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mincoming_block__descriptor) \
+    , 0,NULL }
 
 
-struct  _PSendBlockRequest
+struct  _MIncomingTransaction
 {
   ProtobufCMessage base;
-  uint64_t height;
+  size_t n_transaction;
+  PTransaction **transaction;
 };
-#define PSEND_BLOCK_REQUEST__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&psend_block_request__descriptor) \
+#define MINCOMING_TRANSACTION__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mincoming_transaction__descriptor) \
+    , 0,NULL }
+
+
+struct  _MGetBlockHeightRequest
+{
+  ProtobufCMessage base;
+};
+#define MGET_BLOCK_HEIGHT_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_block_height_request__descriptor) \
+     }
+
+
+struct  _MGetBlockHeightResponse
+{
+  ProtobufCMessage base;
+  int64_t height;
+};
+#define MGET_BLOCK_HEIGHT_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_block_height_response__descriptor) \
     , 0 }
 
 
-struct  _PSendBlockResponse
+struct  _MGetBlockRequest
 {
   ProtobufCMessage base;
-  PBlock *block;
+  int64_t height;
+  ProtobufCBinaryData hash;
 };
-#define PSEND_BLOCK_RESPONSE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&psend_block_response__descriptor) \
-    , NULL }
+#define MGET_BLOCK_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_block_request__descriptor) \
+    , 0, {0,NULL} }
+
+
+struct  _MGetBlockResponse
+{
+  ProtobufCMessage base;
+  int64_t height;
+  size_t n_block;
+  PBlock **block;
+};
+#define MGET_BLOCK_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_block_response__descriptor) \
+    , 0, 0,NULL }
+
+
+struct  _MGetTransactionRequest
+{
+  ProtobufCMessage base;
+  ProtobufCBinaryData id;
+  ProtobufCBinaryData input_hash;
+};
+#define MGET_TRANSACTION_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_transaction_request__descriptor) \
+    , {0,NULL}, {0,NULL} }
+
+
+struct  _MGetTransactionResponse
+{
+  ProtobufCMessage base;
+  size_t n_transaction;
+  PTransaction **transaction;
+};
+#define MGET_TRANSACTION_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_transaction_response__descriptor) \
+    , 0,NULL }
 
 
 /* PInputTransaction methods */
@@ -329,81 +392,176 @@ PEmpty *
 void   pempty__free_unpacked
                      (PEmpty *message,
                       ProtobufCAllocator *allocator);
-/* PSendTransactionRequest methods */
-void   psend_transaction_request__init
-                     (PSendTransactionRequest         *message);
-size_t psend_transaction_request__get_packed_size
-                     (const PSendTransactionRequest   *message);
-size_t psend_transaction_request__pack
-                     (const PSendTransactionRequest   *message,
+/* PPacket methods */
+void   ppacket__init
+                     (PPacket         *message);
+size_t ppacket__get_packed_size
+                     (const PPacket   *message);
+size_t ppacket__pack
+                     (const PPacket   *message,
                       uint8_t             *out);
-size_t psend_transaction_request__pack_to_buffer
-                     (const PSendTransactionRequest   *message,
+size_t ppacket__pack_to_buffer
+                     (const PPacket   *message,
                       ProtobufCBuffer     *buffer);
-PSendTransactionRequest *
-       psend_transaction_request__unpack
+PPacket *
+       ppacket__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   psend_transaction_request__free_unpacked
-                     (PSendTransactionRequest *message,
+void   ppacket__free_unpacked
+                     (PPacket *message,
                       ProtobufCAllocator *allocator);
-/* PSendTransactionResponse methods */
-void   psend_transaction_response__init
-                     (PSendTransactionResponse         *message);
-size_t psend_transaction_response__get_packed_size
-                     (const PSendTransactionResponse   *message);
-size_t psend_transaction_response__pack
-                     (const PSendTransactionResponse   *message,
+/* MIncomingBlock methods */
+void   mincoming_block__init
+                     (MIncomingBlock         *message);
+size_t mincoming_block__get_packed_size
+                     (const MIncomingBlock   *message);
+size_t mincoming_block__pack
+                     (const MIncomingBlock   *message,
                       uint8_t             *out);
-size_t psend_transaction_response__pack_to_buffer
-                     (const PSendTransactionResponse   *message,
+size_t mincoming_block__pack_to_buffer
+                     (const MIncomingBlock   *message,
                       ProtobufCBuffer     *buffer);
-PSendTransactionResponse *
-       psend_transaction_response__unpack
+MIncomingBlock *
+       mincoming_block__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   psend_transaction_response__free_unpacked
-                     (PSendTransactionResponse *message,
+void   mincoming_block__free_unpacked
+                     (MIncomingBlock *message,
                       ProtobufCAllocator *allocator);
-/* PSendBlockRequest methods */
-void   psend_block_request__init
-                     (PSendBlockRequest         *message);
-size_t psend_block_request__get_packed_size
-                     (const PSendBlockRequest   *message);
-size_t psend_block_request__pack
-                     (const PSendBlockRequest   *message,
+/* MIncomingTransaction methods */
+void   mincoming_transaction__init
+                     (MIncomingTransaction         *message);
+size_t mincoming_transaction__get_packed_size
+                     (const MIncomingTransaction   *message);
+size_t mincoming_transaction__pack
+                     (const MIncomingTransaction   *message,
                       uint8_t             *out);
-size_t psend_block_request__pack_to_buffer
-                     (const PSendBlockRequest   *message,
+size_t mincoming_transaction__pack_to_buffer
+                     (const MIncomingTransaction   *message,
                       ProtobufCBuffer     *buffer);
-PSendBlockRequest *
-       psend_block_request__unpack
+MIncomingTransaction *
+       mincoming_transaction__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   psend_block_request__free_unpacked
-                     (PSendBlockRequest *message,
+void   mincoming_transaction__free_unpacked
+                     (MIncomingTransaction *message,
                       ProtobufCAllocator *allocator);
-/* PSendBlockResponse methods */
-void   psend_block_response__init
-                     (PSendBlockResponse         *message);
-size_t psend_block_response__get_packed_size
-                     (const PSendBlockResponse   *message);
-size_t psend_block_response__pack
-                     (const PSendBlockResponse   *message,
+/* MGetBlockHeightRequest methods */
+void   mget_block_height_request__init
+                     (MGetBlockHeightRequest         *message);
+size_t mget_block_height_request__get_packed_size
+                     (const MGetBlockHeightRequest   *message);
+size_t mget_block_height_request__pack
+                     (const MGetBlockHeightRequest   *message,
                       uint8_t             *out);
-size_t psend_block_response__pack_to_buffer
-                     (const PSendBlockResponse   *message,
+size_t mget_block_height_request__pack_to_buffer
+                     (const MGetBlockHeightRequest   *message,
                       ProtobufCBuffer     *buffer);
-PSendBlockResponse *
-       psend_block_response__unpack
+MGetBlockHeightRequest *
+       mget_block_height_request__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   psend_block_response__free_unpacked
-                     (PSendBlockResponse *message,
+void   mget_block_height_request__free_unpacked
+                     (MGetBlockHeightRequest *message,
+                      ProtobufCAllocator *allocator);
+/* MGetBlockHeightResponse methods */
+void   mget_block_height_response__init
+                     (MGetBlockHeightResponse         *message);
+size_t mget_block_height_response__get_packed_size
+                     (const MGetBlockHeightResponse   *message);
+size_t mget_block_height_response__pack
+                     (const MGetBlockHeightResponse   *message,
+                      uint8_t             *out);
+size_t mget_block_height_response__pack_to_buffer
+                     (const MGetBlockHeightResponse   *message,
+                      ProtobufCBuffer     *buffer);
+MGetBlockHeightResponse *
+       mget_block_height_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_block_height_response__free_unpacked
+                     (MGetBlockHeightResponse *message,
+                      ProtobufCAllocator *allocator);
+/* MGetBlockRequest methods */
+void   mget_block_request__init
+                     (MGetBlockRequest         *message);
+size_t mget_block_request__get_packed_size
+                     (const MGetBlockRequest   *message);
+size_t mget_block_request__pack
+                     (const MGetBlockRequest   *message,
+                      uint8_t             *out);
+size_t mget_block_request__pack_to_buffer
+                     (const MGetBlockRequest   *message,
+                      ProtobufCBuffer     *buffer);
+MGetBlockRequest *
+       mget_block_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_block_request__free_unpacked
+                     (MGetBlockRequest *message,
+                      ProtobufCAllocator *allocator);
+/* MGetBlockResponse methods */
+void   mget_block_response__init
+                     (MGetBlockResponse         *message);
+size_t mget_block_response__get_packed_size
+                     (const MGetBlockResponse   *message);
+size_t mget_block_response__pack
+                     (const MGetBlockResponse   *message,
+                      uint8_t             *out);
+size_t mget_block_response__pack_to_buffer
+                     (const MGetBlockResponse   *message,
+                      ProtobufCBuffer     *buffer);
+MGetBlockResponse *
+       mget_block_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_block_response__free_unpacked
+                     (MGetBlockResponse *message,
+                      ProtobufCAllocator *allocator);
+/* MGetTransactionRequest methods */
+void   mget_transaction_request__init
+                     (MGetTransactionRequest         *message);
+size_t mget_transaction_request__get_packed_size
+                     (const MGetTransactionRequest   *message);
+size_t mget_transaction_request__pack
+                     (const MGetTransactionRequest   *message,
+                      uint8_t             *out);
+size_t mget_transaction_request__pack_to_buffer
+                     (const MGetTransactionRequest   *message,
+                      ProtobufCBuffer     *buffer);
+MGetTransactionRequest *
+       mget_transaction_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_transaction_request__free_unpacked
+                     (MGetTransactionRequest *message,
+                      ProtobufCAllocator *allocator);
+/* MGetTransactionResponse methods */
+void   mget_transaction_response__init
+                     (MGetTransactionResponse         *message);
+size_t mget_transaction_response__get_packed_size
+                     (const MGetTransactionResponse   *message);
+size_t mget_transaction_response__pack
+                     (const MGetTransactionResponse   *message,
+                      uint8_t             *out);
+size_t mget_transaction_response__pack_to_buffer
+                     (const MGetTransactionResponse   *message,
+                      ProtobufCBuffer     *buffer);
+MGetTransactionResponse *
+       mget_transaction_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_transaction_response__free_unpacked
+                     (MGetTransactionResponse *message,
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
@@ -431,51 +589,36 @@ typedef void (*PWallet_Closure)
 typedef void (*PEmpty_Closure)
                  (const PEmpty *message,
                   void *closure_data);
-typedef void (*PSendTransactionRequest_Closure)
-                 (const PSendTransactionRequest *message,
+typedef void (*PPacket_Closure)
+                 (const PPacket *message,
                   void *closure_data);
-typedef void (*PSendTransactionResponse_Closure)
-                 (const PSendTransactionResponse *message,
+typedef void (*MIncomingBlock_Closure)
+                 (const MIncomingBlock *message,
                   void *closure_data);
-typedef void (*PSendBlockRequest_Closure)
-                 (const PSendBlockRequest *message,
+typedef void (*MIncomingTransaction_Closure)
+                 (const MIncomingTransaction *message,
                   void *closure_data);
-typedef void (*PSendBlockResponse_Closure)
-                 (const PSendBlockResponse *message,
+typedef void (*MGetBlockHeightRequest_Closure)
+                 (const MGetBlockHeightRequest *message,
+                  void *closure_data);
+typedef void (*MGetBlockHeightResponse_Closure)
+                 (const MGetBlockHeightResponse *message,
+                  void *closure_data);
+typedef void (*MGetBlockRequest_Closure)
+                 (const MGetBlockRequest *message,
+                  void *closure_data);
+typedef void (*MGetBlockResponse_Closure)
+                 (const MGetBlockResponse *message,
+                  void *closure_data);
+typedef void (*MGetTransactionRequest_Closure)
+                 (const MGetTransactionRequest *message,
+                  void *closure_data);
+typedef void (*MGetTransactionResponse_Closure)
+                 (const MGetTransactionResponse *message,
                   void *closure_data);
 
 /* --- services --- */
 
-typedef struct _PInternal_Service PInternal_Service;
-struct _PInternal_Service
-{
-  ProtobufCService base;
-  void (*send_block)(PInternal_Service *service,
-                     const PSendBlockRequest *input,
-                     PSendBlockResponse_Closure closure,
-                     void *closure_data);
-  void (*send_transaction)(PInternal_Service *service,
-                           const PSendTransactionRequest *input,
-                           PSendTransactionResponse_Closure closure,
-                           void *closure_data);
-};
-typedef void (*PInternal_ServiceDestroy)(PInternal_Service *);
-void pinternal__init (PInternal_Service *service,
-                      PInternal_ServiceDestroy destroy);
-#define PINTERNAL__BASE_INIT \
-    { &pinternal__descriptor, protobuf_c_service_invoke_internal, NULL }
-#define PINTERNAL__INIT(function_prefix__) \
-    { PINTERNAL__BASE_INIT,\
-      function_prefix__ ## send_block,\
-      function_prefix__ ## send_transaction  }
-void pinternal__send_block(ProtobufCService *service,
-                           const PSendBlockRequest *input,
-                           PSendBlockResponse_Closure closure,
-                           void *closure_data);
-void pinternal__send_transaction(ProtobufCService *service,
-                                 const PSendTransactionRequest *input,
-                                 PSendTransactionResponse_Closure closure,
-                                 void *closure_data);
 
 /* --- descriptors --- */
 
@@ -487,11 +630,15 @@ extern const ProtobufCMessageDescriptor punspent_transaction__descriptor;
 extern const ProtobufCMessageDescriptor pblock__descriptor;
 extern const ProtobufCMessageDescriptor pwallet__descriptor;
 extern const ProtobufCMessageDescriptor pempty__descriptor;
-extern const ProtobufCMessageDescriptor psend_transaction_request__descriptor;
-extern const ProtobufCMessageDescriptor psend_transaction_response__descriptor;
-extern const ProtobufCMessageDescriptor psend_block_request__descriptor;
-extern const ProtobufCMessageDescriptor psend_block_response__descriptor;
-extern const ProtobufCServiceDescriptor pinternal__descriptor;
+extern const ProtobufCMessageDescriptor ppacket__descriptor;
+extern const ProtobufCMessageDescriptor mincoming_block__descriptor;
+extern const ProtobufCMessageDescriptor mincoming_transaction__descriptor;
+extern const ProtobufCMessageDescriptor mget_block_height_request__descriptor;
+extern const ProtobufCMessageDescriptor mget_block_height_response__descriptor;
+extern const ProtobufCMessageDescriptor mget_block_request__descriptor;
+extern const ProtobufCMessageDescriptor mget_block_response__descriptor;
+extern const ProtobufCMessageDescriptor mget_transaction_request__descriptor;
+extern const ProtobufCMessageDescriptor mget_transaction_response__descriptor;
 
 PROTOBUF_C__END_DECLS
 

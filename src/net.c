@@ -34,16 +34,21 @@
 #include <config.h>
 
 #include "chainparams.h"
+#include "packet.h"
 
 static int g_net_server_running = 0;
 static pittacus_gossip_t *g_net_gossip = NULL;
 
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-
+  if (handle_receive_packet(gossip, data, data_size))
+  {
+    fprintf(stderr, "Failed to handling incoming packet\n");
+    return;
+  }
 }
 
-void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, int data_size)
+void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
   pittacus_gossip_send_data(gossip, data, data_size);
 }

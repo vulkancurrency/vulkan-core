@@ -367,184 +367,409 @@ void   pempty__free_unpacked
   assert(message->base.descriptor == &pempty__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   psend_transaction_request__init
-                     (PSendTransactionRequest         *message)
+void   ppacket__init
+                     (PPacket         *message)
 {
-  static const PSendTransactionRequest init_value = PSEND_TRANSACTION_REQUEST__INIT;
+  static const PPacket init_value = PPACKET__INIT;
   *message = init_value;
 }
-size_t psend_transaction_request__get_packed_size
-                     (const PSendTransactionRequest *message)
+size_t ppacket__get_packed_size
+                     (const PPacket *message)
 {
-  assert(message->base.descriptor == &psend_transaction_request__descriptor);
+  assert(message->base.descriptor == &ppacket__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t psend_transaction_request__pack
-                     (const PSendTransactionRequest *message,
+size_t ppacket__pack
+                     (const PPacket *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &psend_transaction_request__descriptor);
+  assert(message->base.descriptor == &ppacket__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t psend_transaction_request__pack_to_buffer
-                     (const PSendTransactionRequest *message,
+size_t ppacket__pack_to_buffer
+                     (const PPacket *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &psend_transaction_request__descriptor);
+  assert(message->base.descriptor == &ppacket__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-PSendTransactionRequest *
-       psend_transaction_request__unpack
+PPacket *
+       ppacket__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (PSendTransactionRequest *)
-     protobuf_c_message_unpack (&psend_transaction_request__descriptor,
+  return (PPacket *)
+     protobuf_c_message_unpack (&ppacket__descriptor,
                                 allocator, len, data);
 }
-void   psend_transaction_request__free_unpacked
-                     (PSendTransactionRequest *message,
+void   ppacket__free_unpacked
+                     (PPacket *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &psend_transaction_request__descriptor);
+  assert(message->base.descriptor == &ppacket__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   psend_transaction_response__init
-                     (PSendTransactionResponse         *message)
+void   mincoming_block__init
+                     (MIncomingBlock         *message)
 {
-  static const PSendTransactionResponse init_value = PSEND_TRANSACTION_RESPONSE__INIT;
+  static const MIncomingBlock init_value = MINCOMING_BLOCK__INIT;
   *message = init_value;
 }
-size_t psend_transaction_response__get_packed_size
-                     (const PSendTransactionResponse *message)
+size_t mincoming_block__get_packed_size
+                     (const MIncomingBlock *message)
 {
-  assert(message->base.descriptor == &psend_transaction_response__descriptor);
+  assert(message->base.descriptor == &mincoming_block__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t psend_transaction_response__pack
-                     (const PSendTransactionResponse *message,
+size_t mincoming_block__pack
+                     (const MIncomingBlock *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &psend_transaction_response__descriptor);
+  assert(message->base.descriptor == &mincoming_block__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t psend_transaction_response__pack_to_buffer
-                     (const PSendTransactionResponse *message,
+size_t mincoming_block__pack_to_buffer
+                     (const MIncomingBlock *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &psend_transaction_response__descriptor);
+  assert(message->base.descriptor == &mincoming_block__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-PSendTransactionResponse *
-       psend_transaction_response__unpack
+MIncomingBlock *
+       mincoming_block__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (PSendTransactionResponse *)
-     protobuf_c_message_unpack (&psend_transaction_response__descriptor,
+  return (MIncomingBlock *)
+     protobuf_c_message_unpack (&mincoming_block__descriptor,
                                 allocator, len, data);
 }
-void   psend_transaction_response__free_unpacked
-                     (PSendTransactionResponse *message,
+void   mincoming_block__free_unpacked
+                     (MIncomingBlock *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &psend_transaction_response__descriptor);
+  assert(message->base.descriptor == &mincoming_block__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   psend_block_request__init
-                     (PSendBlockRequest         *message)
+void   mincoming_transaction__init
+                     (MIncomingTransaction         *message)
 {
-  static const PSendBlockRequest init_value = PSEND_BLOCK_REQUEST__INIT;
+  static const MIncomingTransaction init_value = MINCOMING_TRANSACTION__INIT;
   *message = init_value;
 }
-size_t psend_block_request__get_packed_size
-                     (const PSendBlockRequest *message)
+size_t mincoming_transaction__get_packed_size
+                     (const MIncomingTransaction *message)
 {
-  assert(message->base.descriptor == &psend_block_request__descriptor);
+  assert(message->base.descriptor == &mincoming_transaction__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t psend_block_request__pack
-                     (const PSendBlockRequest *message,
+size_t mincoming_transaction__pack
+                     (const MIncomingTransaction *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &psend_block_request__descriptor);
+  assert(message->base.descriptor == &mincoming_transaction__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t psend_block_request__pack_to_buffer
-                     (const PSendBlockRequest *message,
+size_t mincoming_transaction__pack_to_buffer
+                     (const MIncomingTransaction *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &psend_block_request__descriptor);
+  assert(message->base.descriptor == &mincoming_transaction__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-PSendBlockRequest *
-       psend_block_request__unpack
+MIncomingTransaction *
+       mincoming_transaction__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (PSendBlockRequest *)
-     protobuf_c_message_unpack (&psend_block_request__descriptor,
+  return (MIncomingTransaction *)
+     protobuf_c_message_unpack (&mincoming_transaction__descriptor,
                                 allocator, len, data);
 }
-void   psend_block_request__free_unpacked
-                     (PSendBlockRequest *message,
+void   mincoming_transaction__free_unpacked
+                     (MIncomingTransaction *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &psend_block_request__descriptor);
+  assert(message->base.descriptor == &mincoming_transaction__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   psend_block_response__init
-                     (PSendBlockResponse         *message)
+void   mget_block_height_request__init
+                     (MGetBlockHeightRequest         *message)
 {
-  static const PSendBlockResponse init_value = PSEND_BLOCK_RESPONSE__INIT;
+  static const MGetBlockHeightRequest init_value = MGET_BLOCK_HEIGHT_REQUEST__INIT;
   *message = init_value;
 }
-size_t psend_block_response__get_packed_size
-                     (const PSendBlockResponse *message)
+size_t mget_block_height_request__get_packed_size
+                     (const MGetBlockHeightRequest *message)
 {
-  assert(message->base.descriptor == &psend_block_response__descriptor);
+  assert(message->base.descriptor == &mget_block_height_request__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t psend_block_response__pack
-                     (const PSendBlockResponse *message,
+size_t mget_block_height_request__pack
+                     (const MGetBlockHeightRequest *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &psend_block_response__descriptor);
+  assert(message->base.descriptor == &mget_block_height_request__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t psend_block_response__pack_to_buffer
-                     (const PSendBlockResponse *message,
+size_t mget_block_height_request__pack_to_buffer
+                     (const MGetBlockHeightRequest *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &psend_block_response__descriptor);
+  assert(message->base.descriptor == &mget_block_height_request__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-PSendBlockResponse *
-       psend_block_response__unpack
+MGetBlockHeightRequest *
+       mget_block_height_request__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (PSendBlockResponse *)
-     protobuf_c_message_unpack (&psend_block_response__descriptor,
+  return (MGetBlockHeightRequest *)
+     protobuf_c_message_unpack (&mget_block_height_request__descriptor,
                                 allocator, len, data);
 }
-void   psend_block_response__free_unpacked
-                     (PSendBlockResponse *message,
+void   mget_block_height_request__free_unpacked
+                     (MGetBlockHeightRequest *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &psend_block_response__descriptor);
+  assert(message->base.descriptor == &mget_block_height_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_block_height_response__init
+                     (MGetBlockHeightResponse         *message)
+{
+  static const MGetBlockHeightResponse init_value = MGET_BLOCK_HEIGHT_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t mget_block_height_response__get_packed_size
+                     (const MGetBlockHeightResponse *message)
+{
+  assert(message->base.descriptor == &mget_block_height_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_block_height_response__pack
+                     (const MGetBlockHeightResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_block_height_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_block_height_response__pack_to_buffer
+                     (const MGetBlockHeightResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_block_height_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetBlockHeightResponse *
+       mget_block_height_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetBlockHeightResponse *)
+     protobuf_c_message_unpack (&mget_block_height_response__descriptor,
+                                allocator, len, data);
+}
+void   mget_block_height_response__free_unpacked
+                     (MGetBlockHeightResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_block_height_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_block_request__init
+                     (MGetBlockRequest         *message)
+{
+  static const MGetBlockRequest init_value = MGET_BLOCK_REQUEST__INIT;
+  *message = init_value;
+}
+size_t mget_block_request__get_packed_size
+                     (const MGetBlockRequest *message)
+{
+  assert(message->base.descriptor == &mget_block_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_block_request__pack
+                     (const MGetBlockRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_block_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_block_request__pack_to_buffer
+                     (const MGetBlockRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_block_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetBlockRequest *
+       mget_block_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetBlockRequest *)
+     protobuf_c_message_unpack (&mget_block_request__descriptor,
+                                allocator, len, data);
+}
+void   mget_block_request__free_unpacked
+                     (MGetBlockRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_block_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_block_response__init
+                     (MGetBlockResponse         *message)
+{
+  static const MGetBlockResponse init_value = MGET_BLOCK_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t mget_block_response__get_packed_size
+                     (const MGetBlockResponse *message)
+{
+  assert(message->base.descriptor == &mget_block_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_block_response__pack
+                     (const MGetBlockResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_block_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_block_response__pack_to_buffer
+                     (const MGetBlockResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_block_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetBlockResponse *
+       mget_block_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetBlockResponse *)
+     protobuf_c_message_unpack (&mget_block_response__descriptor,
+                                allocator, len, data);
+}
+void   mget_block_response__free_unpacked
+                     (MGetBlockResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_block_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_transaction_request__init
+                     (MGetTransactionRequest         *message)
+{
+  static const MGetTransactionRequest init_value = MGET_TRANSACTION_REQUEST__INIT;
+  *message = init_value;
+}
+size_t mget_transaction_request__get_packed_size
+                     (const MGetTransactionRequest *message)
+{
+  assert(message->base.descriptor == &mget_transaction_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_transaction_request__pack
+                     (const MGetTransactionRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_transaction_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_transaction_request__pack_to_buffer
+                     (const MGetTransactionRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_transaction_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetTransactionRequest *
+       mget_transaction_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetTransactionRequest *)
+     protobuf_c_message_unpack (&mget_transaction_request__descriptor,
+                                allocator, len, data);
+}
+void   mget_transaction_request__free_unpacked
+                     (MGetTransactionRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_transaction_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_transaction_response__init
+                     (MGetTransactionResponse         *message)
+{
+  static const MGetTransactionResponse init_value = MGET_TRANSACTION_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t mget_transaction_response__get_packed_size
+                     (const MGetTransactionResponse *message)
+{
+  assert(message->base.descriptor == &mget_transaction_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_transaction_response__pack
+                     (const MGetTransactionResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_transaction_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_transaction_response__pack_to_buffer
+                     (const MGetTransactionResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_transaction_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetTransactionResponse *
+       mget_transaction_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetTransactionResponse *)
+     protobuf_c_message_unpack (&mget_transaction_response__descriptor,
+                                allocator, len, data);
+}
+void   mget_transaction_response__free_unpacked
+                     (MGetTransactionResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_transaction_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 static const ProtobufCFieldDescriptor pinput_transaction__field_descriptors[4] =
@@ -1092,198 +1317,390 @@ const ProtobufCMessageDescriptor pempty__descriptor =
   (ProtobufCMessageInit) pempty__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor psend_transaction_request__field_descriptors[1] =
+static const ProtobufCFieldDescriptor ppacket__field_descriptors[3] =
 {
   {
-    "transaction",
+    "id",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
+    PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(PSendTransactionRequest, transaction),
-    &ptransaction__descriptor,
+    offsetof(PPacket, id),
+    NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
-};
-static const unsigned psend_transaction_request__field_indices_by_name[] = {
-  0,   /* field[0] = transaction */
-};
-static const ProtobufCIntRange psend_transaction_request__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 1 }
-};
-const ProtobufCMessageDescriptor psend_transaction_request__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "PSendTransactionRequest",
-  "PSendTransactionRequest",
-  "PSendTransactionRequest",
-  "",
-  sizeof(PSendTransactionRequest),
-  1,
-  psend_transaction_request__field_descriptors,
-  psend_transaction_request__field_indices_by_name,
-  1,  psend_transaction_request__number_ranges,
-  (ProtobufCMessageInit) psend_transaction_request__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor psend_transaction_response__field_descriptors[1] =
-{
   {
-    "transaction_id",
-    1,
+    "message_size",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT64,
+    0,   /* quantifier_offset */
+    offsetof(PPacket, message_size),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "message",
+    3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_BYTES,
     0,   /* quantifier_offset */
-    offsetof(PSendTransactionResponse, transaction_id),
+    offsetof(PPacket, message),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned psend_transaction_response__field_indices_by_name[] = {
-  0,   /* field[0] = transaction_id */
+static const unsigned ppacket__field_indices_by_name[] = {
+  0,   /* field[0] = id */
+  2,   /* field[2] = message */
+  1,   /* field[1] = message_size */
 };
-static const ProtobufCIntRange psend_transaction_response__number_ranges[1 + 1] =
+static const ProtobufCIntRange ppacket__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 1 }
+  { 0, 3 }
 };
-const ProtobufCMessageDescriptor psend_transaction_response__descriptor =
+const ProtobufCMessageDescriptor ppacket__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "PSendTransactionResponse",
-  "PSendTransactionResponse",
-  "PSendTransactionResponse",
+  "PPacket",
+  "PPacket",
+  "PPacket",
   "",
-  sizeof(PSendTransactionResponse),
-  1,
-  psend_transaction_response__field_descriptors,
-  psend_transaction_response__field_indices_by_name,
-  1,  psend_transaction_response__number_ranges,
-  (ProtobufCMessageInit) psend_transaction_response__init,
+  sizeof(PPacket),
+  3,
+  ppacket__field_descriptors,
+  ppacket__field_indices_by_name,
+  1,  ppacket__number_ranges,
+  (ProtobufCMessageInit) ppacket__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor psend_block_request__field_descriptors[1] =
-{
-  {
-    "height",
-    1,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_UINT64,
-    0,   /* quantifier_offset */
-    offsetof(PSendBlockRequest, height),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-};
-static const unsigned psend_block_request__field_indices_by_name[] = {
-  0,   /* field[0] = height */
-};
-static const ProtobufCIntRange psend_block_request__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 1 }
-};
-const ProtobufCMessageDescriptor psend_block_request__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "PSendBlockRequest",
-  "PSendBlockRequest",
-  "PSendBlockRequest",
-  "",
-  sizeof(PSendBlockRequest),
-  1,
-  psend_block_request__field_descriptors,
-  psend_block_request__field_indices_by_name,
-  1,  psend_block_request__number_ranges,
-  (ProtobufCMessageInit) psend_block_request__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor psend_block_response__field_descriptors[1] =
+static const ProtobufCFieldDescriptor mincoming_block__field_descriptors[1] =
 {
   {
     "block",
     1,
-    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    0,   /* quantifier_offset */
-    offsetof(PSendBlockResponse, block),
+    offsetof(MIncomingBlock, n_block),
+    offsetof(MIncomingBlock, block),
     &pblock__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned psend_block_response__field_indices_by_name[] = {
+static const unsigned mincoming_block__field_indices_by_name[] = {
   0,   /* field[0] = block */
 };
-static const ProtobufCIntRange psend_block_response__number_ranges[1 + 1] =
+static const ProtobufCIntRange mincoming_block__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 1 }
 };
-const ProtobufCMessageDescriptor psend_block_response__descriptor =
+const ProtobufCMessageDescriptor mincoming_block__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "PSendBlockResponse",
-  "PSendBlockResponse",
-  "PSendBlockResponse",
+  "MIncomingBlock",
+  "MIncomingBlock",
+  "MIncomingBlock",
   "",
-  sizeof(PSendBlockResponse),
+  sizeof(MIncomingBlock),
   1,
-  psend_block_response__field_descriptors,
-  psend_block_response__field_indices_by_name,
-  1,  psend_block_response__number_ranges,
-  (ProtobufCMessageInit) psend_block_response__init,
+  mincoming_block__field_descriptors,
+  mincoming_block__field_indices_by_name,
+  1,  mincoming_block__number_ranges,
+  (ProtobufCMessageInit) mincoming_block__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCMethodDescriptor pinternal__method_descriptors[2] =
+static const ProtobufCFieldDescriptor mincoming_transaction__field_descriptors[1] =
 {
-  { "SendBlock", &psend_block_request__descriptor, &psend_block_response__descriptor },
-  { "SendTransaction", &psend_transaction_request__descriptor, &psend_transaction_response__descriptor },
+  {
+    "transaction",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(MIncomingTransaction, n_transaction),
+    offsetof(MIncomingTransaction, transaction),
+    &ptransaction__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
-const unsigned pinternal__method_indices_by_name[] = {
-  0,        /* SendBlock */
-  1         /* SendTransaction */
+static const unsigned mincoming_transaction__field_indices_by_name[] = {
+  0,   /* field[0] = transaction */
 };
-const ProtobufCServiceDescriptor pinternal__descriptor =
+static const ProtobufCIntRange mincoming_transaction__number_ranges[1 + 1] =
 {
-  PROTOBUF_C__SERVICE_DESCRIPTOR_MAGIC,
-  "PInternal",
-  "PInternal",
-  "PInternal",
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor mincoming_transaction__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MIncomingTransaction",
+  "MIncomingTransaction",
+  "MIncomingTransaction",
   "",
-  2,
-  pinternal__method_descriptors,
-  pinternal__method_indices_by_name
+  sizeof(MIncomingTransaction),
+  1,
+  mincoming_transaction__field_descriptors,
+  mincoming_transaction__field_indices_by_name,
+  1,  mincoming_transaction__number_ranges,
+  (ProtobufCMessageInit) mincoming_transaction__init,
+  NULL,NULL,NULL    /* reserved[123] */
 };
-void pinternal__send_block(ProtobufCService *service,
-                           const PSendBlockRequest *input,
-                           PSendBlockResponse_Closure closure,
-                           void *closure_data)
+#define mget_block_height_request__field_descriptors NULL
+#define mget_block_height_request__field_indices_by_name NULL
+#define mget_block_height_request__number_ranges NULL
+const ProtobufCMessageDescriptor mget_block_height_request__descriptor =
 {
-  assert(service->descriptor == &pinternal__descriptor);
-  service->invoke(service, 0, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
-}
-void pinternal__send_transaction(ProtobufCService *service,
-                                 const PSendTransactionRequest *input,
-                                 PSendTransactionResponse_Closure closure,
-                                 void *closure_data)
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetBlockHeightRequest",
+  "MGetBlockHeightRequest",
+  "MGetBlockHeightRequest",
+  "",
+  sizeof(MGetBlockHeightRequest),
+  0,
+  mget_block_height_request__field_descriptors,
+  mget_block_height_request__field_indices_by_name,
+  0,  mget_block_height_request__number_ranges,
+  (ProtobufCMessageInit) mget_block_height_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_block_height_response__field_descriptors[1] =
 {
-  assert(service->descriptor == &pinternal__descriptor);
-  service->invoke(service, 1, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
-}
-void pinternal__init (PInternal_Service *service,
-                      PInternal_ServiceDestroy destroy)
+  {
+    "height",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT64,
+    0,   /* quantifier_offset */
+    offsetof(MGetBlockHeightResponse, height),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_block_height_response__field_indices_by_name[] = {
+  0,   /* field[0] = height */
+};
+static const ProtobufCIntRange mget_block_height_response__number_ranges[1 + 1] =
 {
-  protobuf_c_service_generated_init (&service->base,
-                                     &pinternal__descriptor,
-                                     (ProtobufCServiceDestroy) destroy);
-}
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor mget_block_height_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetBlockHeightResponse",
+  "MGetBlockHeightResponse",
+  "MGetBlockHeightResponse",
+  "",
+  sizeof(MGetBlockHeightResponse),
+  1,
+  mget_block_height_response__field_descriptors,
+  mget_block_height_response__field_indices_by_name,
+  1,  mget_block_height_response__number_ranges,
+  (ProtobufCMessageInit) mget_block_height_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_block_request__field_descriptors[2] =
+{
+  {
+    "height",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT64,
+    0,   /* quantifier_offset */
+    offsetof(MGetBlockRequest, height),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "hash",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(MGetBlockRequest, hash),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_block_request__field_indices_by_name[] = {
+  1,   /* field[1] = hash */
+  0,   /* field[0] = height */
+};
+static const ProtobufCIntRange mget_block_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor mget_block_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetBlockRequest",
+  "MGetBlockRequest",
+  "MGetBlockRequest",
+  "",
+  sizeof(MGetBlockRequest),
+  2,
+  mget_block_request__field_descriptors,
+  mget_block_request__field_indices_by_name,
+  1,  mget_block_request__number_ranges,
+  (ProtobufCMessageInit) mget_block_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_block_response__field_descriptors[2] =
+{
+  {
+    "height",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT64,
+    0,   /* quantifier_offset */
+    offsetof(MGetBlockResponse, height),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "block",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(MGetBlockResponse, n_block),
+    offsetof(MGetBlockResponse, block),
+    &pblock__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_block_response__field_indices_by_name[] = {
+  1,   /* field[1] = block */
+  0,   /* field[0] = height */
+};
+static const ProtobufCIntRange mget_block_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor mget_block_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetBlockResponse",
+  "MGetBlockResponse",
+  "MGetBlockResponse",
+  "",
+  sizeof(MGetBlockResponse),
+  2,
+  mget_block_response__field_descriptors,
+  mget_block_response__field_indices_by_name,
+  1,  mget_block_response__number_ranges,
+  (ProtobufCMessageInit) mget_block_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_transaction_request__field_descriptors[2] =
+{
+  {
+    "id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(MGetTransactionRequest, id),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "input_hash",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(MGetTransactionRequest, input_hash),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_transaction_request__field_indices_by_name[] = {
+  0,   /* field[0] = id */
+  1,   /* field[1] = input_hash */
+};
+static const ProtobufCIntRange mget_transaction_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor mget_transaction_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetTransactionRequest",
+  "MGetTransactionRequest",
+  "MGetTransactionRequest",
+  "",
+  sizeof(MGetTransactionRequest),
+  2,
+  mget_transaction_request__field_descriptors,
+  mget_transaction_request__field_indices_by_name,
+  1,  mget_transaction_request__number_ranges,
+  (ProtobufCMessageInit) mget_transaction_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_transaction_response__field_descriptors[1] =
+{
+  {
+    "transaction",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(MGetTransactionResponse, n_transaction),
+    offsetof(MGetTransactionResponse, transaction),
+    &ptransaction__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_transaction_response__field_indices_by_name[] = {
+  0,   /* field[0] = transaction */
+};
+static const ProtobufCIntRange mget_transaction_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor mget_transaction_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetTransactionResponse",
+  "MGetTransactionResponse",
+  "MGetTransactionResponse",
+  "",
+  sizeof(MGetTransactionResponse),
+  1,
+  mget_transaction_response__field_descriptors,
+  mget_transaction_response__field_indices_by_name,
+  1,  mget_transaction_response__number_ranges,
+  (ProtobufCMessageInit) mget_transaction_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};

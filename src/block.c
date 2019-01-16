@@ -342,9 +342,10 @@ PBlock *block_to_proto(block_t *block)
 int block_to_serialized(uint8_t **buffer, uint32_t *buffer_len, block_t *block)
 {
   PBlock *msg = block_to_proto(block);
-  *buffer_len = pblock__get_packed_size(msg);
 
+  *buffer_len = pblock__get_packed_size(msg);
   *buffer = malloc(*buffer_len);
+
   pblock__pack(msg, *buffer);
   free_proto_block(msg);
 

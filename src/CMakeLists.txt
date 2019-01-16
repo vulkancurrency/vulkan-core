@@ -32,6 +32,7 @@ set(SOURCE_FILES
   merkle.c
   miner.c
   net.c
+  packet.c
   transaction.c
   vulkan.pb-c.c
   wallet.c
@@ -46,6 +47,7 @@ set(HEADER_FILES
   merkle.h
   miner.h
   net.h
+  packet.h
   transaction.h
   version.h
   vulkan.pb-c.h

@@ -89,28 +89,52 @@ message PEmpty
 
 }
 
-message PSendTransactionRequest
+message PPacket
 {
-  PTransaction transaction = 1;
+  int32 id = 1;
+  int32 message_size = 2;
+  bytes message = 3;
 }
 
-message PSendTransactionResponse
+message MIncomingBlock
 {
-  bytes transaction_id = 1;
+  repeated PBlock block = 1;
 }
 
-message PSendBlockRequest
+message MIncomingTransaction
 {
-  uint64 height = 1;
+  repeated PTransaction transaction = 1;
 }
 
-message PSendBlockResponse
+message MGetBlockHeightRequest
 {
-  PBlock block = 1;
+
 }
 
-service PInternal
+message MGetBlockHeightResponse
 {
-  rpc SendBlock (PSendBlockRequest) returns (PSendBlockResponse);
-  rpc SendTransaction (PSendTransactionRequest) returns (PSendTransactionResponse);
+  int64 height = 1;
+}
+
+message MGetBlockRequest
+{
+  int64 height = 1;
+  bytes hash = 2;
+}
+
+message MGetBlockResponse
+{
+  int64 height = 1;
+  repeated PBlock block = 2;
+}
+
+message MGetTransactionRequest
+{
+  bytes id = 1;
+  bytes input_hash = 2;
+}
+
+message MGetTransactionResponse
+{
+  repeated PTransaction transaction = 1;
 }
