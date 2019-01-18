@@ -44,7 +44,10 @@ void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_s
 int net_connect(const char *address, int port);
 int net_open_connection(void);
 
-int net_start_server(void);
+int net_run_server(void);
+void* net_run_server_threaded();
+
+int net_start_server(int threaded);
 void net_stop_server(void);
 
 #ifdef __cplusplus

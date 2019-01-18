@@ -30,12 +30,15 @@
 #include <errno.h>
 #include <poll.h>
 #include <time.h>
+#include <pthread.h>
 
 #include <gossip.h>
 #include <config.h>
 
 #include "chainparams.h"
 #include "packet.h"
+
+#include "net.h"
 
 static int g_net_server_running = 0;
 static pittacus_gossip_t *g_net_gossip = NULL;
@@ -136,13 +139,8 @@ int net_open_connection(void)
   return 0;
 }
 
-int net_start_server(void)
+int net_run_server(void)
 {
-  if(g_net_server_running)
-  {
-    return 1;
-  }
-
   int is_seed_node = NUM_SEED_NODES == 0;
   if (is_seed_node)
   {
@@ -169,13 +167,6 @@ int net_start_server(void)
     }
   }
 
-  if (pittacus_gossip_process_send(g_net_gossip) < 0)
-  {
-    fprintf(stderr, "Failed to send hello message to a cluster.\n");
-    pittacus_gossip_destroy(g_net_gossip);
-    return 0;
-  }
-
   pt_socket_fd gossip_fd = pittacus_gossip_socket_fd(g_net_gossip);
   struct pollfd gossip_poll_fd = {
     .fd = gossip_fd,
@@ -189,7 +180,6 @@ int net_start_server(void)
   int poll_result = 0;
   time_t previous_data_msg_ts = time(NULL);
 
-  g_net_server_running = 1;
   while (g_net_server_running)
   {
     gossip_poll_fd.revents = 0;
@@ -207,7 +197,9 @@ int net_start_server(void)
         recv_result = pittacus_gossip_process_receive(g_net_gossip);
         if (recv_result < 0)
         {
-
+          fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
+          pittacus_gossip_destroy(g_net_gossip);
+          return 1;
         }
       }
     }
@@ -236,6 +228,32 @@ int net_start_server(void)
 
   pittacus_gossip_destroy(g_net_gossip);
   return 0;
+}
+
+void* net_run_server_threaded()
+{
+  net_run_server();
+  return NULL;
+}
+
+int net_start_server(int threaded)
+{
+  if(g_net_server_running)
+  {
+    return 1;
+  }
+  g_net_server_running = 1;
+
+  if (threaded)
+  {
+    pthread_t thread;
+    pthread_create(&thread, NULL, net_run_server_threaded, NULL);
+    return 0;
+  }
+  else
+  {
+    return net_run_server();
+  }
 }
 
 void net_stop_server(void)

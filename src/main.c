@@ -183,7 +183,7 @@ int main(int argc, char **argv)
       case CMD_SERVER:
       {
         init_blockchain();
-        net_start_server();
+        net_start_server(0);
         break;
       }
       case CMD_BLOCKHEIGHT:
@@ -196,6 +196,7 @@ int main(int argc, char **argv)
       case CMD_MINE:
       {
         init_blockchain();
+        net_start_server(0);
         start_mining();
         break;
       }
