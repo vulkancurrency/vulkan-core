@@ -35,7 +35,7 @@
 #define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
 
 // COIN: How many fractions to a coin
-#define COIN 100000000
+#define COIN 1000000
 
 // TOTAL_SUPPLY: How many coin that will ever exist
 #define TOTAL_SUPPLY 64000000
