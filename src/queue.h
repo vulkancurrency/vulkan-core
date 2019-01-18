@@ -23,63 +23,47 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <stdint.h>
+#pragma once
 
-#include "queue.h"
-#include "transaction.h"
+#include <stdlib.h>
+#include <pthread.h>
 
-#include "mempool.h"
-
-static int g_mempool_initialized = 0;
-static queue_t *g_mempool = NULL;
-
-int start_mempool()
+#ifdef __cplusplus
+extern "C"
 {
-  if (g_mempool_initialized)
-  {
-    return 1;
-  }
+#endif
 
-  g_mempool = queue_init();
-  g_mempool_initialized = 1;
-  return 0;
-}
+#define MAX_QUEUE_SIZE 1000000
 
-int push_tx_to_mempool(transaction_t *transaction)
+typedef struct Queue
 {
-  if (!g_mempool_initialized)
-  {
-    return 1;
-  }
+  int num_objects;
+  int max_index;
+  void *queue_objects[MAX_QUEUE_SIZE];
+  pthread_mutex_t mutex;
+} queue_t;
 
-  queue_push_right(g_mempool, transaction);
-  return 0;
+queue_t* queue_init(void);
+void queue_free(queue_t *queue);
+
+void queue_push(queue_t *queue, int index, void *queue_object);
+void queue_push_left(queue_t *queue, void *queue_object);
+void queue_push_right(queue_t *queue, void *queue_object);
+
+int queue_get_size(queue_t *queue);
+int queue_get_empty(queue_t *queue);
+int queue_get_full(queue_t *queue);
+int queue_get_max_index(queue_t *queue);
+int queue_get_index(queue_t *queue, void *queue_object);
+void* queue_get(queue_t *queue, int index);
+
+void queue_remove(queue_t *queue, int index);
+void queue_remove_object(queue_t *queue, void *queue_object);
+
+void* queue_pop(queue_t *queue, int index);
+void* queue_pop_left(queue_t *queue);
+void* queue_pop_right(queue_t *queue);
+
+#ifdef __cplusplus
 }
-
-transaction_t *pop_tx_from_mempool()
-{
-  if (!g_mempool_initialized)
-  {
-    return NULL;
-  }
-
-  transaction_t *transaction = queue_pop_right(g_mempool);
-  return transaction;
-}
-
-int get_number_of_tx_from_mempool()
-{
-  return queue_get_size(g_mempool);
-}
-
-int stop_mempool()
-{
-  if (!g_mempool_initialized)
-  {
-    return 1;
-  }
-
-  g_mempool_initialized = 0;
-  queue_free(g_mempool);
-  return 0;
-}
+#endif

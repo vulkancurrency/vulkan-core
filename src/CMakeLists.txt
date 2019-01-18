@@ -33,6 +33,7 @@ set(SOURCE_FILES
   miner.c
   net.c
   packet.c
+  queue.c
   transaction.c
   vulkan.pb-c.c
   wallet.c
@@ -48,6 +49,7 @@ set(HEADER_FILES
   miner.h
   net.h
   packet.h
+  queue.h
   transaction.h
   version.h
   vulkan.pb-c.h
