@@ -42,6 +42,7 @@
 #include "argparse.h"
 
 static const char *blockchain_data_dir = "blockchain";
+static int enable_miner = 0;
 
 void make_hash(char *digest, unsigned char *string)
 {
@@ -55,7 +56,7 @@ void make_hash(char *digest, unsigned char *string)
   }
 }
 
-void perform_shutdown(int test)
+void perform_shutdown(int sig)
 {
   close_blockchain();
   exit(1);
@@ -99,6 +100,12 @@ int parse_commandline_args(int argc, char **argv)
         i++;
         blockchain_data_dir = (const char*)argv[i];
         break;
+      case CMD_ARG_NEW_WALLET:
+        new_wallet();
+        break;
+      case CMD_ARG_MINE:
+        enable_miner = 1;
+        break;
       default:
         fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
         return 1;
@@ -121,7 +128,16 @@ int main(int argc, char **argv)
   }
 
   init_blockchain(blockchain_data_dir);
-  net_start_server(0);
+  if (enable_miner)
+  {
+    net_start_server(1);
+    start_mining();
+  }
+  else
+  {
+    net_start_server(0);
+  }
+
   close_blockchain();
   return 0;
 }

@@ -31,6 +31,8 @@ typedef enum Argument
   CMD_ARG_VERSION,
 
   CMD_ARG_BLOCKCHAIN_DIR,
+  CMD_ARG_NEW_WALLET,
+  CMD_ARG_MINE,
 
   CMD_ARG_UNKNOWN
 } argument_t;
@@ -47,6 +49,8 @@ static argument_map_t arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information.", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information.", 0},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
+  {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 0},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", 0},
 };
 
 #define NUM_COMMANDS (sizeof(arguments_map) / sizeof(argument_map_t))
