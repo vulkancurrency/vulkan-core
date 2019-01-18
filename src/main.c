@@ -25,9 +25,8 @@
 
 #include <signal.h>
 #include <stdio.h>
-#include <time.h>
-#include <getopt.h>
 #include <string.h>
+
 #include <sodium.h>
 
 #include "chainparams.h"
@@ -42,6 +41,7 @@
 #include "argparse.h"
 
 static const char *blockchain_data_dir = "blockchain";
+static int enable_seed_mode = 0;
 static int enable_miner = 0;
 
 void make_hash(char *digest, unsigned char *string)
@@ -106,6 +106,9 @@ int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_MINE:
         enable_miner = 1;
         break;
+      case CMD_ARG_SEED_MODE:
+        enable_seed_mode = 1;
+        break;
       default:
         fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
         return 1;
@@ -130,12 +133,12 @@ int main(int argc, char **argv)
   init_blockchain(blockchain_data_dir);
   if (enable_miner)
   {
-    net_start_server(1);
+    net_start_server(1, enable_seed_mode);
     start_mining();
   }
   else
   {
-    net_start_server(0);
+    net_start_server(0, enable_seed_mode);
   }
 
   close_blockchain();

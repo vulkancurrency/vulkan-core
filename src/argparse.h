@@ -33,6 +33,7 @@ typedef enum Argument
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_NEW_WALLET,
   CMD_ARG_MINE,
+  CMD_ARG_SEED_MODE,
 
   CMD_ARG_UNKNOWN
 } argument_t;
@@ -51,6 +52,7 @@ static argument_map_t arguments_map[] = {
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
   {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 0},
   {"mine", CMD_ARG_MINE, "Start mining for new blocks.", 0},
+  {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", 0}
 };
 
 #define NUM_COMMANDS (sizeof(arguments_map) / sizeof(argument_map_t))

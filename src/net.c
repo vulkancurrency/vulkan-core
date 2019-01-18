@@ -41,6 +41,7 @@
 #include "net.h"
 
 static int g_net_server_running = 0;
+static int g_net_seed_mode = 0;
 static pittacus_gossip_t *g_net_gossip = NULL;
 
 void net_set_gossip(pittacus_gossip_t *gossip)
@@ -141,7 +142,7 @@ int net_open_connection(void)
 
 int net_run_server(void)
 {
-  int is_seed_node = NUM_SEED_NODES == 0;
+  int is_seed_node = g_net_seed_mode || NUM_SEED_NODES == 0;
   if (is_seed_node)
   {
     if (net_open_connection())
@@ -236,13 +237,15 @@ void* net_run_server_threaded()
   return NULL;
 }
 
-int net_start_server(int threaded)
+int net_start_server(int threaded, int seed_mode)
 {
   if(g_net_server_running)
   {
     return 1;
   }
+
   g_net_server_running = 1;
+  g_net_seed_mode = seed_mode;
 
   if (threaded)
   {
