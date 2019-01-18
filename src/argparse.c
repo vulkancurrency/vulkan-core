@@ -23,47 +23,45 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
-#include <stdint.h>
+#include "util.h"
+#include "version.h"
 
-#include "block.h"
-#include "transaction.h"
+#include "argparse.h"
 
-#ifdef __cplusplus
-extern "C"
+argument_t argparse_get_argument_from_str(const char *arg)
 {
-#endif
+  // verify command argument prefix
+  if (!string_startswith(arg, "-") || string_count(arg, "-", 1) > 2)
+  {
+    return CMD_ARG_UNKNOWN;
+  }
 
-int open_blockchain(const char *blockchain_dir);
-int init_blockchain(const char *blockchain_dir);
-int close_blockchain(void);
-
-uint32_t get_block_height();
-int insert_block_into_blockchain(block_t *block);
-block_t *get_block_from_blockchain(uint8_t *block_hash);
-
-int insert_tx_into_index(uint8_t *block_key, transaction_t *tx);
-int insert_unspent_tx_into_index(transaction_t *tx);
-int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx);
-PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id);
-
-uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id);
-block_t *get_block_from_tx_id(uint8_t *tx_id);
-
-int delete_block_from_blockchain(uint8_t *block_hash);
-int delete_tx_from_index(uint8_t *tx_id);
-int delete_unspent_tx_from_index(uint8_t *tx_id);
-
-uint8_t *get_current_block_hash();
-int set_current_block_hash(uint8_t *hash);
-
-int get_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_block_key(uint8_t *buffer, uint8_t *block_hash);
-
-uint32_t get_balance_for_address(uint8_t *address);
-
-#ifdef __cplusplus
+  // determine the argument type
+  for (int i = 0; i < NUM_COMMANDS; i++)
+  {
+    argument_map_t *argument_map = &arguments_map[i];
+    if (string_endswith(arg, argument_map->name))
+    {
+      return argument_map->type;
+    }
+  }
+  return CMD_ARG_UNKNOWN;
 }
-#endif
+
+argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
+{
+  for (int i = 0; i < NUM_COMMANDS; i++)
+  {
+    argument_map_t *argument_map = &arguments_map[i];
+    if (argument_map->type == arg_type)
+    {
+      return argument_map;
+    }
+  }
+  return NULL;
+}

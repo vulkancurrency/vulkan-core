@@ -39,38 +39,9 @@
 #include "miner.h"
 #include "client.h"
 
-typedef struct VulkanCommand
-{
-  char *key;
-  int val;
-} vulkan_command_t;
+#include "argparse.h"
 
-typedef enum CommandType
-{
-  CMD_NONE,
-  CMD_HELP,
-  CMD_VERSION,
-  CMD_GENESIS,
-  CMD_GET_WALLET,
-  CMD_NEW_WALLET,
-  CMD_SERVER,
-  CMD_BLOCKHEIGHT,
-  CMD_MINE
-} command_type_t;
-
-static vulkan_command_t commands[] = {
-  {"none", CMD_NONE},
-  {"help", CMD_HELP},
-  {"version", CMD_VERSION},
-  {"genesis", CMD_GENESIS},
-  {"wallet", CMD_GET_WALLET},
-  {"new_wallet", CMD_NEW_WALLET},
-  {"server", CMD_SERVER},
-  {"blockheight", CMD_BLOCKHEIGHT},
-  {"mine", CMD_MINE},
-};
-
-#define MAX_COMMANDS (sizeof(commands) / sizeof(vulkan_command_t))
+static const char *blockchain_data_dir = "blockchain";
 
 void make_hash(char *digest, unsigned char *string)
 {
@@ -90,28 +61,50 @@ void perform_shutdown(int test)
   exit(1);
 }
 
-void print_help()
+int parse_commandline_args(int argc, char **argv)
 {
-  printf("Usage: %s <command> [<args>]\n", APPLICATION_NAME);
-}
-
-void print_version()
-{
-  printf("%s|%s - %s\n", APPLICATION_NAME, APPLICATION_RELEASE_NAME, APPLICATION_VERSION);
-}
-
-int command(char *cmd_string)
-{
-  for (int i = 0; i < MAX_COMMANDS; i++)
+  for (int i = 1; i < argc; i++)
   {
-    vulkan_command_t cmd = commands[i];
-    if (strcmp(cmd.key, cmd_string) == 0)
+    argument_t arg_type = argparse_get_argument_from_str(argv[i]);
+    argument_map_t *argument_map = argparse_get_argument_map_from_type(arg_type);
+    if (!argument_map)
     {
-      return cmd.val;
+      fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
+      return 1;
+    }
+
+    // check to see if the user provided the correct number of
+    // arguments required by this option...
+    int num_args = (argc - 1) - i;
+    if (num_args < argument_map->num_args)
+    {
+      fprintf(stderr, "Usage: -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
+      return 1;
+    }
+    switch (arg_type)
+    {
+      case CMD_ARG_HELP:
+        fprintf(stderr, "Command-line Options:\n");
+        for (int i = 0; i < NUM_COMMANDS; i++)
+        {
+          argument_map_t *argument_map = &arguments_map[i];
+          fprintf(stderr, "  -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
+        }
+        fprintf(stderr, "\n");
+        return 1;
+      case CMD_ARG_VERSION:
+        printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
+        return 1;
+      case CMD_ARG_BLOCKCHAIN_DIR:
+        i++;
+        blockchain_data_dir = (const char*)argv[i];
+        break;
+      default:
+        fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
+        return 1;
     }
   }
-
-  return CMD_NONE;
+  return 0;
 }
 
 int main(int argc, char **argv)
@@ -122,96 +115,13 @@ int main(int argc, char **argv)
   }
 
   signal(SIGINT, perform_shutdown);
-
-  if (argc > 1)
+  if (parse_commandline_args(argc, argv))
   {
-    switch(command(argv[1]))
-    {
-      case CMD_NONE:
-      {
-        break;
-      }
-      case CMD_HELP:
-      {
-        print_help();
-        break;
-      }
-      case CMD_VERSION:
-      {
-        print_version();
-        break;
-      }
-      case CMD_GENESIS:
-      {
-        init_blockchain();
-        block_t *block = make_block();
-        block->timestamp = genesis_block.timestamp;
-        hash_block(block);
-
-        int i = 0;
-        while (!valid_block_hash(block))
-        {
-          block->nonce = i;
-          hash_block(block);
-          i++;
-        }
-
-        if (compare_with_genesis_block(block) == 0)
-        {
-          printf("Verified genesis block!\n");
-          print_block(block);
-        }
-        else
-        {
-          fprintf(stderr, "Genesis block mismatch! Generated a hash that is different than recorded.\n");
-          print_block(block);
-        }
-
-        free_block(block);
-        break;
-      }
-      case CMD_GET_WALLET:
-      {
-        rpc_get_wallet();
-        break;
-      }
-      case CMD_NEW_WALLET:
-      {
-        new_wallet();
-        break;
-      }
-      case CMD_SERVER:
-      {
-        init_blockchain();
-        net_start_server(0);
-        break;
-      }
-      case CMD_BLOCKHEIGHT:
-      {
-        init_blockchain();
-        uint32_t height = get_block_height();
-        printf("Current local blockheight: %d\n", height);
-        break;
-      }
-      case CMD_MINE:
-      {
-        init_blockchain();
-        net_start_server(1);
-        start_mining();
-        break;
-      }
-      default:
-      {
-        fprintf(stderr, "No options passed.\n");
-      }
-    }
-  }
-  else
-  {
-    print_version();
-    print_help();
+    return 1;
   }
 
+  init_blockchain(blockchain_data_dir);
+  net_start_server(0);
   close_blockchain();
   return 0;
 }

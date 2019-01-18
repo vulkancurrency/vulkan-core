@@ -47,7 +47,7 @@ static uint8_t g_chain_current_block_hash[32] = {
 static int g_chain_is_open = 0;
 static rocksdb_t *g_chain_db = NULL;
 
-int open_blockchain(void)
+int open_blockchain(const char *blockchain_dir)
 {
   if (g_chain_is_open)
   {
@@ -57,7 +57,7 @@ int open_blockchain(void)
   char *err = NULL;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
-  g_chain_db = rocksdb_open(options, "blockchain", &err);
+  g_chain_db = rocksdb_open(options, blockchain_dir, &err);
 
   if (err != NULL)
   {
@@ -96,9 +96,9 @@ int close_blockchain(void)
   }
 }
 
-int init_blockchain(void)
+int init_blockchain(const char *blockchain_dir)
 {
-  open_blockchain();
+  open_blockchain(blockchain_dir);
   return 0;
 }
 

@@ -23,47 +23,60 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
-
+#include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <string.h>
 
-#include "block.h"
-#include "transaction.h"
+#ifdef _WIN32
+ #include <sysinfoapi.h>
+#endif
 
-#ifdef __cplusplus
-extern "C"
+#include "util.h"
+
+int get_num_logical_cores(void)
 {
+#ifdef _WIN32
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  return sysinfo.dwNumberOfProcessors;
+#else
+  return sysconf(_SC_NPROCESSORS_ONLN);
 #endif
-
-int open_blockchain(const char *blockchain_dir);
-int init_blockchain(const char *blockchain_dir);
-int close_blockchain(void);
-
-uint32_t get_block_height();
-int insert_block_into_blockchain(block_t *block);
-block_t *get_block_from_blockchain(uint8_t *block_hash);
-
-int insert_tx_into_index(uint8_t *block_key, transaction_t *tx);
-int insert_unspent_tx_into_index(transaction_t *tx);
-int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx);
-PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id);
-
-uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id);
-block_t *get_block_from_tx_id(uint8_t *tx_id);
-
-int delete_block_from_blockchain(uint8_t *block_hash);
-int delete_tx_from_index(uint8_t *tx_id);
-int delete_unspent_tx_from_index(uint8_t *tx_id);
-
-uint8_t *get_current_block_hash();
-int set_current_block_hash(uint8_t *hash);
-
-int get_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_block_key(uint8_t *buffer, uint8_t *block_hash);
-
-uint32_t get_balance_for_address(uint8_t *address);
-
-#ifdef __cplusplus
 }
-#endif
+
+int string_equals(const char *string, const char *equals)
+{
+  return strcmp(string, equals) == 0;
+}
+
+int string_startswith(const char *string, const char *prefix)
+{
+  return strncmp(prefix, string, strlen(prefix)) == 0;
+}
+
+int string_endswith(const char *string, const char *ext)
+{
+  int ext_length = strlen(ext);
+  return strncmp(ext, &string[strlen(string) - ext_length], ext_length) == 0;
+}
+
+int string_count(const char *string, const char *countstr, int countbreak)
+{
+  int count = 0;
+  for (int i = 0; i < strlen(string) - 1; i++)
+  {
+    if (string_startswith(&string[i], countstr))
+    {
+      count++;
+    }
+    else
+    {
+      if (countbreak)
+      {
+        break;
+      }
+    }
+  }
+  return count;
+}

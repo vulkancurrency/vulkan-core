@@ -24,6 +24,7 @@
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 set(SOURCE_FILES
+  argparse.c
   block.c
   chain.c
   client.c
@@ -35,11 +36,13 @@ set(SOURCE_FILES
   packet.c
   queue.c
   transaction.c
+  util.c
   vulkan.pb-c.c
   wallet.c
 )
 
 set(HEADER_FILES
+  argparse.h
   block.h
   chain.h
   chainparams.h
@@ -51,6 +54,7 @@ set(HEADER_FILES
   packet.h
   queue.h
   transaction.h
+  util.h
   version.h
   vulkan.pb-c.h
   wallet.h
