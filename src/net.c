@@ -71,7 +71,7 @@ int net_connect(const char *address, int port)
 {
   struct sockaddr_in self_in;
   self_in.sin_family = AF_INET;
-  self_in.sin_port = htons(P2P_PORT);
+  self_in.sin_port = 0;
   inet_aton("0.0.0.0", &self_in.sin_addr);
 
   pittacus_addr_t self_addr = {
