@@ -196,7 +196,7 @@ int main(int argc, char **argv)
       case CMD_MINE:
       {
         init_blockchain();
-        net_start_server(0);
+        net_start_server(1);
         start_mining();
         break;
       }
