@@ -9,7 +9,7 @@
 	url = https://github.com/facebook/rocksdb.git
 [submodule "external/pittacus"]
 	path = external/pittacus
-	url = https://github.com/izeigerman/pittacus.git
+	url = https://github.com/vulkancurrency/pittacus.git
 [submodule "external/miniupnp"]
 	path = external/miniupnp
 	url = https://github.com/vulkancurrency/miniupnp.git
