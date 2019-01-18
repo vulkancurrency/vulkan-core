@@ -34,8 +34,8 @@ extern "C"
 {
 #endif
 
-int start_mining();
-void stop_mining();
+int start_mining(void);
+void stop_mining(void);
 
 block_t *compute_next_block(uint8_t *prev_block_hash);
 

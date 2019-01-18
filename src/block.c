@@ -39,7 +39,7 @@
  *
  * Later to be free'd with `free_block`
  */
-block_t *make_block()
+block_t *make_block(void)
 {
   block_t *block = malloc(sizeof(block_t));
 

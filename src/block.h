@@ -54,7 +54,7 @@ typedef struct Block
   transaction_t **transactions;
 } block_t;
 
-block_t *make_block();
+block_t *make_block(void);
 
 static block_t genesis_block = {
   .version = BLOCK_VERSION,

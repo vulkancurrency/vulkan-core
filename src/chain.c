@@ -47,7 +47,7 @@ static uint8_t g_chain_current_block_hash[32] = {
 static int g_chain_is_open = 0;
 static rocksdb_t *g_chain_db = NULL;
 
-int open_blockchain()
+int open_blockchain(void)
 {
   if (g_chain_is_open)
   {
@@ -82,7 +82,7 @@ int open_blockchain()
   return 0;
 }
 
-int close_blockchain()
+int close_blockchain(void)
 {
   if (g_chain_is_open)
   {
@@ -96,7 +96,7 @@ int close_blockchain()
   }
 }
 
-int init_blockchain()
+int init_blockchain(void)
 {
   open_blockchain();
   return 0;

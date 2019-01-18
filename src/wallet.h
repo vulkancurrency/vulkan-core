@@ -38,9 +38,9 @@ extern "C"
 
 #define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
-rocksdb_t *open_wallet();
-int new_wallet();
-PWallet *get_wallet();
+rocksdb_t *open_wallet(void);
+int new_wallet(void);
+PWallet *get_wallet(void);
 
 int public_key_to_address(unsigned char *address, unsigned char *pk);
 uint8_t get_address_id(uint8_t *address);

@@ -50,7 +50,7 @@ static void handle_get_wallet(const PWallet *wallet, void *closure_data)
   *(protobuf_c_boolean *) closure_data = 1;
 }
 
-int rpc_get_wallet()
+int rpc_get_wallet(void)
 {
   /*ProtobufCService *service;
   ProtobufC_RPC_Client *client;

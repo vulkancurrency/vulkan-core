@@ -36,7 +36,7 @@
 
 static int g_miner_is_mining = 0;
 
-int start_mining()
+int start_mining(void)
 {
   if (g_miner_is_mining)
   {
@@ -64,7 +64,7 @@ int start_mining()
   return 0;
 }
 
-void stop_mining()
+void stop_mining(void)
 {
   if (!g_miner_is_mining)
   {

@@ -35,9 +35,9 @@ extern "C"
 {
 #endif
 
-int open_blockchain();
-int close_blockchain();
-int init_blockchain();
+int open_blockchain(void);
+int close_blockchain(void);
+int init_blockchain(void);
 
 uint32_t get_block_height();
 int insert_block_into_blockchain(block_t *block);

@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-int rpc_get_wallet();
+int rpc_get_wallet(void);
 
 #ifdef __cplusplus
 }

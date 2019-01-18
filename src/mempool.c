@@ -33,7 +33,7 @@
 static int g_mempool_initialized = 0;
 static queue_t *g_mempool = NULL;
 
-int start_mempool()
+int start_mempool(void)
 {
   if (g_mempool_initialized)
   {
@@ -56,7 +56,7 @@ int push_tx_to_mempool(transaction_t *transaction)
   return 0;
 }
 
-transaction_t *pop_tx_from_mempool()
+transaction_t *pop_tx_from_mempool(void)
 {
   if (!g_mempool_initialized)
   {
@@ -67,12 +67,12 @@ transaction_t *pop_tx_from_mempool()
   return transaction;
 }
 
-int get_number_of_tx_from_mempool()
+int get_number_of_tx_from_mempool(void)
 {
   return queue_get_size(g_mempool);
 }
 
-int stop_mempool()
+int stop_mempool(void)
 {
   if (!g_mempool_initialized)
   {

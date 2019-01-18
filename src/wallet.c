@@ -45,7 +45,7 @@ rocksdb_t *open_wallet(char *err)
   return rocksdb_open(options, "wallet", &err);
 }
 
-int new_wallet()
+int new_wallet(void)
 {
   // Open DB
 
@@ -133,7 +133,7 @@ int new_wallet()
   return 0;
 }
 
-PWallet *get_wallet()
+PWallet *get_wallet(void)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(err);
