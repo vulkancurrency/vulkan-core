@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <gossip.h>
 
@@ -73,14 +74,14 @@ int free_proto_packet(PPacket *proto_packet)
   return 0;
 }
 
-int packet_to_serialized(uint8_t **buffer, uint32_t *buffer_len, packet_t *packet)
+int packet_to_serialized(uint8_t *buffer, size_t buffer_len, packet_t *packet)
 {
   PPacket *msg = packet_to_proto(packet);
 
-  *buffer_len = ppacket__get_packed_size(msg);
-  *buffer = malloc(*buffer_len);
+  buffer_len = ppacket__get_packed_size(msg);
+  buffer = malloc(buffer_len);
 
-  ppacket__pack(msg, *buffer);
+  ppacket__pack(msg, buffer);
   free_proto_packet(msg);
 
   return 0;
@@ -107,32 +108,52 @@ packet_t *packet_from_serialized(uint8_t *buffer, uint32_t buffer_len)
   return packet;
 }
 
-int deserialize_packet(void *message, packet_t *packet)
+void* deserialize_packet(packet_t *packet)
 {
   switch (packet->id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
-        MIncomingBlock *proto_message = mincoming_block__unpack(NULL, packet->message_size, packet->message);
+        MIncomingBlock *proto_message = mincoming_block__unpack(NULL,
+          packet->message_size, packet->message);
 
-        incoming_block_t *message_object = malloc(sizeof(incoming_block_t));
-        message_object->block = block_from_proto(*proto_message->block);
+        incoming_block_t *message = malloc(sizeof(incoming_block_t));
+        message->block = block_from_proto(proto_message->block);
 
         mincoming_block__free_unpacked(proto_message, NULL);
-        break;
+        return message;
       }
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
-        MIncomingTransaction *proto_message = mincoming_transaction__unpack(NULL, packet->message_size, packet->message);
+        MIncomingTransaction *proto_message = mincoming_transaction__unpack(NULL,
+          packet->message_size, packet->message);
 
-        incoming_transaction_t *message_object = malloc(sizeof(incoming_transaction_t));
-        message_object->transaction = transaction_from_proto(*proto_message->transaction);
+        incoming_transaction_t *message = malloc(sizeof(incoming_transaction_t));
+        message->transaction = transaction_from_proto(proto_message->transaction);
 
         mincoming_transaction__free_unpacked(proto_message, NULL);
-        break;
+        return message;
       }
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
+      {
+        MGetBlockHeightRequest *proto_message = mget_block_height_request__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_block_height_request_t *message = malloc(sizeof(get_block_height_request_t));
+        mget_block_height_request__free_unpacked(proto_message, NULL);
+        return message;
+      }
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
+      {
+        MGetBlockHeightResponse *proto_message = mget_block_height_response__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_block_height_response_t *message = malloc(sizeof(get_block_height_response_t));
+        message->height = proto_message->height;
+
+        mget_block_height_response__free_unpacked(proto_message, NULL);
+        return message;
+      }
     case PKT_TYPE_GET_BLOCK_REQ:
     case PKT_TYPE_GET_BLOCK_RESP:
     case PKT_TYPE_GET_TRANSACTION_REQ:
@@ -140,92 +161,196 @@ int deserialize_packet(void *message, packet_t *packet)
       break;
     default:
       fprintf(stderr, "Could not deserialize packet with unknown packet_id: %d\n", packet->id);
-      return 1;
+      return NULL;
   }
-  return 0;
+  return NULL;
 }
 
-int serialize_packet(packet_t *packet, uint32_t packet_id, void *message)
+packet_t* serialize_packet(uint32_t packet_id, va_list args)
 {
-  uint8_t **buffer = NULL;
-  uint32_t *buffer_len = 0;
+  uint8_t *buffer = NULL;
+  uint32_t buffer_len = 0;
 
   switch (packet_id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
+        block_t *block = va_arg(args, block_t*);
+
         MIncomingBlock *msg = malloc(sizeof(MIncomingBlock));
         mincoming_block__init(msg);
 
-        incoming_block_t *message_object = (incoming_block_t*)message;
-        message = message_object;
+        PBlock *proto_block = block_to_proto(block);
+        msg->block = proto_block;
 
-        PBlock *proto_block = block_to_proto(message_object->block);
-        msg->block = &proto_block;
+        buffer_len = mincoming_block__get_packed_size(msg);
+        buffer = malloc(buffer_len);
 
-        *buffer_len = mincoming_block__get_packed_size(msg);
-        *buffer = malloc(*buffer_len);
-
-        mincoming_block__pack(msg, *buffer);
+        mincoming_block__pack(msg, buffer);
 
         free(msg);
         free_proto_block(proto_block);
-        free(message_object);
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
+        transaction_t *transaction = va_arg(args, transaction_t*);
+
         MIncomingTransaction *msg = malloc(sizeof(MIncomingTransaction));
         mincoming_transaction__init(msg);
 
-        incoming_transaction_t *message_object = (incoming_transaction_t*)message;
-        message = message_object;
+        PTransaction *proto_transaction = transaction_to_proto(transaction);
+        msg->transaction = proto_transaction;
 
-        PTransaction *proto_transaction = transaction_to_proto(message_object->transaction);
-        msg->transaction = &proto_transaction;
+        buffer_len = mincoming_transaction__get_packed_size(msg);
+        buffer = malloc(buffer_len);
 
-        *buffer_len = mincoming_transaction__get_packed_size(msg);
-        *buffer = malloc(*buffer_len);
-
-        mincoming_transaction__pack(msg, *buffer);
+        mincoming_transaction__pack(msg, buffer);
 
         free(msg);
         free_proto_transaction(proto_transaction);
-        free(message_object);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
+      {
+        MGetBlockHeightRequest *msg = malloc(sizeof(MGetBlockHeightRequest));
+        mget_block_height_request__init(msg);
+
+        buffer_len = mget_block_height_request__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_block_height_request__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
+      {
+        uint64_t height = va_arg(args, uint64_t);
+
+        MGetBlockHeightResponse *msg = malloc(sizeof(MGetBlockHeightResponse));
+        mget_block_height_response__init(msg);
+
+        msg->height = height;
+
+        buffer_len = mget_block_height_response__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_block_height_response__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_REQ:
+      {
+        uint64_t height = va_arg(args, uint64_t);
+        uint8_t *hash = va_arg(args, uint8_t*);
+
+        MGetBlockRequest *msg = malloc(sizeof(MGetBlockRequest));
+        mget_block_request__init(msg);
+
+        msg->height = height;
+
+        msg->hash.len = 32;
+        msg->hash.data = malloc(sizeof(char) * 32);
+        memcpy(msg->hash.data, hash, 32);
+
+        buffer_len = mget_block_request__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_block_request__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_RESP:
+      {
+        uint64_t height = va_arg(args, uint64_t);
+        block_t *block = va_arg(args, block_t*);
+
+        MGetBlockResponse *msg = malloc(sizeof(MGetBlockResponse));
+        mget_block_response__init(msg);
+
+        msg->height = height;
+
+        PBlock *proto_block = block_to_proto(block);
+        msg->block = proto_block;
+
+        buffer_len = mget_block_response__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_block_response__pack(msg, buffer);
+
+        free(msg);
+        free(proto_block);
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
+      {
+        uint8_t *id = va_arg(args, uint8_t*);
+        uint8_t *input_hash = va_arg(args, uint8_t*);
+
+        MGetTransactionRequest *msg = malloc(sizeof(MGetBlockRequest));
+        mget_transaction_request__init(msg);
+
+        msg->id.len = 32;
+        msg->id.data = malloc(sizeof(char) * 32);
+        memcpy(msg->id.data, id, 32);
+
+        msg->input_hash.len = 32;
+        msg->input_hash.data = malloc(sizeof(char) * 32);
+        memcpy(msg->input_hash.data, input_hash, 32);
+
+        buffer_len = mget_transaction_request__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_transaction_request__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_RESP:
+      {
+        transaction_t *transaction = va_arg(args, transaction_t*);
+
+        MGetTransactionResponse *msg = malloc(sizeof(MGetTransactionResponse));
+        mget_transaction_response__init(msg);
+
+        PTransaction *proto_transaction = transaction_to_proto(transaction);
+        msg->transaction = proto_transaction;
+
+        buffer_len = mget_transaction_response__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_transaction_response__pack(msg, buffer);
+
+        free(msg);
+        free(proto_transaction);
+      }
       break;
     default:
-      fprintf(stderr, "Could not serialize packet with unknown packet_id: %d\n", packet->id);
-      return 1;
+      fprintf(stderr, "Could not serialize packet with unknown packet_id: %d\n", packet_id);
+      return NULL;
   }
-
-  packet = make_packet(packet_id, *buffer_len, *buffer);
-  return 0;
+  return make_packet(packet_id, buffer_len, buffer);
 }
 
-int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message)
+int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object)
 {
   switch (packet_id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
-        incoming_block_t *message_object = (incoming_block_t*)message;
-        insert_block_into_blockchain(message_object->block);
-        free(message_object);
+        incoming_block_t *message = (incoming_block_t*)message_object;
+        insert_block_into_blockchain(message->block);
+        free(message);
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
-        incoming_transaction_t *message_object = (incoming_transaction_t*)message;
-        insert_tx_into_index(message_object->transaction->id, message_object->transaction);
-        free(message_object);
+        incoming_transaction_t *message = (incoming_transaction_t*)message_object;
+        insert_tx_into_index(message->transaction->id, message->transaction);
+        free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -244,9 +369,9 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message)
 
 int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  void *message = NULL;
   packet_t *packet = packet_from_serialized((uint8_t*)data, (uint32_t)data_size);
-  if (deserialize_packet(message, packet))
+  void *message = deserialize_packet(packet);
+  if (!message)
   {
     return 1;
   }
@@ -255,21 +380,49 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t
   {
     return 1;
   }
+
   return 0;
 }
 
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message)
+int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...)
 {
-  packet_t *packet = NULL;
-  if (serialize_packet(packet, packet_id, message))
+  va_list args;
+  va_start(args, packet_id);
+
+  packet_t *packet = serialize_packet(packet_id, args);
+  if (!packet)
   {
     return 1;
   }
 
-  uint8_t **buffer = NULL;
-  uint32_t *buffer_len = 0;
+  va_end(args);
+
+  uint8_t *buffer = NULL;
+  size_t buffer_len = 0;
 
   packet_to_serialized(buffer, buffer_len, packet);
-  net_send_data(gossip, (const uint8_t*)buffer, (size_t)buffer_len);
+  net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
   return 0;
+}
+
+int handle_send_incoming_block(pittacus_gossip_t *gossip, block_t *block)
+{
+  handle_send_packet(gossip, PKT_TYPE_INCOMING_BLOCK, block);
+  return 0;
+}
+
+int handle_send_incoming_transaction(pittacus_gossip_t *gossip, transaction_t *transaction)
+{
+  handle_send_packet(gossip, PKT_TYPE_INCOMING_TRANSACTION, transaction);
+  return 0;
+}
+
+int handle_broadcast_incoming_block(block_t *block)
+{
+  return handle_send_incoming_block(net_get_gossip(), block);
+}
+
+int handle_broadcast_incoming_transaction(transaction_t *transaction)
+{
+  return handle_send_incoming_transaction(net_get_gossip(), transaction);
 }

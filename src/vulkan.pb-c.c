@@ -1335,7 +1335,7 @@ static const ProtobufCFieldDescriptor ppacket__field_descriptors[3] =
     "message_size",
     2,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
     offsetof(PPacket, message_size),
     NULL,
@@ -1386,9 +1386,9 @@ static const ProtobufCFieldDescriptor mincoming_block__field_descriptors[1] =
   {
     "block",
     1,
-    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(MIncomingBlock, n_block),
+    0,   /* quantifier_offset */
     offsetof(MIncomingBlock, block),
     &pblock__descriptor,
     NULL,
@@ -1424,9 +1424,9 @@ static const ProtobufCFieldDescriptor mincoming_transaction__field_descriptors[1
   {
     "transaction",
     1,
-    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(MIncomingTransaction, n_transaction),
+    0,   /* quantifier_offset */
     offsetof(MIncomingTransaction, transaction),
     &ptransaction__descriptor,
     NULL,
@@ -1581,9 +1581,9 @@ static const ProtobufCFieldDescriptor mget_block_response__field_descriptors[2] 
   {
     "block",
     2,
-    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(MGetBlockResponse, n_block),
+    0,   /* quantifier_offset */
     offsetof(MGetBlockResponse, block),
     &pblock__descriptor,
     NULL,
@@ -1671,9 +1671,9 @@ static const ProtobufCFieldDescriptor mget_transaction_response__field_descripto
   {
     "transaction",
     1,
-    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(MGetTransactionResponse, n_transaction),
+    0,   /* quantifier_offset */
     offsetof(MGetTransactionResponse, transaction),
     &ptransaction__descriptor,
     NULL,

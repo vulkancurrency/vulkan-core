@@ -35,6 +35,9 @@ extern "C"
 {
 #endif
 
+void net_set_gossip(pittacus_gossip_t *gossip);
+pittacus_gossip_t* net_get_gossip(void);
+
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
 void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
 

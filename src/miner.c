@@ -29,8 +29,10 @@
 
 #include "block.h"
 #include "chain.h"
-#include "miner.h"
+#include "packet.h"
 #include "wallet.h"
+
+#include "miner.h"
 
 static int g_miner_is_mining = 0;
 
@@ -52,7 +54,10 @@ int start_mining()
 
     printf("Inserted block #%d\n", block_height);
     print_block(block);
+
     set_current_block_hash(block->hash);
+    handle_broadcast_incoming_block(block);
+
     free(block);
   }
 

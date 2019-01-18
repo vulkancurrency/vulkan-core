@@ -146,7 +146,7 @@ struct  _PPacket
 {
   ProtobufCMessage base;
   int32_t id;
-  int64_t message_size;
+  int32_t message_size;
   ProtobufCBinaryData message;
 };
 #define PPACKET__INIT \
@@ -157,23 +157,21 @@ struct  _PPacket
 struct  _MIncomingBlock
 {
   ProtobufCMessage base;
-  size_t n_block;
-  PBlock **block;
+  PBlock *block;
 };
 #define MINCOMING_BLOCK__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mincoming_block__descriptor) \
-    , 0,NULL }
+    , NULL }
 
 
 struct  _MIncomingTransaction
 {
   ProtobufCMessage base;
-  size_t n_transaction;
-  PTransaction **transaction;
+  PTransaction *transaction;
 };
 #define MINCOMING_TRANSACTION__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mincoming_transaction__descriptor) \
-    , 0,NULL }
+    , NULL }
 
 
 struct  _MGetBlockHeightRequest
@@ -210,12 +208,11 @@ struct  _MGetBlockResponse
 {
   ProtobufCMessage base;
   int64_t height;
-  size_t n_block;
-  PBlock **block;
+  PBlock *block;
 };
 #define MGET_BLOCK_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mget_block_response__descriptor) \
-    , 0, 0,NULL }
+    , 0, NULL }
 
 
 struct  _MGetTransactionRequest
@@ -232,12 +229,11 @@ struct  _MGetTransactionRequest
 struct  _MGetTransactionResponse
 {
   ProtobufCMessage base;
-  size_t n_transaction;
-  PTransaction **transaction;
+  PTransaction *transaction;
 };
 #define MGET_TRANSACTION_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mget_transaction_response__descriptor) \
-    , 0,NULL }
+    , NULL }
 
 
 /* PInputTransaction methods */

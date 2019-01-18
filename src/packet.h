@@ -26,6 +26,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #include <gossip.h>
 
@@ -76,7 +77,7 @@ typedef struct MGetBlockHeightRequest
 
 typedef struct MGetBlockHeightResponse
 {
-  uint64_t current_height;
+  uint64_t height;
 } get_block_height_response_t;
 
 typedef struct MGetBlockRequest
@@ -107,13 +108,22 @@ int free_packet(packet_t *packet);
 
 PPacket *packet_to_proto(packet_t *packet);
 int free_proto_packet(PPacket *proto_packet);
-int packet_to_serialized(uint8_t **buffer, uint32_t *buffer_len, packet_t *packet);
+int packet_to_serialized(uint8_t *buffer, size_t buffer_len, packet_t *packet);
 packet_t *packet_from_proto(PPacket *proto_packet);
 packet_t *packet_from_serialized(uint8_t *buffer, uint32_t buffer_len);
 
-int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message);
+packet_t* serialize_packet(uint32_t packet_id, va_list args);
+void* deserialize_packet(packet_t *packet);
+
+int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object);
 int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message);
+int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...);
+
+int handle_send_incoming_block(pittacus_gossip_t *gossip, block_t *block);
+int handle_send_incoming_transaction(pittacus_gossip_t *gossip, transaction_t *transaction);
+
+int handle_broadcast_incoming_block(block_t *block);
+int handle_broadcast_incoming_transaction(transaction_t *transaction);
 
 #ifdef __cplusplus
 }

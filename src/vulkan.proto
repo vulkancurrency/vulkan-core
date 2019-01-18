@@ -98,12 +98,12 @@ message PPacket
 
 message MIncomingBlock
 {
-  repeated PBlock block = 1;
+  PBlock block = 1;
 }
 
 message MIncomingTransaction
 {
-  repeated PTransaction transaction = 1;
+  PTransaction transaction = 1;
 }
 
 message MGetBlockHeightRequest
@@ -125,7 +125,7 @@ message MGetBlockRequest
 message MGetBlockResponse
 {
   int64 height = 1;
-  repeated PBlock block = 2;
+  PBlock block = 2;
 }
 
 message MGetTransactionRequest
@@ -136,5 +136,5 @@ message MGetTransactionRequest
 
 message MGetTransactionResponse
 {
-  repeated PTransaction transaction = 1;
+  PTransaction transaction = 1;
 }

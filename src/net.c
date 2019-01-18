@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <poll.h>
@@ -38,6 +39,16 @@
 
 static int g_net_server_running = 0;
 static pittacus_gossip_t *g_net_gossip = NULL;
+
+void net_set_gossip(pittacus_gossip_t *gossip)
+{
+  g_net_gossip = gossip;
+}
+
+pittacus_gossip_t* net_get_gossip(void)
+{
+  return g_net_gossip;
+}
 
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
@@ -196,9 +207,7 @@ int net_start_server(void)
         recv_result = pittacus_gossip_process_receive(g_net_gossip);
         if (recv_result < 0)
         {
-          fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
-          pittacus_gossip_destroy(g_net_gossip);
-          return 1;
+
         }
       }
     }
