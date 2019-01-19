@@ -412,14 +412,12 @@ int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...)
 
 int handle_send_incoming_block(pittacus_gossip_t *gossip, block_t *block)
 {
-  handle_send_packet(gossip, PKT_TYPE_INCOMING_BLOCK, block);
-  return 0;
+  return handle_send_packet(gossip, PKT_TYPE_INCOMING_BLOCK, block);
 }
 
 int handle_send_incoming_transaction(pittacus_gossip_t *gossip, transaction_t *transaction)
 {
-  handle_send_packet(gossip, PKT_TYPE_INCOMING_TRANSACTION, transaction);
-  return 0;
+  return handle_send_packet(gossip, PKT_TYPE_INCOMING_TRANSACTION, transaction);
 }
 
 int handle_broadcast_incoming_block(block_t *block)
