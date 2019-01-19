@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 
+#include "cryptoutil.h"
 #include "block.h"
 #include "transaction.h"
 

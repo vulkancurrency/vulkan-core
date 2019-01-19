@@ -30,6 +30,7 @@
 #include <sodium.h>
 
 #include "chainparams.h"
+#include "cryptoutil.h"
 #include "block.h"
 #include "vulkan.pb-c.h"
 
@@ -46,13 +47,13 @@ block_t *make_block(void)
   block->version = BLOCK_VERSION;
   block->nonce = 0;
 
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < HASH_SIZE; i++)
   {
     block->previous_hash[i] = 0x00;
     block->hash[i] = 0x00;
   }
 
-  memcpy(block->merkle_root, &genesis_block.merkle_root, 32);
+  memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
 
   block->bits = INITIAL_DIFFICULTY_BITS;
   block->timestamp = 0;
@@ -66,7 +67,7 @@ int hash_block(block_t *block)
   uint8_t header[BLOCK_HEADER_SIZE];
 
   get_block_header(header, block);
-  crypto_hash_sha256(block->hash, header, 32 + 1 + 1);
+  crypto_hash_sha256(block->hash, header, HASH_SIZE + 1 + 1);
 
   return 0;
 }
@@ -119,7 +120,7 @@ int valid_block(block_t *block)
       transaction_t *second_tx = block->transactions[second_tx_index];
 
       // TXs can not have duplicate transaction hash IDs
-      if ((first_tx_index != second_tx_index) && memcmp(block->transactions[first_tx_index], block->transactions[second_tx_index], 32))
+      if ((first_tx_index != second_tx_index) && memcmp(block->transactions[first_tx_index], block->transactions[second_tx_index], HASH_SIZE))
       {
         return false;
       }
@@ -131,7 +132,7 @@ int valid_block(block_t *block)
         for (int second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
-          if ((memcmp(txin_first->transaction, txin_second->transaction, 32) == 0) && (txin_first->txout_index == txin_second->txout_index))
+          if ((memcmp(txin_first->transaction, txin_second->transaction, HASH_SIZE) == 0) && (txin_first->txout_index == txin_second->txout_index))
           {
             return false;
           }
@@ -156,10 +157,10 @@ int valid_block(block_t *block)
 }
 
 int valid_merkle_root(block_t *block) {
-  uint8_t *merkle_root = malloc(sizeof(uint8_t) * 32);
+  uint8_t *merkle_root = malloc(sizeof(uint8_t) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
-  if (memcmp(merkle_root, block->merkle_root, 32) == 0)
+  if (memcmp(merkle_root, block->merkle_root, HASH_SIZE) == 0)
   {
     return 1;
   }
@@ -174,7 +175,7 @@ int valid_block_hash(block_t *block)
   uint32_t target = block->bits;
   uint32_t current_target = 0;
 
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < HASH_SIZE; i++)
   {
     uint8_t byte = block->hash[i];
     uint32_t n = 0;
@@ -211,14 +212,14 @@ int valid_block_hash(block_t *block)
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
-  uint8_t *hashes = malloc(sizeof(uint8_t) * 32 * block->transaction_count);
+  uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
   for (int i = 0; i < block->transaction_count; i++)
   {
-    compute_tx_id(&hashes[32 * i], block->transactions[i]);
+    compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
   }
 
   struct MerkleTree *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
-  memcpy(merkle_root, tree->root->hash, 32);
+  memcpy(merkle_root, tree->root->hash, HASH_SIZE);
 
   free_merkle_tree(tree);
   free(hashes);
@@ -243,10 +244,10 @@ int get_block_header(uint8_t *block_header, block_t *block)
   position += 4;
   memcpy(block_header + position, &block->timestamp, 4);
   position += 4;
-  memcpy(block_header + position, &block->previous_hash, 32);
-  position += 32;
-  memcpy(block_header + position, &block->merkle_root, 32);
-  position += 32;
+  memcpy(block_header + position, &block->previous_hash, HASH_SIZE);
+  position += HASH_SIZE;
+  memcpy(block_header + position, &block->merkle_root, HASH_SIZE);
+  position += HASH_SIZE;
 
   return 0;
 }
@@ -288,7 +289,7 @@ int compare_with_genesis_block(block_t *block)
   hash_block(block);
   hash_block(&genesis_block);
 
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < HASH_SIZE; i++)
   {
     if (block->hash[i] != genesis_block.hash[i])
     {
@@ -313,20 +314,20 @@ PBlock *block_to_proto(block_t *block)
   msg->version = block->version;
   msg->bits = block->bits;
 
-  msg->previous_hash.len = 32;
-  msg->previous_hash.data = malloc(sizeof(char) * 32);
-  memcpy(msg->previous_hash.data, block->previous_hash, 32);
+  msg->previous_hash.len = HASH_SIZE;
+  msg->previous_hash.data = malloc(sizeof(char) * HASH_SIZE);
+  memcpy(msg->previous_hash.data, block->previous_hash, HASH_SIZE);
 
-  msg->hash.len = 32;
-  msg->hash.data = malloc(sizeof(char) * 32);
-  memcpy(msg->hash.data, block->hash, 32);
+  msg->hash.len = HASH_SIZE;
+  msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+  memcpy(msg->hash.data, block->hash, HASH_SIZE);
 
   msg->timestamp = block->timestamp;
   msg->nonce = block->nonce;
 
-  msg->merkle_root.len = 32;
-  msg->merkle_root.data = malloc(sizeof(char) * 32);
-  memcpy(msg->merkle_root.data, block->merkle_root, 32);
+  msg->merkle_root.len = HASH_SIZE;
+  msg->merkle_root.data = malloc(sizeof(char) * HASH_SIZE);
+  memcpy(msg->merkle_root.data, block->merkle_root, HASH_SIZE);
 
   msg->n_transactions = block->transaction_count;
   msg->transactions = malloc(sizeof(PTransaction *) * msg->n_transactions);
@@ -359,9 +360,9 @@ block_t *block_from_proto(PBlock *proto_block)
   block->version = proto_block->version;
   block->bits = proto_block->bits;
 
-  memcpy(block->previous_hash, proto_block->previous_hash.data, 32);
-  memcpy(block->hash, proto_block->hash.data, 32);
-  memcpy(block->merkle_root, proto_block->merkle_root.data, 32);
+  memcpy(block->previous_hash, proto_block->previous_hash.data, HASH_SIZE);
+  memcpy(block->hash, proto_block->hash.data, HASH_SIZE);
+  memcpy(block->merkle_root, proto_block->merkle_root.data, HASH_SIZE);
 
   block->timestamp = proto_block->timestamp;
   block->nonce = proto_block->nonce;

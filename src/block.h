@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 #include "chainparams.h"
+#include "cryptoutil.h"
 #include "transaction.h"
 #include "vulkan.pb-c.h"
 
@@ -36,20 +37,20 @@ extern "C"
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (32 + 32 + 4 + 4 + 1 + 1)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 4 + 4 + 1 + 1)
 
 typedef struct Block
 {
   uint8_t version;
   uint8_t bits;
 
-  uint8_t previous_hash[32];
-  uint8_t hash[32];
+  uint8_t previous_hash[HASH_SIZE];
+  uint8_t hash[HASH_SIZE];
 
   uint32_t timestamp;
   uint32_t nonce;
 
-  uint8_t merkle_root[32];
+  uint8_t merkle_root[HASH_SIZE];
   uint32_t transaction_count;
   transaction_t **transactions;
 } block_t;

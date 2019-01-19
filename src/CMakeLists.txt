@@ -45,6 +45,7 @@ set(HEADER_FILES
   block.h
   chain.h
   chainparams.h
+  cryptoutil.h
   mempool.h
   merkle.h
   miner.h

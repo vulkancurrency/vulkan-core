@@ -28,12 +28,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "cryptoutil.h"
 #include "chain.h"
 #include "vulkan.pb-c.h"
 #include "transaction.h"
 #include "wallet.h"
 
-static uint8_t g_transaction_zero_hash[32] = {
+static uint8_t g_transaction_zero_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
@@ -55,7 +56,7 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
 {
   uint32_t header_size = get_tx_sign_header_size(tx) + TXIN_HEADER_SIZE;
   uint8_t header[header_size];
-  uint8_t hash[32];
+  uint8_t hash[HASH_SIZE];
 
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
@@ -68,8 +69,8 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
 
 int get_txin_header(uint8_t *header, input_transaction_t *txin)
 {
-  memcpy(header, &txin->transaction, 32);
-  memcpy(header + 32, &txin->txout_index, 4);
+  memcpy(header, &txin->transaction, HASH_SIZE);
+  memcpy(header + HASH_SIZE, &txin->txout_index, 4);
   return 0;
 }
 
@@ -175,7 +176,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 
 int is_generation_tx(transaction_t *tx)
 {
-  return (tx->txin_count == 1 && tx->txout_count == 1 && memcmp(tx->txins[0]->transaction, g_transaction_zero_hash, 32) == 0);
+  return (tx->txin_count == 1 && tx->txout_count == 1 && memcmp(tx->txins[0]->transaction, g_transaction_zero_hash, HASH_SIZE) == 0);
 }
 
 int compute_tx_id(uint8_t *header, transaction_t *tx)
@@ -207,9 +208,9 @@ PTransaction *transaction_to_proto(transaction_t *tx)
   PTransaction *msg = malloc(sizeof(PTransaction));
   ptransaction__init(msg);
 
-  msg->id.len = 32;
-  msg->id.data = malloc(sizeof(char) * 32);
-  memcpy(msg->id.data, tx->id, 32);
+  msg->id.len = HASH_SIZE;
+  msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+  memcpy(msg->id.data, tx->id, HASH_SIZE);
 
   msg->n_txins = tx->txin_count;
   msg->n_txouts = tx->txout_count;
@@ -224,9 +225,9 @@ PTransaction *transaction_to_proto(transaction_t *tx)
 
     msg->txins[i]->txout_index = tx->txins[i]->txout_index;
 
-    msg->txins[i]->transaction.len = 32;
-    msg->txins[i]->transaction.data = malloc(sizeof(uint8_t) * 32);
-    memcpy(msg->txins[i]->transaction.data, tx->txins[i]->transaction, 32);
+    msg->txins[i]->transaction.len = HASH_SIZE;
+    msg->txins[i]->transaction.data = malloc(sizeof(uint8_t) * HASH_SIZE);
+    memcpy(msg->txins[i]->transaction.data, tx->txins[i]->transaction, HASH_SIZE);
 
     msg->txins[i]->signature.len = crypto_sign_BYTES;
     msg->txins[i]->signature.data = malloc(crypto_sign_BYTES);
@@ -257,9 +258,9 @@ PUnspentTransaction *unspent_transaction_to_proto(transaction_t *tx)
   PUnspentTransaction *msg = malloc(sizeof(PTransaction));
   punspent_transaction__init(msg);
 
-  msg->id.len = 32;
-  msg->id.data = malloc(sizeof(char) * 32);
-  memcpy(msg->id.data, tx->id, 32);
+  msg->id.len = HASH_SIZE;
+  msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+  memcpy(msg->id.data, tx->id, HASH_SIZE);
 
   msg->coinbase = is_generation_tx(tx);
   msg->n_unspent_txouts = tx->txout_count;
@@ -323,7 +324,7 @@ input_transaction_t *txin_from_proto(PInputTransaction *proto_txin)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
 
-  memcpy(txin->transaction, proto_txin->transaction.data, 32);
+  memcpy(txin->transaction, proto_txin->transaction.data, HASH_SIZE);
   txin->txout_index = proto_txin->txout_index;
   memcpy(txin->signature, proto_txin->signature.data, crypto_sign_BYTES);
   memcpy(txin->public_key, proto_txin->public_key.data, crypto_sign_PUBLICKEYBYTES);
@@ -355,7 +356,7 @@ transaction_t *transaction_from_proto(PTransaction *proto_tx)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
 
-  memcpy(tx->id, proto_tx->id.data, 32);
+  memcpy(tx->id, proto_tx->id.data, HASH_SIZE);
   tx->txin_count = proto_tx->n_txins;
   tx->txout_count = proto_tx->n_txouts;
 

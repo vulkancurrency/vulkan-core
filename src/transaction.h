@@ -28,7 +28,10 @@
 #include <stdint.h>
 #include <sodium.h>
 
+#include "cryptoutil.h"
 #include "vulkan.pb-c.h"
+
+#include "wallet.h"
 
 /*
  * Transactions can contain multiple InputTXs and multiple OutputTXs.
@@ -47,22 +50,20 @@
  * - If you don't want to spend everything from an InputTX, you can create a new OutputTX to send back to yourself as leftover-change.
  */
 
-#include "wallet.h"
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define TXIN_HEADER_SIZE (32 + 4)
-#define TXOUT_HEADER_SIZE (32 + 4)
+#define TXIN_HEADER_SIZE (HASH_SIZE + 4)
+#define TXOUT_HEADER_SIZE (HASH_SIZE + 4)
 
-extern uint8_t zero_tx_hash[32];
+extern uint8_t zero_tx_hash[HASH_SIZE];
 
 typedef struct InputTransaction
 {
   // --- Header
-  uint8_t transaction[32]; // Previous tx hash/id
+  uint8_t transaction[HASH_SIZE]; // Previous tx hash/id
   uint32_t txout_index; // Referenced txout index in previous tx
   // ---
 
@@ -78,7 +79,7 @@ typedef struct OutputTransaction
 
 typedef struct Transaction
 {
-  uint8_t id[32];
+  uint8_t id[HASH_SIZE];
   uint8_t txin_count;
   uint8_t txout_count;
   input_transaction_t **txins;

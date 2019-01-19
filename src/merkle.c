@@ -24,7 +24,10 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <string.h>
+
 #include <sodium.h>
+
+#include "cryptoutil.h"
 
 #include "merkle.h"
 
@@ -69,7 +72,7 @@ int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_
     merkle_node_t *node = malloc(sizeof(merkle_node_t));
     node->left = NULL;
     node->right = NULL;
-    memcpy(node->hash, &hashes[i * 32], 32);
+    memcpy(node->hash, &hashes[i * HASH_SIZE], HASH_SIZE);
     nodes[i] = node;
   }
 
@@ -112,16 +115,16 @@ int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
  */
 merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
 {
-  uint8_t *combined_hash = malloc(sizeof(uint8_t) * 64);
-  uint8_t *node_hash = malloc(sizeof(uint8_t) * 32);
+  uint8_t *combined_hash = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
+  uint8_t *node_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
 
-  memcpy(combined_hash, left->hash, 32);
-  memcpy(combined_hash + 32, right->hash, 32);
+  memcpy(combined_hash, left->hash, HASH_SIZE);
+  memcpy(combined_hash + HASH_SIZE, right->hash, HASH_SIZE);
 
-  crypto_hash_sha256(node_hash, combined_hash, 64);
+  crypto_hash_sha256(node_hash, combined_hash, HASH_SIZE * 2);
 
   merkle_node_t *node = malloc(sizeof(merkle_node_t));
-  memcpy(node->hash, node_hash, 32);
+  memcpy(node->hash, node_hash, HASH_SIZE);
   node->left = left;
   node->right = right;
 

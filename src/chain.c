@@ -29,11 +29,13 @@
 
 #include <rocksdb/c.h>
 
-#include "vulkan.pb-c.h"
+#include "cryptoutil.h"
 #include "block.h"
+#include "vulkan.pb-c.h"
+
 #include "chain.h"
 
-static uint8_t g_chain_current_block_hash[32] = {
+static uint8_t g_chain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
@@ -116,7 +118,7 @@ int insert_block_into_blockchain(block_t *block)
   }
 
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
 
   uint8_t *buffer = NULL;
@@ -125,7 +127,7 @@ int insert_block_into_blockchain(block_t *block)
   block_to_serialized(&buffer, &buffer_len, block);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, 33, (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -205,12 +207,12 @@ int insert_block_into_blockchain(block_t *block)
 block_t *get_block_from_blockchain(uint8_t *block_hash)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block_hash);
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, 33, &read_len, &err);
+  uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || serialized_block == NULL)
   {
@@ -232,11 +234,11 @@ block_t *get_block_from_blockchain(uint8_t *block_hash)
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_tx_key(key, tx->id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, 33, (char*)block_key, 33, &err);
+  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -252,7 +254,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 int insert_unspent_tx_into_index(transaction_t *tx)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, tx->id);
 
   uint8_t *buffer = NULL;
@@ -260,7 +262,7 @@ int insert_unspent_tx_into_index(transaction_t *tx)
   unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, 33, (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -278,7 +280,7 @@ int insert_unspent_tx_into_index(transaction_t *tx)
 int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, tx->id.data);
 
   uint8_t *buffer = NULL;
@@ -286,7 +288,7 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
   proto_unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, 33, (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -304,12 +306,12 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
 PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, tx_id);
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, 33, &read_len, &err);
+  uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || serialized_tx == NULL)
   {
@@ -331,12 +333,12 @@ PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
 uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_tx_key(key, tx_id);
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *block_key = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, 33, &read_len, &err);
+  uint8_t *block_key = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || block_key == NULL)
   {
@@ -350,8 +352,8 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t) * 32);
-  memcpy(block_hash, block_key + 1, 32);
+  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  memcpy(block_hash, block_key + 1, HASH_SIZE);
 
   rocksdb_free(block_key);
 
@@ -402,11 +404,11 @@ uint32_t get_block_height()
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block_hash);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, 33, &err);
+  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -424,11 +426,11 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 int delete_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, 33, &err);
+  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -445,11 +447,11 @@ int delete_tx_from_index(uint8_t *tx_id)
 int delete_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[33];
+  uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, 33, &err);
+  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -471,28 +473,28 @@ uint8_t *get_current_block_hash()
 
 int set_current_block_hash(uint8_t *hash)
 {
-  memcpy(g_chain_current_block_hash, hash, 32);
+  memcpy(g_chain_current_block_hash, hash, HASH_SIZE);
   return 0;
 }
 
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
   buffer[0] = 't';
-  memcpy(buffer + 1, tx_id, 32);
+  memcpy(buffer + 1, tx_id, HASH_SIZE);
   return 0;
 }
 
 int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
   buffer[0] = 'c';
-  memcpy(buffer + 1, tx_id, 32);
+  memcpy(buffer + 1, tx_id, HASH_SIZE);
   return 0;
 }
 
 int get_block_key(uint8_t *buffer, uint8_t *block_hash)
 {
   buffer[0] = 'b';
-  memcpy(buffer + 1, block_hash, 32);
+  memcpy(buffer + 1, block_hash, HASH_SIZE);
   return 0;
 }
 
