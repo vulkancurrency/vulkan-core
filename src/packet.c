@@ -74,15 +74,20 @@ int free_proto_packet(PPacket *proto_packet)
   return 0;
 }
 
-int packet_to_serialized(uint8_t *buffer, size_t buffer_len, packet_t *packet)
+int packet_to_serialized(uint8_t **buffer, size_t *buffer_len, packet_t *packet)
 {
   PPacket *msg = packet_to_proto(packet);
 
-  buffer_len = ppacket__get_packed_size(msg);
-  buffer = malloc(buffer_len);
+  size_t buff_len = ppacket__get_packed_size(msg);
+  uint8_t *buff = malloc(buff_len);
 
-  ppacket__pack(msg, buffer);
+  fprintf(stderr, "Got buffer_len: %zu\n", buff_len);
+
+  ppacket__pack(msg, buff);
   free_proto_packet(msg);
+
+  *buffer_len = buff_len;
+  *buffer = buff;
 
   return 0;
 }
@@ -94,12 +99,13 @@ packet_t *packet_from_proto(PPacket *proto_packet)
   packet->id = proto_packet->id;
   packet->message_size = proto_packet->message_size;
 
+  packet->message = malloc(proto_packet->message_size);
   memcpy(packet->message, proto_packet->message.data, proto_packet->message_size);
 
   return packet;
 }
 
-packet_t *packet_from_serialized(uint8_t *buffer, uint32_t buffer_len)
+packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len)
 {
   PPacket *proto_packet = ppacket__unpack(NULL, buffer_len, buffer);
   packet_t *packet = packet_from_proto(proto_packet);
@@ -369,7 +375,7 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
 
 int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  packet_t *packet = packet_from_serialized((uint8_t*)data, (uint32_t)data_size);
+  packet_t *packet = packet_from_serialized(data, data_size);
   void *message = deserialize_packet(packet);
   if (!message)
   {
@@ -381,6 +387,7 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t
     return 1;
   }
 
+  free(packet);
   return 0;
 }
 
@@ -400,7 +407,7 @@ int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...)
   uint8_t *buffer = NULL;
   size_t buffer_len = 0;
 
-  packet_to_serialized(buffer, buffer_len, packet);
+  packet_to_serialized(&buffer, &buffer_len, packet);
   net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
   return 0;
 }

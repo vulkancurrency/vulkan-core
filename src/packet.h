@@ -108,9 +108,9 @@ int free_packet(packet_t *packet);
 
 PPacket *packet_to_proto(packet_t *packet);
 int free_proto_packet(PPacket *proto_packet);
-int packet_to_serialized(uint8_t *buffer, size_t buffer_len, packet_t *packet);
+int packet_to_serialized(uint8_t **buffer, size_t *buffer_len, packet_t *packet);
 packet_t *packet_from_proto(PPacket *proto_packet);
-packet_t *packet_from_serialized(uint8_t *buffer, uint32_t buffer_len);
+packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len);
 
 packet_t* serialize_packet(uint32_t packet_id, va_list args);
 void* deserialize_packet(packet_t *packet);
