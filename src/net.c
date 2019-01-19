@@ -36,7 +36,7 @@
 #include <config.h>
 
 #include "chainparams.h"
-#include "packet.h"
+#include "protocol.h"
 
 #include "net.h"
 

@@ -29,7 +29,7 @@
 
 #include "block.h"
 #include "chain.h"
-#include "packet.h"
+#include "protocol.h"
 #include "wallet.h"
 
 #include "miner.h"

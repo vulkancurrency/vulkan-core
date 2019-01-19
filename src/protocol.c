@@ -33,7 +33,7 @@
 #include "net.h"
 #include "vulkan.pb-c.h"
 
-#include "packet.h"
+#include "protocol.h"
 
 packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message)
 {

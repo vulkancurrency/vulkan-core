@@ -33,7 +33,7 @@ set(SOURCE_FILES
   merkle.c
   miner.c
   net.c
-  packet.c
+  protocol.c
   queue.c
   transaction.c
   util.c
@@ -51,7 +51,7 @@ set(HEADER_FILES
   merkle.h
   miner.h
   net.h
-  packet.h
+  protocol.h
   queue.h
   transaction.h
   util.h
