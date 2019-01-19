@@ -161,6 +161,22 @@ PWallet *get_wallet(void)
   return proto_wallet;
 }
 
+void print_wallet(PWallet *wallet)
+{
+  int public_address_len = (ADDRESS_SIZE * 2) + 1;
+  char public_address[public_address_len];
+
+  for (int i = 0; i < ADDRESS_SIZE; i++)
+  {
+    sprintf(&public_address[i*2], "%02x", (int) wallet->address.data[i]);
+  }
+
+  uint64_t balance = get_balance_for_address(wallet->address.data) / COIN;
+
+  printf("Public Address: %s\n", public_address);
+  printf("Balance: %llu\n", balance);
+}
+
 int public_key_to_address(uint8_t *address, uint8_t *pk)
 {
   uint8_t address_id = MAINNET_ADDRESS_ID;
@@ -189,20 +205,4 @@ int valid_address(uint8_t *address)
       return 0;
     }
   }
-}
-
-void print_wallet(const PWallet *wallet)
-{
-  int public_address_len = (ADDRESS_SIZE * 2) + 1;
-  char public_address[public_address_len];
-
-  for (int i = 0; i < ADDRESS_SIZE; i++)
-  {
-    sprintf(&public_address[i*2], "%02x", (int) wallet->address.data[i]);
-  }
-
-  uint64_t balance = get_balance_for_address(wallet->address.data) / COIN;
-
-  printf("Public Address: %s\n", public_address);
-  printf("Balance: %llu\n", balance);
 }
