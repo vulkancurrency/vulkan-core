@@ -490,9 +490,9 @@ int get_block_key(uint8_t *buffer, uint8_t *block_hash)
   return 0;
 }
 
-uint32_t get_balance_for_address(uint8_t *address)
+uint64_t get_balance_for_address(uint8_t *address)
 {
-  uint32_t balance = 0;
+  uint64_t balance = 0;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_chain_db, roptions);
@@ -500,18 +500,20 @@ uint32_t get_balance_for_address(uint8_t *address)
   for (rocksdb_iter_seek(iterator, "c", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
     size_t key_length;
-    char *key = (char *) rocksdb_iter_key(iterator, &key_length);
+    char *key = (char*)rocksdb_iter_key(iterator, &key_length);
 
     if (key_length > 0 && key[0] == 'c')
     {
       size_t value_length;
-      uint8_t *value = (uint8_t *) rocksdb_iter_value(iterator, &value_length);
-
+      uint8_t *value = (uint8_t*)rocksdb_iter_value(iterator, &value_length);
       PUnspentTransaction *tx = unspent_transaction_from_serialized(value, value_length);
-
       for (int i = 0; i < tx->n_unspent_txouts; i++)
       {
         PUnspentOutputTransaction *unspent_txout = tx->unspent_txouts[i];
+        if (memcmp(unspent_txout->address.data, address, unspent_txout->address.len) != 0)
+        {
+          continue;
+        }
         if (unspent_txout->spent == 0)
         {
           balance += unspent_txout->amount;
@@ -522,6 +524,5 @@ uint32_t get_balance_for_address(uint8_t *address)
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
-
   return balance;
 }

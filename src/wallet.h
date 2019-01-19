@@ -38,13 +38,15 @@ extern "C"
 
 #define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
-rocksdb_t *open_wallet(char *err);
-int new_wallet(void);
+rocksdb_t *open_wallet(const char *wallet_filename, char *err);
+int new_wallet(const char *wallet_filename);
 PWallet *get_wallet(void);
 
 int public_key_to_address(unsigned char *address, unsigned char *pk);
 uint8_t get_address_id(uint8_t *address);
 int valid_address(uint8_t *address);
+
+void print_wallet(const PWallet *wallet);
 
 #ifdef __cplusplus
 }

@@ -36,11 +36,12 @@
 #include "net.h"
 #include "chain.h"
 #include "miner.h"
-#include "client.h"
 
 #include "argparse.h"
 
 static const char *blockchain_data_dir = "blockchain";
+static const char *wallet_filename = "wallet";
+
 static int enable_seed_mode = 0;
 static int enable_miner = 0;
 
@@ -101,7 +102,9 @@ int parse_commandline_args(int argc, char **argv)
         blockchain_data_dir = (const char*)argv[i];
         break;
       case CMD_ARG_NEW_WALLET:
-        new_wallet();
+        i++;
+        wallet_filename = (const char*)argv[i];
+        new_wallet(wallet_filename);
         break;
       case CMD_ARG_MINE:
         enable_miner = 1;

@@ -35,7 +35,7 @@ message PInputTransaction
 
 message POutputTransaction
 {
-  int32 amount = 1;
+  int64 amount = 1;
   bytes address = 2;
 }
 
@@ -48,7 +48,7 @@ message PTransaction
 
 message PUnspentOutputTransaction
 {
-  int32 amount = 1;
+  int64 amount = 1;
   bytes address = 2;
   bool spent = 3;
 }
@@ -81,7 +81,7 @@ message PWallet
   bytes secret_key = 1;
   bytes public_key = 2;
   bytes address = 3;
-  int32 balance = 4;
+  int64 balance = 4;
 }
 
 message PEmpty

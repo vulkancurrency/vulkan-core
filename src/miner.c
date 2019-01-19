@@ -83,7 +83,7 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
 
   memset(txin->transaction, 0, 32);
   txin->txout_index = get_block_height();
-  txout->amount = 50 * COIN;
+  txout->amount = (uint64_t)50 * COIN;
 
   PWallet *wallet = get_wallet();
   memcpy(txout->address, wallet->address.data, ADDRESS_SIZE);

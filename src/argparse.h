@@ -50,7 +50,7 @@ static argument_map_t arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information.", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information.", 0},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
-  {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 0},
+  {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 1},
   {"mine", CMD_ARG_MINE, "Start mining for new blocks.", 0},
   {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", 0}
 };

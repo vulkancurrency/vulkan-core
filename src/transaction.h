@@ -72,7 +72,7 @@ typedef struct InputTransaction
 
 typedef struct OutputTransaction
 {
-  uint32_t amount;
+  uint64_t amount;
   uint8_t address[ADDRESS_SIZE];
 } output_transaction_t;
 

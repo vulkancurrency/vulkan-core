@@ -27,7 +27,6 @@ set(SOURCE_FILES
   argparse.c
   block.c
   chain.c
-  client.c
   main.c
   mempool.c
   merkle.c
@@ -46,7 +45,6 @@ set(HEADER_FILES
   block.h
   chain.h
   chainparams.h
-  client.h
   mempool.h
   merkle.h
   miner.h

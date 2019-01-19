@@ -27,30 +27,37 @@
 #include <string.h>
 #include <sodium.h>
 #include <stdlib.h>
+
 #include <rocksdb/c.h>
 
-#include "wallet.h"
 #include "chain.h"
+#include "chainparams.h"
+
+#include "wallet.h"
+
+static const char *g_wallet_filename = NULL;
 
 /*
  * open_wallet()
  * Opens a LevelDB instance for the wallet
  */
-rocksdb_t *open_wallet(char *err)
+rocksdb_t *open_wallet(const char *wallet_filename, char *err)
 {
+  g_wallet_filename = wallet_filename;
+
   rocksdb_t *db;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
 
-  return rocksdb_open(options, "wallet", &err);
+  return rocksdb_open(options, wallet_filename, &err);
 }
 
-int new_wallet(void)
+int new_wallet(const char *wallet_filename)
 {
   // Open DB
 
   char *err = NULL;
-  rocksdb_t *db = open_wallet(err);
+  rocksdb_t *db = open_wallet(wallet_filename, err);
 
   if (err != NULL)
   {
@@ -129,14 +136,13 @@ int new_wallet(void)
 
   // Close DB
   rocksdb_close(db);
-
   return 0;
 }
 
 PWallet *get_wallet(void)
 {
   char *err = NULL;
-  rocksdb_t *db = open_wallet(err);
+  rocksdb_t *db = open_wallet(g_wallet_filename, err);
 
   if (err != NULL)
   {
@@ -147,8 +153,9 @@ PWallet *get_wallet(void)
   size_t buffer_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   uint8_t *buffer = (uint8_t *) rocksdb_get(db, roptions, "0", 1, &buffer_len, &err);
-
   PWallet *proto_wallet = pwallet__unpack(NULL, buffer_len, buffer);
+
+  print_wallet((const PWallet*)proto_wallet);
 
   rocksdb_free(roptions);
   rocksdb_close(db);
@@ -184,4 +191,20 @@ int valid_address(uint8_t *address)
       return 0;
     }
   }
+}
+
+void print_wallet(const PWallet *wallet)
+{
+  int public_address_len = (ADDRESS_SIZE * 2) + 1;
+  char public_address[public_address_len];
+
+  for (int i = 0; i < ADDRESS_SIZE; i++)
+  {
+    sprintf(&public_address[i*2], "%02x", (int) wallet->address.data[i]);
+  }
+
+  uint64_t balance = get_balance_for_address(wallet->address.data) / COIN;
+
+  printf("Public Address: %s\n", public_address);
+  printf("Balance: %llu\n", balance);
 }

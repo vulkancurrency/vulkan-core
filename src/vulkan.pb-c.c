@@ -855,7 +855,7 @@ static const ProtobufCFieldDescriptor poutput_transaction__field_descriptors[2] 
     "amount",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_INT64,
     0,   /* quantifier_offset */
     offsetof(POutputTransaction, amount),
     NULL,
@@ -970,7 +970,7 @@ static const ProtobufCFieldDescriptor punspent_output_transaction__field_descrip
     "amount",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_INT64,
     0,   /* quantifier_offset */
     offsetof(PUnspentOutputTransaction, amount),
     NULL,
@@ -1264,7 +1264,7 @@ static const ProtobufCFieldDescriptor pwallet__field_descriptors[4] =
     "balance",
     4,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_INT64,
     0,   /* quantifier_offset */
     offsetof(PWallet, balance),
     NULL,

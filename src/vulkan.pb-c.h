@@ -55,7 +55,7 @@ struct  _PInputTransaction
 struct  _POutputTransaction
 {
   ProtobufCMessage base;
-  int32_t amount;
+  int64_t amount;
   ProtobufCBinaryData address;
 };
 #define POUTPUT_TRANSACTION__INIT \
@@ -80,7 +80,7 @@ struct  _PTransaction
 struct  _PUnspentOutputTransaction
 {
   ProtobufCMessage base;
-  int32_t amount;
+  int64_t amount;
   ProtobufCBinaryData address;
   protobuf_c_boolean spent;
 };
@@ -126,7 +126,7 @@ struct  _PWallet
   ProtobufCBinaryData secret_key;
   ProtobufCBinaryData public_key;
   ProtobufCBinaryData address;
-  int32_t balance;
+  int64_t balance;
 };
 #define PWALLET__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&pwallet__descriptor) \
