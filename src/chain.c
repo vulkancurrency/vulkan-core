@@ -110,6 +110,13 @@ int init_blockchain(const char *blockchain_dir)
  */
 int insert_block_into_blockchain(block_t *block)
 {
+  // check for orphan blocks, this occurs when a valid block with valid
+  // transactions have been mined by a miner before another miner...
+  if (get_block_from_blockchain(block->hash) != NULL)
+  {
+    return 1;
+  }
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
@@ -209,8 +216,6 @@ block_t *get_block_from_blockchain(uint8_t *block_hash)
 
   if (err != NULL || serialized_block == NULL)
   {
-    fprintf(stderr, "Could not retrieve block from blockchain: %s\n", err);
-
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     return NULL;
