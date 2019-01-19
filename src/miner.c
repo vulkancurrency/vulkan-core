@@ -56,7 +56,7 @@ int start_mining(void)
     print_block(block);
 
     set_current_block_hash(block->hash);
-    handle_broadcast_incoming_block(block);
+    handle_broadcast_packet(PKT_TYPE_INCOMING_BLOCK, block);
 
     free(block);
   }

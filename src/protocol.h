@@ -117,13 +117,9 @@ void* deserialize_packet(packet_t *packet);
 
 int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object);
 int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+
 int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...);
-
-int handle_send_incoming_block(pittacus_gossip_t *gossip, block_t *block);
-int handle_send_incoming_transaction(pittacus_gossip_t *gossip, transaction_t *transaction);
-
-int handle_broadcast_incoming_block(block_t *block);
-int handle_broadcast_incoming_transaction(transaction_t *transaction);
+int handle_broadcast_packet(uint32_t packet_id, ...);
 
 #ifdef __cplusplus
 }

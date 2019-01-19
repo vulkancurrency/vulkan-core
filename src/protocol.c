@@ -411,22 +411,15 @@ int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...)
   return 0;
 }
 
-int handle_send_incoming_block(pittacus_gossip_t *gossip, block_t *block)
+int handle_broadcast_packet(uint32_t packet_id, ...)
 {
-  return handle_send_packet(gossip, PKT_TYPE_INCOMING_BLOCK, block);
-}
+  va_list args;
+  va_start(args, packet_id);
+  if (handle_send_packet(net_get_gossip(), packet_id, args))
+  {
+    return 1;
+  }
 
-int handle_send_incoming_transaction(pittacus_gossip_t *gossip, transaction_t *transaction)
-{
-  return handle_send_packet(gossip, PKT_TYPE_INCOMING_TRANSACTION, transaction);
-}
-
-int handle_broadcast_incoming_block(block_t *block)
-{
-  return handle_send_incoming_block(net_get_gossip(), block);
-}
-
-int handle_broadcast_incoming_transaction(transaction_t *transaction)
-{
-  return handle_send_incoming_transaction(net_get_gossip(), transaction);
+  va_end(args);
+  return 0;
 }
