@@ -155,8 +155,6 @@ PWallet *get_wallet(void)
   uint8_t *buffer = (uint8_t *) rocksdb_get(db, roptions, "0", 1, &buffer_len, &err);
   PWallet *proto_wallet = pwallet__unpack(NULL, buffer_len, buffer);
 
-  print_wallet((const PWallet*)proto_wallet);
-
   rocksdb_free(roptions);
   rocksdb_close(db);
 
