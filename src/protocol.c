@@ -31,6 +31,7 @@
 
 #include "chain.h"
 #include "net.h"
+#include "mempool.h"
 #include "vulkan.pb-c.h"
 
 #include "protocol.h"
