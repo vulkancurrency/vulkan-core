@@ -294,7 +294,6 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
   return 0;
 }
 
-
 PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;

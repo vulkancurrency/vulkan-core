@@ -353,7 +353,7 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
         incoming_transaction_t *message = (incoming_transaction_t*)message_object;
-        insert_tx_into_index(message->transaction->id, message->transaction);
+        push_tx_to_mempool(message->transaction);
         free(message);
       }
       break;
