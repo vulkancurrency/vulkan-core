@@ -29,6 +29,7 @@
 
 #include <gossip.h>
 
+#include "cryptoutil.h"
 #include "chain.h"
 #include "net.h"
 #include "mempool.h"
@@ -256,9 +257,9 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
 
         msg->height = height;
 
-        msg->hash.len = 32;
-        msg->hash.data = malloc(sizeof(char) * 32);
-        memcpy(msg->hash.data, hash, 32);
+        msg->hash.len = HASH_SIZE;
+        msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+        memcpy(msg->hash.data, hash, HASH_SIZE);
 
         buffer_len = mget_block_request__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -298,13 +299,13 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         MGetTransactionRequest *msg = malloc(sizeof(MGetBlockRequest));
         mget_transaction_request__init(msg);
 
-        msg->id.len = 32;
-        msg->id.data = malloc(sizeof(char) * 32);
-        memcpy(msg->id.data, id, 32);
+        msg->id.len = HASH_SIZE;
+        msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+        memcpy(msg->id.data, id, HASH_SIZE);
 
-        msg->input_hash.len = 32;
-        msg->input_hash.data = malloc(sizeof(char) * 32);
-        memcpy(msg->input_hash.data, input_hash, 32);
+        msg->input_hash.len = HASH_SIZE;
+        msg->input_hash.data = malloc(sizeof(char) * HASH_SIZE);
+        memcpy(msg->input_hash.data, input_hash, HASH_SIZE);
 
         buffer_len = mget_transaction_request__get_packed_size(msg);
         buffer = malloc(buffer_len);
