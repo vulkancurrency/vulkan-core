@@ -56,6 +56,17 @@ int push_tx_to_mempool(transaction_t *transaction)
   return 0;
 }
 
+int remove_tx_from_mempool(transaction_t *transaction)
+{
+  if (!g_mempool_initialized)
+  {
+    return 1;
+  }
+
+  queue_remove_object(g_mempool, transaction);
+  return 0;
+}
+
 transaction_t *pop_tx_from_mempool(void)
 {
   if (!g_mempool_initialized)

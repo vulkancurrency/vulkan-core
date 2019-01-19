@@ -38,7 +38,9 @@ int start_mempool(void);
 int stop_mempool(void);
 
 int push_tx_to_mempool(transaction_t *transaction);
+int remove_tx_from_mempool(transaction_t *transaction);
 transaction_t *pop_tx_from_mempool(void);
+
 int get_number_of_tx_from_mempool(void);
 
 #ifdef __cplusplus
