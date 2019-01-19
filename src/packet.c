@@ -81,8 +81,6 @@ int packet_to_serialized(uint8_t **buffer, size_t *buffer_len, packet_t *packet)
   size_t buff_len = ppacket__get_packed_size(msg);
   uint8_t *buff = malloc(buff_len);
 
-  fprintf(stderr, "Got buffer_len: %zu\n", buff_len);
-
   ppacket__pack(msg, buff);
   free_proto_packet(msg);
 
