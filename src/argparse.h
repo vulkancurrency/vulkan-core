@@ -61,4 +61,3 @@ static argument_map_t arguments_map[] = {
 
 argument_t argparse_get_argument_from_str(const char *arg);
 argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type);
-int argparse_parse_args(int argc, char **argv);
