@@ -110,13 +110,6 @@ int init_blockchain(const char *blockchain_dir)
  */
 int insert_block_into_blockchain(block_t *block)
 {
-  // check to see if the block has been orphaned
-  if (get_block_from_blockchain(block->hash) != NULL)
-  {
-    fprintf(stderr, "Failed to add orphaned block to main chain!\n");
-    return 1;
-  }
-
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
