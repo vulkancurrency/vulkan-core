@@ -118,7 +118,7 @@ void* deserialize_packet(packet_t *packet);
 int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object);
 int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
 
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...);
+int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, va_list args);
 int handle_broadcast_packet(uint32_t packet_id, ...);
 
 #ifdef __cplusplus

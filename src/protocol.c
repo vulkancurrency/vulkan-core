@@ -390,18 +390,13 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t
   return 0;
 }
 
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, ...)
+int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, va_list args)
 {
-  va_list args;
-  va_start(args, packet_id);
-
   packet_t *packet = serialize_packet(packet_id, args);
   if (!packet)
   {
     return 1;
   }
-
-  va_end(args);
 
   uint8_t *buffer = NULL;
   size_t buffer_len = 0;
