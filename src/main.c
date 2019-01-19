@@ -23,8 +23,8 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <signal.h>
 #include <stdio.h>
+#include <signal.h>
 #include <string.h>
 
 #include <sodium.h>
@@ -100,6 +100,10 @@ int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
         blockchain_data_dir = (const char*)argv[i];
+        break;
+      case CMD_ARG_WALLET_FILENAME:
+        i++;
+        wallet_filename = (const char*)argv[i];
         break;
       case CMD_ARG_NEW_WALLET:
         i++;
