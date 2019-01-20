@@ -67,7 +67,7 @@ int open_blockchain(const char *blockchain_dir)
     return 1;
   }
 
-  block_t *test_block = get_block_from_blockchain(genesis_block.hash);
+  block_t *test_block = get_block_from_hash(genesis_block.hash);
   if (test_block == NULL)
   {
     insert_block_into_blockchain(&genesis_block);
@@ -112,7 +112,7 @@ int insert_block_into_blockchain(block_t *block)
 {
   // check for orphan blocks, this occurs when a valid block with valid
   // transactions have been mined by a miner before another miner...
-  if (get_block_from_blockchain(block->hash) != NULL)
+  if (get_block_from_hash(block->hash) != NULL)
   {
     return 1;
   }
@@ -204,7 +204,7 @@ int insert_block_into_blockchain(block_t *block)
   return 1;
 }
 
-block_t *get_block_from_blockchain(uint8_t *block_hash)
+block_t *get_block_from_hash(uint8_t *block_hash)
 {
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
@@ -227,6 +227,43 @@ block_t *get_block_from_blockchain(uint8_t *block_hash)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
   return block;
+}
+
+block_t *get_block_from_height(uint32_t height)
+{
+  block_t *block = get_block_from_hash(get_current_block_hash());
+  for (int i = get_block_height(); i > 0; i--)
+  {
+    block = get_block_from_hash(block->previous_hash);
+    if (i == height)
+    {
+      return block;
+    }
+  }
+  return NULL;
+}
+
+int32_t get_block_height_from_hash(uint8_t *block_hash)
+{
+  for (int i = 0; i <= get_block_height(); i++)
+  {
+    block_t *block = get_block_from_height(i);
+    if (memcmp(block->hash, block_hash, HASH_SIZE) != 0)
+    {
+      return i;
+    }
+  }
+  return -1;
+}
+
+uint8_t *get_block_hash_from_height(uint32_t height)
+{
+  block_t *block = get_block_from_height(height);
+  if (!block)
+  {
+    return NULL;
+  }
+  return block->hash;
 }
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
@@ -366,7 +403,7 @@ block_t *get_block_from_tx_id(uint8_t *tx_id)
     return NULL;
   }
 
-  return get_block_from_blockchain(block_hash);
+  return get_block_from_hash(block_hash);
 }
 
 /*

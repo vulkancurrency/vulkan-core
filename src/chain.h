@@ -42,7 +42,11 @@ int close_blockchain(void);
 
 uint32_t get_block_height();
 int insert_block_into_blockchain(block_t *block);
-block_t *get_block_from_blockchain(uint8_t *block_hash);
+
+block_t *get_block_from_hash(uint8_t *block_hash);
+block_t *get_block_from_height(uint32_t height);
+int32_t get_block_height_from_hash(uint8_t *block_hash);
+uint8_t *get_block_hash_from_height(uint32_t height);
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx);
 int insert_unspent_tx_into_index(transaction_t *tx);

@@ -59,7 +59,7 @@ TEST can_insert_block_into_blockchain(void) {
   block->transaction_count = 0;
 
   insert_block_into_blockchain(block);
-  block_t *block_from_db = get_block_from_blockchain(block->hash);
+  block_t *block_from_db = get_block_by_hash(block->hash);
 
   ASSERT_MEM_EQ(block->hash, block_hash, 32);
   ASSERT_EQ(block->nonce, 123456);
@@ -129,12 +129,12 @@ TEST can_delete_block_from_blockchain(void) {
   memcpy(block->hash, block_hash, 32);
 
   insert_block_into_blockchain(block);
-  block_t *block_from_db = get_block_from_blockchain(block_hash);
+  block_t *block_from_db = get_block_by_hash(block_hash);
 
   ASSERT(block_from_db != NULL);
 
   delete_block_from_blockchain(block_hash);
-  block_t *deleted_block = get_block_from_blockchain(block_hash);
+  block_t *deleted_block = get_block_by_hash(block_hash);
 
   ASSERT(deleted_block == NULL);
 
