@@ -204,6 +204,7 @@ int insert_block_into_blockchain(block_t *block)
 
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+
   return 1;
 }
 
@@ -290,6 +291,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
       return i;
     }
   }
+
   return -1;
 }
 
@@ -300,6 +302,7 @@ uint8_t *get_block_hash_from_height(uint32_t height)
   {
     return NULL;
   }
+
   return block->hash;
 }
 
@@ -569,6 +572,7 @@ int set_current_block(block_t *block)
   {
     return 1;
   }
+
   set_current_block_hash(block->hash);
   return 0;
 }
@@ -617,6 +621,7 @@ uint64_t get_balance_for_address(uint8_t *address)
         {
           continue;
         }
+
         if (unspent_txout->spent == 0)
         {
           balance += unspent_txout->amount;
@@ -627,5 +632,6 @@ uint64_t get_balance_for_address(uint8_t *address)
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+
   return balance;
 }
