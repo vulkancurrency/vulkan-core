@@ -26,7 +26,7 @@
 set(SOURCE_FILES
   argparse.c
   block.c
-  chain.c
+  blockchain.c
   main.c
   mempool.c
   merkle.c
@@ -44,7 +44,7 @@ set(SOURCE_FILES
 set(HEADER_FILES
   argparse.h
   block.h
-  chain.h
+  blockchain.h
   chainparams.h
   cryptoutil.h
   mempool.h

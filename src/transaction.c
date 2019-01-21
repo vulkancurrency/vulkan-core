@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #include "cryptoutil.h"
-#include "chain.h"
+#include "blockchain.h"
 #include "vulkan.pb-c.h"
 #include "transaction.h"
 #include "wallet.h"

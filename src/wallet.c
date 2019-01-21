@@ -30,7 +30,7 @@
 
 #include <rocksdb/c.h>
 
-#include "chain.h"
+#include "blockchain.h"
 #include "chainparams.h"
 
 #include "wallet.h"

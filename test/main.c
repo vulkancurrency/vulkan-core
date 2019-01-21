@@ -29,13 +29,13 @@
 
 #include "deps/greatest.h"
 
-#include "../src/chain.h"
+#include "../src/blockchain.h"
 
 SUITE_EXTERN(transaction_suite);
 SUITE_EXTERN(block_suite);
 SUITE_EXTERN(mempool_suite);
 SUITE_EXTERN(merkle_suite);
-SUITE_EXTERN(chain_suite);
+SUITE_EXTERN(blockchain_suite);
 
 GREATEST_MAIN_DEFS();
 
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   RUN_SUITE(block_suite);
   RUN_SUITE(mempool_suite);
   RUN_SUITE(merkle_suite);
-  RUN_SUITE(chain_suite);
+  RUN_SUITE(blockchain_suite);
 
   GREATEST_MAIN_END();
 

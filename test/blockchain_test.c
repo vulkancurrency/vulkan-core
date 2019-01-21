@@ -26,9 +26,9 @@
 #include "deps/greatest.h"
 
 #include "../src/block.h"
-#include "../src/chain.h"
+#include "../src/blockchain.h"
 
-SUITE(chain_suite);
+SUITE(blockchain_suite);
 
 static uint8_t block_hash[32] = {
   0x01, 0x02, 0x03, 0x04,
@@ -423,7 +423,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void) {
   }
 }
 
-GREATEST_SUITE(chain_suite) {
+GREATEST_SUITE(blockchain_suite) {
   RUN_TEST(can_insert_block_into_blockchain);
   RUN_TEST(inserting_block_into_blockchain_also_inserts_tx);
   RUN_TEST(can_get_block_from_tx_id);

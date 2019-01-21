@@ -28,7 +28,7 @@
 #include <time.h>
 
 #include "block.h"
-#include "chain.h"
+#include "blockchain.h"
 #include "protocol.h"
 #include "wallet.h"
 

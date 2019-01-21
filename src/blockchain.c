@@ -33,9 +33,9 @@
 #include "block.h"
 #include "vulkan.pb-c.h"
 
-#include "chain.h"
+#include "blockchain.h"
 
-static uint8_t g_chain_current_block_hash[HASH_SIZE] = {
+static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
@@ -46,12 +46,12 @@ static uint8_t g_chain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00
 };
 
-static int g_chain_is_open = 0;
-static rocksdb_t *g_chain_db = NULL;
+static int g_blockchain_is_open = 0;
+static rocksdb_t *g_blockchain_db = NULL;
 
 int open_blockchain(const char *blockchain_dir)
 {
-  if (g_chain_is_open)
+  if (g_blockchain_is_open)
   {
     return 0;
   }
@@ -59,7 +59,7 @@ int open_blockchain(const char *blockchain_dir)
   char *err = NULL;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
-  g_chain_db = rocksdb_open(options, blockchain_dir, &err);
+  g_blockchain_db = rocksdb_open(options, blockchain_dir, &err);
 
   if (err != NULL)
   {
@@ -79,7 +79,7 @@ int open_blockchain(const char *blockchain_dir)
     free_block(test_block);
   }
 
-  g_chain_is_open = 1;
+  g_blockchain_is_open = 1;
 
   rocksdb_free(err);
   rocksdb_free(options);
@@ -88,10 +88,10 @@ int open_blockchain(const char *blockchain_dir)
 
 int close_blockchain(void)
 {
-  if (g_chain_is_open)
+  if (g_blockchain_is_open)
   {
-    rocksdb_close(g_chain_db);
-    g_chain_is_open = 0;
+    rocksdb_close(g_blockchain_db);
+    g_blockchain_is_open = 0;
     return 0;
   }
   else
@@ -127,7 +127,7 @@ int insert_block_into_blockchain(block_t *block)
   block_to_serialized(&buffer, &buffer_len, block);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -216,7 +216,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || serialized_block == NULL)
   {
@@ -242,7 +242,7 @@ block_t *get_block_from_height(uint32_t height)
   block_t *block = NULL;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_chain_db, roptions);
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
   for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
@@ -254,7 +254,7 @@ block_t *get_block_from_height(uint32_t height)
     }
 
     size_t read_len;
-    uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, key_length, &read_len, &err);
+    uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, key_length, &read_len, &err);
 
     if (err != NULL || serialized_block == NULL)
     {
@@ -323,7 +323,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
   get_tx_key(key, tx->id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -347,7 +347,7 @@ int insert_unspent_tx_into_index(transaction_t *tx)
   unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -373,7 +373,7 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
   proto_unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_chain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
 
   free(buffer);
 
@@ -396,7 +396,7 @@ PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || serialized_tx == NULL)
   {
@@ -423,7 +423,7 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *block_key = (uint8_t*)rocksdb_get(g_chain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *block_key = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 
   if (err != NULL || block_key == NULL)
   {
@@ -457,17 +457,17 @@ block_t *get_block_from_tx_id(uint8_t *tx_id)
 }
 
 /*
- * This function gets the block height by iterating all keys in the blockchain g_chain_db.
+ * This function gets the block height by iterating all keys in the blockchain g_blockchain_db.
  * All blocks get prefixed with "b + <block_hash>".
  *
- * For the sake of dev time, only blocks in the g_chain_db are valid + main chain.
+ * For the sake of dev time, only blocks in the g_blockchain_db are valid + main chain.
  */
 uint32_t get_block_height(void)
 {
   uint32_t block_height = 0;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_chain_db, roptions);
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
   for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
@@ -492,7 +492,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
   get_block_key(key, block_hash);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
+  rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -514,7 +514,7 @@ int delete_tx_from_index(uint8_t *tx_id)
   get_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
+  rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -535,7 +535,7 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   get_unspent_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_delete(g_chain_db, woptions, (char*)key, sizeof(key), &err);
+  rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
 
   if (err != NULL)
   {
@@ -552,12 +552,12 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 
 uint8_t *get_current_block_hash(void)
 {
-  return g_chain_current_block_hash;
+  return g_blockchain_current_block_hash;
 }
 
 int set_current_block_hash(uint8_t *hash)
 {
-  memcpy(g_chain_current_block_hash, hash, HASH_SIZE);
+  memcpy(g_blockchain_current_block_hash, hash, HASH_SIZE);
   return 0;
 }
 
@@ -603,7 +603,7 @@ uint64_t get_balance_for_address(uint8_t *address)
   uint64_t balance = 0;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_chain_db, roptions);
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
   for (rocksdb_iter_seek(iterator, "c", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {

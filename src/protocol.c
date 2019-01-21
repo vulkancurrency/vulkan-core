@@ -30,7 +30,7 @@
 #include <gossip.h>
 
 #include "cryptoutil.h"
-#include "chain.h"
+#include "blockchain.h"
 #include "net.h"
 #include "mempool.h"
 #include "vulkan.pb-c.h"

@@ -35,7 +35,7 @@
 #include "wallet.h"
 #include "task.h"
 #include "net.h"
-#include "chain.h"
+#include "blockchain.h"
 #include "miner.h"
 
 #include "argparse.h"
