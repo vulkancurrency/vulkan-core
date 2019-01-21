@@ -31,9 +31,8 @@
 
 #include "cryptoutil.h"
 #include "block.h"
-#include "vulkan.pb-c.h"
-
 #include "blockchain.h"
+#include "vulkan.pb-c.h"
 
 static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
@@ -112,6 +111,15 @@ int init_blockchain(const char *blockchain_dir)
  */
 int insert_block_into_blockchain(block_t *block)
 {
+  // verify the block, ensure the block is not an orphan or stale,
+  // if the block is the genesis, then we do not need to validate it...
+  if (!valid_block(block) && get_block_height() > 0)
+  {
+    fprintf(stderr, "Could not insert invalid block into blockchain!\n");
+    return 1;
+  }
+
+  // ensure we are not adding a block that already exists in the blockchain...
   if (has_block_by_hash(block->hash))
   {
     return 1;
@@ -286,7 +294,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
   for (int i = 0; i <= get_block_height(); i++)
   {
     block_t *block = get_block_from_height(i);
-    if (memcmp(block->hash, block_hash, HASH_SIZE) != 0)
+    if (memcmp(block->hash, block_hash, HASH_SIZE) == 0)
     {
       return i;
     }

@@ -50,10 +50,10 @@
 #define TESTNET_ADDRESS_ID 0x02
 
 // GENESIS_NONCE: Genesis block nonce
-#define GENESIS_NONCE 10000
+#define GENESIS_NONCE 0
 
 // GENESIS_TIMESTAMP: Genesis block UNIX EPOCH timestamp
-#define GENESIS_TIMESTAMP 1547319656
+#define GENESIS_TIMESTAMP 1504395525
 
 // TIME_BETWEEN_BLOCKS_IN_SECS_TARGET: Target duration between blocks being mined (secs)
 #define TIME_BETWEEN_BLOCKS_IN_SECS_TARGET (1 * 60)

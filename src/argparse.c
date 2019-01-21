@@ -28,10 +28,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "argparse.h"
 #include "util.h"
 #include "version.h"
-
-#include "argparse.h"
 
 argument_t argparse_get_argument_from_str(const char *arg)
 {

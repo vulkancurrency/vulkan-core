@@ -23,18 +23,17 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <stdbool.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 #include <sodium.h>
 
 #include "chainparams.h"
 #include "cryptoutil.h"
 #include "block.h"
-#include "vulkan.pb-c.h"
-
 #include "merkle.h"
+#include "vulkan.pb-c.h"
 
 /* Allocates a block for usage.
  *
@@ -87,76 +86,81 @@ int valid_block(block_t *block)
   // Block must have a non-zero number of TXs.
   if (block->transaction_count < 1)
   {
-    return false;
+    return 0;
   }
 
   // First TX must always be a generational TX.
   if (is_generation_tx(block->transactions[0]) != 1)
   {
-    return false;
+    return 0;
   }
 
   // For each TX, compare to the other TXs that:
-  // - No other TX shares the same hash ID
+  // - No other TX shares the same hash id
   // - No other TX shares the same TXIN referencing the same txout + id
   for (int first_tx_index = 0; first_tx_index < block->transaction_count; first_tx_index++)
   {
     transaction_t *first_tx = block->transactions[first_tx_index];
 
-    // Can't have more than one generational TX.
-    if ((first_tx_index != 0) && is_generation_tx(first_tx))
+    // check to see if we have more than one generational transaction
+    if (first_tx_index != 0 && is_generation_tx(first_tx))
     {
-      return false;
+      return 0;
     }
 
-    // Must be a valid TX.
-    if (valid_transaction(first_tx) != 0)
+    // check to see if this is a valid transaction
+    if (!valid_transaction(first_tx))
     {
-      return false;
+      return 0;
     }
 
     for (int second_tx_index = 0; second_tx_index < block->transaction_count; second_tx_index++)
     {
       transaction_t *second_tx = block->transactions[second_tx_index];
-
-      // TXs can not have duplicate transaction hash IDs
-      if ((first_tx_index != second_tx_index) && memcmp(block->transactions[first_tx_index], block->transactions[second_tx_index], HASH_SIZE))
+      if (first_tx_index == second_tx_index)
       {
-        return false;
+        continue;
       }
 
-      // TXs cannot reference the same txout id + index
+      // check to see if any transactions have duplicate transaction hash ids
+      if (memcmp(first_tx->id, second_tx->id, HASH_SIZE) == 0)
+      {
+        return 0;
+      }
+
+      // check to see if any transactions reference same txout id + index
       for (int first_txin_index = 0; first_txin_index < block->transactions[first_tx_index]->txin_count; first_txin_index++)
       {
         input_transaction_t *txin_first = first_tx->txins[first_tx_index];
         for (int second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
-          if ((memcmp(txin_first->transaction, txin_second->transaction, HASH_SIZE) == 0) && (txin_first->txout_index == txin_second->txout_index))
+          if (memcmp(txin_first->transaction, txin_second->transaction, HASH_SIZE) == 0 && txin_first->txout_index == txin_second->txout_index)
           {
-            return false;
+            return 0;
           }
         }
       }
     }
   }
 
-  // Block hash must be valid
-  if (valid_block_hash(block) != 0)
+  // check the block hash
+  if (!valid_block_hash(block))
   {
-    return false;
+    return 0;
   }
 
-  // Merkle root must be valid
-  if (valid_merkle_root(block) != 0)
+  // check the merkle root
+  if (!valid_merkle_root(block))
   {
-    return false;
+    return 0;
   }
 
-  return true;
+  return 1;
 }
 
-int valid_merkle_root(block_t *block) {
+int valid_merkle_root(block_t *block)
+{
   uint8_t *merkle_root = malloc(sizeof(uint8_t) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
@@ -218,7 +222,7 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
     compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
   }
 
-  struct MerkleTree *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
+  merkle_tree_t *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
   memcpy(merkle_root, tree->root->hash, HASH_SIZE);
 
   free_merkle_tree(tree);

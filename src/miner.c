@@ -29,10 +29,10 @@
 
 #include "block.h"
 #include "blockchain.h"
+#include "cryptoutil.h"
+#include "miner.h"
 #include "protocol.h"
 #include "wallet.h"
-
-#include "miner.h"
 
 static int g_miner_is_mining = 0;
 
@@ -81,7 +81,7 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
 
-  memset(txin->transaction, 0, 32);
+  memset(txin->transaction, 0, HASH_SIZE);
   txin->txout_index = get_block_height();
   txout->amount = (uint64_t)50 * COIN;
 
@@ -106,7 +106,7 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
   block->transactions = malloc(sizeof(transaction_t *) * 1);
   block->transactions[0] = tx;
   block->timestamp = current_time;
-  memcpy(block->previous_hash, get_current_block_hash(), 32);
+  memcpy(block->previous_hash, get_current_block_hash(), HASH_SIZE);
 
   compute_self_merkle_root(block);
   hash_block(block);

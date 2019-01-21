@@ -37,7 +37,6 @@
 #include "net.h"
 #include "blockchain.h"
 #include "miner.h"
-
 #include "argparse.h"
 
 static const char *g_blockchain_data_dir = "blockchain";
@@ -46,11 +45,10 @@ static const char *g_wallet_filename = "wallet";
 static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
 
-void make_hash(char *digest, unsigned char *string)
+static void make_hash(char *digest, unsigned char *string)
 {
   unsigned char hash[crypto_hash_sha256_BYTES];
-
-  crypto_hash_sha256(hash, string, strlen((char *) string));
+  crypto_hash_sha256(hash, string, strlen((char*)string));
 
   for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
   {
@@ -58,13 +56,44 @@ void make_hash(char *digest, unsigned char *string)
   }
 }
 
-void perform_shutdown(int sig)
+static block_t* create_genesis_block(void)
+{
+  block_t *block = make_block();
+  block->timestamp = genesis_block.timestamp;
+  hash_block(block);
+
+  int i = 0;
+  while (!valid_block_hash(block))
+  {
+    block->nonce = i;
+    hash_block(block);
+    i++;
+  }
+
+  return block;
+}
+
+static void compare_genesis_block(block_t *block)
+{
+  if (compare_with_genesis_block(block) == 0)
+  {
+    printf("Verified genesis block!\n");
+    print_block(block);
+  }
+  else
+  {
+    fprintf(stderr, "Genesis block mismatch, generated hash that is different than recorded!\n");
+    print_block(block);
+  }
+}
+
+static void perform_shutdown(int sig)
 {
   close_blockchain();
   exit(1);
 }
 
-int parse_commandline_args(int argc, char **argv)
+static int parse_commandline_args(int argc, char **argv)
 {
   for (int i = 1; i < argc; i++)
   {
@@ -87,13 +116,13 @@ int parse_commandline_args(int argc, char **argv)
     switch (arg_type)
     {
       case CMD_ARG_HELP:
-        fprintf(stderr, "Command-line Options:\n");
+        printf("Command-line Options:\n");
         for (int i = 0; i < NUM_COMMANDS; i++)
         {
           argument_map_t *argument_map = &g_arguments_map[i];
-          fprintf(stderr, "  -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
+          printf("  -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
         }
-        fprintf(stderr, "\n");
+        printf("\n");
         return 1;
       case CMD_ARG_VERSION:
         printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
@@ -111,6 +140,13 @@ int parse_commandline_args(int argc, char **argv)
         g_wallet_filename = (const char*)argv[i];
         new_wallet(g_wallet_filename);
         break;
+      case CMD_ARG_CREATE_GENESIS_BLOCK:
+        {
+          block_t *block = create_genesis_block();
+          printf("Generated new genesis block.\n");
+          print_block(block);
+        }
+        return 1;
       case CMD_ARG_MINE:
         g_enable_miner = 1;
         break;
