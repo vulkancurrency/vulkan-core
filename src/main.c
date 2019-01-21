@@ -33,17 +33,18 @@
 #include "version.h"
 #include "block.h"
 #include "wallet.h"
+#include "task.h"
 #include "net.h"
 #include "chain.h"
 #include "miner.h"
 
 #include "argparse.h"
 
-static const char *blockchain_data_dir = "blockchain";
-static const char *wallet_filename = "wallet";
+static const char *g_blockchain_data_dir = "blockchain";
+static const char *g_wallet_filename = "wallet";
 
-static int enable_seed_mode = 0;
-static int enable_miner = 0;
+static int g_enable_seed_mode = 0;
+static int g_enable_miner = 0;
 
 void make_hash(char *digest, unsigned char *string)
 {
@@ -89,7 +90,7 @@ int parse_commandline_args(int argc, char **argv)
         fprintf(stderr, "Command-line Options:\n");
         for (int i = 0; i < NUM_COMMANDS; i++)
         {
-          argument_map_t *argument_map = &arguments_map[i];
+          argument_map_t *argument_map = &g_arguments_map[i];
           fprintf(stderr, "  -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
         }
         fprintf(stderr, "\n");
@@ -99,22 +100,22 @@ int parse_commandline_args(int argc, char **argv)
         return 1;
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
-        blockchain_data_dir = (const char*)argv[i];
+        g_blockchain_data_dir = (const char*)argv[i];
         break;
       case CMD_ARG_WALLET_FILENAME:
         i++;
-        wallet_filename = (const char*)argv[i];
+        g_wallet_filename = (const char*)argv[i];
         break;
       case CMD_ARG_NEW_WALLET:
         i++;
-        wallet_filename = (const char*)argv[i];
-        new_wallet(wallet_filename);
+        g_wallet_filename = (const char*)argv[i];
+        new_wallet(g_wallet_filename);
         break;
       case CMD_ARG_MINE:
-        enable_miner = 1;
+        g_enable_miner = 1;
         break;
       case CMD_ARG_SEED_MODE:
-        enable_seed_mode = 1;
+        g_enable_seed_mode = 1;
         break;
       default:
         fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
@@ -137,17 +138,19 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  init_blockchain(blockchain_data_dir);
-  if (enable_miner)
+  taskmgr_init();
+  init_blockchain(g_blockchain_data_dir);
+  if (g_enable_miner)
   {
-    net_start_server(1, enable_seed_mode);
+    net_start_server(1, g_enable_seed_mode);
     start_mining();
   }
   else
   {
-    net_start_server(0, enable_seed_mode);
+    net_start_server(0, g_enable_seed_mode);
   }
 
   close_blockchain();
+  taskmgr_shutdown();
   return 0;
 }

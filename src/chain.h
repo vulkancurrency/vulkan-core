@@ -40,11 +40,12 @@ int open_blockchain(const char *blockchain_dir);
 int init_blockchain(const char *blockchain_dir);
 int close_blockchain(void);
 
-uint32_t get_block_height();
+uint32_t get_block_height(void);
 int insert_block_into_blockchain(block_t *block);
 
 block_t *get_block_from_hash(uint8_t *block_hash);
 block_t *get_block_from_height(uint32_t height);
+
 int32_t get_block_height_from_hash(uint8_t *block_hash);
 uint8_t *get_block_hash_from_height(uint32_t height);
 
@@ -60,8 +61,10 @@ int delete_block_from_blockchain(uint8_t *block_hash);
 int delete_tx_from_index(uint8_t *tx_id);
 int delete_unspent_tx_from_index(uint8_t *tx_id);
 
-uint8_t *get_current_block_hash();
+uint8_t *get_current_block_hash(void);
 int set_current_block_hash(uint8_t *hash);
+block_t *get_current_block(void);
+int set_current_block(block_t *block);
 
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);

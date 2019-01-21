@@ -157,16 +157,67 @@ void* deserialize_packet(packet_t *packet)
         get_block_height_response_t *message = malloc(sizeof(get_block_height_response_t));
         message->height = proto_message->height;
 
+        message->hash = malloc(HASH_SIZE);
+        memcpy(message->hash, proto_message->hash.data, HASH_SIZE);
+
         mget_block_height_response__free_unpacked(proto_message, NULL);
         return message;
       }
     case PKT_TYPE_GET_BLOCK_REQ:
+      {
+        MGetBlockRequest *proto_message = mget_block_request__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_block_request_t *message = malloc(sizeof(get_block_request_t));
+        message->height = proto_message->height;
+
+        message->hash = malloc(HASH_SIZE);
+        memcpy(message->hash, proto_message->hash.data, HASH_SIZE);
+
+        mget_block_request__free_unpacked(proto_message, NULL);
+        return message;
+      }
     case PKT_TYPE_GET_BLOCK_RESP:
+      {
+        MGetBlockResponse *proto_message = mget_block_response__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_block_response_t *message = malloc(sizeof(get_block_response_t));
+        message->height = proto_message->height;
+        message->block = block_from_proto(proto_message->block);
+
+        mget_block_response__free_unpacked(proto_message, NULL);
+        return message;
+      }
     case PKT_TYPE_GET_TRANSACTION_REQ:
+      {
+        MGetTransactionRequest *proto_message = mget_transaction_request__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_transaction_request_t *message = malloc(sizeof(get_transaction_request_t));
+
+        message->id = malloc(HASH_SIZE);
+        memcpy(message->id, proto_message->id.data, HASH_SIZE);
+
+        message->input_hash = malloc(HASH_SIZE);
+        memcpy(message->input_hash, proto_message->input_hash.data, HASH_SIZE);
+
+        mget_transaction_request__free_unpacked(proto_message, NULL);
+        return message;
+      }
     case PKT_TYPE_GET_TRANSACTION_RESP:
-      break;
+      {
+        MGetTransactionResponse *proto_message = mget_transaction_response__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_transaction_response_t *message = malloc(sizeof(get_transaction_response_t));
+        message->transaction = transaction_from_proto(proto_message->transaction);
+
+        mget_transaction_response__free_unpacked(proto_message, NULL);
+        return message;
+      }
     default:
-      fprintf(stderr, "Could not deserialize packet with unknown packet_id: %d\n", packet->id);
+      fprintf(stderr, "Could not deserialize packet with unknown packet id: %d\n", packet->id);
       return NULL;
   }
   return NULL;
@@ -233,11 +284,16 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
         uint64_t height = va_arg(args, uint64_t);
+        uint8_t *hash = va_arg(args, uint8_t*);
 
         MGetBlockHeightResponse *msg = malloc(sizeof(MGetBlockHeightResponse));
         mget_block_height_response__init(msg);
 
         msg->height = height;
+
+        msg->hash.len = HASH_SIZE;
+        msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+        memcpy(msg->hash.data, hash, HASH_SIZE);
 
         buffer_len = mget_block_height_response__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -278,9 +334,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         mget_block_response__init(msg);
 
         msg->height = height;
-
-        PBlock *proto_block = block_to_proto(block);
-        msg->block = proto_block;
+        msg->block = block_to_proto(block);
 
         buffer_len = mget_block_response__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -288,7 +342,6 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         mget_block_response__pack(msg, buffer);
 
         free(msg);
-        free(proto_block);
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
@@ -296,7 +349,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         uint8_t *id = va_arg(args, uint8_t*);
         uint8_t *input_hash = va_arg(args, uint8_t*);
 
-        MGetTransactionRequest *msg = malloc(sizeof(MGetBlockRequest));
+        MGetTransactionRequest *msg = malloc(sizeof(MGetTransactionRequest));
         mget_transaction_request__init(msg);
 
         msg->id.len = HASH_SIZE;
@@ -322,8 +375,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         MGetTransactionResponse *msg = malloc(sizeof(MGetTransactionResponse));
         mget_transaction_response__init(msg);
 
-        PTransaction *proto_transaction = transaction_to_proto(transaction);
-        msg->transaction = proto_transaction;
+        msg->transaction = transaction_to_proto(transaction);;
 
         buffer_len = mget_transaction_response__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -331,11 +383,10 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         mget_transaction_response__pack(msg, buffer);
 
         free(msg);
-        free(proto_transaction);
       }
       break;
     default:
-      fprintf(stderr, "Could not serialize packet with unknown packet_id: %d\n", packet_id);
+      fprintf(stderr, "Could not serialize packet with unknown packet id: %d\n", packet_id);
       return NULL;
   }
   return make_packet(packet_id, buffer_len, buffer);
@@ -360,14 +411,61 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
+      {
+        get_block_height_request_t *message = (get_block_height_request_t*)message_object;
+        handle_broadcast_packet(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height(), get_current_block_hash());
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
+      {
+        get_block_height_response_t *message = (get_block_height_response_t*)message_object;
+        if (message->height > get_block_height())
+        {
+          handle_broadcast_packet(PKT_TYPE_GET_BLOCK_REQ, message->height, message->hash);
+        }
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_REQ:
+      {
+        get_block_request_t *message = (get_block_request_t*)message_object;
+        block_t *block = NULL;
+        if (message->height < 0)
+        {
+          block = get_block_from_hash(message->hash);
+        }
+        else
+        {
+          block = get_block_from_height(message->height);
+        }
+        if (block != NULL)
+        {
+          handle_broadcast_packet(PKT_TYPE_GET_BLOCK_RESP, message->height, block);
+        }
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_RESP:
+      {
+        get_block_response_t *message = (get_block_response_t*)message_object;
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
+      {
+        get_transaction_request_t *message = (get_transaction_request_t*)message_object;
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_RESP:
+      {
+        get_transaction_response_t *message = (get_transaction_response_t*)message_object;
+        free(message);
+      }
       break;
     default:
-      fprintf(stderr, "Could not handle packet with unknown packet_id: %d\n", packet_id);
+      fprintf(stderr, "Could not handle packet with unknown packet id: %d\n", packet_id);
       return 1;
   }
   return 0;

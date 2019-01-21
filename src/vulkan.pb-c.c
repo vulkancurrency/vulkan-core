@@ -1475,7 +1475,7 @@ const ProtobufCMessageDescriptor mget_block_height_request__descriptor =
   (ProtobufCMessageInit) mget_block_height_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor mget_block_height_response__field_descriptors[1] =
+static const ProtobufCFieldDescriptor mget_block_height_response__field_descriptors[2] =
 {
   {
     "height",
@@ -1489,14 +1489,27 @@ static const ProtobufCFieldDescriptor mget_block_height_response__field_descript
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "hash",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(MGetBlockHeightResponse, hash),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mget_block_height_response__field_indices_by_name[] = {
+  1,   /* field[1] = hash */
   0,   /* field[0] = height */
 };
 static const ProtobufCIntRange mget_block_height_response__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 1 }
+  { 0, 2 }
 };
 const ProtobufCMessageDescriptor mget_block_height_response__descriptor =
 {
@@ -1506,7 +1519,7 @@ const ProtobufCMessageDescriptor mget_block_height_response__descriptor =
   "MGetBlockHeightResponse",
   "",
   sizeof(MGetBlockHeightResponse),
-  1,
+  2,
   mget_block_height_response__field_descriptors,
   mget_block_height_response__field_indices_by_name,
   1,  mget_block_height_response__number_ranges,

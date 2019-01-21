@@ -78,6 +78,7 @@ typedef struct MGetBlockHeightRequest
 typedef struct MGetBlockHeightResponse
 {
   uint64_t height;
+  uint8_t *hash;
 } get_block_height_response_t;
 
 typedef struct MGetBlockRequest

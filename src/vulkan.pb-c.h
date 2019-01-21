@@ -187,10 +187,11 @@ struct  _MGetBlockHeightResponse
 {
   ProtobufCMessage base;
   int64_t height;
+  ProtobufCBinaryData hash;
 };
 #define MGET_BLOCK_HEIGHT_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mget_block_height_response__descriptor) \
-    , 0 }
+    , 0, {0,NULL} }
 
 
 struct  _MGetBlockRequest

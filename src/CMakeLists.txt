@@ -34,6 +34,7 @@ set(SOURCE_FILES
   net.c
   protocol.c
   queue.c
+  task.c
   transaction.c
   util.c
   vulkan.pb-c.c
@@ -52,6 +53,7 @@ set(HEADER_FILES
   net.h
   protocol.h
   queue.h
+  task.h
   transaction.h
   util.h
   version.h

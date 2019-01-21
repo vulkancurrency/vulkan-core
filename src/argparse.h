@@ -47,7 +47,7 @@ typedef struct ArgumentMap
   int num_args;
 } argument_map_t;
 
-static argument_map_t arguments_map[] = {
+static argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information.", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information.", 0},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
@@ -57,7 +57,7 @@ static argument_map_t arguments_map[] = {
   {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", 0}
 };
 
-#define NUM_COMMANDS (sizeof(arguments_map) / sizeof(argument_map_t))
+#define NUM_COMMANDS (sizeof(g_arguments_map) / sizeof(argument_map_t))
 
 argument_t argparse_get_argument_from_str(const char *arg);
 argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type);

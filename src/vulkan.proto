@@ -114,6 +114,7 @@ message MGetBlockHeightRequest
 message MGetBlockHeightResponse
 {
   int64 height = 1;
+  bytes hash = 2;
 }
 
 message MGetBlockRequest

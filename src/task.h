@@ -25,36 +25,74 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdint.h>
+#include <stdarg.h>
+#include <pthread.h>
 
-#include <gossip.h>
-
-#include "task.h"
+#include "queue.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define RESYNC_CHAIN_TASK_DELAY 10
+typedef enum TaskResult
+{
+  TASK_RESULT_DONE = 0,
+  TASK_RESULT_CONT,
+  TASK_RESULT_WAIT
+} task_result_t;
 
-void net_set_gossip(pittacus_gossip_t *gossip);
-pittacus_gossip_t* net_get_gossip(void);
+typedef task_result_t (*callable_func_t)();
 
-void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
-void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+typedef struct Task
+{
+  int id;
+  callable_func_t func;
+  va_list *args;
+  int delayable;
+  double delay;
+  time_t timestamp;
+  pthread_mutex_t mutex;
+} task_t;
 
-int net_connect(const char *address, int port);
-int net_open_connection(void);
+typedef struct TaskScheduler
+{
+  int id;
+  pthread_t thread;
+  pthread_attr_t thread_attr;
+} task_scheduler_t;
 
-int net_run_server(void);
-void* net_run_server_threaded();
+int taskmgr_init(void);
+int taskmgr_tick(void);
+int taskmgr_run(void);
+void* taskmgr_scheduler_run();
+int taskmgr_shutdown(void);
 
-int net_start_server(int threaded, int seed_mode);
-void net_stop_server(void);
+int has_task(task_t *task);
+int has_task_by_id(int id);
 
-task_result_t resync_chain(task_t *task, va_list args);
+task_t* add_task(callable_func_t func, double delay, ...);
+
+task_t* get_task_by_id(int id);
+
+void remove_task(task_t *task);
+void remove_task_by_id(int id);
+
+void free_task(task_t *task);
+void free_task_by_id(int id);
+
+int has_scheduler(task_scheduler_t *task_scheduler);
+int has_scheduler_by_id(int id);
+
+task_scheduler_t* add_scheduler(void);
+
+task_scheduler_t* get_scheduler_by_id(int id);
+
+void remove_scheduler(task_scheduler_t *task_scheduler);
+void remove_scheduler_by_id(int id);
+
+void free_scheduler(task_scheduler_t *task_scheduler);
+void free_scheduler_by_id(int id);
 
 #ifdef __cplusplus
 }

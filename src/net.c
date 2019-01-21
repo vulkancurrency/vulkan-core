@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <poll.h>
@@ -36,13 +37,16 @@
 #include <config.h>
 
 #include "chainparams.h"
+#include "task.h"
 #include "protocol.h"
 
 #include "net.h"
 
 static int g_net_server_running = 0;
 static int g_net_seed_mode = 0;
+
 static pittacus_gossip_t *g_net_gossip = NULL;
+static task_t *g_net_resync_chain_task = NULL;
 
 void net_set_gossip(pittacus_gossip_t *gossip)
 {
@@ -218,6 +222,9 @@ int net_run_server(void)
       return 1;
     }
 
+    // update the task manager
+    taskmgr_tick();
+
     send_result = pittacus_gossip_process_send(g_net_gossip);
     if (send_result < 0)
     {
@@ -247,6 +254,8 @@ int net_start_server(int threaded, int seed_mode)
   g_net_server_running = 1;
   g_net_seed_mode = seed_mode;
 
+  g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
+
   if (threaded)
   {
     pthread_t thread;
@@ -266,4 +275,10 @@ void net_stop_server(void)
     return;
   }
   g_net_server_running = 0;
+}
+
+task_result_t resync_chain(task_t *task, va_list args)
+{
+  handle_broadcast_packet(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  return TASK_RESULT_WAIT;
 }

@@ -44,7 +44,7 @@ argument_t argparse_get_argument_from_str(const char *arg)
   // determine the argument type
   for (int i = 0; i < NUM_COMMANDS; i++)
   {
-    argument_map_t *argument_map = &arguments_map[i];
+    argument_map_t *argument_map = &g_arguments_map[i];
     if (string_endswith(arg, argument_map->name))
     {
       return argument_map->type;
@@ -57,7 +57,7 @@ argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
 {
   for (int i = 0; i < NUM_COMMANDS; i++)
   {
-    argument_map_t *argument_map = &arguments_map[i];
+    argument_map_t *argument_map = &g_arguments_map[i];
     if (argument_map->type == arg_type)
     {
       return argument_map;
