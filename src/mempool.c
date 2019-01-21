@@ -45,9 +45,24 @@ int start_mempool(void)
   return 0;
 }
 
+int is_tx_in_mempool(transaction_t *transaction)
+{
+  if (!g_mempool_initialized)
+  {
+    return 0;
+  }
+
+  return queue_get_index(g_mempool, transaction) != -1;
+}
+
 int push_tx_to_mempool(transaction_t *transaction)
 {
   if (!g_mempool_initialized)
+  {
+    return 1;
+  }
+
+  if (is_tx_in_mempool(transaction))
   {
     return 1;
   }
@@ -61,6 +76,11 @@ int remove_tx_from_mempool(transaction_t *transaction)
   if (!g_mempool_initialized)
   {
     return 1;
+  }
+
+  if (!is_tx_in_mempool(transaction))
+  {
+    return 0;
   }
 
   queue_remove_object(g_mempool, transaction);

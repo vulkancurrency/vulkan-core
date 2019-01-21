@@ -37,6 +37,7 @@ extern "C"
 int start_mempool(void);
 int stop_mempool(void);
 
+int is_tx_in_mempool(transaction_t *transaction);
 int push_tx_to_mempool(transaction_t *transaction);
 int remove_tx_from_mempool(transaction_t *transaction);
 transaction_t *pop_tx_from_mempool(void);
