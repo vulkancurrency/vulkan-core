@@ -112,7 +112,7 @@ int init_blockchain(const char *blockchain_dir)
  */
 int insert_block_into_blockchain(block_t *block)
 {
-  if (get_block_from_hash(block->hash) != NULL)
+  if (has_block_by_hash(block->hash))
   {
     return 1;
   }
@@ -301,6 +301,16 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
   return block->hash;
+}
+
+int has_block_by_hash(uint8_t *block_hash)
+{
+  return get_block_from_hash(block_hash) != NULL;
+}
+
+int has_block_by_height(uint32_t height)
+{
+  return get_block_from_height(height) != NULL;
 }
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
