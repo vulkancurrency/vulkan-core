@@ -64,7 +64,7 @@ int string_endswith(const char *string, const char *ext)
 int string_count(const char *string, const char *countstr, int countbreak)
 {
   int count = 0;
-  for (int i = 0; i < strlen(string) - 1; i++)
+  for (int i = 0; i <= strlen(string) - 1; i++)
   {
     if (string_startswith(&string[i], countstr))
     {
