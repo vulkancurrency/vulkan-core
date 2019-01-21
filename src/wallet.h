@@ -26,6 +26,7 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <rocksdb/c.h>
 
 #include "chainparams.h"
@@ -35,8 +36,6 @@
 extern "C"
 {
 #endif
-
-#define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
 rocksdb_t *open_wallet(const char *wallet_filename, char *err);
 int new_wallet(const char *wallet_filename);

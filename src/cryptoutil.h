@@ -25,4 +25,7 @@
 
 #pragma once
 
+#include <sodium.h>
+
 #define HASH_SIZE 32
+#define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
