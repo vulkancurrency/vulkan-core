@@ -42,8 +42,9 @@ extern "C"
 void net_set_gossip(pittacus_gossip_t *gossip);
 pittacus_gossip_t* net_get_gossip(void);
 
-void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
-void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
+int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
 
 int net_connect(const char *address, int port);
 int net_open_connection(void);

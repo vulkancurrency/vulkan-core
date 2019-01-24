@@ -58,18 +58,23 @@ pittacus_gossip_t* net_get_gossip(void)
   return g_net_gossip;
 }
 
-void net_receive_data(void *context, pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
+void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
-  if (handle_receive_packet(gossip, data, data_size))
+  if (handle_receive_packet(gossip, recipient, recipient_len, data, data_size))
   {
     fprintf(stderr, "Failed to handling incoming packet\n");
     return;
   }
 }
 
-void net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
+int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  pittacus_gossip_send_data(gossip, data, data_size);
+  return pittacus_gossip_send_data(gossip, data, data_size);
+}
+
+int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
+{
+  return pittacus_gossip_data_sendto(gossip, recipient, recipient_len, data, data_size);
 }
 
 int net_connect(const char *address, int port)
@@ -279,6 +284,6 @@ void net_stop_server(void)
 
 task_result_t resync_chain(task_t *task, va_list args)
 {
-  handle_broadcast_packet(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
   return TASK_RESULT_WAIT;
 }

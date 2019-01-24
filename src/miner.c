@@ -49,14 +49,15 @@ int start_mining(void)
   {
     uint8_t *previous_hash = get_current_block_hash();
     block_t *block = compute_next_block(previous_hash);
-    insert_block_into_blockchain(block);
     uint32_t block_height = get_block_height();
+    if (insert_block_into_blockchain(block))
+    {
+      printf("Inserted block #%d\n", block_height);
+      print_block(block);
 
-    printf("Inserted block #%d\n", block_height);
-    print_block(block);
-
-    set_current_block_hash(block->hash);
-    handle_broadcast_packet(PKT_TYPE_INCOMING_BLOCK, block);
+      set_current_block_hash(block->hash);
+      handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
+    }
 
     free(block);
   }

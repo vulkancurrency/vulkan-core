@@ -73,8 +73,7 @@ int open_blockchain(const char *blockchain_dir)
   }
   else
   {
-    // find the top block and save it's hash as our current block.
-    set_current_block_hash(get_block_hash_from_height(get_block_height()));
+    set_current_block(get_top_block());
     free_block(test_block);
   }
 
@@ -116,13 +115,19 @@ int insert_block_into_blockchain(block_t *block)
   if (!valid_block(block) && get_block_height() > 0)
   {
     fprintf(stderr, "Could not insert invalid block into blockchain!\n");
-    return 1;
+    return 0;
   }
 
   // ensure we are not adding a block that already exists in the blockchain...
   if (has_block_by_hash(block->hash))
   {
-    return 1;
+    return 0;
+  }
+
+  // check this blocks previous has against our current top block hash
+  if (memcmp(get_current_block_hash(), block->previous_hash, HASH_SIZE) != 0)
+  {
+    return 0;
   }
 
   char *err = NULL;
@@ -244,47 +249,19 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
 block_t *get_block_from_height(uint32_t height)
 {
-  char *err = NULL;
-
-  uint32_t current_block_height = 0;
-  block_t *block = NULL;
-
-  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
-
-  for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+  block_t *block = get_current_block();
+  for (int i = get_block_height() - 1; i >= 0; i--)
   {
-    size_t key_length;
-    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
-    if (key_length > 0 && key[0] == 'b')
-    {
-      current_block_height++;
-    }
-
-    size_t read_len;
-    uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, key_length, &read_len, &err);
-
-    if (err != NULL || serialized_block == NULL)
-    {
-      rocksdb_free(err);
-      rocksdb_readoptions_destroy(roptions);
-      return NULL;
-    }
-
-    block = block_from_serialized(serialized_block, read_len);
-    rocksdb_free(serialized_block);
-
-    // check to see if the block at this height is the height
-    // we are looking for...
-    if (current_block_height == height)
+    if (!block)
     {
       break;
     }
+    if (i == height)
+    {
+      break;
+    }
+    block = get_block_from_hash(block->previous_hash);
   }
-
-  rocksdb_free(err);
-  rocksdb_readoptions_destroy(roptions);
-  rocksdb_iter_destroy(iterator);
 
   return block;
 }
@@ -301,6 +278,11 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
   }
 
   return -1;
+}
+
+int32_t get_block_height_from_block(block_t *block)
+{
+  return get_block_height_from_hash(block->hash);
 }
 
 uint8_t *get_block_hash_from_height(uint32_t height)
@@ -491,6 +473,42 @@ uint32_t get_block_height(void)
   rocksdb_iter_destroy(iterator);
 
   return block_height;
+}
+
+block_t *get_top_block(void)
+{
+  char *err = NULL;
+  block_t *block = NULL;
+
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+
+  for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+  {
+    size_t key_length;
+    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
+    if (key_length > 0 && key[0] == 'b')
+    {
+      size_t read_len;
+      uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, key_length, &read_len, &err);
+
+      if (err != NULL || serialized_block == NULL)
+      {
+        rocksdb_free(err);
+        rocksdb_readoptions_destroy(roptions);
+        return NULL;
+      }
+
+      block = block_from_serialized(serialized_block, read_len);
+      rocksdb_free(serialized_block);
+    }
+  }
+
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+
+  return block;
 }
 
 int delete_block_from_blockchain(uint8_t *block_hash)

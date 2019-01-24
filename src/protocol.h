@@ -104,6 +104,13 @@ typedef struct MGetTransactionResponse
   transaction_t *transaction;
 } get_transaction_response_t;
 
+typedef struct SyncEntry
+{
+  int height;
+  const pt_sockaddr_storage *recipient;
+  pt_socklen_t recipient_len;
+} sync_entry_t;
+
 packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message);
 int free_packet(packet_t *packet);
 
@@ -116,11 +123,16 @@ packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len);
 packet_t* serialize_packet(uint32_t packet_id, va_list args);
 void* deserialize_packet(packet_t *packet);
 
-int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object);
-int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int free_sync_request(void);
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash);
 
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, va_list args);
-int handle_broadcast_packet(uint32_t packet_id, ...);
+int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);
+int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
+
+int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args);
+int handle_packet_sendto(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, ...);
+int handle_packet_broadcast(uint32_t packet_id, ...);
 
 #ifdef __cplusplus
 }

@@ -37,6 +37,8 @@
 
 #include "protocol.h"
 
+static sync_entry_t *g_protocol_sync_entry = NULL;
+
 packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message)
 {
   packet_t *packet = malloc(sizeof(packet_t));
@@ -315,7 +317,11 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
 
         msg->hash.len = HASH_SIZE;
         msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
-        memcpy(msg->hash.data, hash, HASH_SIZE);
+
+        if (hash != NULL)
+        {
+          memcpy(msg->hash.data, hash, HASH_SIZE);
+        }
 
         buffer_len = mget_block_request__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -392,14 +398,51 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
   return make_packet(packet_id, buffer_len, buffer);
 }
 
-int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_object)
+int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
+{
+  if (g_protocol_sync_entry != NULL)
+  {
+    return 1;
+  }
+
+  g_protocol_sync_entry = malloc(sizeof(g_protocol_sync_entry));
+  g_protocol_sync_entry->height = height;
+  g_protocol_sync_entry->recipient = recipient;
+  g_protocol_sync_entry->recipient_len = recipient_len;
+
+  return 0;
+}
+
+int free_sync_request(void)
+{
+  if (g_protocol_sync_entry == NULL)
+  {
+    return 1;
+  }
+
+  free(g_protocol_sync_entry);
+  g_protocol_sync_entry = NULL;
+
+  return 0;
+}
+
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash)
+{
+  printf("Requesting block at height: %d...\n", height);
+  return handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_REQ, height, hash);
+}
+
+int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object)
 {
   switch (packet_id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
-        insert_block_into_blockchain(message->block);
+        if (insert_block_into_blockchain(message->block))
+        {
+          printf("Added incoming block at height: %d!\n", get_block_height());
+        }
         free(message);
       }
       break;
@@ -413,16 +456,39 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = (get_block_height_request_t*)message_object;
-        handle_broadcast_packet(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height(), get_current_block_hash());
+        handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height() - 1, get_current_block_hash());
         free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
         get_block_height_response_t *message = (get_block_height_response_t*)message_object;
-        if (message->height > get_block_height())
+        uint32_t current_block_height = get_block_height();
+        if (message->height > current_block_height)
         {
-          handle_broadcast_packet(PKT_TYPE_GET_BLOCK_REQ, message->height, message->hash);
+          if (g_protocol_sync_entry != NULL)
+          {
+            if (message->height > g_protocol_sync_entry->height)
+            {
+              if (g_protocol_sync_entry->recipient == recipient)
+              {
+                g_protocol_sync_entry->height = message->height;
+                printf("Updating sync height with presumed top block: %llu...\n", message->height);
+              }
+              else
+              {
+                if (!free_sync_request())
+                {
+                  printf("Found potential alternative blockchain at height: %llu.\n", message->height);
+                }
+              }
+            }
+          }
+          if (!init_sync_request(message->height, recipient, recipient_len))
+          {
+            printf("Beginning sync with presumed top block: %llu...\n", message->height);
+            request_sync_block(recipient, recipient_len, current_block_height, NULL);
+          }
         }
         free(message);
       }
@@ -441,7 +507,12 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
         }
         if (block != NULL)
         {
-          handle_broadcast_packet(PKT_TYPE_GET_BLOCK_RESP, message->height, block);
+          handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, message->height, block);
+          free(block);
+        }
+        else
+        {
+          printf("Failed to send unknown block at height: %lld.\n", message->height);
         }
         free(message);
       }
@@ -449,6 +520,33 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
     case PKT_TYPE_GET_BLOCK_RESP:
       {
         get_block_response_t *message = (get_block_response_t*)message_object;
+        if (g_protocol_sync_entry != NULL)
+        {
+          uint32_t current_block_height = get_block_height();
+          if (insert_block_into_blockchain(message->block))
+          {
+            printf("Received block at height: %d.\n", current_block_height);
+
+            if (current_block_height < g_protocol_sync_entry->height)
+            {
+              request_sync_block(recipient, recipient_len, current_block_height + 1, NULL);
+            }
+            else
+            {
+              if (!free_sync_request())
+              {
+                printf("Successfully synced blockchain at block height: %d.\n", get_block_height());
+              }
+            }
+          }
+          else
+          {
+            if (!free_sync_request())
+            {
+              printf("Failed to sync to top block...!\n");
+            }
+          }
+        }
         free(message);
       }
       break;
@@ -471,7 +569,7 @@ int handle_packet(pittacus_gossip_t *gossip, uint32_t packet_id, void *message_o
   return 0;
 }
 
-int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
+int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
   packet_t *packet = packet_from_serialized(data, data_size);
   void *message = deserialize_packet(packet);
@@ -480,7 +578,7 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t
     return 1;
   }
 
-  if (handle_packet(gossip, packet->id, message))
+  if (handle_packet(gossip, recipient, recipient_len, packet->id, message))
   {
     return 1;
   }
@@ -489,7 +587,7 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const uint8_t *data, size_t
   return 0;
 }
 
-int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, va_list args)
+int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args)
 {
   packet_t *packet = serialize_packet(packet_id, args);
   if (!packet)
@@ -501,15 +599,35 @@ int handle_send_packet(pittacus_gossip_t *gossip, uint32_t packet_id, va_list ar
   size_t buffer_len = 0;
 
   packet_to_serialized(&buffer, &buffer_len, packet);
-  net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
-  return 0;
+
+  if (broadcast)
+  {
+    return net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
+  }
+  else
+  {
+    return net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)buffer, buffer_len);
+  }
 }
 
-int handle_broadcast_packet(uint32_t packet_id, ...)
+int handle_packet_sendto(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, ...)
 {
   va_list args;
   va_start(args, packet_id);
-  if (handle_send_packet(net_get_gossip(), packet_id, args))
+  if (handle_send_packet(net_get_gossip(), recipient, recipient_len, 0, packet_id, args))
+  {
+    return 1;
+  }
+
+  va_end(args);
+  return 0;
+}
+
+int handle_packet_broadcast(uint32_t packet_id, ...)
+{
+  va_list args;
+  va_start(args, packet_id);
+  if (handle_send_packet(net_get_gossip(), NULL, 0, 1, packet_id, args))
   {
     return 1;
   }
