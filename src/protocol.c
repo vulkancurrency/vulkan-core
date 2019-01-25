@@ -433,9 +433,10 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
+        uint32_t current_block_height = get_block_height();
         if (insert_block_into_blockchain(message->block))
         {
-          printf("Added incoming block at height: %d!\n", get_block_height());
+          printf("Added incoming block at height: %d!\n", current_block_height);
         }
         free(message);
       }
@@ -503,6 +504,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         {
           uint32_t block_height = get_block_height_from_block(block);
           handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, block_height, block);
+          free(block);
         }
         free(message);
       }
