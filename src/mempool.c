@@ -69,7 +69,7 @@ int push_tx_to_mempool(transaction_t *transaction)
 
   if (!valid_transaction(transaction))
   {
-    return 0;
+    return 1;
   }
 
   queue_push_right(g_mempool, transaction);
@@ -85,7 +85,7 @@ int remove_tx_from_mempool(transaction_t *transaction)
 
   if (!is_tx_in_mempool(transaction))
   {
-    return 0;
+    return 1;
   }
 
   queue_remove_object(g_mempool, transaction);
