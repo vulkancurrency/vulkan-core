@@ -67,6 +67,11 @@ int push_tx_to_mempool(transaction_t *transaction)
     return 1;
   }
 
+  if (!valid_transaction(transaction))
+  {
+    return 0;
+  }
+
   queue_push_right(g_mempool, transaction);
   return 0;
 }
