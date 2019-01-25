@@ -643,7 +643,7 @@ uint64_t get_balance_for_address(uint8_t *address)
       for (int i = 0; i < tx->n_unspent_txouts; i++)
       {
         PUnspentOutputTransaction *unspent_txout = tx->unspent_txouts[i];
-        if (memcmp(unspent_txout->address.data, address, unspent_txout->address.len) != 0)
+        if (memcmp(unspent_txout->address.data, address, ADDRESS_SIZE) != 0)
         {
           continue;
         }
