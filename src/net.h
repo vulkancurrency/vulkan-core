@@ -37,7 +37,7 @@ extern "C"
 {
 #endif
 
-#define RESYNC_CHAIN_TASK_DELAY 10
+#define RESYNC_CHAIN_TASK_DELAY 5
 
 void net_set_gossip(pittacus_gossip_t *gossip);
 pittacus_gossip_t* net_get_gossip(void);
