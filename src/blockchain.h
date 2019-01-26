@@ -27,9 +27,9 @@
 
 #include <stdint.h>
 
-#include "cryptoutil.h"
 #include "block.h"
 #include "transaction.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C"

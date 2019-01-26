@@ -28,9 +28,9 @@
 #include <stdint.h>
 
 #include "chainparams.h"
-#include "cryptoutil.h"
 #include "transaction.h"
 #include "vulkan.pb-c.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C"

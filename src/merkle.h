@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-#include "cryptoutil.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C"

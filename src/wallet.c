@@ -25,14 +25,14 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sodium.h>
 #include <stdlib.h>
+
+#include <sodium.h>
 
 #include <rocksdb/c.h>
 
-#include "blockchain.h"
 #include "chainparams.h"
-
+#include "blockchain.h"
 #include "wallet.h"
 
 static const char *g_wallet_filename = NULL;

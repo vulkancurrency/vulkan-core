@@ -29,9 +29,9 @@
 
 #include "block.h"
 #include "blockchain.h"
-#include "cryptoutil.h"
 #include "miner.h"
 #include "protocol.h"
+#include "util.h"
 #include "wallet.h"
 
 static int g_miner_is_mining = 0;

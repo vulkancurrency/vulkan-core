@@ -29,9 +29,9 @@
 
 #include <rocksdb/c.h>
 
-#include "cryptoutil.h"
 #include "block.h"
 #include "blockchain.h"
+#include "util.h"
 #include "vulkan.pb-c.h"
 
 static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {

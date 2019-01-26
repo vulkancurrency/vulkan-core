@@ -26,11 +26,11 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <sodium.h>
 
-#include "cryptoutil.h"
 #include "vulkan.pb-c.h"
-
+#include "util.h"
 #include "wallet.h"
 
 /*

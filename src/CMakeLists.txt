@@ -46,7 +46,6 @@ set(HEADER_FILES
   block.h
   blockchain.h
   chainparams.h
-  cryptoutil.h
   mempool.h
   merkle.h
   miner.h

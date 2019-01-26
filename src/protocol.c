@@ -29,13 +29,12 @@
 
 #include <gossip.h>
 
-#include "cryptoutil.h"
 #include "blockchain.h"
-#include "net.h"
 #include "mempool.h"
-#include "vulkan.pb-c.h"
-
+#include "net.h"
 #include "protocol.h"
+#include "vulkan.pb-c.h"
+#include "util.h"
 
 static sync_entry_t *g_protocol_sync_entry = NULL;
 

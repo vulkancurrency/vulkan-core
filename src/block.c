@@ -30,10 +30,10 @@
 #include <sodium.h>
 
 #include "chainparams.h"
-#include "cryptoutil.h"
 #include "block.h"
 #include "merkle.h"
 #include "vulkan.pb-c.h"
+#include "util.h"
 
 /* Allocates a block for usage.
  *

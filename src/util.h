@@ -27,10 +27,15 @@
 
 #include <stdlib.h>
 
+#include <sodium.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#define HASH_SIZE 32
+#define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
 int get_num_logical_cores(void);
 
