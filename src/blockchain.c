@@ -300,7 +300,11 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
 
-  return block->hash;
+  uint8_t *block_hash = malloc(HASH_SIZE);
+  memcpy(block_hash, block->hash, HASH_SIZE);
+
+  free_block(block);
+  return block_hash;
 }
 
 int has_block_by_hash(uint8_t *block_hash)
