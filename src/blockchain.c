@@ -45,8 +45,19 @@ static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00
 };
 
+static const char *g_blockchain_dir = NULL;
+static const char *g_blockchain_backup_dir = "_backup";
+
 static int g_blockchain_is_open = 0;
+static int g_blockchain_backup_is_open = 0;
+
 static rocksdb_t *g_blockchain_db = NULL;
+static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
+
+static const char* get_blockchain_backup_dir(void)
+{
+  return string_copy(g_blockchain_dir, g_blockchain_backup_dir);
+}
 
 int open_blockchain(const char *blockchain_dir)
 {
@@ -55,10 +66,14 @@ int open_blockchain(const char *blockchain_dir)
     return 0;
   }
 
+  g_blockchain_dir = blockchain_dir;
+
   char *err = NULL;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
+
   g_blockchain_db = rocksdb_open(options, blockchain_dir, &err);
+  g_blockchain_backup_db = rocksdb_backup_engine_open(options, get_blockchain_backup_dir(), &err);
 
   if (err != NULL)
   {
@@ -76,6 +91,7 @@ int open_blockchain(const char *blockchain_dir)
   }
 
   g_blockchain_is_open = 1;
+  g_blockchain_backup_is_open = 1;
 
   rocksdb_free(err);
   rocksdb_free(options);
@@ -87,18 +103,62 @@ int close_blockchain(void)
   if (g_blockchain_is_open)
   {
     rocksdb_close(g_blockchain_db);
+    rocksdb_backup_engine_close(g_blockchain_backup_db);
     g_blockchain_is_open = 0;
+    g_blockchain_backup_is_open = 0;
     return 0;
   }
-  else
-  {
-    return 0;
-  }
+
+  return 0;
 }
 
 int init_blockchain(const char *blockchain_dir)
 {
   open_blockchain(blockchain_dir);
+  return 0;
+}
+
+int backup_blockchain(void)
+{
+  if (!g_blockchain_backup_is_open)
+  {
+    return 1;
+  }
+
+  char *err = NULL;
+  rocksdb_backup_engine_create_new_backup(g_blockchain_backup_db, g_blockchain_db, &err);
+
+  if (err != NULL)
+  {
+    fprintf(stderr, "Could not backup database: %s\n", err);
+    return 1;
+  }
+
+  rocksdb_free(err);
+  return 0;
+}
+
+int restore_blockchain(void)
+{
+  if (!g_blockchain_backup_is_open)
+  {
+    return 1;
+  }
+
+  char *err = NULL;
+
+  rocksdb_restore_options_t *restore_options = rocksdb_restore_options_create();
+  rocksdb_backup_engine_restore_db_from_latest_backup(g_blockchain_backup_db, g_blockchain_dir,
+    g_blockchain_dir, restore_options, &err);
+
+  if (err != NULL)
+  {
+    fprintf(stderr, "Could not restore database from backup: %s\n", err);
+    return 1;
+  }
+
+  rocksdb_restore_options_destroy(restore_options);
+  rocksdb_free(err);
   return 0;
 }
 

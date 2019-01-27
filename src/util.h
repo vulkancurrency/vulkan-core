@@ -43,6 +43,7 @@ int string_equals(const char *string, const char *equals);
 int string_startswith(const char *string, const char *prefix);
 int string_endswith(const char *string, const char *ext);
 int string_count(const char *string, const char *countstr, int countbreak);
+const char* string_copy(const char *string1, const char *string2);
 
 #ifdef __cplusplus
 }

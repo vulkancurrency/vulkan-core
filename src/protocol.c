@@ -409,6 +409,7 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
   g_protocol_sync_entry.recipient_len = recipient_len;
 
   g_protocol_sync_entry.sync_initiated = 1;
+  g_protocol_sync_entry.sync_alternative = 0;
   g_protocol_sync_entry.sync_height = height;
 
   g_protocol_sync_entry.last_sync_height = 0;
@@ -418,17 +419,30 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
   return 0;
 }
 
-int clear_sync_request(void)
+int clear_sync_request(int sync_success)
 {
   if (!g_protocol_sync_entry.sync_initiated)
   {
     return 1;
   }
 
+  if (!sync_success && g_protocol_sync_entry.sync_alternative)
+  {
+    if (!restore_blockchain())
+    {
+      printf("Successfully restored blockchain after sync to alternative blockchain failed.\n");
+    }
+    else
+    {
+      fprintf(stderr, "Could not restore blockchain after sync to alternative blockchain failed!\n");
+    }
+  }
+
   g_protocol_sync_entry.recipient = NULL;
   g_protocol_sync_entry.recipient_len = 0;
 
   g_protocol_sync_entry.sync_initiated = 0;
+  g_protocol_sync_entry.sync_alternative = 0;
   g_protocol_sync_entry.sync_height = 0;
 
   g_protocol_sync_entry.last_sync_height = 0;
@@ -443,7 +457,7 @@ int check_sync_status(void)
   int current_block_height = get_block_height();
   if (current_block_height >= g_protocol_sync_entry.sync_height)
   {
-    if (!clear_sync_request())
+    if (!clear_sync_request(1))
     {
       printf("Successfully synced blockchain at block height: %d.\n", current_block_height);
       return 0;
@@ -494,7 +508,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
   uint32_t block_height = g_protocol_sync_entry.last_sync_height;
   if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
   {
-    if (clear_sync_request())
+    if (clear_sync_request(0))
     {
       fprintf(stderr, "Timed out when requesting block at height: %d!\n", block_height);
     }
@@ -550,6 +564,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
         get_block_height_response_t *message = (get_block_height_response_t*)message_object;
+        int found_alt_chain = 0;
         uint32_t current_block_height = get_block_height();
         if (message->height > current_block_height)
         {
@@ -564,9 +579,10 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
               }
               else
               {
-                if (!clear_sync_request())
+                if (!clear_sync_request(0))
                 {
                   printf("Found potential alternative blockchain at height: %llu.\n", message->height);
+                  found_alt_chain = 1;
                 }
               }
             }
@@ -574,6 +590,24 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
           if (!init_sync_request(message->height, recipient, recipient_len))
           {
+            // check to see if we found an alternative chain with an alternative
+            // top block height, if so then backup our current chain. This will be used
+            // if we fail to sync to that alternative chain, we can switch back to our previous
+            // chain and not have to resync to the previous height over again...
+            if (found_alt_chain)
+            {
+              g_protocol_sync_entry.sync_alternative = 1;
+              if (!backup_blockchain())
+              {
+                printf("Successfully backed up current blockchain in preparation to sync to an alternative blockchain.\n");
+              }
+              else
+              {
+                fprintf(stderr, "Could not backup current blockchain when trying to sync to alternative blockchain!\n");
+                return 1;
+              }
+            }
+
             printf("Beginning sync with presumed top block: %llu...\n", message->height);
             request_sync_next_block(recipient, recipient_len);
           }

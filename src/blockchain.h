@@ -37,8 +37,10 @@ extern "C"
 #endif
 
 int open_blockchain(const char *blockchain_dir);
-int init_blockchain(const char *blockchain_dir);
 int close_blockchain(void);
+int init_blockchain(const char *blockchain_dir);
+int backup_blockchain(void);
+int restore_blockchain(void);
 
 uint32_t get_block_height(void);
 int insert_block_into_blockchain(block_t *block);

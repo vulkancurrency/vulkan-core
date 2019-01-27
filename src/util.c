@@ -80,3 +80,15 @@ int string_count(const char *string, const char *countstr, int countbreak)
   }
   return count;
 }
+
+const char* string_copy(const char *string1, const char *string2)
+{
+  int size = sizeof(char*) * (strlen(string1) + strlen(string2));
+  char* dir_name = malloc(size);
+  memset(dir_name, '\0', size);
+
+  strncpy(dir_name, string1, strlen(string1));
+  strncpy(dir_name + strlen(string1), string2, strlen(string2));
+
+  return (const char*)dir_name;
+}
