@@ -293,12 +293,9 @@ int compare_with_genesis_block(block_t *block)
   hash_block(block);
   hash_block(&genesis_block);
 
-  for (int i = 0; i < HASH_SIZE; i++)
+  if (memcmp(block->hash, genesis_block.hash, HASH_SIZE) != 0)
   {
-    if (block->hash[i] != genesis_block.hash[i])
-    {
-      return 1;
-    }
+    return 1;
   }
 
   return 0;
