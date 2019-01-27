@@ -24,8 +24,9 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
+#include <time.h>
+#include <string.h>
 
 #include <gossip.h>
 
@@ -36,7 +37,7 @@
 #include "vulkan.pb-c.h"
 #include "util.h"
 
-static sync_entry_t *g_protocol_sync_entry = NULL;
+static sync_entry_t g_protocol_sync_entry;
 
 packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message)
 {
@@ -399,28 +400,119 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
 
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
 {
-  if (g_protocol_sync_entry != NULL)
+  if (g_protocol_sync_entry.sync_initiated)
   {
     return 1;
   }
 
-  g_protocol_sync_entry = malloc(sizeof(g_protocol_sync_entry));
-  g_protocol_sync_entry->height = height;
-  g_protocol_sync_entry->recipient = recipient;
-  g_protocol_sync_entry->recipient_len = recipient_len;
+  g_protocol_sync_entry.recipient = recipient;
+  g_protocol_sync_entry.recipient_len = recipient_len;
+
+  g_protocol_sync_entry.sync_initiated = 1;
+  g_protocol_sync_entry.sync_height = height;
+
+  g_protocol_sync_entry.last_sync_height = 0;
+  g_protocol_sync_entry.last_sync_ts = time(0);
+  g_protocol_sync_entry.last_sync_tries = 0;
 
   return 0;
 }
 
-int free_sync_request(void)
+int clear_sync_request(void)
 {
-  if (g_protocol_sync_entry == NULL)
+  if (!g_protocol_sync_entry.sync_initiated)
   {
     return 1;
   }
 
-  free(g_protocol_sync_entry);
-  g_protocol_sync_entry = NULL;
+  g_protocol_sync_entry.recipient = NULL;
+  g_protocol_sync_entry.recipient_len = 0;
+
+  g_protocol_sync_entry.sync_initiated = 0;
+  g_protocol_sync_entry.sync_height = 0;
+
+  g_protocol_sync_entry.last_sync_height = 0;
+  g_protocol_sync_entry.last_sync_ts = time(0);
+  g_protocol_sync_entry.last_sync_tries = 0;
+
+  return 0;
+}
+
+int check_sync_status(void)
+{
+  int current_block_height = get_block_height();
+  if (current_block_height >= g_protocol_sync_entry.sync_height)
+  {
+    if (!clear_sync_request())
+    {
+      printf("Successfully synced blockchain at block height: %d.\n", current_block_height);
+      return 0;
+    }
+    else
+    {
+      return 1;
+    }
+  }
+
+  return 1;
+}
+
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash)
+{
+  int sync_height = height;
+  if (height < 0 && hash != NULL)
+  {
+    sync_height = get_block_height_from_hash(hash);
+  }
+
+  if (sync_height < 0)
+  {
+    fprintf(stderr, "Could not request block at an unknown sync height!\n");
+    return 1;
+  }
+
+  if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_REQ, height, hash))
+  {
+    return 1;
+  }
+
+  if (sync_height == g_protocol_sync_entry.last_sync_height)
+  {
+    g_protocol_sync_entry.last_sync_tries++;
+  }
+  else
+  {
+    g_protocol_sync_entry.last_sync_height = sync_height;
+  }
+
+  g_protocol_sync_entry.last_sync_ts = time(NULL);
+  return 0;
+}
+
+int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
+{
+  uint32_t block_height = g_protocol_sync_entry.last_sync_height;
+  if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
+  {
+    if (clear_sync_request())
+    {
+      fprintf(stderr, "Timed out when requesting block at height: %d!\n", block_height);
+    }
+
+    return 1;
+  }
+
+  if (!has_block_by_height(block_height))
+  {
+    fprintf(stderr, "Cannot request next block when previous block at height: %d, was not found in the blockchain!\n", block_height);
+    return 1;
+  }
+
+  int sync_height = get_block_height() + 1;
+  if (request_sync_block(recipient, recipient_len, sync_height, NULL))
+  {
+    return 1;
+  }
 
   return 0;
 }
@@ -432,11 +524,12 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
-        uint32_t current_block_height = get_block_height();
         if (insert_block_into_blockchain(message->block))
         {
-          printf("Added incoming block at height: %d!\n", current_block_height);
+          printf("Added incoming block at height: %d.\n", get_block_height());
         }
+
+        free_block(message->block);
         free(message);
       }
       break;
@@ -450,7 +543,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = (get_block_height_request_t*)message_object;
-        handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height() - 1, get_current_block_hash());
+        handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height(), get_current_block_hash());
         free(message);
       }
       break;
@@ -460,30 +553,33 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         uint32_t current_block_height = get_block_height();
         if (message->height > current_block_height)
         {
-          if (g_protocol_sync_entry != NULL)
+          if (g_protocol_sync_entry.sync_initiated)
           {
-            if (message->height > g_protocol_sync_entry->height)
+            if (message->height > g_protocol_sync_entry.sync_height)
             {
-              if (g_protocol_sync_entry->recipient == recipient)
+              if (g_protocol_sync_entry.recipient == recipient)
               {
-                g_protocol_sync_entry->height = message->height;
+                g_protocol_sync_entry.sync_height = message->height;
                 printf("Updating sync height with presumed top block: %llu...\n", message->height);
               }
               else
               {
-                if (!free_sync_request())
+                if (!clear_sync_request())
                 {
                   printf("Found potential alternative blockchain at height: %llu.\n", message->height);
                 }
               }
             }
           }
+
           if (!init_sync_request(message->height, recipient, recipient_len))
           {
             printf("Beginning sync with presumed top block: %llu...\n", message->height);
-            handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_REQ, current_block_height, NULL);
+            request_sync_next_block(recipient, recipient_len);
           }
         }
+
+        free(message->hash);
         free(message);
       }
       break;
@@ -491,6 +587,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       {
         get_block_request_t *message = (get_block_request_t*)message_object;
         block_t *block = NULL;
+
         if (message->height < 0)
         {
           block = get_block_from_hash(message->hash);
@@ -499,45 +596,34 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         {
           block = get_block_from_height(message->height);
         }
+
         if (block != NULL)
         {
           uint32_t block_height = get_block_height_from_block(block);
           handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, block_height, block);
-          free(block);
+          free_block(block);
         }
+
+        free(message->hash);
         free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_RESP:
       {
         get_block_response_t *message = (get_block_response_t*)message_object;
-        if (g_protocol_sync_entry != NULL)
+        if (g_protocol_sync_entry.sync_initiated)
         {
-          uint32_t current_block_height = get_block_height();
           if (insert_block_into_blockchain(message->block))
           {
-            printf("Received block at height: %d.\n", current_block_height);
-
-            if (current_block_height < g_protocol_sync_entry->height)
+            printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
+            if (check_sync_status())
             {
-              handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_REQ, current_block_height + 1, NULL);
-            }
-            else
-            {
-              if (!free_sync_request())
-              {
-                printf("Successfully synced blockchain at block height: %d.\n", current_block_height);
-              }
-            }
-          }
-          else
-          {
-            if (!free_sync_request())
-            {
-
+              request_sync_next_block(recipient, recipient_len);
             }
           }
         }
+
+        free_block(message->block);
         free(message);
       }
       break;
@@ -625,4 +711,19 @@ int handle_packet_broadcast(uint32_t packet_id, ...)
 
   va_end(args);
   return 0;
+}
+
+task_result_t resync_chain(task_t *task, va_list args)
+{
+  if (g_protocol_sync_entry.sync_initiated)
+  {
+    if (time(NULL) - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
+    {
+      uint32_t block_height = g_protocol_sync_entry.last_sync_height;
+      request_sync_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len, block_height, NULL);
+    }
+  }
+
+  handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  return TASK_RESULT_WAIT;
 }

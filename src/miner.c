@@ -23,9 +23,10 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdio.h>
 #include <stdint.h>
-#include <string.h>
 #include <time.h>
+#include <string.h>
 
 #include "block.h"
 #include "blockchain.h"
@@ -49,10 +50,9 @@ int start_mining(void)
   {
     uint8_t *previous_hash = get_current_block_hash();
     block_t *block = compute_next_block(previous_hash);
-    uint32_t block_height = get_block_height();
     if (insert_block_into_blockchain(block))
     {
-      printf("Inserted block #%d\n", block_height);
+      printf("Inserted block #%d\n", get_block_height());
       print_block(block);
 
       set_current_block_hash(block->hash);

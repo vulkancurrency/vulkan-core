@@ -27,16 +27,22 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include <gossip.h>
 
 #include "block.h"
+#include "task.h"
 #include "transaction.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#define RESYNC_CHAIN_TASK_DELAY 2
+#define RESYNC_BLOCK_REQUEST_DELAY 10
+#define RESYNC_BLOCK_MAX_TRIES 5
 
 enum
 {
@@ -106,9 +112,15 @@ typedef struct MGetTransactionResponse
 
 typedef struct SyncEntry
 {
-  int height;
   const pt_sockaddr_storage *recipient;
   pt_socklen_t recipient_len;
+
+  int sync_initiated;
+  uint32_t sync_height;
+
+  uint32_t last_sync_height;
+  time_t last_sync_ts;
+  uint8_t last_sync_tries;
 } sync_entry_t;
 
 packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message);
@@ -124,7 +136,10 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args);
 void* deserialize_packet(packet_t *packet);
 
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
-int free_sync_request(void);
+int clear_sync_request(void);
+int check_sync_status(void);
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash);
+int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);
 int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
@@ -132,6 +147,8 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
 int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args);
 int handle_packet_sendto(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, ...);
 int handle_packet_broadcast(uint32_t packet_id, ...);
+
+task_result_t resync_chain(task_t *task, va_list args);
 
 #ifdef __cplusplus
 }

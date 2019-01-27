@@ -37,8 +37,6 @@ extern "C"
 {
 #endif
 
-#define RESYNC_CHAIN_TASK_DELAY 5
-
 void net_set_gossip(pittacus_gossip_t *gossip);
 pittacus_gossip_t* net_get_gossip(void);
 
@@ -54,8 +52,6 @@ void* net_run_server_threaded();
 
 int net_start_server(int threaded, int seed_mode);
 void net_stop_server(void);
-
-task_result_t resync_chain(task_t *task, va_list args);
 
 #ifdef __cplusplus
 }

@@ -90,7 +90,7 @@ int valid_block(block_t *block)
   }
 
   // First TX must always be a generational TX.
-  if (is_generation_tx(block->transactions[0]) != 1)
+  if (!is_generation_tx(block->transactions[0]))
   {
     return 0;
   }
@@ -373,11 +373,13 @@ block_t *block_from_proto(PBlock *proto_block)
 
   // @TODO(vy): unpack transactions into struct
   block->transaction_count = proto_block->n_transactions;
-  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
-
-  for (int i = 0; i < block->transaction_count; i++)
+  if (block->transaction_count > 0)
   {
-    block->transactions[i] = transaction_from_proto(proto_block->transactions[i]);
+    block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+    for (int i = 0; i < block->transaction_count; i++)
+    {
+      block->transactions[i] = transaction_from_proto(proto_block->transactions[i]);
+    }
   }
 
   return block;
@@ -413,13 +415,13 @@ int free_proto_block(PBlock *proto_block)
  */
 int free_block(block_t *block)
 {
-  for (int i = 0; i < block->transaction_count; i++)
-  {
-    free_transaction(block->transactions[i]);
-  }
-
   if (block->transaction_count > 0)
   {
+    for (int i = 0; i < block->transaction_count; i++)
+    {
+      free_transaction(block->transactions[i]);
+    }
+
     free(block->transactions);
   }
 

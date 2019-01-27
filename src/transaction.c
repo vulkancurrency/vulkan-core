@@ -24,9 +24,9 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "blockchain.h"
 #include "transaction.h"
@@ -443,7 +443,8 @@ int free_transaction(transaction_t *tx)
     free(tx->txouts[i]);
   }
 
+  free(tx->txins);
+  free(tx->txouts);
   free(tx);
-
   return 0;
 }

@@ -23,9 +23,9 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <string.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 
 #include <rocksdb/c.h>
 
@@ -66,15 +66,13 @@ int open_blockchain(const char *blockchain_dir)
     return 1;
   }
 
-  block_t *test_block = get_block_from_hash(genesis_block.hash);
-  if (test_block == NULL)
+  if (!has_block_by_hash(genesis_block.hash))
   {
     insert_block_into_blockchain(&genesis_block);
   }
   else
   {
     set_current_block(get_top_block());
-    free_block(test_block);
   }
 
   g_blockchain_is_open = 1;
@@ -125,7 +123,7 @@ int insert_block_into_blockchain(block_t *block)
   }
 
   // check this blocks previous has against our current top block hash
-  if (memcmp(get_current_block_hash(), block->previous_hash, HASH_SIZE) != 0)
+  if (memcmp(block->previous_hash, get_current_block_hash(), HASH_SIZE) != 0)
   {
     return 0;
   }
@@ -250,16 +248,19 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 block_t *get_block_from_height(uint32_t height)
 {
   block_t *block = get_current_block();
-  for (int i = get_block_height() - 1; i >= 0; i--)
+  for (int i = get_block_height(); i >= 0; i--)
   {
     if (!block)
     {
       break;
     }
+
     if (i == height)
     {
       break;
     }
+
+    free_block(block);
     block = get_block_from_hash(block->previous_hash);
   }
 
@@ -268,16 +269,22 @@ block_t *get_block_from_height(uint32_t height)
 
 int32_t get_block_height_from_hash(uint8_t *block_hash)
 {
+  int32_t block_height = -1;
+  block_t *block = NULL;
   for (int i = 0; i <= get_block_height(); i++)
   {
-    block_t *block = get_block_from_height(i);
+    block = get_block_from_height(i);
     if (memcmp(block->hash, block_hash, HASH_SIZE) == 0)
     {
-      return i;
+      block_height = i;
+      break;
     }
+
+    free_block(block);
   }
 
-  return -1;
+  free_block(block);
+  return block_height;
 }
 
 int32_t get_block_height_from_block(block_t *block)
@@ -298,12 +305,26 @@ uint8_t *get_block_hash_from_height(uint32_t height)
 
 int has_block_by_hash(uint8_t *block_hash)
 {
-  return get_block_from_hash(block_hash) != NULL;
+  block_t *block = get_block_from_hash(block_hash);
+  if (!block)
+  {
+    return 0;
+  }
+
+  free_block(block);
+  return 1;
 }
 
 int has_block_by_height(uint32_t height)
 {
-  return get_block_from_height(height) != NULL;
+  block_t *block = get_block_from_height(height);
+  if (!block)
+  {
+    return 0;
+  }
+
+  free_block(block);
+  return 1;
 }
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
@@ -469,46 +490,15 @@ uint32_t get_block_height(void)
     }
   }
 
+  if (block_height > 0)
+  {
+    block_height--;
+  }
+
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
 
   return block_height;
-}
-
-block_t *get_top_block(void)
-{
-  char *err = NULL;
-  block_t *block = NULL;
-
-  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
-
-  for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
-  {
-    size_t key_length;
-    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
-    if (key_length > 0 && key[0] == 'b')
-    {
-      size_t read_len;
-      uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, key_length, &read_len, &err);
-
-      if (err != NULL || serialized_block == NULL)
-      {
-        rocksdb_free(err);
-        rocksdb_readoptions_destroy(roptions);
-        return NULL;
-      }
-
-      block = block_from_serialized(serialized_block, read_len);
-      rocksdb_free(serialized_block);
-    }
-  }
-
-  rocksdb_free(err);
-  rocksdb_readoptions_destroy(roptions);
-  rocksdb_iter_destroy(iterator);
-
-  return block;
 }
 
 int delete_block_from_blockchain(uint8_t *block_hash)
@@ -576,9 +566,50 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   return 1;
 }
 
-uint8_t *get_current_block_hash(void)
+int set_top_block(block_t *block)
 {
-  return g_blockchain_current_block_hash;
+  char *err = NULL;
+  uint8_t key[2];
+  get_top_block_key(key);
+
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block->hash, HASH_SIZE, &err);
+
+  if (err != NULL)
+  {
+    fprintf(stderr, "Could not set blockchain top block: %s\n", err);
+    return 1;
+  }
+
+  rocksdb_free(err);
+  rocksdb_writeoptions_destroy(woptions);
+  return 0;
+}
+
+block_t *get_top_block(void)
+{
+  char *err = NULL;
+  uint8_t key[2];
+  get_top_block_key(key);
+
+  size_t read_len;
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  uint8_t *block_hash = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+
+  if (err != NULL || block_hash == NULL)
+  {
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    return NULL;
+  }
+
+  block_t *block = get_block_from_hash(block_hash);
+
+  rocksdb_free(block_hash);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+
+  return block;
 }
 
 int set_current_block_hash(uint8_t *hash)
@@ -587,9 +618,9 @@ int set_current_block_hash(uint8_t *hash)
   return 0;
 }
 
-block_t *get_current_block(void)
+uint8_t *get_current_block_hash(void)
 {
-  return get_block_from_hash(get_current_block_hash());
+  return g_blockchain_current_block_hash;
 }
 
 int set_current_block(block_t *block)
@@ -599,8 +630,14 @@ int set_current_block(block_t *block)
     return 1;
   }
 
+  set_top_block(block);
   set_current_block_hash(block->hash);
   return 0;
+}
+
+block_t *get_current_block(void)
+{
+  return get_block_from_hash(get_current_block_hash());
 }
 
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
@@ -621,6 +658,12 @@ int get_block_key(uint8_t *buffer, uint8_t *block_hash)
 {
   buffer[0] = 'b';
   memcpy(buffer + 1, block_hash, HASH_SIZE);
+  return 0;
+}
+
+int get_top_block_key(uint8_t *buffer)
+{
+  memcpy(buffer, "tb", 2);
   return 0;
 }
 

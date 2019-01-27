@@ -281,9 +281,3 @@ void net_stop_server(void)
   }
   g_net_server_running = 0;
 }
-
-task_result_t resync_chain(task_t *task, va_list args)
-{
-  handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
-  return TASK_RESULT_WAIT;
-}

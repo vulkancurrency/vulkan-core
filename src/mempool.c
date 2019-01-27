@@ -25,10 +25,9 @@
 
 #include <stdint.h>
 
+#include "mempool.h"
 #include "queue.h"
 #include "transaction.h"
-
-#include "mempool.h"
 
 static int g_mempool_initialized = 0;
 static queue_t *g_mempool = NULL;
