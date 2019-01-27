@@ -44,11 +44,11 @@ typedef struct Queue
 } queue_t;
 
 queue_t* queue_init(void);
-void queue_free(queue_t *queue);
+int queue_free(queue_t *queue);
 
-void queue_push(queue_t *queue, int index, void *queue_object);
-void queue_push_left(queue_t *queue, void *queue_object);
-void queue_push_right(queue_t *queue, void *queue_object);
+int queue_push(queue_t *queue, int index, void *queue_object);
+int queue_push_left(queue_t *queue, void *queue_object);
+int queue_push_right(queue_t *queue, void *queue_object);
 
 int queue_get_size(queue_t *queue);
 int queue_get_empty(queue_t *queue);
@@ -57,8 +57,8 @@ int queue_get_max_index(queue_t *queue);
 int queue_get_index(queue_t *queue, void *queue_object);
 void* queue_get(queue_t *queue, int index);
 
-void queue_remove(queue_t *queue, int index);
-void queue_remove_object(queue_t *queue, void *queue_object);
+int queue_remove(queue_t *queue, int index);
+int queue_remove_object(queue_t *queue, void *queue_object);
 
 void* queue_pop(queue_t *queue, int index);
 void* queue_pop_left(queue_t *queue);

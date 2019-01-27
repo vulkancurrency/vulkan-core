@@ -38,17 +38,19 @@ queue_t* queue_init(void)
   return queue;
 }
 
-void queue_free(queue_t *queue)
+int queue_free(queue_t *queue)
 {
   for (int i = 0; i <= queue->max_index; i++)
   {
     queue_remove(queue, i);
   }
+
   queue->num_objects = 0;
   queue->max_index = -1;
 
   pthread_mutex_destroy(&queue->mutex);
   free(queue);
+  return 0;
 }
 
 int queue_get_size(queue_t *queue)
@@ -83,6 +85,7 @@ int queue_get_index(queue_t *queue, void *queue_object)
       break;
     }
   }
+
   return index;
 }
 
@@ -92,24 +95,33 @@ void* queue_get(queue_t *queue, int index)
   {
     return NULL;
   }
+
   return queue->queue_objects[index];
 }
 
-void queue_push(queue_t *queue, int index, void *queue_object)
+int queue_push(queue_t *queue, int index, void *queue_object)
 {
   if (index < 0)
   {
-    return;
+    return 1;
   }
+
+  if (queue_get_full(queue))
+  {
+    return 1;
+  }
+
   queue->queue_objects[index] = queue_object;
   queue->num_objects++;
   if (index > queue->max_index)
   {
     queue->max_index = index;
   }
+
+  return 0;
 }
 
-void queue_push_left(queue_t *queue, void *queue_object)
+int queue_push_left(queue_t *queue, void *queue_object)
 {
   pthread_mutex_lock(&queue->mutex);
   for (int i = queue->max_index + 1; i >= 0; i--)
@@ -117,47 +129,56 @@ void queue_push_left(queue_t *queue, void *queue_object)
     // shift all object over right by one index
     queue->queue_objects[i] = queue->queue_objects[i - 1];
   }
-  queue_push(queue, 0, queue_object);
+
+  int result = queue_push(queue, 0, queue_object);
   pthread_mutex_unlock(&queue->mutex);
+  return result;
 }
 
-void queue_push_right(queue_t *queue, void *queue_object)
+int queue_push_right(queue_t *queue, void *queue_object)
 {
   pthread_mutex_lock(&queue->mutex);
-  queue_push(queue, queue->max_index + 1, queue_object);
+  int result = queue_push(queue, queue->max_index + 1, queue_object);
   pthread_mutex_unlock(&queue->mutex);
+  return result;
 }
 
-void queue_remove(queue_t *queue, int index)
+int queue_remove(queue_t *queue, int index)
 {
   if (index < 0)
   {
-    return;
+    return 1;
   }
+
   if (index >= queue->max_index)
   {
     queue->max_index = index - 1;
   }
+
   queue->queue_objects[index] = NULL;
   queue->num_objects--;
+  return 0;
 }
 
-void queue_remove_object(queue_t *queue, void *queue_object)
+int queue_remove_object(queue_t *queue, void *queue_object)
 {
   if (!queue_object)
   {
-    return;
+    return 1;
   }
+
   pthread_mutex_lock(&queue->mutex);
   int index = queue_get_index(queue, queue_object);
   pthread_mutex_unlock(&queue->mutex);
   if (index == -1)
   {
-    return;
+    return 1;
   }
+
   pthread_mutex_lock(&queue->mutex);
-  queue_remove(queue, index);
+  int result = queue_remove(queue, index);
   pthread_mutex_unlock(&queue->mutex);
+  return result;
 }
 
 void* queue_pop(queue_t *queue, int index)
