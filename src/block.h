@@ -37,12 +37,12 @@ extern "C"
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 4 + 4 + 1 + 1)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 4 + 4 + 4 + 4)
 
 typedef struct Block
 {
-  uint8_t version;
-  uint8_t bits;
+  uint32_t version;
+  uint32_t bits;
 
   uint8_t previous_hash[HASH_SIZE];
   uint8_t hash[HASH_SIZE];

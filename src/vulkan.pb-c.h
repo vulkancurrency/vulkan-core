@@ -43,7 +43,7 @@ struct  _PInputTransaction
 {
   ProtobufCMessage base;
   ProtobufCBinaryData transaction;
-  int32_t txout_index;
+  uint32_t txout_index;
   ProtobufCBinaryData signature;
   ProtobufCBinaryData public_key;
 };
@@ -55,7 +55,7 @@ struct  _PInputTransaction
 struct  _POutputTransaction
 {
   ProtobufCMessage base;
-  int64_t amount;
+  uint64_t amount;
   ProtobufCBinaryData address;
 };
 #define POUTPUT_TRANSACTION__INIT \
@@ -80,7 +80,7 @@ struct  _PTransaction
 struct  _PUnspentOutputTransaction
 {
   ProtobufCMessage base;
-  int64_t amount;
+  uint64_t amount;
   ProtobufCBinaryData address;
   protobuf_c_boolean spent;
 };
@@ -105,12 +105,12 @@ struct  _PUnspentTransaction
 struct  _PBlock
 {
   ProtobufCMessage base;
-  int32_t version;
-  int32_t bits;
+  uint32_t version;
+  uint32_t bits;
   ProtobufCBinaryData previous_hash;
   ProtobufCBinaryData hash;
-  int32_t timestamp;
-  int32_t nonce;
+  uint32_t timestamp;
+  uint32_t nonce;
   ProtobufCBinaryData merkle_root;
   size_t n_transactions;
   PTransaction **transactions;
@@ -126,7 +126,7 @@ struct  _PWallet
   ProtobufCBinaryData secret_key;
   ProtobufCBinaryData public_key;
   ProtobufCBinaryData address;
-  int64_t balance;
+  uint64_t balance;
 };
 #define PWALLET__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&pwallet__descriptor) \
@@ -145,8 +145,8 @@ struct  _PEmpty
 struct  _PPacket
 {
   ProtobufCMessage base;
-  int32_t id;
-  int32_t message_size;
+  uint32_t id;
+  uint32_t message_size;
   ProtobufCBinaryData message;
 };
 #define PPACKET__INIT \
@@ -186,7 +186,7 @@ struct  _MGetBlockHeightRequest
 struct  _MGetBlockHeightResponse
 {
   ProtobufCMessage base;
-  int64_t height;
+  uint64_t height;
   ProtobufCBinaryData hash;
 };
 #define MGET_BLOCK_HEIGHT_RESPONSE__INIT \
@@ -208,7 +208,7 @@ struct  _MGetBlockRequest
 struct  _MGetBlockResponse
 {
   ProtobufCMessage base;
-  int64_t height;
+  uint64_t height;
   PBlock *block;
 };
 #define MGET_BLOCK_RESPONSE__INIT \

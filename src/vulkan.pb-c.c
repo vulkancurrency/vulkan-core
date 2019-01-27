@@ -790,7 +790,7 @@ static const ProtobufCFieldDescriptor pinput_transaction__field_descriptors[4] =
     "txout_index",
     2,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PInputTransaction, txout_index),
     NULL,
@@ -855,7 +855,7 @@ static const ProtobufCFieldDescriptor poutput_transaction__field_descriptors[2] 
     "amount",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
     offsetof(POutputTransaction, amount),
     NULL,
@@ -970,7 +970,7 @@ static const ProtobufCFieldDescriptor punspent_output_transaction__field_descrip
     "amount",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
     offsetof(PUnspentOutputTransaction, amount),
     NULL,
@@ -1098,7 +1098,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
     "version",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PBlock, version),
     NULL,
@@ -1110,7 +1110,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
     "bits",
     2,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PBlock, bits),
     NULL,
@@ -1146,7 +1146,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
     "timestamp",
     5,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PBlock, timestamp),
     NULL,
@@ -1158,7 +1158,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
     "nonce",
     6,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PBlock, nonce),
     NULL,
@@ -1180,7 +1180,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
   },
   {
     "transactions",
-    9,
+    8,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(PBlock, n_transactions),
@@ -1201,10 +1201,9 @@ static const unsigned pblock__field_indices_by_name[] = {
   7,   /* field[7] = transactions */
   0,   /* field[0] = version */
 };
-static const ProtobufCIntRange pblock__number_ranges[2 + 1] =
+static const ProtobufCIntRange pblock__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 9, 7 },
   { 0, 8 }
 };
 const ProtobufCMessageDescriptor pblock__descriptor =
@@ -1218,7 +1217,7 @@ const ProtobufCMessageDescriptor pblock__descriptor =
   8,
   pblock__field_descriptors,
   pblock__field_indices_by_name,
-  2,  pblock__number_ranges,
+  1,  pblock__number_ranges,
   (ProtobufCMessageInit) pblock__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
@@ -1264,7 +1263,7 @@ static const ProtobufCFieldDescriptor pwallet__field_descriptors[4] =
     "balance",
     4,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
     offsetof(PWallet, balance),
     NULL,
@@ -1323,7 +1322,7 @@ static const ProtobufCFieldDescriptor ppacket__field_descriptors[3] =
     "id",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PPacket, id),
     NULL,
@@ -1335,7 +1334,7 @@ static const ProtobufCFieldDescriptor ppacket__field_descriptors[3] =
     "message_size",
     2,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PPacket, message_size),
     NULL,
@@ -1481,7 +1480,7 @@ static const ProtobufCFieldDescriptor mget_block_height_response__field_descript
     "height",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
     offsetof(MGetBlockHeightResponse, height),
     NULL,
@@ -1583,7 +1582,7 @@ static const ProtobufCFieldDescriptor mget_block_response__field_descriptors[2] 
     "height",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
     offsetof(MGetBlockResponse, height),
     NULL,

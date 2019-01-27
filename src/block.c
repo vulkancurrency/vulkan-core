@@ -241,9 +241,9 @@ int get_block_header(uint8_t *block_header, block_t *block)
   uint32_t position = 0;
 
   memcpy(block_header + position, &block->version, 1);
-  position += 1;
+  position += 4;
   memcpy(block_header + position, &block->bits, 1);
-  position += 1;
+  position += 4;
   memcpy(block_header + position, &block->nonce, 4);
   position += 4;
   memcpy(block_header + position, &block->timestamp, 4);
