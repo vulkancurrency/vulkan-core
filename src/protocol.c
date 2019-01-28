@@ -222,6 +222,7 @@ void* deserialize_packet(packet_t *packet)
       fprintf(stderr, "Could not deserialize packet with unknown packet id: %d\n", packet->id);
       return NULL;
   }
+
   return NULL;
 }
 
@@ -395,6 +396,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
       fprintf(stderr, "Could not serialize packet with unknown packet id: %d\n", packet_id);
       return NULL;
   }
+
   return make_packet(packet_id, buffer_len, buffer);
 }
 
@@ -596,7 +598,12 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = (get_block_height_request_t*)message_object;
-        handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_RESP, get_block_height(), get_current_block_hash());
+        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_HEIGHT_RESP,
+          get_block_height(), get_current_block_hash()))
+        {
+          return 1;
+        }
+
         free(message);
       }
       break;
@@ -765,6 +772,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       fprintf(stderr, "Could not handle packet with unknown packet id: %d\n", packet_id);
       return 1;
   }
+
   return 0;
 }
 
