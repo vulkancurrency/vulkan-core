@@ -841,6 +841,11 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
   packet_t *packet = packet_from_serialized(data, data_size);
+  if (!packet)
+  {
+    return 1;
+  }
+
   void *message = deserialize_packet(packet);
   if (!message)
   {
