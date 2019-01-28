@@ -649,15 +649,12 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         {
           printf("Added incoming block at height: %d.\n", get_block_height());
         }
-
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
         incoming_transaction_t *message = (incoming_transaction_t*)message_object;
         push_tx_to_mempool(message->transaction);
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -668,8 +665,6 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         {
           return 1;
         }
-
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
@@ -721,8 +716,6 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             }
           }
         }
-
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_REQ:
@@ -749,8 +742,6 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
           free_block(block);
         }
-
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_RESP:
@@ -814,20 +805,16 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             }
           }
         }
-
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
-        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_RESP:
       {
         get_transaction_response_t *message = (get_transaction_response_t*)message_object;
-        free_message(packet_id, message);
       }
       break;
     default:
@@ -849,14 +836,18 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
   void *message = deserialize_packet(packet);
   if (!message)
   {
+    free_packet(packet);
     return 1;
   }
 
   if (handle_packet(gossip, recipient, recipient_len, packet->id, message))
   {
+    free_message(packet->id, message);
+    free_packet(packet);
     return 1;
   }
 
+  free_message(packet->id, message);
   free_packet(packet);
   return 0;
 }
