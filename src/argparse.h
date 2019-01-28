@@ -30,6 +30,9 @@ typedef enum Argument
   CMD_ARG_HELP = 0,
   CMD_ARG_VERSION,
 
+  CMD_ARG_BIND_ADDRESS,
+  CMD_ARG_BIND_PORT,
+  CMD_ARG_DISABLE_PORT_MAPPING,
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_WALLET_FILENAME,
   CMD_ARG_NEW_WALLET,
@@ -51,6 +54,9 @@ typedef struct ArgumentMap
 static argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information.", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information.", 0},
+  {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", 0},
+  {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", 0},
+  {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", 0},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", 1},
   {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 1},

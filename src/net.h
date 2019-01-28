@@ -40,6 +40,17 @@ extern "C"
 void net_set_gossip(pittacus_gossip_t *gossip);
 pittacus_gossip_t* net_get_gossip(void);
 
+void net_set_disable_port_mapping(int disable_port_mapping);
+int net_get_disable_port_mapping(void);
+
+void net_set_bind_address(const char *bind_address);
+const char* net_get_bind_address(void);
+
+void net_set_bind_port(int bind_port);
+int net_get_bind_port(void);
+
+void net_setup_port_mapping(int port);
+
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
 int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
 int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);

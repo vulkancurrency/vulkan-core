@@ -33,17 +33,24 @@
 #include <time.h>
 #include <pthread.h>
 
+#include <miniupnpc/miniupnpc.h>
+#include <miniupnpc/upnpcommands.h>
+#include <miniupnpc/upnperrors.h>
+
 #include <gossip.h>
 #include <config.h>
 
 #include "chainparams.h"
-#include "task.h"
-#include "protocol.h"
-
 #include "net.h"
+#include "protocol.h"
+#include "task.h"
+#include "version.h"
 
 static int g_net_server_running = 0;
 static int g_net_seed_mode = 0;
+static int g_net_disable_port_mapping = 0;
+static const char* g_net_bind_address = "0.0.0.0";
+static int g_net_bind_port = P2P_PORT;
 
 static pittacus_gossip_t *g_net_gossip = NULL;
 static task_t *g_net_resync_chain_task = NULL;
@@ -59,6 +66,97 @@ void net_set_gossip(pittacus_gossip_t *gossip)
 pittacus_gossip_t* net_get_gossip(void)
 {
   return g_net_gossip;
+}
+
+void net_set_disable_port_mapping(int disable_port_mapping)
+{
+  g_net_disable_port_mapping = disable_port_mapping;
+}
+
+int net_get_disable_port_mapping(void)
+{
+  return g_net_disable_port_mapping;
+}
+
+void net_set_bind_address(const char *bind_address)
+{
+  g_net_bind_address = bind_address;
+}
+
+const char* net_get_bind_address(void)
+{
+  return g_net_bind_address;
+}
+
+void net_set_bind_port(int bind_port)
+{
+  g_net_bind_port = bind_port;
+}
+
+int net_get_bind_port(void)
+{
+  return g_net_bind_port;
+}
+
+void net_setup_port_mapping(int port)
+{
+  printf("Tring to add IGD port mapping...\n");
+  int result;
+
+#if MINIUPNPC_API_VERSION > 13
+  unsigned char ttl = 2;
+  struct UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, ttl, &result);
+#else
+  struct UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, &result);
+#endif
+
+  struct UPNPUrls urls;
+  struct IGDdatas igdData;
+  char lanAddress[64];
+  result = UPNP_GetValidIGD(deviceList, &urls, &igdData, lanAddress, sizeof lanAddress);
+  freeUPNPDevlist(deviceList);
+
+  if (result > 0)
+  {
+    if (result == 1)
+    {
+      char *port_string = malloc(sizeof(port));
+      sprintf(port_string, "%d", port);
+
+      UPNP_DeletePortMapping(urls.controlURL, igdData.first.servicetype, port_string, "TCP", 0);
+      int portMappingResult = UPNP_AddPortMapping(urls.controlURL, igdData.first.servicetype,
+        port_string, port_string, lanAddress, APPLICATION_NAME, "TCP", 0, "0");
+
+      if (portMappingResult != 0)
+      {
+        fprintf(stderr, "Failed to add IGD port mapping!\n");
+      }
+      else
+      {
+        printf("Added IGD port mapping.\n");
+      }
+
+      free(port_string);
+    }
+    else if (result == 2)
+    {
+      fprintf(stderr, "Failed to add IGD port mapping, could not connect IGD port mapping!\n");
+    }
+    else if (result == 3)
+    {
+      fprintf(stderr, "Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!\n");
+    }
+    else
+    {
+      fprintf(stderr, "Failed to add IGD port mapping, invalid code returned: %d!", result);
+    }
+
+    FreeUPNPUrls(&urls);
+  }
+  else
+  {
+    fprintf(stderr, "Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!\n");
+  }
 }
 
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
@@ -93,12 +191,17 @@ int net_connect(const char *address, int port)
   struct sockaddr_in self_in;
   self_in.sin_family = AF_INET;
   self_in.sin_port = 0;
-  inet_aton("0.0.0.0", &self_in.sin_addr);
+  inet_aton(g_net_bind_address, &self_in.sin_addr);
 
   pittacus_addr_t self_addr = {
     .addr = (const pt_sockaddr *) &self_in,
     .addr_len = sizeof(struct sockaddr_in)
   };
+
+  if (!g_net_disable_port_mapping)
+  {
+    net_setup_port_mapping(ntohs(self_in.sin_port));
+  }
 
   pittacus_gossip_t *gossip = pittacus_gossip_create(&self_addr, &net_receive_data, NULL);
   if (gossip == NULL)
@@ -131,10 +234,15 @@ int net_connect(const char *address, int port)
 
 int net_open_connection(void)
 {
+  if (!g_net_disable_port_mapping)
+  {
+    net_setup_port_mapping(g_net_bind_port);
+  }
+
   struct sockaddr_in self_in;
   self_in.sin_family = AF_INET;
-  self_in.sin_port = htons(P2P_PORT);
-  inet_aton("0.0.0.0", &self_in.sin_addr);
+  self_in.sin_port = htons(g_net_bind_port);
+  inet_aton(g_net_bind_address, &self_in.sin_addr);
 
   pittacus_addr_t self_addr = {
     .addr = (const pt_sockaddr *) &self_in,

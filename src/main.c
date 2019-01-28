@@ -29,15 +29,15 @@
 
 #include <sodium.h>
 
+#include "argparse.h"
 #include "chainparams.h"
-#include "version.h"
 #include "block.h"
-#include "wallet.h"
-#include "task.h"
-#include "net.h"
 #include "blockchain.h"
 #include "miner.h"
-#include "argparse.h"
+#include "net.h"
+#include "task.h"
+#include "version.h"
+#include "wallet.h"
 
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";
@@ -127,6 +127,19 @@ static int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_VERSION:
         printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
         return 1;
+      case CMD_ARG_BIND_ADDRESS:
+        i++;
+        const char *bind_address = (const char*)argv[i];
+        net_set_bind_address(bind_address);
+        break;
+      case CMD_ARG_BIND_PORT:
+        i++;
+        int bind_port = atoi(argv[i]);
+        net_set_bind_port(bind_port);
+        break;
+      case CMD_ARG_DISABLE_PORT_MAPPING:
+        net_set_disable_port_mapping(1);
+        break;
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
         g_blockchain_data_dir = (const char*)argv[i];
