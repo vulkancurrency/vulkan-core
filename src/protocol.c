@@ -525,7 +525,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
     return 1;
   }
 
-  int sync_height = get_block_height() + 1;
+  uint32_t sync_height = g_protocol_sync_entry.last_sync_height + 1;
   if (request_sync_block(recipient, recipient_len, sync_height, NULL))
   {
     return 1;
