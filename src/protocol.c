@@ -52,6 +52,7 @@ packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *messag
 
 int free_packet(packet_t *packet)
 {
+  free(packet->message);
   free(packet);
   return 0;
 }
@@ -867,15 +868,19 @@ int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *rec
   size_t buffer_len = 0;
 
   packet_to_serialized(&buffer, &buffer_len, packet);
+  free_packet(packet);
 
+  int result = 0;
   if (broadcast)
   {
-    return net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
+    result = net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
   }
   else
   {
-    return net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)buffer, buffer_len);
+    result = net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)buffer, buffer_len);
   }
+
+  return result;
 }
 
 int handle_packet_sendto(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, ...)
