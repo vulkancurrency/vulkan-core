@@ -288,9 +288,14 @@ int print_block(block_t *block)
   return 0;
 }
 
+int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
+{
+  return memcmp(hash, other_hash, HASH_SIZE) != 0;
+}
+
 int compare_block(block_t *block, block_t *other_block)
 {
-  return memcmp(block->hash, other_block->hash, HASH_SIZE) != 0;
+  return compare_block_hash(block->hash, other_block->hash);
 }
 
 int compare_with_genesis_block(block_t *block)

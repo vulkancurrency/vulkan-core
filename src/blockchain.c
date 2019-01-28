@@ -265,7 +265,7 @@ int insert_block_into_blockchain(block_t *block)
   }
 
   // check this blocks previous has against our current top block hash
-  if (memcmp(block->previous_hash, get_current_block_hash(), HASH_SIZE) != 0)
+  if (compare_block_hash(block->previous_hash, get_current_block_hash()))
   {
     return 0;
   }
@@ -421,7 +421,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
   for (int i = 0; i <= get_block_height(); i++)
   {
     block = get_block_from_height(i);
-    if (memcmp(block->hash, block_hash, HASH_SIZE) == 0)
+    if (!compare_block_hash(block->hash, block_hash))
     {
       block_height = i;
       break;
