@@ -84,11 +84,11 @@ int string_count(const char *string, const char *countstr, int countbreak)
 const char* string_copy(const char *string, const char *other_string)
 {
   int size = sizeof(char*) * (strlen(string) + strlen(other_string));
-  char* dir_name = malloc(size);
-  memset(dir_name, '\0', size);
+  char* out_string = malloc(size);
+  memset(out_string, '\0', size);
 
-  strncpy(dir_name, string, strlen(string));
-  strncpy(dir_name + strlen(string), other_string, strlen(other_string));
+  strncpy(out_string, string, strlen(string));
+  strncpy(out_string + strlen(string), other_string, strlen(other_string));
 
-  return (const char*)dir_name;
+  return (const char*)out_string;
 }
