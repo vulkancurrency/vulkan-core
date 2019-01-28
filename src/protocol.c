@@ -496,6 +496,7 @@ int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipi
   }
   else
   {
+    g_protocol_sync_entry.last_sync_tries = 0;
     g_protocol_sync_entry.last_sync_height = sync_height;
   }
 
