@@ -400,6 +400,71 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
   return make_packet(packet_id, buffer_len, buffer);
 }
 
+void free_message(uint32_t packet_id, void *message_object)
+{
+  switch (packet_id)
+  {
+    case PKT_TYPE_INCOMING_BLOCK:
+      {
+        incoming_block_t *message = (incoming_block_t*)message_object;
+        free_block(message->block);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_INCOMING_TRANSACTION:
+      {
+        incoming_transaction_t *message = (incoming_transaction_t*)message_object;
+        free_transaction(message->transaction);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
+      {
+        get_block_height_request_t *message = (get_block_height_request_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
+      {
+        get_block_height_response_t *message = (get_block_height_response_t*)message_object;
+        free(message->hash);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_REQ:
+      {
+        get_block_request_t *message = (get_block_request_t*)message_object;
+        free(message->hash);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_RESP:
+      {
+        get_block_response_t *message = (get_block_response_t*)message_object;
+        free(message->block);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_TRANSACTION_REQ:
+      {
+        get_transaction_request_t *message = (get_transaction_request_t*)message_object;
+        free(message->id);
+        free(message->input_hash);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_TRANSACTION_RESP:
+      {
+        get_transaction_response_t *message = (get_transaction_response_t*)message_object;
+        free_transaction(message->transaction);
+        free(message);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
 {
   if (g_protocol_sync_entry.sync_initiated)
@@ -584,15 +649,14 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           printf("Added incoming block at height: %d.\n", get_block_height());
         }
 
-        free_block(message->block);
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
         incoming_transaction_t *message = (incoming_transaction_t*)message_object;
         push_tx_to_mempool(message->transaction);
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -604,7 +668,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           return 1;
         }
 
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
@@ -657,8 +721,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           }
         }
 
-        free(message->hash);
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_REQ:
@@ -686,8 +749,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           free_block(block);
         }
 
-        free(message->hash);
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_RESP:
@@ -752,20 +814,19 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           }
         }
 
-        free_block(message->block);
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_RESP:
       {
         get_transaction_response_t *message = (get_transaction_response_t*)message_object;
-        free(message);
+        free_message(packet_id, message);
       }
       break;
     default:

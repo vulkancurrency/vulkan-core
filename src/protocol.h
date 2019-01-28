@@ -137,6 +137,8 @@ packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len);
 packet_t* serialize_packet(uint32_t packet_id, va_list args);
 void* deserialize_packet(packet_t *packet);
 
+void free_message(uint32_t packet_id, void *message_object);
+
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);
