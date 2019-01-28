@@ -48,6 +48,9 @@ static int g_net_seed_mode = 0;
 static pittacus_gossip_t *g_net_gossip = NULL;
 static task_t *g_net_resync_chain_task = NULL;
 
+static pthread_mutex_t g_net_send_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_net_recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void net_set_gossip(pittacus_gossip_t *gossip)
 {
   g_net_gossip = gossip;
@@ -60,21 +63,29 @@ pittacus_gossip_t* net_get_gossip(void)
 
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
+  pthread_mutex_lock(&g_net_recv_mutex);
   if (handle_receive_packet(gossip, recipient, recipient_len, data, data_size))
   {
-    fprintf(stderr, "Failed to handling incoming packet\n");
-    return;
+    fprintf(stderr, "Failed to handle an incoming packet!\n");
   }
+
+  pthread_mutex_unlock(&g_net_recv_mutex);
 }
 
 int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  return pittacus_gossip_send_data(gossip, data, data_size);
+  pthread_mutex_lock(&g_net_send_mutex);
+  int result = pittacus_gossip_send_data(gossip, data, data_size);
+  pthread_mutex_unlock(&g_net_send_mutex);
+  return result;
 }
 
 int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
-  return pittacus_gossip_data_sendto(gossip, recipient, recipient_len, data, data_size);
+  pthread_mutex_lock(&g_net_send_mutex);
+  int result = pittacus_gossip_data_sendto(gossip, recipient, recipient_len, data, data_size);
+  pthread_mutex_unlock(&g_net_send_mutex);
+  return result;
 }
 
 int net_connect(const char *address, int port)
@@ -227,9 +238,6 @@ int net_run_server(void)
       return 1;
     }
 
-    // update the task manager
-    taskmgr_tick();
-
     send_result = pittacus_gossip_process_send(g_net_gossip);
     if (send_result < 0)
     {
@@ -237,6 +245,9 @@ int net_run_server(void)
       pittacus_gossip_destroy(g_net_gossip);
       return 1;
     }
+
+    // update the task manager
+    taskmgr_tick();
   }
 
   pittacus_gossip_destroy(g_net_gossip);

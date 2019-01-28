@@ -73,11 +73,13 @@ int open_blockchain(const char *blockchain_dir)
   rocksdb_options_set_create_if_missing(options, 1);
 
   g_blockchain_db = rocksdb_open(options, blockchain_dir, &err);
-  g_blockchain_backup_db = rocksdb_backup_engine_open(options, get_blockchain_backup_dir(), &err);
 
   if (err != NULL)
   {
     fprintf(stderr, "Could not open blockchain database: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_free(options);
     return 1;
   }
 
@@ -91,7 +93,6 @@ int open_blockchain(const char *blockchain_dir)
   }
 
   g_blockchain_is_open = 1;
-  g_blockchain_backup_is_open = 1;
 
   rocksdb_free(err);
   rocksdb_free(options);
@@ -100,21 +101,64 @@ int open_blockchain(const char *blockchain_dir)
 
 int close_blockchain(void)
 {
-  if (g_blockchain_is_open)
+  if (!g_blockchain_is_open)
   {
-    rocksdb_close(g_blockchain_db);
-    rocksdb_backup_engine_close(g_blockchain_backup_db);
-    g_blockchain_is_open = 0;
-    g_blockchain_backup_is_open = 0;
-    return 0;
+    return 1;
   }
 
+  rocksdb_close(g_blockchain_db);
+  g_blockchain_is_open = 0;
+
+  return 0;
+}
+
+int open_backup_blockchain(void)
+{
+  if (g_blockchain_backup_is_open)
+  {
+    return 1;
+  }
+
+  char *err = NULL;
+  rocksdb_options_t *options = rocksdb_options_create();
+  rocksdb_options_set_create_if_missing(options, 1);
+
+  g_blockchain_backup_db = rocksdb_backup_engine_open(options, get_blockchain_backup_dir(), &err);
+
+  if (err != NULL)
+  {
+    fprintf(stderr, "Could not open backup blockchain database: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_free(options);
+    return 1;
+  }
+
+  g_blockchain_backup_is_open = 1;
+
+  rocksdb_free(err);
+  rocksdb_free(options);
+  return 0;
+}
+
+int close_backup_blockchain(void)
+{
+  if (!g_blockchain_is_open)
+  {
+    return 1;
+  }
+
+  rocksdb_backup_engine_close(g_blockchain_backup_db);
+  g_blockchain_backup_is_open = 0;
+
+  close_backup_blockchain();
   return 0;
 }
 
 int init_blockchain(const char *blockchain_dir)
 {
   open_blockchain(blockchain_dir);
+  open_backup_blockchain();
   return 0;
 }
 
@@ -131,6 +175,8 @@ int backup_blockchain(void)
   if (err != NULL)
   {
     fprintf(stderr, "Could not backup database: %s\n", err);
+
+    rocksdb_free(err);
     return 1;
   }
 
@@ -154,11 +200,47 @@ int restore_blockchain(void)
   if (err != NULL)
   {
     fprintf(stderr, "Could not restore database from backup: %s\n", err);
+
+    rocksdb_restore_options_destroy(restore_options);
+    rocksdb_free(err);
     return 1;
   }
 
   rocksdb_restore_options_destroy(restore_options);
   rocksdb_free(err);
+  return 0;
+}
+
+int rollback_blockchain(int rollback_height)
+{
+  uint32_t current_block_height = get_block_height();
+  for (int i = current_block_height; i >= 0; i--)
+  {
+    if (i == rollback_height)
+    {
+      break;
+    }
+
+    block_t *block = get_block_from_height(i);
+    if (!block)
+    {
+      fprintf(stderr, "Could not reset blockchain, unknown block at height: %d!\n", i);
+      return 1;
+    }
+
+    if (!delete_block_from_blockchain(block->hash))
+    {
+      free_block(block);
+      return 1;
+    }
+
+    printf("Rolled back block at height: %d.\n", i);
+    free_block(block);
+  }
+
+  block_t *current_block = get_block_from_height(rollback_height);
+  set_current_block(current_block);
+  free_block(current_block);
   return 0;
 }
 
@@ -307,6 +389,11 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
 block_t *get_block_from_height(uint32_t height)
 {
+  if (height == 0)
+  {
+    return get_block_from_hash(genesis_block.hash);
+  }
+
   block_t *block = get_current_block();
   for (int i = get_block_height(); i >= 0; i--)
   {

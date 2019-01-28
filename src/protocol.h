@@ -116,8 +116,9 @@ typedef struct SyncEntry
   pt_socklen_t recipient_len;
 
   int sync_initiated;
-  int sync_alternative;
+  int sync_did_backup_blockchain;
   uint32_t sync_height;
+  int sync_start_height;
 
   uint32_t last_sync_height;
   time_t last_sync_ts;
@@ -141,6 +142,8 @@ int clear_sync_request(int sync_success);
 int check_sync_status(void);
 int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash);
 int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+
+int rollback_blockchain_and_resync(void);
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);
 int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);

@@ -288,17 +288,17 @@ int print_block(block_t *block)
   return 0;
 }
 
+int compare_block(block_t *block, block_t *other_block)
+{
+  return memcmp(block->hash, other_block->hash, HASH_SIZE) != 0;
+}
+
 int compare_with_genesis_block(block_t *block)
 {
   hash_block(block);
   hash_block(&genesis_block);
 
-  if (memcmp(block->hash, genesis_block.hash, HASH_SIZE) != 0)
-  {
-    return 1;
-  }
-
-  return 0;
+  return compare_block(block, &genesis_block);
 }
 
 /*

@@ -409,8 +409,9 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
   g_protocol_sync_entry.recipient_len = recipient_len;
 
   g_protocol_sync_entry.sync_initiated = 1;
-  g_protocol_sync_entry.sync_alternative = 0;
+  g_protocol_sync_entry.sync_did_backup_blockchain = 0;
   g_protocol_sync_entry.sync_height = height;
+  g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.last_sync_height = 0;
   g_protocol_sync_entry.last_sync_ts = time(0);
@@ -426,7 +427,7 @@ int clear_sync_request(int sync_success)
     return 1;
   }
 
-  if (!sync_success && g_protocol_sync_entry.sync_alternative)
+  if (!sync_success && g_protocol_sync_entry.sync_did_backup_blockchain)
   {
     if (!restore_blockchain())
     {
@@ -442,8 +443,9 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.recipient_len = 0;
 
   g_protocol_sync_entry.sync_initiated = 0;
-  g_protocol_sync_entry.sync_alternative = 0;
+  g_protocol_sync_entry.sync_did_backup_blockchain = 0;
   g_protocol_sync_entry.sync_height = 0;
+  g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.last_sync_height = 0;
   g_protocol_sync_entry.last_sync_ts = time(0);
@@ -532,6 +534,42 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
   return 0;
 }
 
+int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
+{
+  uint32_t sync_height = g_protocol_sync_entry.last_sync_height - 1;
+  if (request_sync_block(recipient, recipient_len, sync_height, NULL))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+int rollback_blockchain_and_resync(void)
+{
+  int current_block_height = get_block_height();
+  if (current_block_height > 0)
+  {
+    printf("Backing up blockchain in preparation for resync...\n");
+    if (backup_blockchain())
+    {
+      return 1;
+    }
+
+    g_protocol_sync_entry.sync_did_backup_blockchain = 1;
+    if (current_block_height > g_protocol_sync_entry.sync_start_height)
+    {
+      printf("Rolling blockchain back to height: %d...\n", g_protocol_sync_entry.sync_start_height);
+      if (rollback_blockchain(g_protocol_sync_entry.sync_start_height))
+      {
+        return 1;
+      }
+    }
+  }
+
+  return request_sync_previous_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
+}
+
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object)
 {
   switch (packet_id)
@@ -565,52 +603,50 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
         get_block_height_response_t *message = (get_block_height_response_t*)message_object;
-        int found_alt_chain = 0;
+        int can_initiate_sync = 1;
         uint32_t current_block_height = get_block_height();
         if (message->height > current_block_height)
         {
           if (g_protocol_sync_entry.sync_initiated)
           {
-            if (message->height > g_protocol_sync_entry.sync_height)
+            if (g_protocol_sync_entry.recipient == recipient)
             {
-              if (g_protocol_sync_entry.recipient == recipient)
+              if (message->height > g_protocol_sync_entry.sync_height)
               {
-                g_protocol_sync_entry.sync_height = message->height;
                 printf("Updating sync height with presumed top block: %llu...\n", message->height);
+                g_protocol_sync_entry.sync_height = message->height;
               }
-              else
-              {
-                if (!clear_sync_request(0))
-                {
-                  printf("Found potential alternative blockchain at height: %llu.\n", message->height);
-                  found_alt_chain = 1;
-                }
-              }
+
+              can_initiate_sync = 0;
             }
           }
 
-          if (!init_sync_request(message->height, recipient, recipient_len))
+          if (can_initiate_sync)
           {
-            // check to see if we found an alternative chain with an alternative
-            // top block height, if so then backup our current chain. This will be used
-            // if we fail to sync to that alternative chain, we can switch back to our previous
-            // chain and not have to resync to the previous height over again...
-            if (found_alt_chain)
+            printf("Found potential alternative blockchain at height: %llu.\n", message->height);
+            clear_sync_request(0);
+
+            if (!init_sync_request(message->height, recipient, recipient_len))
             {
-              g_protocol_sync_entry.sync_alternative = 1;
-              if (!backup_blockchain())
+              if (current_block_height > 0)
               {
-                printf("Successfully backed up current blockchain in preparation to sync to an alternative blockchain.\n");
+                printf("Determining best sync starting height...\n");
+                g_protocol_sync_entry.last_sync_height = current_block_height + 1;
+                if (request_sync_previous_block(recipient, recipient_len))
+                {
+                  return 1;
+                }
               }
               else
               {
-                fprintf(stderr, "Could not backup current blockchain when trying to sync to alternative blockchain!\n");
-                return 1;
+                g_protocol_sync_entry.sync_start_height = 0;
+                printf("Beginning sync with presumed top block: %llu...\n", message->height);
+                if (request_sync_next_block(recipient, recipient_len))
+                {
+                  return 1;
+                }
               }
             }
-
-            printf("Beginning sync with presumed top block: %llu...\n", message->height);
-            request_sync_next_block(recipient, recipient_len);
           }
         }
 
@@ -635,7 +671,11 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         if (block != NULL)
         {
           uint32_t block_height = get_block_height_from_block(block);
-          handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, block_height, block);
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, block_height, block))
+          {
+            return 1;
+          }
+
           free_block(block);
         }
 
@@ -648,12 +688,56 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         get_block_response_t *message = (get_block_response_t*)message_object;
         if (g_protocol_sync_entry.sync_initiated)
         {
-          if (insert_block_into_blockchain(message->block))
+          if (g_protocol_sync_entry.sync_start_height == -1)
           {
-            printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
-            if (check_sync_status())
+            block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
+            if (!known_block)
             {
-              request_sync_next_block(recipient, recipient_len);
+              return 1;
+            }
+
+            int can_rollback_and_resync = 0;
+            if (!compare_block(message->block, known_block))
+            {
+              free_block(known_block);
+              printf("Found sync starting height: %d!\n", g_protocol_sync_entry.last_sync_height);
+              g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
+              can_rollback_and_resync = 1;
+            }
+            else
+            {
+              free_block(known_block);
+              if (g_protocol_sync_entry.last_sync_height <= 0)
+              {
+                printf("Unable to find sync starting height, continuing anyway.\n");
+                can_rollback_and_resync = 1;
+              }
+              else
+              {
+                if (request_sync_previous_block(recipient, recipient_len))
+                {
+                  return 1;
+                }
+              }
+            }
+
+            if (can_rollback_and_resync)
+            {
+              if (rollback_blockchain_and_resync())
+              {
+                return 1;
+              }
+            }
+          }
+          else
+          {
+            if (insert_block_into_blockchain(message->block))
+            {
+              printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
+              if (check_sync_status())
+              {
+                request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
+              }
             }
           }
         }

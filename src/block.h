@@ -99,6 +99,7 @@ int hash_block(block_t *block);
 int get_block_header(uint8_t *block_header, block_t *block);
 int valid_block_hash(block_t *block);
 int print_block(block_t *block);
+int compare_block(block_t *block, block_t *other_block);
 int compare_with_genesis_block(block_t *block);
 
 int valid_block(block_t *block);
