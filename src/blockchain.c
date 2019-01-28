@@ -109,6 +109,7 @@ int close_blockchain(void)
   rocksdb_close(g_blockchain_db);
   g_blockchain_is_open = 0;
 
+  close_backup_blockchain();
   return 0;
 }
 
@@ -150,8 +151,6 @@ int close_backup_blockchain(void)
 
   rocksdb_backup_engine_close(g_blockchain_backup_db);
   g_blockchain_backup_is_open = 0;
-
-  close_backup_blockchain();
   return 0;
 }
 
