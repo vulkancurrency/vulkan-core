@@ -700,7 +700,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             if (!compare_block(message->block, known_block))
             {
               free_block(known_block);
-              printf("Found sync starting height: %d!\n", g_protocol_sync_entry.last_sync_height);
+              printf("Found sync starting block at height: %d!\n", g_protocol_sync_entry.last_sync_height);
               g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
               can_rollback_and_resync = 1;
             }
@@ -736,7 +736,10 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
               printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
               if (check_sync_status())
               {
-                request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
+                if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
+                {
+                  return 1;
+                }
               }
             }
           }
