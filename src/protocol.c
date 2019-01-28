@@ -864,20 +864,24 @@ int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *rec
     return 1;
   }
 
-  uint8_t *buffer = NULL;
+  uint8_t *raw_buffer = NULL;
   size_t buffer_len = 0;
 
-  packet_to_serialized(&buffer, &buffer_len, packet);
+  packet_to_serialized(&raw_buffer, &buffer_len, packet);
   free_packet(packet);
+
+  uint8_t buffer[buffer_len];
+  memcpy(&buffer, raw_buffer, buffer_len);
+  free(raw_buffer);
 
   int result = 0;
   if (broadcast)
   {
-    result = net_send_data(gossip, (const uint8_t*)buffer, buffer_len);
+    result = net_send_data(gossip, (const uint8_t*)&buffer, buffer_len);
   }
   else
   {
-    result = net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)buffer, buffer_len);
+    result = net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)&buffer, buffer_len);
   }
 
   return result;
