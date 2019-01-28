@@ -144,7 +144,7 @@ int open_backup_blockchain(void)
 
 int close_backup_blockchain(void)
 {
-  if (!g_blockchain_is_open)
+  if (!g_blockchain_backup_is_open)
   {
     return 1;
   }
