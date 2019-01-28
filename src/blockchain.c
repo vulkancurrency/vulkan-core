@@ -54,7 +54,7 @@ static int g_blockchain_backup_is_open = 0;
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
 
-static const char* get_blockchain_backup_dir(void)
+const char* get_blockchain_backup_dir(void)
 {
   return string_copy(g_blockchain_dir, g_blockchain_backup_dir);
 }

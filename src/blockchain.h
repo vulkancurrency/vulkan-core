@@ -36,6 +36,8 @@ extern "C"
 {
 #endif
 
+const char* get_blockchain_backup_dir(void);
+
 int open_blockchain(const char *blockchain_dir);
 int close_blockchain(void);
 
