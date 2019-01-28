@@ -857,7 +857,7 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
     return 1;
   }
 
-  free(packet);
+  free_packet(packet);
   return 0;
 }
 
