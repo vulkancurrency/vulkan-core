@@ -567,7 +567,7 @@ int rollback_blockchain_and_resync(void)
     }
   }
 
-  return request_sync_previous_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
+  return request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
 }
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object)
