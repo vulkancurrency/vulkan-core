@@ -140,7 +140,7 @@ void* deserialize_packet(packet_t *packet);
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);
-int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash);
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash);
 int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
 
 int rollback_blockchain_and_resync(void);

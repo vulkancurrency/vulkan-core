@@ -473,10 +473,10 @@ int check_sync_status(void)
   return 1;
 }
 
-int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int height, uint8_t *hash)
+int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash)
 {
-  int sync_height = height;
-  if (height < 0 && hash != NULL)
+  int32_t sync_height = height;
+  if (hash != NULL)
   {
     sync_height = get_block_height_from_hash(hash);
   }
