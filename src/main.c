@@ -110,7 +110,7 @@ static int parse_commandline_args(int argc, char **argv)
     int num_args = (argc - 1) - i;
     if (num_args < argument_map->num_args)
     {
-      fprintf(stderr, "Usage: -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
+      fprintf(stderr, "Usage: -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->usage);
       return 1;
     }
     switch (arg_type)

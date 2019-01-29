@@ -48,21 +48,22 @@ typedef struct ArgumentMap
   const char *name;
   argument_t type;
   const char *help;
+  const char *usage;
   int num_args;
 } argument_map_t;
 
 static argument_map_t g_arguments_map[] = {
-  {"help", CMD_ARG_HELP, "Shows the help information.", 0},
-  {"version", CMD_ARG_VERSION, "Shows the version information.", 0},
-  {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", 0},
-  {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", 0},
-  {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", 0},
-  {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", 1},
-  {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", 1},
-  {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", 1},
-  {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", 0},
-  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", 0},
-  {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", 0}
+  {"help", CMD_ARG_HELP, "Shows the help information.", "", 0},
+  {"version", CMD_ARG_VERSION, "Shows the version information.", "", 0},
+  {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", "<bind_address>", 0},
+  {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 0},
+  {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", "", 0},
+  {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
+  {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
+  {"new-wallet", CMD_ARG_NEW_WALLET, "Create a new wallet file.", "<wallet_filename>", 1},
+  {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "", 0},
+  {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", "", 0}
 };
 
 #define NUM_COMMANDS (sizeof(g_arguments_map) / sizeof(argument_map_t))
