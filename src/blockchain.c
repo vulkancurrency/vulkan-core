@@ -85,11 +85,23 @@ int open_blockchain(const char *blockchain_dir)
 
   if (!has_block_by_hash(genesis_block.hash))
   {
-    insert_block_into_blockchain(&genesis_block);
+    if (!insert_block_into_blockchain(&genesis_block))
+    {
+      fprintf(stderr, "Could not insert genesis block into blockchain!\n");
+      return 1;
+    }
   }
   else
   {
-    set_current_block(get_top_block());
+    block_t *top_block = get_top_block();
+    if (!top_block)
+    {
+      fprintf(stderr, "Could not get unknown blockchain top block!\n");
+      return 1;
+    }
+
+    set_current_block(top_block);
+    free_block(top_block);
   }
 
   g_blockchain_is_open = 1;
