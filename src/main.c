@@ -188,7 +188,11 @@ int main(int argc, char **argv)
   }
 
   taskmgr_init();
-  init_blockchain(g_blockchain_data_dir);
+  if (init_blockchain(g_blockchain_data_dir))
+  {
+    return 1;
+  }
+
   if (g_enable_miner)
   {
     net_start_server(1, g_enable_seed_mode);
@@ -199,7 +203,11 @@ int main(int argc, char **argv)
     net_start_server(0, g_enable_seed_mode);
   }
 
-  close_blockchain();
+  if (close_blockchain())
+  {
+    return 1;
+  }
+
   taskmgr_shutdown();
   return 0;
 }
