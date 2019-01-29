@@ -26,6 +26,7 @@
 #pragma once
 
 #include <stdarg.h>
+#include <time.h>
 #include <pthread.h>
 
 #include "queue.h"
@@ -75,11 +76,11 @@ task_t* add_task(callable_func_t func, double delay, ...);
 
 task_t* get_task_by_id(int id);
 
-void remove_task(task_t *task);
-void remove_task_by_id(int id);
+int remove_task(task_t *task);
+int remove_task_by_id(int id);
 
-void free_task(task_t *task);
-void free_task_by_id(int id);
+int free_task(task_t *task);
+int free_task_by_id(int id);
 
 int has_scheduler(task_scheduler_t *task_scheduler);
 int has_scheduler_by_id(int id);
@@ -88,11 +89,11 @@ task_scheduler_t* add_scheduler(void);
 
 task_scheduler_t* get_scheduler_by_id(int id);
 
-void remove_scheduler(task_scheduler_t *task_scheduler);
-void remove_scheduler_by_id(int id);
+int remove_scheduler(task_scheduler_t *task_scheduler);
+int remove_scheduler_by_id(int id);
 
-void free_scheduler(task_scheduler_t *task_scheduler);
-void free_scheduler_by_id(int id);
+int free_scheduler(task_scheduler_t *task_scheduler);
+int free_scheduler_by_id(int id);
 
 #ifdef __cplusplus
 }

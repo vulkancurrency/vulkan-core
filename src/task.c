@@ -25,11 +25,11 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 #include <sched.h>
 #include <pthread.h>
 
 #include "queue.h"
-
 #include "task.h"
 
 static int taskmgr_next_task_id = -1;
@@ -72,6 +72,7 @@ int taskmgr_tick(void)
         return 0;
       }
     }
+
     pthread_mutex_lock(&task->mutex);
     va_list args;
     va_copy(args, *task->args);
@@ -98,6 +99,7 @@ int taskmgr_tick(void)
         break;
     }
   }
+
   return 0;
 }
 
@@ -107,6 +109,7 @@ int taskmgr_run(void)
   {
     return 1;
   }
+
   taskmgr_running = 1;
   while (taskmgr_running)
   {
@@ -114,8 +117,10 @@ int taskmgr_run(void)
     {
       return 1;
     }
+
     sched_yield();
   }
+
   return 0;
 }
 
@@ -183,23 +188,29 @@ task_t* get_task_by_id(int id)
   return NULL;
 }
 
-void remove_task(task_t *task)
+int remove_task(task_t *task)
 {
-  queue_remove_object(taskmgr_task_queue, task);
+  if (queue_remove_object(taskmgr_task_queue, task))
+  {
+    return 1;
+  }
+
   free_task(task);
+  return 0;
 }
 
-void remove_task_by_id(int id)
+int remove_task_by_id(int id)
 {
   task_t *task = get_task_by_id(id);
   if (!task)
   {
-    return;
+    return 1;
   }
-  remove_task(task);
+
+  return remove_task(task);
 }
 
-void free_task(task_t *task)
+int free_task(task_t *task)
 {
   va_end(*task->args);
 
@@ -210,16 +221,18 @@ void free_task(task_t *task)
 
   pthread_mutex_destroy(&task->mutex);
   free(task);
+  return 0;
 }
 
-void free_task_by_id(int id)
+int free_task_by_id(int id)
 {
   task_t *task = get_task_by_id(id);
   if (!task)
   {
-    return;
+    return 1;
   }
-  free_task(task);
+
+  return free_task(task);
 }
 
 int has_scheduler(task_scheduler_t *task_scheduler)
@@ -244,12 +257,14 @@ task_scheduler_t* add_scheduler(void)
     fprintf(stderr, "Failed to initialize thread attribute!\n");
     return NULL;
   }
+
   if (pthread_create(&task_scheduler->thread, &task_scheduler->thread_attr,
     taskmgr_scheduler_run, NULL) != 0)
   {
     fprintf(stderr, "Failed to initialize thread!\n");
     return NULL;
   }
+
   queue_push_right(taskmgr_scheduler_queue, task_scheduler);
   return task_scheduler;
 }
@@ -267,35 +282,47 @@ task_scheduler_t* get_scheduler_by_id(int id)
   return NULL;
 }
 
-void remove_scheduler(task_scheduler_t *task_scheduler)
+int remove_scheduler(task_scheduler_t *task_scheduler)
 {
-  queue_remove_object(taskmgr_scheduler_queue, task_scheduler);
-  free_scheduler(task_scheduler);
+  if (queue_remove_object(taskmgr_scheduler_queue, task_scheduler))
+  {
+    return 1;
+  }
+
+  if (free_scheduler(task_scheduler))
+  {
+    return 1;
+  }
+
+  return 0;
 }
 
-void remove_scheduler_by_id(int id)
+int remove_scheduler_by_id(int id)
 {
   task_scheduler_t *task_scheduler = get_scheduler_by_id(id);
   if (!task_scheduler)
   {
-    return;
+    return 1;
   }
-  remove_scheduler(task_scheduler);
+
+  return remove_scheduler(task_scheduler);
 }
 
-void free_scheduler(task_scheduler_t *task_scheduler)
+int free_scheduler(task_scheduler_t *task_scheduler)
 {
   task_scheduler->id = -1;
   pthread_attr_destroy(&task_scheduler->thread_attr);
   free(task_scheduler);
+  return 0;
 }
 
-void free_scheduler_by_id(int id)
+int free_scheduler_by_id(int id)
 {
   task_scheduler_t *task_scheduler = get_scheduler_by_id(id);
   if (!task_scheduler)
   {
-    return;
+    return 1;
   }
-  free_scheduler(task_scheduler);
+
+  return free_scheduler(task_scheduler);
 }
