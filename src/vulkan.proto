@@ -129,10 +129,29 @@ message MGetBlockResponse
   PBlock block = 2;
 }
 
+message MGetNumTransactionsRequest
+{
+
+}
+
+message MGetNumTransactionsResponse
+{
+  uint32 num_transactions = 1;
+}
+
+message MGetAllTransactionIdsRequest
+{
+
+}
+
+message MGetAllTransactionIdsResponse
+{
+  repeated bytes transaction_ids = 8;
+}
+
 message MGetTransactionRequest
 {
   bytes id = 1;
-  bytes input_hash = 2;
 }
 
 message MGetTransactionResponse

@@ -30,6 +30,10 @@ typedef struct _MGetBlockHeightRequest MGetBlockHeightRequest;
 typedef struct _MGetBlockHeightResponse MGetBlockHeightResponse;
 typedef struct _MGetBlockRequest MGetBlockRequest;
 typedef struct _MGetBlockResponse MGetBlockResponse;
+typedef struct _MGetNumTransactionsRequest MGetNumTransactionsRequest;
+typedef struct _MGetNumTransactionsResponse MGetNumTransactionsResponse;
+typedef struct _MGetAllTransactionIdsRequest MGetAllTransactionIdsRequest;
+typedef struct _MGetAllTransactionIdsResponse MGetAllTransactionIdsResponse;
 typedef struct _MGetTransactionRequest MGetTransactionRequest;
 typedef struct _MGetTransactionResponse MGetTransactionResponse;
 
@@ -216,15 +220,53 @@ struct  _MGetBlockResponse
     , 0, NULL }
 
 
+struct  _MGetNumTransactionsRequest
+{
+  ProtobufCMessage base;
+};
+#define MGET_NUM_TRANSACTIONS_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_num_transactions_request__descriptor) \
+     }
+
+
+struct  _MGetNumTransactionsResponse
+{
+  ProtobufCMessage base;
+  uint32_t num_transactions;
+};
+#define MGET_NUM_TRANSACTIONS_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_num_transactions_response__descriptor) \
+    , 0 }
+
+
+struct  _MGetAllTransactionIdsRequest
+{
+  ProtobufCMessage base;
+};
+#define MGET_ALL_TRANSACTION_IDS_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_all_transaction_ids_request__descriptor) \
+     }
+
+
+struct  _MGetAllTransactionIdsResponse
+{
+  ProtobufCMessage base;
+  size_t n_transaction_ids;
+  ProtobufCBinaryData *transaction_ids;
+};
+#define MGET_ALL_TRANSACTION_IDS_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mget_all_transaction_ids_response__descriptor) \
+    , 0,NULL }
+
+
 struct  _MGetTransactionRequest
 {
   ProtobufCMessage base;
   ProtobufCBinaryData id;
-  ProtobufCBinaryData input_hash;
 };
 #define MGET_TRANSACTION_REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mget_transaction_request__descriptor) \
-    , {0,NULL}, {0,NULL} }
+    , {0,NULL} }
 
 
 struct  _MGetTransactionResponse
@@ -522,6 +564,82 @@ MGetBlockResponse *
 void   mget_block_response__free_unpacked
                      (MGetBlockResponse *message,
                       ProtobufCAllocator *allocator);
+/* MGetNumTransactionsRequest methods */
+void   mget_num_transactions_request__init
+                     (MGetNumTransactionsRequest         *message);
+size_t mget_num_transactions_request__get_packed_size
+                     (const MGetNumTransactionsRequest   *message);
+size_t mget_num_transactions_request__pack
+                     (const MGetNumTransactionsRequest   *message,
+                      uint8_t             *out);
+size_t mget_num_transactions_request__pack_to_buffer
+                     (const MGetNumTransactionsRequest   *message,
+                      ProtobufCBuffer     *buffer);
+MGetNumTransactionsRequest *
+       mget_num_transactions_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_num_transactions_request__free_unpacked
+                     (MGetNumTransactionsRequest *message,
+                      ProtobufCAllocator *allocator);
+/* MGetNumTransactionsResponse methods */
+void   mget_num_transactions_response__init
+                     (MGetNumTransactionsResponse         *message);
+size_t mget_num_transactions_response__get_packed_size
+                     (const MGetNumTransactionsResponse   *message);
+size_t mget_num_transactions_response__pack
+                     (const MGetNumTransactionsResponse   *message,
+                      uint8_t             *out);
+size_t mget_num_transactions_response__pack_to_buffer
+                     (const MGetNumTransactionsResponse   *message,
+                      ProtobufCBuffer     *buffer);
+MGetNumTransactionsResponse *
+       mget_num_transactions_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_num_transactions_response__free_unpacked
+                     (MGetNumTransactionsResponse *message,
+                      ProtobufCAllocator *allocator);
+/* MGetAllTransactionIdsRequest methods */
+void   mget_all_transaction_ids_request__init
+                     (MGetAllTransactionIdsRequest         *message);
+size_t mget_all_transaction_ids_request__get_packed_size
+                     (const MGetAllTransactionIdsRequest   *message);
+size_t mget_all_transaction_ids_request__pack
+                     (const MGetAllTransactionIdsRequest   *message,
+                      uint8_t             *out);
+size_t mget_all_transaction_ids_request__pack_to_buffer
+                     (const MGetAllTransactionIdsRequest   *message,
+                      ProtobufCBuffer     *buffer);
+MGetAllTransactionIdsRequest *
+       mget_all_transaction_ids_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_all_transaction_ids_request__free_unpacked
+                     (MGetAllTransactionIdsRequest *message,
+                      ProtobufCAllocator *allocator);
+/* MGetAllTransactionIdsResponse methods */
+void   mget_all_transaction_ids_response__init
+                     (MGetAllTransactionIdsResponse         *message);
+size_t mget_all_transaction_ids_response__get_packed_size
+                     (const MGetAllTransactionIdsResponse   *message);
+size_t mget_all_transaction_ids_response__pack
+                     (const MGetAllTransactionIdsResponse   *message,
+                      uint8_t             *out);
+size_t mget_all_transaction_ids_response__pack_to_buffer
+                     (const MGetAllTransactionIdsResponse   *message,
+                      ProtobufCBuffer     *buffer);
+MGetAllTransactionIdsResponse *
+       mget_all_transaction_ids_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mget_all_transaction_ids_response__free_unpacked
+                     (MGetAllTransactionIdsResponse *message,
+                      ProtobufCAllocator *allocator);
 /* MGetTransactionRequest methods */
 void   mget_transaction_request__init
                      (MGetTransactionRequest         *message);
@@ -607,6 +725,18 @@ typedef void (*MGetBlockRequest_Closure)
 typedef void (*MGetBlockResponse_Closure)
                  (const MGetBlockResponse *message,
                   void *closure_data);
+typedef void (*MGetNumTransactionsRequest_Closure)
+                 (const MGetNumTransactionsRequest *message,
+                  void *closure_data);
+typedef void (*MGetNumTransactionsResponse_Closure)
+                 (const MGetNumTransactionsResponse *message,
+                  void *closure_data);
+typedef void (*MGetAllTransactionIdsRequest_Closure)
+                 (const MGetAllTransactionIdsRequest *message,
+                  void *closure_data);
+typedef void (*MGetAllTransactionIdsResponse_Closure)
+                 (const MGetAllTransactionIdsResponse *message,
+                  void *closure_data);
 typedef void (*MGetTransactionRequest_Closure)
                  (const MGetTransactionRequest *message,
                   void *closure_data);
@@ -634,6 +764,10 @@ extern const ProtobufCMessageDescriptor mget_block_height_request__descriptor;
 extern const ProtobufCMessageDescriptor mget_block_height_response__descriptor;
 extern const ProtobufCMessageDescriptor mget_block_request__descriptor;
 extern const ProtobufCMessageDescriptor mget_block_response__descriptor;
+extern const ProtobufCMessageDescriptor mget_num_transactions_request__descriptor;
+extern const ProtobufCMessageDescriptor mget_num_transactions_response__descriptor;
+extern const ProtobufCMessageDescriptor mget_all_transaction_ids_request__descriptor;
+extern const ProtobufCMessageDescriptor mget_all_transaction_ids_response__descriptor;
 extern const ProtobufCMessageDescriptor mget_transaction_request__descriptor;
 extern const ProtobufCMessageDescriptor mget_transaction_response__descriptor;
 

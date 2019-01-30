@@ -93,6 +93,9 @@ uint32_t get_tx_sign_header_size(transaction_t *tx);
 uint32_t get_tx_header_size(transaction_t *tx);
 int get_tx_sign_header(uint8_t *header, transaction_t *tx);
 
+int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
+int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);
+
 int valid_transaction(transaction_t *tx);
 int is_generation_tx(transaction_t *tx);
 int do_txins_reference_unspent_txouts(transaction_t *tx);

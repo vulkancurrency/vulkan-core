@@ -24,13 +24,17 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdint.h>
+#include <time.h>
 
 #include "mempool.h"
 #include "queue.h"
+#include "task.h"
 #include "transaction.h"
 
 static int g_mempool_initialized = 0;
+
 static queue_t *g_mempool = NULL;
+static task_t *g_mempool_flush_task = NULL;
 
 int start_mempool(void)
 {
@@ -40,8 +44,41 @@ int start_mempool(void)
   }
 
   g_mempool = queue_init();
+  g_mempool_flush_task = add_task(flush_mempool, FLUSH_MEMPOOL_TASK_DELAY);
   g_mempool_initialized = 1;
   return 0;
+}
+
+int stop_mempool(void)
+{
+  if (!g_mempool_initialized)
+  {
+    return 1;
+  }
+
+  remove_task(g_mempool_flush_task);
+  queue_free(g_mempool);
+  g_mempool_initialized = 0;
+  return 0;
+}
+
+mempool_entry_t *get_mempool_entry_from_tx(transaction_t *transaction)
+{
+  for (int i = 0; i <= get_top_tx_index_from_mempool(); i++)
+  {
+    mempool_entry_t *mempool_entry = queue_get(g_mempool, i);
+    if (!mempool_entry)
+    {
+      break;
+    }
+
+    if (mempool_entry->transaction == transaction)
+    {
+      return mempool_entry;
+    }
+  }
+
+  return NULL;
 }
 
 int is_tx_in_mempool(transaction_t *transaction)
@@ -51,7 +88,7 @@ int is_tx_in_mempool(transaction_t *transaction)
     return 0;
   }
 
-  return queue_get_index(g_mempool, transaction) != -1;
+  return get_mempool_entry_from_tx(transaction) != NULL;
 }
 
 int push_tx_to_mempool(transaction_t *transaction)
@@ -71,7 +108,11 @@ int push_tx_to_mempool(transaction_t *transaction)
     return 1;
   }
 
-  queue_push_right(g_mempool, transaction);
+  mempool_entry_t mempool_entry;
+  mempool_entry.transaction = transaction;
+  mempool_entry.received_ts = time(NULL);
+
+  queue_push_right(g_mempool, &mempool_entry);
   return 0;
 }
 
@@ -82,13 +123,55 @@ int remove_tx_from_mempool(transaction_t *transaction)
     return 1;
   }
 
-  if (!is_tx_in_mempool(transaction))
+  mempool_entry_t *mempool_entry = get_mempool_entry_from_tx(transaction);
+  if (!mempool_entry)
   {
     return 1;
   }
 
-  queue_remove_object(g_mempool, transaction);
+  queue_remove_object(g_mempool, mempool_entry);
   return 0;
+}
+
+transaction_t *get_tx_by_index_from_mempool(int index)
+{
+  if (index < 0 || index > get_top_tx_index_from_mempool())
+  {
+    return NULL;
+  }
+
+  mempool_entry_t *mempool_entry = queue_get(g_mempool, index);
+  if (!mempool_entry)
+  {
+    return NULL;
+  }
+
+  return mempool_entry->transaction;
+}
+
+transaction_t *get_tx_by_id_from_mempool(uint8_t *id)
+{
+  for (int i = 0; i >= queue_get_max_index(g_mempool); i++)
+  {
+    mempool_entry_t *mempool_entry = queue_get(g_mempool, i);
+    if (!mempool_entry)
+    {
+      continue;
+    }
+
+    transaction_t *transaction = mempool_entry->transaction;
+    if (!transaction)
+    {
+      continue;
+    }
+
+    if (!compare_transaction_hash(transaction->id, id))
+    {
+      return transaction;
+    }
+  }
+
+  return NULL;
 }
 
 transaction_t *pop_tx_from_mempool(void)
@@ -98,8 +181,13 @@ transaction_t *pop_tx_from_mempool(void)
     return NULL;
   }
 
-  transaction_t *transaction = queue_pop_right(g_mempool);
-  return transaction;
+  mempool_entry_t *mempool_entry = queue_pop_right(g_mempool);
+  if (!mempool_entry)
+  {
+    return NULL;
+  }
+
+  return mempool_entry->transaction;
 }
 
 int get_number_of_tx_from_mempool(void)
@@ -107,14 +195,26 @@ int get_number_of_tx_from_mempool(void)
   return queue_get_size(g_mempool);
 }
 
-int stop_mempool(void)
+int get_top_tx_index_from_mempool(void)
 {
-  if (!g_mempool_initialized)
+  return queue_get_max_index(g_mempool);
+}
+
+task_result_t flush_mempool(task_t *task, va_list args)
+{
+  for (int i = 0; i <= get_top_tx_index_from_mempool(); i++)
   {
-    return 1;
+    mempool_entry_t *mempool_entry = queue_get(g_mempool, i);
+    if (!mempool_entry)
+    {
+      break;
+    }
+
+    if (time(NULL) - mempool_entry->received_ts >= MEMPOOL_TX_EXPIRE_TIME)
+    {
+      remove_tx_from_mempool(mempool_entry->transaction);
+    }
   }
 
-  g_mempool_initialized = 0;
-  queue_free(g_mempool);
-  return 0;
+  return TASK_RESULT_WAIT;
 }

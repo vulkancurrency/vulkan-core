@@ -25,55 +25,29 @@
 
 #pragma once
 
-// BLOCK_VERSION: Blockchain protocol version
 #define BLOCK_VERSION 0x01
-
-// MAX_BLOCK_SIZE: Max serialized size of a block (1MB)
 #define MAX_BLOCK_SIZE 1000000
-
-// MAX_FUTURE_BLOCK_TIME: How far in the future to accept block timestamps (secs)
 #define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
 
-// COIN: How many fractions to a coin
+#define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
+
 #define COIN 100000000
-
-// TOTAL_SUPPLY: How many coin that will ever exist
 #define TOTAL_SUPPLY 64000000
-
-// MAX_MONEY: Maximum number of coins/units that will ever exist
 #define MAX_MONEY (COIN * TOTAL_SUPPLY)
 
-// MAINNET_ADDRESS_ID: Mainnet address prefix
 #define MAINNET_ADDRESS_ID 0x01
-
-// TESTNET_ADDRESS_ID: Testnet address prefix
 #define TESTNET_ADDRESS_ID 0x02
 
-// GENESIS_NONCE: Genesis block nonce
 #define GENESIS_NONCE 0
-
-// GENESIS_TIMESTAMP: Genesis block UNIX EPOCH timestamp
 #define GENESIS_TIMESTAMP 1504395525
 
-// TIME_BETWEEN_BLOCKS_IN_SECS_TARGET: Target duration between blocks being mined (secs)
 #define TIME_BETWEEN_BLOCKS_IN_SECS_TARGET (1 * 60)
-
-// DIFFICULTY_PERIOD_IN_SECS_TARGET: How long difficulty should last (secs)
 #define DIFFICULTY_PERIOD_IN_SECS_TARGET (60 * 60 * 10)
-
-// DIFFICULTY_PERIOD_IN_BLOCKS_TARGET: How long difficulty should last (blocks)
 #define DIFFICULTY_PERIOD_IN_BLOCKS_TARGET (DIFFICULTY_PERIOD_IN_SECS_TARGET / TIME_BETWEEN_BLOCKS_IN_SECS_TARGET)
-
-// INITIAL_DIFFICULTY_BITS: The starting difficulty
 #define INITIAL_DIFFICULTY_BITS 85
-
-// HALVE_SUBSIDY_AFTER_BLOCKS_NUM: When the block reward will half
 #define HALVE_SUBSIDY_AFTER_BLOCKS_NUM 200000
 
-// P2P_PORT: peer-to-peer connection port
 #define P2P_PORT 9899
-
-// RPC_PORT: rpc connection port
 #define RPC_PORT 9898
 
 typedef struct SeedNodeEntry

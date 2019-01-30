@@ -123,9 +123,9 @@ void net_setup_port_mapping(int port)
       char *port_string = malloc(sizeof(port));
       sprintf(port_string, "%d", port);
 
-      UPNP_DeletePortMapping(urls.controlURL, igdData.first.servicetype, port_string, "TCP", 0);
+      UPNP_DeletePortMapping(urls.controlURL, igdData.first.servicetype, port_string, "UDP", 0);
       int portMappingResult = UPNP_AddPortMapping(urls.controlURL, igdData.first.servicetype,
-        port_string, port_string, lanAddress, APPLICATION_NAME, "TCP", 0, "0");
+        port_string, port_string, lanAddress, APPLICATION_NAME, "UDP", 0, "0");
 
       if (portMappingResult != 0)
       {
@@ -326,9 +326,9 @@ int net_run_server(void)
         recv_result = pittacus_gossip_process_receive(g_net_gossip);
         if (recv_result < 0)
         {
-          fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
-          pittacus_gossip_destroy(g_net_gossip);
-          return 1;
+          //fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
+          //pittacus_gossip_destroy(g_net_gossip);
+          //return 1;
         }
       }
     }

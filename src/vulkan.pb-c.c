@@ -682,6 +682,186 @@ void   mget_block_response__free_unpacked
   assert(message->base.descriptor == &mget_block_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   mget_num_transactions_request__init
+                     (MGetNumTransactionsRequest         *message)
+{
+  static const MGetNumTransactionsRequest init_value = MGET_NUM_TRANSACTIONS_REQUEST__INIT;
+  *message = init_value;
+}
+size_t mget_num_transactions_request__get_packed_size
+                     (const MGetNumTransactionsRequest *message)
+{
+  assert(message->base.descriptor == &mget_num_transactions_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_num_transactions_request__pack
+                     (const MGetNumTransactionsRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_num_transactions_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_num_transactions_request__pack_to_buffer
+                     (const MGetNumTransactionsRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_num_transactions_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetNumTransactionsRequest *
+       mget_num_transactions_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetNumTransactionsRequest *)
+     protobuf_c_message_unpack (&mget_num_transactions_request__descriptor,
+                                allocator, len, data);
+}
+void   mget_num_transactions_request__free_unpacked
+                     (MGetNumTransactionsRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_num_transactions_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_num_transactions_response__init
+                     (MGetNumTransactionsResponse         *message)
+{
+  static const MGetNumTransactionsResponse init_value = MGET_NUM_TRANSACTIONS_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t mget_num_transactions_response__get_packed_size
+                     (const MGetNumTransactionsResponse *message)
+{
+  assert(message->base.descriptor == &mget_num_transactions_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_num_transactions_response__pack
+                     (const MGetNumTransactionsResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_num_transactions_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_num_transactions_response__pack_to_buffer
+                     (const MGetNumTransactionsResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_num_transactions_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetNumTransactionsResponse *
+       mget_num_transactions_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetNumTransactionsResponse *)
+     protobuf_c_message_unpack (&mget_num_transactions_response__descriptor,
+                                allocator, len, data);
+}
+void   mget_num_transactions_response__free_unpacked
+                     (MGetNumTransactionsResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_num_transactions_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_all_transaction_ids_request__init
+                     (MGetAllTransactionIdsRequest         *message)
+{
+  static const MGetAllTransactionIdsRequest init_value = MGET_ALL_TRANSACTION_IDS_REQUEST__INIT;
+  *message = init_value;
+}
+size_t mget_all_transaction_ids_request__get_packed_size
+                     (const MGetAllTransactionIdsRequest *message)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_all_transaction_ids_request__pack
+                     (const MGetAllTransactionIdsRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_all_transaction_ids_request__pack_to_buffer
+                     (const MGetAllTransactionIdsRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetAllTransactionIdsRequest *
+       mget_all_transaction_ids_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetAllTransactionIdsRequest *)
+     protobuf_c_message_unpack (&mget_all_transaction_ids_request__descriptor,
+                                allocator, len, data);
+}
+void   mget_all_transaction_ids_request__free_unpacked
+                     (MGetAllTransactionIdsRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_all_transaction_ids_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mget_all_transaction_ids_response__init
+                     (MGetAllTransactionIdsResponse         *message)
+{
+  static const MGetAllTransactionIdsResponse init_value = MGET_ALL_TRANSACTION_IDS_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t mget_all_transaction_ids_response__get_packed_size
+                     (const MGetAllTransactionIdsResponse *message)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mget_all_transaction_ids_response__pack
+                     (const MGetAllTransactionIdsResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mget_all_transaction_ids_response__pack_to_buffer
+                     (const MGetAllTransactionIdsResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &mget_all_transaction_ids_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MGetAllTransactionIdsResponse *
+       mget_all_transaction_ids_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MGetAllTransactionIdsResponse *)
+     protobuf_c_message_unpack (&mget_all_transaction_ids_response__descriptor,
+                                allocator, len, data);
+}
+void   mget_all_transaction_ids_response__free_unpacked
+                     (MGetAllTransactionIdsResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &mget_all_transaction_ids_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   mget_transaction_request__init
                      (MGetTransactionRequest         *message)
 {
@@ -1627,7 +1807,119 @@ const ProtobufCMessageDescriptor mget_block_response__descriptor =
   (ProtobufCMessageInit) mget_block_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor mget_transaction_request__field_descriptors[2] =
+#define mget_num_transactions_request__field_descriptors NULL
+#define mget_num_transactions_request__field_indices_by_name NULL
+#define mget_num_transactions_request__number_ranges NULL
+const ProtobufCMessageDescriptor mget_num_transactions_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetNumTransactionsRequest",
+  "MGetNumTransactionsRequest",
+  "MGetNumTransactionsRequest",
+  "",
+  sizeof(MGetNumTransactionsRequest),
+  0,
+  mget_num_transactions_request__field_descriptors,
+  mget_num_transactions_request__field_indices_by_name,
+  0,  mget_num_transactions_request__number_ranges,
+  (ProtobufCMessageInit) mget_num_transactions_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_num_transactions_response__field_descriptors[1] =
+{
+  {
+    "num_transactions",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT32,
+    0,   /* quantifier_offset */
+    offsetof(MGetNumTransactionsResponse, num_transactions),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_num_transactions_response__field_indices_by_name[] = {
+  0,   /* field[0] = num_transactions */
+};
+static const ProtobufCIntRange mget_num_transactions_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor mget_num_transactions_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetNumTransactionsResponse",
+  "MGetNumTransactionsResponse",
+  "MGetNumTransactionsResponse",
+  "",
+  sizeof(MGetNumTransactionsResponse),
+  1,
+  mget_num_transactions_response__field_descriptors,
+  mget_num_transactions_response__field_indices_by_name,
+  1,  mget_num_transactions_response__number_ranges,
+  (ProtobufCMessageInit) mget_num_transactions_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+#define mget_all_transaction_ids_request__field_descriptors NULL
+#define mget_all_transaction_ids_request__field_indices_by_name NULL
+#define mget_all_transaction_ids_request__number_ranges NULL
+const ProtobufCMessageDescriptor mget_all_transaction_ids_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetAllTransactionIdsRequest",
+  "MGetAllTransactionIdsRequest",
+  "MGetAllTransactionIdsRequest",
+  "",
+  sizeof(MGetAllTransactionIdsRequest),
+  0,
+  mget_all_transaction_ids_request__field_descriptors,
+  mget_all_transaction_ids_request__field_indices_by_name,
+  0,  mget_all_transaction_ids_request__number_ranges,
+  (ProtobufCMessageInit) mget_all_transaction_ids_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_all_transaction_ids_response__field_descriptors[1] =
+{
+  {
+    "transaction_ids",
+    8,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_BYTES,
+    offsetof(MGetAllTransactionIdsResponse, n_transaction_ids),
+    offsetof(MGetAllTransactionIdsResponse, transaction_ids),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mget_all_transaction_ids_response__field_indices_by_name[] = {
+  0,   /* field[0] = transaction_ids */
+};
+static const ProtobufCIntRange mget_all_transaction_ids_response__number_ranges[1 + 1] =
+{
+  { 8, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor mget_all_transaction_ids_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "MGetAllTransactionIdsResponse",
+  "MGetAllTransactionIdsResponse",
+  "MGetAllTransactionIdsResponse",
+  "",
+  sizeof(MGetAllTransactionIdsResponse),
+  1,
+  mget_all_transaction_ids_response__field_descriptors,
+  mget_all_transaction_ids_response__field_indices_by_name,
+  1,  mget_all_transaction_ids_response__number_ranges,
+  (ProtobufCMessageInit) mget_all_transaction_ids_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mget_transaction_request__field_descriptors[1] =
 {
   {
     "id",
@@ -1641,27 +1933,14 @@ static const ProtobufCFieldDescriptor mget_transaction_request__field_descriptor
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
-  {
-    "input_hash",
-    2,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_BYTES,
-    0,   /* quantifier_offset */
-    offsetof(MGetTransactionRequest, input_hash),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
 };
 static const unsigned mget_transaction_request__field_indices_by_name[] = {
   0,   /* field[0] = id */
-  1,   /* field[1] = input_hash */
 };
 static const ProtobufCIntRange mget_transaction_request__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 2 }
+  { 0, 1 }
 };
 const ProtobufCMessageDescriptor mget_transaction_request__descriptor =
 {
@@ -1671,7 +1950,7 @@ const ProtobufCMessageDescriptor mget_transaction_request__descriptor =
   "MGetTransactionRequest",
   "",
   sizeof(MGetTransactionRequest),
-  2,
+  1,
   mget_transaction_request__field_descriptors,
   mget_transaction_request__field_indices_by_name,
   1,  mget_transaction_request__number_ranges,

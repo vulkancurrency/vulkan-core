@@ -26,7 +26,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <time.h>
 
+#include "chainparams.h"
+#include "task.h"
 #include "transaction.h"
 
 #ifdef __cplusplus
@@ -34,15 +37,33 @@ extern "C"
 {
 #endif
 
+#define FLUSH_MEMPOOL_TASK_DELAY 60
+
+typedef struct MempoolEntry
+{
+  transaction_t *transaction;
+  time_t received_ts;
+} mempool_entry_t;
+
 int start_mempool(void);
 int stop_mempool(void);
 
+mempool_entry_t *get_mempool_entry_from_tx(transaction_t *transaction);
+
 int is_tx_in_mempool(transaction_t *transaction);
+
 int push_tx_to_mempool(transaction_t *transaction);
 int remove_tx_from_mempool(transaction_t *transaction);
+
+transaction_t *get_tx_by_index_from_mempool(int index);
+transaction_t *get_tx_by_id_from_mempool(uint8_t *id);
+
 transaction_t *pop_tx_from_mempool(void);
 
 int get_number_of_tx_from_mempool(void);
+int get_top_tx_index_from_mempool(void);
+
+task_result_t flush_mempool(task_t *task, va_list args);
 
 #ifdef __cplusplus
 }

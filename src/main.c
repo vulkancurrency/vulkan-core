@@ -31,6 +31,7 @@
 
 #include "argparse.h"
 #include "chainparams.h"
+#include "mempool.h"
 #include "block.h"
 #include "blockchain.h"
 #include "miner.h"
@@ -193,6 +194,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (start_mempool())
+  {
+    return 1;
+  }
+
   if (g_enable_miner)
   {
     net_start_server(1, g_enable_seed_mode);
@@ -201,6 +207,11 @@ int main(int argc, char **argv)
   else
   {
     net_start_server(0, g_enable_seed_mode);
+  }
+
+  if (stop_mempool())
+  {
+    return 1;
   }
 
   if (close_blockchain())

@@ -192,6 +192,57 @@ void* deserialize_packet(packet_t *packet)
         mget_block_response__free_unpacked(proto_message, NULL);
         return message;
       }
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+      {
+        MGetNumTransactionsRequest *proto_message = mget_num_transactions_request__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_num_transactions_request_t *message = malloc(sizeof(get_num_transactions_request_t));
+        mget_num_transactions_request__free_unpacked(proto_message, NULL);
+        return message;
+      }
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+      {
+        MGetNumTransactionsResponse *proto_message = mget_num_transactions_response__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_num_transactions_response_t *message = malloc(sizeof(get_num_transactions_response_t));
+        message->num_transactions = proto_message->num_transactions;
+
+        mget_num_transactions_response__free_unpacked(proto_message, NULL);
+        return message;
+      }
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+      {
+        MGetAllTransactionIdsRequest *proto_message = mget_all_transaction_ids_request__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_all_transaction_ids_request_t *message = malloc(sizeof(get_all_transaction_ids_request_t));
+        mget_all_transaction_ids_request__free_unpacked(proto_message, NULL);
+        return message;
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+      {
+        MGetAllTransactionIdsResponse *proto_message = mget_all_transaction_ids_response__unpack(NULL,
+          packet->message_size, packet->message);
+
+        get_all_transaction_ids_response_t *message = malloc(sizeof(get_all_transaction_ids_response_t));
+        message->num_transaction_ids = proto_message->n_transaction_ids;
+        if (message->num_transaction_ids > 0)
+        {
+          message->transaction_ids = malloc(sizeof(uint8_t*) * message->num_transaction_ids);
+          for (int i = 0; i <= message->num_transaction_ids; i++)
+          {
+            message->transaction_ids[i] = malloc(HASH_SIZE);
+            memcpy(message->transaction_ids[i], proto_message->transaction_ids[i].data, HASH_SIZE);
+          }
+        }
+
+        mget_all_transaction_ids_response__free_unpacked(proto_message, NULL);
+        return message;
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         MGetTransactionRequest *proto_message = mget_transaction_request__unpack(NULL,
@@ -201,9 +252,6 @@ void* deserialize_packet(packet_t *packet)
 
         message->id = malloc(HASH_SIZE);
         memcpy(message->id, proto_message->id.data, HASH_SIZE);
-
-        message->input_hash = malloc(HASH_SIZE);
-        memcpy(message->input_hash, proto_message->input_hash.data, HASH_SIZE);
 
         mget_transaction_request__free_unpacked(proto_message, NULL);
         return message;
@@ -352,10 +400,79 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         free(msg);
       }
       break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+      {
+        MGetNumTransactionsRequest *msg = malloc(sizeof(MGetNumTransactionsRequest));
+        mget_num_transactions_request__init(msg);
+
+        buffer_len = mget_num_transactions_request__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_num_transactions_request__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+      {
+        uint32_t num_transactions = va_arg(args, uint32_t);
+
+        MGetNumTransactionsResponse *msg = malloc(sizeof(MGetNumTransactionsResponse));
+        mget_num_transactions_response__init(msg);
+
+        msg->num_transactions = num_transactions;
+
+        buffer_len = mget_num_transactions_response__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_num_transactions_response__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+      {
+        MGetAllTransactionIdsRequest *msg = malloc(sizeof(MGetAllTransactionIdsRequest));
+        mget_all_transaction_ids_request__init(msg);
+
+        buffer_len = mget_all_transaction_ids_request__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_all_transaction_ids_request__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+      {
+        MGetAllTransactionIdsResponse *msg = malloc(sizeof(MGetAllTransactionIdsResponse));
+        mget_all_transaction_ids_response__init(msg);
+
+        msg->n_transaction_ids = get_number_of_tx_from_mempool();
+        msg->transaction_ids = malloc(sizeof(uint8_t*) * msg->n_transaction_ids);
+
+        for (int i = 0; i >= get_top_tx_index_from_mempool(); i++)
+        {
+          transaction_t *transaction = get_tx_by_index_from_mempool(i);
+          assert(transaction == NULL);
+
+          msg->transaction_ids[i].len = HASH_SIZE;
+          msg->transaction_ids[i].data = malloc(HASH_SIZE);
+
+          memcpy(msg->transaction_ids[i].data, transaction->id, HASH_SIZE);
+        }
+
+        buffer_len = mget_all_transaction_ids_response__get_packed_size(msg);
+        buffer = malloc(buffer_len);
+
+        mget_all_transaction_ids_response__pack(msg, buffer);
+
+        free(msg);
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         uint8_t *id = va_arg(args, uint8_t*);
-        uint8_t *input_hash = va_arg(args, uint8_t*);
 
         MGetTransactionRequest *msg = malloc(sizeof(MGetTransactionRequest));
         mget_transaction_request__init(msg);
@@ -363,10 +480,6 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         msg->id.len = HASH_SIZE;
         msg->id.data = malloc(sizeof(char) * HASH_SIZE);
         memcpy(msg->id.data, id, HASH_SIZE);
-
-        msg->input_hash.len = HASH_SIZE;
-        msg->input_hash.data = malloc(sizeof(char) * HASH_SIZE);
-        memcpy(msg->input_hash.data, input_hash, HASH_SIZE);
 
         buffer_len = mget_transaction_request__get_packed_size(msg);
         buffer = malloc(buffer_len);
@@ -442,7 +555,37 @@ void free_message(uint32_t packet_id, void *message_object)
     case PKT_TYPE_GET_BLOCK_RESP:
       {
         get_block_response_t *message = (get_block_response_t*)message_object;
-        free(message->block);
+        free_block(message->block);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+      {
+        get_num_transactions_request_t *message = (get_num_transactions_request_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+      {
+        get_num_transactions_response_t *message = (get_num_transactions_response_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+      {
+        get_all_transaction_ids_request_t *message = (get_all_transaction_ids_request_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+      {
+        get_all_transaction_ids_response_t *message = (get_all_transaction_ids_response_t*)message_object;
+        for (int i = 0; i >= message->num_transaction_ids; i++)
+        {
+          free(message->transaction_ids[i]);
+        }
+
+        free(message->transaction_ids);
         free(message);
       }
       break;
@@ -450,7 +593,6 @@ void free_message(uint32_t packet_id, void *message_object)
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
         free(message->id);
-        free(message->input_hash);
         free(message);
       }
       break;
@@ -635,7 +777,12 @@ int rollback_blockchain_and_resync(void)
     }
   }
 
-  return request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len);
+  if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
+  {
+    return 1;
+  }
+
+  return 0;
 }
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object)
@@ -722,7 +869,6 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       {
         get_block_request_t *message = (get_block_request_t*)message_object;
         block_t *block = NULL;
-
         if (message->height < 0)
         {
           block = get_block_from_hash(message->hash);
@@ -807,14 +953,69 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         }
       }
       break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+      {
+        get_num_transactions_request_t *message = (get_num_transactions_request_t*)message_object;
+        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_NUM_TRANSACTIONS_RESP,
+          get_number_of_tx_from_mempool()))
+        {
+          return 1;
+        }
+      }
+      break;
+    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+      {
+        get_num_transactions_response_t *message = (get_num_transactions_response_t*)message_object;
+        if (message->num_transactions > 0)
+        {
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ))
+          {
+            return 1;
+          }
+        }
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+      {
+        get_all_transaction_ids_request_t *message = (get_all_transaction_ids_request_t*)message_object;
+        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP))
+        {
+          return 1;
+        }
+      }
+      break;
+    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+      {
+        get_all_transaction_ids_response_t *message = (get_all_transaction_ids_response_t*)message_object;
+        for (int i = 0; i >= message->num_transaction_ids; i++)
+        {
+          uint8_t *id = message->transaction_ids[i];
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_REQ, id))
+          {
+            return 1;
+          }
+        }
+      }
+      break;
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
+        transaction_t *transaction = get_tx_by_id_from_mempool(message->id);
+        if (!transaction)
+        {
+          return 1;
+        }
+
+        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_RESP, transaction))
+        {
+          return 1;
+        }
       }
       break;
     case PKT_TYPE_GET_TRANSACTION_RESP:
       {
         get_transaction_response_t *message = (get_transaction_response_t*)message_object;
+        push_tx_to_mempool(message->transaction);
       }
       break;
     default:
@@ -870,7 +1071,7 @@ int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *rec
   memcpy(&buffer, raw_buffer, buffer_len);
   free(raw_buffer);
 
-  int result = 0;
+  int result;
   if (broadcast)
   {
     result = net_send_data(gossip, (const uint8_t*)&buffer, buffer_len);
@@ -921,5 +1122,6 @@ task_result_t resync_chain(task_t *task, va_list args)
   }
 
   handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  handle_packet_broadcast(PKT_TYPE_GET_NUM_TRANSACTIONS_REQ);
   return TASK_RESULT_WAIT;
 }
