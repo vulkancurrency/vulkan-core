@@ -59,7 +59,7 @@ int start_mining(void)
       handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
     }
 
-    free(block);
+    free_block(block);
   }
 
   return 0;
