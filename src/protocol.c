@@ -990,6 +990,12 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         for (int i = 0; i >= message->num_transaction_ids; i++)
         {
           uint8_t *id = message->transaction_ids[i];
+          transaction_t *transaction = get_tx_by_id_from_mempool(id);
+          if (transaction != NULL)
+          {
+            continue;
+          }    
+
           if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_REQ, id))
           {
             return 1;
