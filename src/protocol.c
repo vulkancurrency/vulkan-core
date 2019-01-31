@@ -335,7 +335,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
-        uint64_t height = va_arg(args, uint64_t);
+        uint32_t height = va_arg(args, uint32_t);
         uint8_t *hash = va_arg(args, uint8_t*);
 
         MGetBlockHeightResponse *msg = malloc(sizeof(MGetBlockHeightResponse));
@@ -666,7 +666,7 @@ int clear_sync_request(int sync_success)
 
 int check_sync_status(void)
 {
-  int current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height();
   if (current_block_height >= g_protocol_sync_entry.sync_height)
   {
     if (!clear_sync_request(1))
