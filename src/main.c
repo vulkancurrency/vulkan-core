@@ -150,8 +150,6 @@ static int parse_commandline_args(int argc, char **argv)
         g_wallet_filename = (const char*)argv[i];
         break;
       case CMD_ARG_NEW_WALLET:
-        i++;
-        g_wallet_filename = (const char*)argv[i];
         new_wallet(g_wallet_filename);
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
