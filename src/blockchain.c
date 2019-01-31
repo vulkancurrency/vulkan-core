@@ -255,6 +255,7 @@ int rollback_blockchain(uint32_t rollback_height)
     if (!compare_block_hash(get_current_block_hash(), block->hash))
     {
       block_t *previous_block = get_block_from_hash(block->previous_hash);
+      assert(previous_block != NULL);
       set_current_block(previous_block);
       free_block(previous_block);
     }
