@@ -227,7 +227,7 @@ int restore_blockchain(void)
   return 0;
 }
 
-int rollback_blockchain(int rollback_height)
+int rollback_blockchain(uint32_t rollback_height)
 {
   for (uint32_t i = get_block_height(); i > 0; i--)
   {
@@ -269,7 +269,6 @@ int insert_block_into_blockchain(block_t *block)
   // if the block is the genesis, then we do not need to validate it...
   if (!valid_block(block) && get_block_height() > 0)
   {
-    fprintf(stderr, "Could not insert invalid block into blockchain!\n");
     return 0;
   }
 

@@ -897,34 +897,39 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         {
           if (g_protocol_sync_entry.sync_start_height == -1)
           {
+            int found_starting_block = 0;
+            int can_rollback_and_resync = 0;
+
+            // try to find a starting height which starts at a block we already know of,
+            // if we cannot find a starting block, then restart from genesis...
             block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
-            if (!known_block)
+            if (known_block != NULL)
             {
-              return 1;
+              if (!compare_block(message->block, known_block))
+              {
+                found_starting_block = 1;
+              }
+
+              free_block(known_block);
             }
 
-            int can_rollback_and_resync = 0;
-            if (!compare_block(message->block, known_block))
+            if (found_starting_block)
             {
-              free_block(known_block);
               printf("Found sync starting block at height: %d!\n", g_protocol_sync_entry.last_sync_height);
               g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
               can_rollback_and_resync = 1;
             }
+            else if (g_protocol_sync_entry.last_sync_height <= 0)
+            {
+              printf("Unable to find sync starting height, continuing anyway.\n");
+              g_protocol_sync_entry.sync_start_height = 0;
+              can_rollback_and_resync = 1;
+            }
             else
             {
-              free_block(known_block);
-              if (g_protocol_sync_entry.last_sync_height <= 0)
+              if (request_sync_previous_block(recipient, recipient_len))
               {
-                printf("Unable to find sync starting height, continuing anyway.\n");
-                can_rollback_and_resync = 1;
-              }
-              else
-              {
-                if (request_sync_previous_block(recipient, recipient_len))
-                {
-                  return 1;
-                }
+                return 1;
               }
             }
 

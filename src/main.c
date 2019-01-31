@@ -30,10 +30,10 @@
 #include <sodium.h>
 
 #include "argparse.h"
-#include "chainparams.h"
-#include "mempool.h"
 #include "block.h"
 #include "blockchain.h"
+#include "chainparams.h"
+#include "mempool.h"
 #include "miner.h"
 #include "net.h"
 #include "task.h"
