@@ -229,8 +229,7 @@ int restore_blockchain(void)
 
 int rollback_blockchain(int rollback_height)
 {
-  uint32_t current_block_height = get_block_height();
-  for (int i = current_block_height; i >= 0; i--)
+  for (uint32_t i = get_block_height(); i >= 0; i--)
   {
     if (i == rollback_height)
     {
@@ -411,8 +410,7 @@ block_t *get_block_from_height(uint32_t height)
   }
 
   block_t *block = get_current_block();
-  uint32_t block_height = get_block_height();
-  for (int i = block_height; i >= 0; i--)
+  for (uint32_t i = get_block_height(); i > 0; i--)
   {
     if (!block)
     {
@@ -428,7 +426,7 @@ block_t *get_block_from_height(uint32_t height)
     memcpy(&block_hash, block->previous_hash, HASH_SIZE);
     
     free_block(block);
-    block = get_block_from_hash(block_hash);
+    block = get_block_from_hash(&block_hash);
   }
 
   return block;
@@ -438,7 +436,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
 {
   int32_t block_height = -1;
   block_t *block = NULL;
-  for (int i = 0; i <= get_block_height(); i++)
+  for (uint32_t i = 0; i <= get_block_height(); i++)
   {
     block = get_block_from_height(i);
     if (!compare_block_hash(block->hash, block_hash))
@@ -467,11 +465,11 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(HASH_SIZE);
-  memcpy(block_hash, block->hash, HASH_SIZE);
+  uint8_t block_hash[HASH_SIZE];
+  memcpy(&block_hash, block->hash, HASH_SIZE);
 
   free_block(block);
-  return block_hash;
+  return &block_hash;
 }
 
 int has_block_by_hash(uint8_t *block_hash)
