@@ -411,7 +411,8 @@ block_t *get_block_from_height(uint32_t height)
   }
 
   block_t *block = get_current_block();
-  for (int i = get_block_height(); i >= 0; i--)
+  uint32_t block_height = get_block_height();
+  for (int i = block_height; i >= 0; i--)
   {
     if (!block)
     {
@@ -422,9 +423,12 @@ block_t *get_block_from_height(uint32_t height)
     {
       break;
     }
-
+    
+    uint8_t block_hash[HASH_SIZE];
+    memcpy(&block_hash, block->previous_hash, HASH_SIZE);
+    
     free_block(block);
-    block = get_block_from_hash(block->previous_hash);
+    block = get_block_from_hash(block_hash);
   }
 
   return block;
