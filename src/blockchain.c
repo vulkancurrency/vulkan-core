@@ -249,13 +249,20 @@ int rollback_blockchain(uint32_t rollback_height)
       return 1;
     }
 
+    // check to see if are rolling back the top block in the blockchain,
+    // if so then we need to reset the top block to the previous block of
+    // the block we just rolled back.
+    if (!compare_block_hash(get_current_block_hash(), block->hash))
+    {
+      block_t *previous_block = get_block_from_hash(block->previous_hash);
+      set_current_block(previous_block);
+      free_block(previous_block);
+    }
+
     printf("Rolled back block at height: %d.\n", i);
     free_block(block);
   }
 
-  block_t *current_block = get_block_from_height(rollback_height);
-  set_current_block(current_block);
-  free_block(current_block);
   return 0;
 }
 

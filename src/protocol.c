@@ -757,7 +757,7 @@ int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen
 
 int rollback_blockchain_and_resync(void)
 {
-  int current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height();
   if (current_block_height > 0)
   {
     printf("Backing up blockchain in preparation for resync...\n");
@@ -937,7 +937,10 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             {
               if (rollback_blockchain_and_resync())
               {
-                return 1;
+                // if by some way we fail to rollback and resync and we
+                // fail to clear our sync request, then throw an assertion,
+                // this should never happen...
+                assert(clear_sync_request(0));
               }
             }
           }
