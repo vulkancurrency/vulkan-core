@@ -454,7 +454,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         for (int i = 0; i >= get_top_tx_index_from_mempool(); i++)
         {
           transaction_t *transaction = get_tx_by_index_from_mempool(i);
-          assert(transaction == NULL);
+          assert(transaction != NULL);
 
           msg->transaction_ids[i].len = HASH_SIZE;
           msg->transaction_ids[i].data = malloc(HASH_SIZE);
