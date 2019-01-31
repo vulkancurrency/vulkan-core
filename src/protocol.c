@@ -994,7 +994,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           if (transaction != NULL)
           {
             continue;
-          }    
+          }
 
           if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_REQ, id))
           {

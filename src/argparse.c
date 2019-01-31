@@ -49,6 +49,7 @@ argument_t argparse_get_argument_from_str(const char *arg)
       return argument_map->type;
     }
   }
+
   return CMD_ARG_UNKNOWN;
 }
 
@@ -62,5 +63,6 @@ argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
       return argument_map;
     }
   }
+
   return NULL;
 }

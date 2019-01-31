@@ -279,6 +279,7 @@ task_scheduler_t* get_scheduler_by_id(int id)
       return task_scheduler;
     }
   }
+
   return NULL;
 }
 
