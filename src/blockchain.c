@@ -428,13 +428,10 @@ block_t *get_block_from_height(uint32_t height)
     {
       break;
     }
-
-    uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
-    memcpy(block_hash, block->previous_hash, HASH_SIZE);
-
+    
+    block_t *previous_block = get_block_from_hash(block->previous_hash);
     free_block(block);
-    block = get_block_from_hash(block_hash);
-    free(block_hash);
+    block = previous_block;
   }
 
   return block;
