@@ -604,6 +604,7 @@ void free_message(uint32_t packet_id, void *message_object)
       }
       break;
     default:
+      fprintf(stderr, "Could not free packet with unknown packet id: %d\n", packet_id);
       break;
   }
 }
