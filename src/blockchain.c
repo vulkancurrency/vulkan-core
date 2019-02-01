@@ -429,7 +429,7 @@ block_t *get_block_from_height(uint32_t height)
       break;
     }
 
-    uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+    uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
     memcpy(block_hash, block->previous_hash, HASH_SIZE);
 
     free_block(block);
@@ -476,7 +476,7 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
   memcpy(block_hash, block->hash, HASH_SIZE);
 
   free_block(block);
@@ -628,7 +628,7 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
   memcpy(block_hash, block_key + 1, HASH_SIZE);
 
   rocksdb_free(block_key);

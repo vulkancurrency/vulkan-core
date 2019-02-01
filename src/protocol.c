@@ -366,7 +366,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         msg->height = height;
 
         msg->hash.len = HASH_SIZE;
-        msg->hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
+        msg->hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
 
         if (hash != NULL)
         {
