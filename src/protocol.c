@@ -940,7 +940,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
                 // if by some way we fail to rollback and resync and we
                 // fail to clear our sync request, then throw an assertion,
                 // this should never happen...
-                assert(clear_sync_request(0));
+                assert(!clear_sync_request(0));
               }
             }
           }
