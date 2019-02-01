@@ -160,7 +160,7 @@ void* deserialize_packet(packet_t *packet)
         get_block_height_response_t *message = malloc(sizeof(get_block_height_response_t));
         message->height = proto_message->height;
 
-        message->hash = malloc(HASH_SIZE);
+        message->hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
         memcpy(message->hash, proto_message->hash.data, HASH_SIZE);
 
         mget_block_height_response__free_unpacked(proto_message, NULL);
@@ -174,7 +174,7 @@ void* deserialize_packet(packet_t *packet)
         get_block_request_t *message = malloc(sizeof(get_block_request_t));
         message->height = proto_message->height;
 
-        message->hash = malloc(HASH_SIZE);
+        message->hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
         memcpy(message->hash, proto_message->hash.data, HASH_SIZE);
 
         mget_block_request__free_unpacked(proto_message, NULL);
@@ -234,7 +234,7 @@ void* deserialize_packet(packet_t *packet)
           message->transaction_ids = malloc(sizeof(uint8_t*) * message->num_transaction_ids);
           for (int i = 0; i <= message->num_transaction_ids; i++)
           {
-            message->transaction_ids[i] = malloc(HASH_SIZE);
+            message->transaction_ids[i] = malloc(sizeof(uint8_t*) * HASH_SIZE);
             memcpy(message->transaction_ids[i], proto_message->transaction_ids[i].data, HASH_SIZE);
           }
         }
@@ -250,7 +250,7 @@ void* deserialize_packet(packet_t *packet)
 
         get_transaction_request_t *message = malloc(sizeof(get_transaction_request_t));
 
-        message->id = malloc(HASH_SIZE);
+        message->id = malloc(sizeof(uint8_t*) * HASH_SIZE);
         memcpy(message->id, proto_message->id.data, HASH_SIZE);
 
         mget_transaction_request__free_unpacked(proto_message, NULL);
@@ -344,7 +344,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         msg->height = height;
 
         msg->hash.len = HASH_SIZE;
-        msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+        msg->hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
         memcpy(msg->hash.data, hash, HASH_SIZE);
 
         buffer_len = mget_block_height_response__get_packed_size(msg);
@@ -366,7 +366,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         msg->height = height;
 
         msg->hash.len = HASH_SIZE;
-        msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+        msg->hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
 
         if (hash != NULL)
         {
@@ -457,7 +457,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
           assert(transaction != NULL);
 
           msg->transaction_ids[i].len = HASH_SIZE;
-          msg->transaction_ids[i].data = malloc(HASH_SIZE);
+          msg->transaction_ids[i].data = malloc(sizeof(uint8_t*) * HASH_SIZE);
 
           memcpy(msg->transaction_ids[i].data, transaction->id, HASH_SIZE);
         }
@@ -478,7 +478,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         mget_transaction_request__init(msg);
 
         msg->id.len = HASH_SIZE;
-        msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+        msg->id.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
         memcpy(msg->id.data, id, HASH_SIZE);
 
         buffer_len = mget_transaction_request__get_packed_size(msg);
