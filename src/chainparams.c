@@ -23,47 +23,18 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
-
 #include <stdint.h>
 
-#define BLOCK_VERSION 0x01
-#define MAX_BLOCK_SIZE 1000000
-#define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
+#include "chainparams.h"
 
-#define COIN ((uint64_t)100000000)
-#define TOTAL_SUPPLY 64000000
-#define MAX_MONEY ((uint64_t)(COIN * TOTAL_SUPPLY))
-
-#define MAINNET_ADDRESS_ID 0x01
-#define TESTNET_ADDRESS_ID 0x02
-
-#define GENESIS_NONCE 0
-#define GENESIS_TIMESTAMP 1504395525
-
-#define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
-
-#define TIME_BETWEEN_BLOCKS_IN_SECS_TARGET (1 * 60)
-#define DIFFICULTY_PERIOD_IN_SECS_TARGET (60 * 60 * 10)
-#define DIFFICULTY_PERIOD_IN_BLOCKS_TARGET (DIFFICULTY_PERIOD_IN_SECS_TARGET / TIME_BETWEEN_BLOCKS_IN_SECS_TARGET)
-#define INITIAL_DIFFICULTY_BITS 85
-
-#define INITIAL_BLOCK_REWARD ((uint64_t)(COIN * 50))
-#define HALVE_SUBSIDY_AFTER_BLOCKS_NUM 210000
-
-#define P2P_PORT 9899
-#define RPC_PORT 9898
-
-typedef struct SeedNodeEntry
+uint64_t get_block_reward_with_subsidy(uint32_t block_height)
 {
-  const char *address;
-  int port;
-} seed_node_entry_t;
+  uint64_t block_reward = INITIAL_BLOCK_REWARD;
+  if (block_height < HALVE_SUBSIDY_AFTER_BLOCKS_NUM)
+  {
+    return block_reward;
+  }
 
-static seed_node_entry_t SEED_NODES[] = {
-  {"127.0.0.1", P2P_PORT}
-};
-
-#define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
-
-uint64_t get_block_reward_with_subsidy(uint32_t block_height);
+  uint16_t subsidy = block_height / HALVE_SUBSIDY_AFTER_BLOCKS_NUM;
+  return block_reward / subsidy;
+}

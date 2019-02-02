@@ -78,13 +78,14 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
 {
   uint32_t nonce = 0;
   time_t current_time = time(NULL);
+  uint32_t current_block_height = get_block_height();
 
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
 
   memset(txin->transaction, 0, HASH_SIZE);
-  txin->txout_index = get_block_height();
-  txout->amount = (uint64_t)50 * COIN;
+  txin->txout_index = current_block_height;
+  txout->amount = get_block_reward_with_subsidy(current_block_height);
 
   PWallet *wallet = get_wallet();
   memcpy(txout->address, wallet->address.data, ADDRESS_SIZE);
@@ -92,19 +93,19 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t*) * 1);
   tx->txouts[0] = txout;
 
   sign_txin(txin, tx, wallet->public_key.data, wallet->secret_key.data);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t*) * 1);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t*) * 1);
   block->transactions[0] = tx;
   block->timestamp = current_time;
   memcpy(block->previous_hash, get_current_block_hash(), HASH_SIZE);
