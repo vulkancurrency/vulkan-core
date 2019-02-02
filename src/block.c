@@ -158,7 +158,7 @@ int valid_block(block_t *block)
 
 int valid_merkle_root(block_t *block)
 {
-  uint8_t *merkle_root = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *merkle_root = malloc(sizeof(uint8_t*) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
   if (memcmp(merkle_root, block->merkle_root, HASH_SIZE) == 0)
@@ -318,22 +318,22 @@ PBlock *block_to_proto(block_t *block)
   msg->bits = block->bits;
 
   msg->previous_hash.len = HASH_SIZE;
-  msg->previous_hash.data = malloc(sizeof(char) * HASH_SIZE);
+  msg->previous_hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
   memcpy(msg->previous_hash.data, block->previous_hash, HASH_SIZE);
 
   msg->hash.len = HASH_SIZE;
-  msg->hash.data = malloc(sizeof(char) * HASH_SIZE);
+  msg->hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
   memcpy(msg->hash.data, block->hash, HASH_SIZE);
 
   msg->timestamp = block->timestamp;
   msg->nonce = block->nonce;
 
   msg->merkle_root.len = HASH_SIZE;
-  msg->merkle_root.data = malloc(sizeof(char) * HASH_SIZE);
+  msg->merkle_root.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
   memcpy(msg->merkle_root.data, block->merkle_root, HASH_SIZE);
 
   msg->n_transactions = block->transaction_count;
-  msg->transactions = malloc(sizeof(PTransaction *) * msg->n_transactions);
+  msg->transactions = malloc(sizeof(PTransaction*) * msg->n_transactions);
 
   for (int i = 0; i < msg->n_transactions; i++)
   {
@@ -370,11 +370,10 @@ block_t *block_from_proto(PBlock *proto_block)
   block->timestamp = proto_block->timestamp;
   block->nonce = proto_block->nonce;
 
-  // @TODO(vy): unpack transactions into struct
   block->transaction_count = proto_block->n_transactions;
   if (block->transaction_count > 0)
   {
-    block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+    block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
     for (int i = 0; i < block->transaction_count; i++)
     {
       block->transactions[i] = transaction_from_proto(proto_block->transactions[i]);
