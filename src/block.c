@@ -44,18 +44,15 @@ block_t *make_block(void)
   block_t *block = malloc(sizeof(block_t));
 
   block->version = BLOCK_VERSION;
+  block->bits = INITIAL_DIFFICULTY_BITS;
+
+  memset(block->previous_hash, 0, HASH_SIZE);
+  memset(block->hash, 0, HASH_SIZE);
+
+  block->timestamp = 0;
   block->nonce = 0;
 
-  for (int i = 0; i < HASH_SIZE; i++)
-  {
-    block->previous_hash[i] = 0x00;
-    block->hash[i] = 0x00;
-  }
-
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
-
-  block->bits = INITIAL_DIFFICULTY_BITS;
-  block->timestamp = 0;
   block->transaction_count = 0;
 
   return block;
