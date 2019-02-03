@@ -864,6 +864,25 @@ int get_top_block_key(uint8_t *buffer)
   return 0;
 }
 
+uint64_t get_already_generated_coins(void)
+{
+  block_t *current_block = get_current_block();
+  uint64_t already_generated_coins = current_block->already_generated_coins;
+  free_block(current_block);
+  return already_generated_coins;
+}
+
+uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
+{
+  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
+  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
+  {
+    block_reward = GENESIS_REWARD;
+  }
+
+  return block_reward;
+}
+
 uint64_t get_balance_for_address(uint8_t *address)
 {
   uint64_t balance = 0;
@@ -900,15 +919,4 @@ uint64_t get_balance_for_address(uint8_t *address)
   rocksdb_iter_destroy(iterator);
 
   return balance;
-}
-
-uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
-{
-  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
-  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
-  {
-    block_reward = GENESIS_REWARD;
-  }
-
-  return block_reward;
 }

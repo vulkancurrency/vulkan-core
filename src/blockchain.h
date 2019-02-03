@@ -88,9 +88,10 @@ int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_block_key(uint8_t *buffer, uint8_t *block_hash);
 int get_top_block_key(uint8_t *buffer);
 
-uint64_t get_balance_for_address(uint8_t *address);
-
+uint64_t get_already_generated_coins(void);
 uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins);
+
+uint64_t get_balance_for_address(uint8_t *address);
 
 #ifdef __cplusplus
 }
