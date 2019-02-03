@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <sodium.h>
+
 #ifdef _WIN32
  #include <sysinfoapi.h>
 #endif
@@ -91,4 +93,17 @@ const char* string_copy(const char *string, const char *other_string)
   strncpy(out_string + strlen(string), other_string, strlen(other_string));
 
   return (const char*)out_string;
+}
+
+int make_hash(char *digest, unsigned char *string)
+{
+  unsigned char hash[crypto_hash_sha256_BYTES];
+  crypto_hash_sha256(hash, string, strlen((char*)string));
+
+  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
+  {
+    sprintf(&digest[i*2], "%02x", (unsigned int) hash[i]);
+  }
+
+  return 0;
 }

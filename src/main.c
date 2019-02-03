@@ -46,17 +46,6 @@ static const char *g_wallet_filename = "wallet";
 static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
 
-static void make_hash(char *digest, unsigned char *string)
-{
-  unsigned char hash[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256(hash, string, strlen((char*)string));
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&digest[i*2], "%02x", (unsigned int) hash[i]);
-  }
-}
-
 static block_t* create_genesis_block(void)
 {
   block_t *block = make_block();
@@ -72,20 +61,6 @@ static block_t* create_genesis_block(void)
   }
 
   return block;
-}
-
-static void compare_genesis_block(block_t *block)
-{
-  if (compare_with_genesis_block(block) == 0)
-  {
-    printf("Verified genesis block!\n");
-    print_block(block);
-  }
-  else
-  {
-    fprintf(stderr, "Genesis block mismatch, generated hash that is different than recorded!\n");
-    print_block(block);
-  }
 }
 
 static void perform_shutdown(int sig)
