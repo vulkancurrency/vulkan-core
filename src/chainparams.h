@@ -40,6 +40,7 @@
 
 #define GENESIS_NONCE 0
 #define GENESIS_TIMESTAMP 1504395525
+#define GENESIS_REWARD ((uint64_t)0)
 
 #define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
 
@@ -48,8 +49,7 @@
 #define DIFFICULTY_PERIOD_IN_BLOCKS_TARGET (DIFFICULTY_PERIOD_IN_SECS_TARGET / TIME_BETWEEN_BLOCKS_IN_SECS_TARGET)
 #define INITIAL_DIFFICULTY_BITS 85
 
-#define INITIAL_BLOCK_REWARD ((uint64_t)(COIN * 50))
-#define HALVE_SUBSIDY_AFTER_BLOCKS_NUM 210000
+#define BLOCK_REWARD_EMISSION_FACTOR 18
 
 #define P2P_PORT 9899
 #define RPC_PORT 9898
@@ -65,5 +65,3 @@ static seed_node_entry_t SEED_NODES[] = {
 };
 
 #define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
-
-uint64_t get_block_reward_with_subsidy(uint32_t block_height);

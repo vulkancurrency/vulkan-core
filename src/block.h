@@ -37,7 +37,7 @@ extern "
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 4 + 4 + 4 + 4)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 4 + 4 + 4 + 4)
 
 typedef struct Block
 {
@@ -49,6 +49,7 @@ typedef struct Block
 
   uint32_t timestamp;
   uint32_t nonce;
+  uint64_t already_generated_coins;
 
   uint8_t merkle_root[HASH_SIZE];
   uint32_t transaction_count;
@@ -80,6 +81,7 @@ static block_t genesis_block = {
   },
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
+  .already_generated_coins = 0,
   .merkle_root = {
     0xe3, 0xb0, 0xc4, 0x42,
     0xfc, 0x1c, 0x14, 0x9a,

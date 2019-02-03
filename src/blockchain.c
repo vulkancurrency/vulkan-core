@@ -313,8 +313,32 @@ int insert_block_into_blockchain(block_t *block)
     insert_tx_into_index(key, tx);
     insert_unspent_tx_into_index(tx);
 
+    // ensure that the genesis tx block reward and the block's already_generated_coins
+    // value has not been manipulated...
     if (is_generation_tx(tx))
     {
+      block_t *current_block = get_current_block();
+      uint64_t expected_block_reward = get_block_reward(get_block_height() + 1, current_block->already_generated_coins);
+
+      // check to ensure that the generation tx reward is valid
+      // for it's height in the blockchain...
+      output_transaction_t *txout = tx->txouts[0];
+      if (txout->amount != expected_block_reward)
+      {
+        free_block(current_block);
+        return 0;
+      }
+
+      // check to ensure that the block's already_generated_coins value
+      // is equivalent to the previous already_generated_coins plus the block reward...
+      uint64_t expected_already_generated_coins = current_block->already_generated_coins + expected_block_reward;
+      if (block->already_generated_coins != expected_already_generated_coins)
+      {
+        free_block(current_block);
+        return 0;
+      }
+
+      free_block(current_block);
       continue;
     }
 
@@ -417,19 +441,16 @@ block_t *get_block_from_height(uint32_t height)
   }
 
   block_t *block = get_current_block();
+  assert(block != NULL);
   for (uint32_t i = get_block_height(); i > 0; i--)
   {
-    if (!block)
-    {
-      break;
-    }
-
     if (i == height)
     {
       break;
     }
-    
+
     block_t *previous_block = get_block_from_hash(block->previous_hash);
+    assert(previous_block != NULL);
     free_block(block);
     block = previous_block;
   }
@@ -879,4 +900,15 @@ uint64_t get_balance_for_address(uint8_t *address)
   rocksdb_iter_destroy(iterator);
 
   return balance;
+}
+
+uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
+{
+  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
+  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
+  {
+    block_reward = GENESIS_REWARD;
+  }
+
+  return block_reward;
 }

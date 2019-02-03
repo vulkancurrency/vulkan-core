@@ -80,6 +80,7 @@ int string_count(const char *string, const char *countstr, int countbreak)
       }
     }
   }
+
   return count;
 }
 

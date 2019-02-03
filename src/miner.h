@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 #include "block.h"
+#include "wallet.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,7 +38,7 @@ extern "C"
 int start_mining(void);
 void stop_mining(void);
 
-block_t *compute_next_block(uint8_t *prev_block_hash);
+block_t *compute_next_block(PWallet *wallet, block_t *previous_block);
 
 #ifdef __cplusplus
 }

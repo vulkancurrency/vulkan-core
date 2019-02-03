@@ -70,10 +70,11 @@ message PBlock
 
   uint32 timestamp = 5;
   uint32 nonce = 6;
+  uint64 already_generated_coins = 7;
 
-  bytes merkle_root = 7;
+  bytes merkle_root = 8;
 
-  repeated PTransaction transactions = 8;
+  repeated PTransaction transactions = 9;
 }
 
 message PWallet

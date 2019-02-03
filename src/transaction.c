@@ -219,14 +219,14 @@ PTransaction *transaction_to_proto(transaction_t *tx)
   ptransaction__init(msg);
 
   msg->id.len = HASH_SIZE;
-  msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+  msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(msg->id.data, tx->id, HASH_SIZE);
 
   msg->n_txins = tx->txin_count;
   msg->n_txouts = tx->txout_count;
 
-  msg->txins = malloc(sizeof(PInputTransaction *) * msg->n_txins);
-  msg->txouts = malloc(sizeof(POutputTransaction *) * msg->n_txouts);
+  msg->txins = malloc(sizeof(PInputTransaction*) * msg->n_txins);
+  msg->txouts = malloc(sizeof(POutputTransaction*) * msg->n_txouts);
 
   for (int i = 0; i < msg->n_txins; i++)
   {
@@ -269,12 +269,12 @@ PUnspentTransaction *unspent_transaction_to_proto(transaction_t *tx)
   punspent_transaction__init(msg);
 
   msg->id.len = HASH_SIZE;
-  msg->id.data = malloc(sizeof(char) * HASH_SIZE);
+  msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(msg->id.data, tx->id, HASH_SIZE);
 
   msg->coinbase = is_generation_tx(tx);
   msg->n_unspent_txouts = tx->txout_count;
-  msg->unspent_txouts = malloc(sizeof(POutputTransaction *) * msg->n_unspent_txouts);
+  msg->unspent_txouts = malloc(sizeof(POutputTransaction*) * msg->n_unspent_txouts);
 
   for (int i = 0; i < msg->n_unspent_txouts; i++)
   {
@@ -370,8 +370,8 @@ transaction_t *transaction_from_proto(PTransaction *proto_tx)
   tx->txin_count = proto_tx->n_txins;
   tx->txout_count = proto_tx->n_txouts;
 
-  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
-  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txout_count);
+  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
+  tx->txouts = malloc(sizeof(output_transaction_t*) * tx->txout_count);
 
   for (int i = 0; i < tx->txin_count; i++)
   {

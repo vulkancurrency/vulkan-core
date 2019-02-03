@@ -51,6 +51,7 @@ block_t *make_block(void)
 
   block->timestamp = 0;
   block->nonce = 0;
+  block->already_generated_coins = 0;
 
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
   block->transaction_count = 0;
@@ -63,7 +64,7 @@ int hash_block(block_t *block)
   uint8_t header[BLOCK_HEADER_SIZE];
 
   get_block_header(header, block);
-  crypto_hash_sha256(block->hash, header, HASH_SIZE + 1 + 1);
+  crypto_hash_sha256(block->hash, header, HASH_SIZE);
 
   return 0;
 }
@@ -176,7 +177,7 @@ int valid_block_hash(block_t *block)
   uint32_t target = block->bits;
   uint32_t current_target = 0;
 
-  for (int i = 0; i < HASH_SIZE; i++)
+  for (int i = 0; i <= HASH_SIZE; i++)
   {
     uint8_t byte = block->hash[i];
     uint32_t n = 0;
@@ -213,7 +214,7 @@ int valid_block_hash(block_t *block)
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
-  uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
+  uint8_t *hashes = malloc(sizeof(uint8_t*) * HASH_SIZE * block->transaction_count);
   for (int i = 0; i < block->transaction_count; i++)
   {
     compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
@@ -245,6 +246,8 @@ int get_block_header(uint8_t *block_header, block_t *block)
   position += 4;
   memcpy(block_header + position, &block->timestamp, 4);
   position += 4;
+  memcpy(block_header + position, &block->already_generated_coins, 8);
+  position += 8;
   memcpy(block_header + position, &block->previous_hash, HASH_SIZE);
   position += HASH_SIZE;
   memcpy(block_header + position, &block->merkle_root, HASH_SIZE);
@@ -279,6 +282,7 @@ int print_block(block_t *block)
   printf("Bits: %d\n", block->bits);
   printf("Nonce: %d\n", block->nonce);
   printf("Timestamp (epoch): %d\n", block->timestamp);
+  printf("Emission: %llu\n", block->already_generated_coins / COIN);
   printf("Previous Hash: %s\n", previous_hash);
   printf("Merkle Root: %s\n", merkle_root);
   printf("Hash: %s\n", hash);
@@ -318,18 +322,19 @@ PBlock *block_to_proto(block_t *block)
   msg->bits = block->bits;
 
   msg->previous_hash.len = HASH_SIZE;
-  msg->previous_hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  msg->previous_hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(msg->previous_hash.data, block->previous_hash, HASH_SIZE);
 
   msg->hash.len = HASH_SIZE;
-  msg->hash.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  msg->hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(msg->hash.data, block->hash, HASH_SIZE);
 
   msg->timestamp = block->timestamp;
   msg->nonce = block->nonce;
+  msg->already_generated_coins = block->already_generated_coins;
 
   msg->merkle_root.len = HASH_SIZE;
-  msg->merkle_root.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  msg->merkle_root.data = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(msg->merkle_root.data, block->merkle_root, HASH_SIZE);
 
   msg->n_transactions = block->transaction_count;
@@ -365,10 +370,12 @@ block_t *block_from_proto(PBlock *proto_block)
 
   memcpy(block->previous_hash, proto_block->previous_hash.data, HASH_SIZE);
   memcpy(block->hash, proto_block->hash.data, HASH_SIZE);
-  memcpy(block->merkle_root, proto_block->merkle_root.data, HASH_SIZE);
 
   block->timestamp = proto_block->timestamp;
   block->nonce = proto_block->nonce;
+  block->already_generated_coins = proto_block->already_generated_coins;
+
+  memcpy(block->merkle_root, proto_block->merkle_root.data, HASH_SIZE);
 
   block->transaction_count = proto_block->n_transactions;
   if (block->transaction_count > 0)

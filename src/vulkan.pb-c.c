@@ -1272,7 +1272,7 @@ const ProtobufCMessageDescriptor punspent_transaction__descriptor =
   (ProtobufCMessageInit) punspent_transaction__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
+static const ProtobufCFieldDescriptor pblock__field_descriptors[9] =
 {
   {
     "version",
@@ -1347,8 +1347,20 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "merkle_root",
+    "already_generated_coins",
     7,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT64,
+    0,   /* quantifier_offset */
+    offsetof(PBlock, already_generated_coins),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "merkle_root",
+    8,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_BYTES,
     0,   /* quantifier_offset */
@@ -1360,7 +1372,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
   },
   {
     "transactions",
-    8,
+    9,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(PBlock, n_transactions),
@@ -1372,19 +1384,20 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[8] =
   },
 };
 static const unsigned pblock__field_indices_by_name[] = {
+  6,   /* field[6] = already_generated_coins */
   1,   /* field[1] = bits */
   3,   /* field[3] = hash */
-  6,   /* field[6] = merkle_root */
+  7,   /* field[7] = merkle_root */
   5,   /* field[5] = nonce */
   2,   /* field[2] = previous_hash */
   4,   /* field[4] = timestamp */
-  7,   /* field[7] = transactions */
+  8,   /* field[8] = transactions */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange pblock__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 8 }
+  { 0, 9 }
 };
 const ProtobufCMessageDescriptor pblock__descriptor =
 {
@@ -1394,7 +1407,7 @@ const ProtobufCMessageDescriptor pblock__descriptor =
   "PBlock",
   "",
   sizeof(PBlock),
-  8,
+  9,
   pblock__field_descriptors,
   pblock__field_indices_by_name,
   1,  pblock__number_ranges,

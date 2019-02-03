@@ -66,7 +66,7 @@ PPacket *packet_to_proto(packet_t *packet)
   msg->message_size = packet->message_size;
 
   msg->message.len = packet->message_size;
-  msg->message.data = malloc(sizeof(char) * packet->message_size);
+  msg->message.data = malloc(sizeof(uint8_t*) * packet->message_size);
   memcpy(msg->message.data, packet->message, packet->message_size);
 
   return msg;

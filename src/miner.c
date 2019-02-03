@@ -44,12 +44,13 @@ int start_mining(void)
     return 1;
   }
   g_miner_is_mining = 1;
+  PWallet *wallet = get_wallet();
   printf("Started mining...\n");
 
   while (g_miner_is_mining)
   {
-    uint8_t *previous_hash = get_current_block_hash();
-    block_t *block = compute_next_block(previous_hash);
+    block_t *previous_block = get_current_block();
+    block_t *block = compute_next_block(wallet, previous_block);
     if (insert_block_into_blockchain(block))
     {
       printf("Inserted block #%d\n", get_block_height());
@@ -59,9 +60,11 @@ int start_mining(void)
       handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
     }
 
+    free_block(previous_block);
     free_block(block);
   }
 
+  pwallet__free_unpacked(wallet, NULL);
   return 0;
 }
 
@@ -74,7 +77,7 @@ void stop_mining(void)
   g_miner_is_mining = 0;
 }
 
-block_t *compute_next_block(uint8_t *prev_block_hash)
+block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
 {
   uint32_t nonce = 0;
   time_t current_time = time(NULL);
@@ -85,11 +88,9 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
 
   memset(txin->transaction, 0, HASH_SIZE);
   txin->txout_index = current_block_height;
-  txout->amount = get_block_reward_with_subsidy(current_block_height);
-
-  PWallet *wallet = get_wallet();
+  uint64_t block_reward = get_block_reward(current_block_height + 1, previous_block->already_generated_coins);
+  txout->amount = block_reward;
   memcpy(txout->address, wallet->address.data, ADDRESS_SIZE);
-  pwallet__free_unpacked(wallet, NULL);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -99,16 +100,19 @@ block_t *compute_next_block(uint8_t *prev_block_hash)
   sign_txin(txin, tx, wallet->public_key.data, wallet->secret_key.data);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t*) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
   block_t *block = make_block();
-  block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t*) * 1);
-  block->transactions[0] = tx;
+  memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
+
   block->timestamp = current_time;
-  memcpy(block->previous_hash, get_current_block_hash(), HASH_SIZE);
+  block->already_generated_coins = previous_block->already_generated_coins + block_reward;
+
+  block->transaction_count = 1;
+  block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
+  block->transactions[0] = tx;
 
   compute_self_merkle_root(block);
   hash_block(block);

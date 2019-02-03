@@ -27,7 +27,6 @@ set(SOURCE_FILES
   argparse.c
   block.c
   blockchain.c
-  chainparams.c
   main.c
   mempool.c
   merkle.c

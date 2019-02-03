@@ -115,13 +115,14 @@ struct  _PBlock
   ProtobufCBinaryData hash;
   uint32_t timestamp;
   uint32_t nonce;
+  uint64_t already_generated_coins;
   ProtobufCBinaryData merkle_root;
   size_t n_transactions;
   PTransaction **transactions;
 };
 #define PBLOCK__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&pblock__descriptor) \
-    , 0, 0, {0,NULL}, {0,NULL}, 0, 0, {0,NULL}, 0,NULL }
+    , 0, 0, {0,NULL}, {0,NULL}, 0, 0, 0, {0,NULL}, 0,NULL }
 
 
 struct  _PWallet

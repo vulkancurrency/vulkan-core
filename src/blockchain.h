@@ -90,6 +90,8 @@ int get_top_block_key(uint8_t *buffer);
 
 uint64_t get_balance_for_address(uint8_t *address);
 
+uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins);
+
 #ifdef __cplusplus
 }
 #endif
