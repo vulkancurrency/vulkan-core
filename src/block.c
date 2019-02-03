@@ -296,7 +296,17 @@ int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
 
 int compare_block(block_t *block, block_t *other_block)
 {
-  return compare_block_hash(block->hash, other_block->hash);
+  if (compare_block_hash(block->hash, other_block->hash))
+  {
+    return 1;
+  }
+
+  if (memcmp(block->merkle_root, other_block->merkle_root, HASH_SIZE) != 0)
+  {
+    return 1;
+  }
+
+  return 0;
 }
 
 int compare_with_genesis_block(block_t *block)
