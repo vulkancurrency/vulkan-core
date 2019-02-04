@@ -58,6 +58,8 @@ extern "C"
 #define TXIN_HEADER_SIZE (HASH_SIZE + 4)
 #define TXOUT_HEADER_SIZE (HASH_SIZE + 4)
 
+#define MAX_NUM_TX_ENTRIES 1024
+
 extern uint8_t zero_tx_hash[HASH_SIZE];
 
 typedef struct InputTransaction
@@ -86,6 +88,18 @@ typedef struct Transaction
   output_transaction_t **txouts;
 } transaction_t;
 
+typedef struct TransactionEntry
+{
+  uint8_t *address;
+  uint64_t amount;
+} transaction_entry_t;
+
+typedef struct TransactionEntries
+{
+  uint16_t num_entries;
+  transaction_entry_t entries[MAX_NUM_TX_ENTRIES];
+} transaction_entries_t;
+
 int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
 int get_txin_header(uint8_t *header, input_transaction_t *txin);
 int get_txout_header(uint8_t *header, output_transaction_t *txout);
@@ -112,6 +126,11 @@ int proto_unspent_transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_l
 int transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, transaction_t *tx);
 transaction_t *transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len);
 PUnspentTransaction *unspent_transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len);
+
+input_transaction_t *make_input_tx(uint32_t block_height);
+output_transaction_t *make_output_tx(uint8_t *address, uint64_t amount);
+transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries);
+transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward);
 
 int free_proto_transaction(PTransaction *proto_transaction);
 int free_proto_unspent_transaction(PUnspentTransaction *proto_unspent_tx);

@@ -83,35 +83,19 @@ block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
   time_t current_time = time(NULL);
   uint32_t current_block_height = get_block_height();
 
-  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
-
-  memset(txin->transaction, 0, HASH_SIZE);
-  txin->txout_index = current_block_height;
-  uint64_t block_reward = get_block_reward(current_block_height + 1, previous_block->already_generated_coins);
-  txout->amount = block_reward;
-  memcpy(txout->address, wallet->address.data, ADDRESS_SIZE);
-
-  transaction_t *tx = malloc(sizeof(transaction_t));
-  tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t*) * 1);
-  tx->txouts[0] = txout;
-
-  sign_txin(txin, tx, wallet->public_key.data, wallet->secret_key.data);
-
-  tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
-  tx->txins[0] = txin;
-  compute_self_tx_id(tx);
+  uint64_t already_generated_coins = previous_block->already_generated_coins;
+  uint64_t block_reward = get_block_reward(current_block_height + 1, already_generated_coins);
 
   block_t *block = make_block();
   memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
 
   block->timestamp = current_time;
-  block->already_generated_coins = previous_block->already_generated_coins + block_reward;
+  block->already_generated_coins = already_generated_coins + block_reward;
 
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
+
+  transaction_t *tx = make_generation_tx(wallet, current_block_height, already_generated_coins, block_reward);
   block->transactions[0] = tx;
 
   compute_self_merkle_root(block);

@@ -401,6 +401,63 @@ PUnspentTransaction *unspent_transaction_from_serialized(uint8_t *buffer, uint32
   return proto_unspent_tx;
 }
 
+input_transaction_t *make_input_tx(uint32_t block_height)
+{
+  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
+  memset(txin->transaction, 0, HASH_SIZE);
+  txin->txout_index = block_height;
+  return txin;
+}
+
+output_transaction_t *make_output_tx(uint8_t *address, uint64_t amount)
+{
+  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  txout->amount = amount;
+  memcpy(txout->address, address, ADDRESS_SIZE);
+  return txout;
+}
+
+transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries)
+{
+  transaction_t *tx = malloc(sizeof(transaction_t));
+
+  tx->txout_count = transaction_entries.num_entries;
+  tx->txouts = malloc(sizeof(output_transaction_t*) * tx->txout_count);
+
+  tx->txin_count = transaction_entries.num_entries;
+  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
+
+  for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
+  {
+    transaction_entry_t transaction_entry = transaction_entries.entries[i];
+
+    input_transaction_t *txin = make_input_tx(block_height);
+    output_transaction_t *txout = make_output_tx(transaction_entry.address, transaction_entry.amount);
+
+    tx->txins[i] = txin;
+    tx->txouts[i] = txout;
+
+    sign_txin(txin, tx, wallet->public_key.data, wallet->secret_key.data);
+  }
+
+  compute_self_tx_id(tx);
+  return tx;
+}
+
+transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward)
+{
+  transaction_entry_t transaction_entry;
+  transaction_entry.address = wallet->address.data;
+  transaction_entry.amount = block_reward;
+
+  transaction_entries_t transaction_entries;
+  transaction_entries.num_entries = 1;
+  transaction_entries.entries[0] = transaction_entry;
+
+  transaction_t *tx = make_tx(wallet, block_height, already_generated_coins, transaction_entries);
+  return tx;
+}
+
 int free_proto_transaction(PTransaction *proto_transaction)
 {
   for (int i = 0; i < proto_transaction->n_txins; i++)
