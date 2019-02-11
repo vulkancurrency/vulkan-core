@@ -282,7 +282,7 @@ int print_block(block_t *block)
   printf("Bits: %d\n", block->bits);
   printf("Nonce: %d\n", block->nonce);
   printf("Timestamp (epoch): %d\n", block->timestamp);
-  printf("Emission: %llu\n", block->already_generated_coins / COIN);
+  printf("Emission: %llu\n", block->already_generated_coins);
   printf("Previous Hash: %s\n", previous_hash);
   printf("Merkle Root: %s\n", merkle_root);
   printf("Hash: %s\n", hash);
