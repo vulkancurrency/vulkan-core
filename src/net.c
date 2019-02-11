@@ -55,7 +55,6 @@ static int g_net_bind_port = P2P_PORT;
 static pittacus_gossip_t *g_net_gossip = NULL;
 static task_t *g_net_resync_chain_task = NULL;
 
-static pthread_mutex_t g_net_send_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_net_recv_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void net_set_gossip(pittacus_gossip_t *gossip)
@@ -172,18 +171,12 @@ void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockadd
 
 int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
 {
-  pthread_mutex_lock(&g_net_send_mutex);
-  int result = pittacus_gossip_send_data(gossip, data, data_size);
-  pthread_mutex_unlock(&g_net_send_mutex);
-  return result;
+  return pittacus_gossip_send_data(gossip, data, data_size);
 }
 
 int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
-  pthread_mutex_lock(&g_net_send_mutex);
-  int result = pittacus_gossip_data_sendto(gossip, recipient, recipient_len, data, data_size);
-  pthread_mutex_unlock(&g_net_send_mutex);
-  return result;
+  return pittacus_gossip_data_sendto(gossip, recipient, recipient_len, data, data_size);
 }
 
 int net_connect(const char *address, int port)

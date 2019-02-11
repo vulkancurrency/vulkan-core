@@ -62,6 +62,7 @@ int taskmgr_tick(void)
     {
       return 1;
     }
+
     if (task->delayable)
     {
       if (time(NULL) - task->timestamp < task->delay)
