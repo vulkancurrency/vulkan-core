@@ -45,6 +45,8 @@ int close_blockchain(void);
 int open_backup_blockchain(void);
 int close_backup_blockchain(void);
 
+int valid_timestamp(block_t *block);
+
 int init_blockchain(const char *blockchain_dir);
 int backup_blockchain(void);
 int restore_blockchain(void);

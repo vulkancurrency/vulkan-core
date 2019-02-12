@@ -267,6 +267,31 @@ int rollback_blockchain(uint32_t rollback_height)
   return 0;
 }
 
+int valid_timestamp(block_t *block)
+{
+  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  {
+    return 0;
+  }
+
+  uint32_t current_block_height = get_block_height();
+  if (current_block_height >= TIMESTAMP_CHECK_WINDOW)
+  {
+    block_t *median_block = get_block_from_height(current_block_height - (TIMESTAMP_CHECK_WINDOW / 2));
+    assert(median_block != NULL);
+
+    if (block->timestamp <= median_block->timestamp)
+    {
+      free_block(median_block);
+      return 0;
+    }
+
+    free_block(median_block);
+  }
+
+  return 1;
+}
+
 /* After we insert block into blockchain
  * Mark unspent txouts as spent for current txins
  * Add current TX w/ unspent txouts to unspent index
@@ -288,6 +313,12 @@ int insert_block_into_blockchain(block_t *block)
 
   // check this blocks previous has against our current top block hash
   if (compare_block_hash(block->previous_hash, get_current_block_hash()))
+  {
+    return 0;
+  }
+
+  // check to see if this block's timestamp is within the valid range
+  if (!valid_timestamp(block))
   {
     return 0;
   }
