@@ -292,9 +292,6 @@ int insert_block_into_blockchain(block_t *block)
     return 0;
   }
 
-  block_t *current_block = get_current_block();
-  assert(current_block != NULL);
-
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
@@ -320,6 +317,9 @@ int insert_block_into_blockchain(block_t *block)
     // value has not been manipulated...
     if (is_generation_tx(tx))
     {
+      block_t *current_block = get_current_block();
+      assert(current_block != NULL);
+
       uint64_t expected_block_reward = get_block_reward(get_block_height() + 1, current_block->already_generated_coins);
 
       // check to ensure that the generation tx reward is valid
@@ -340,6 +340,7 @@ int insert_block_into_blockchain(block_t *block)
         return 0;
       }
 
+      free_block(current_block);
       continue;
     }
 
@@ -394,7 +395,6 @@ int insert_block_into_blockchain(block_t *block)
   {
     fprintf(stderr, "Could not insert block into blockchain: %s\n", err);
 
-    free_block(current_block);
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
     return 0;
@@ -403,7 +403,6 @@ int insert_block_into_blockchain(block_t *block)
   // update our current top block hash in the blockchain
   set_current_block(block);
 
-  free_block(current_block);
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
   return 1;
