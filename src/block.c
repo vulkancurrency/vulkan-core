@@ -82,6 +82,12 @@ int hash_block(block_t *block)
 // Returns 0 if invalid, 1 is valid.
 int valid_block(block_t *block)
 {
+  // block timestamp must be less than 2 hours ahead of our current timestamp
+  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  {
+    return 0;
+  }
+
   // block must have a non-zero number of TXs.
   if (block->transaction_count < 1)
   {
