@@ -30,6 +30,7 @@
 #include "queue.h"
 #include "task.h"
 #include "transaction.h"
+#include "util.h"
 
 static int g_mempool_initialized = 0;
 
@@ -110,7 +111,7 @@ int push_tx_to_mempool(transaction_t *transaction)
 
   mempool_entry_t mempool_entry;
   mempool_entry.transaction = transaction;
-  mempool_entry.received_ts = time(NULL);
+  mempool_entry.received_ts = get_current_time();
 
   queue_push_right(g_mempool, &mempool_entry);
   return 0;
@@ -210,7 +211,7 @@ task_result_t flush_mempool(task_t *task, va_list args)
       break;
     }
 
-    if (time(NULL) - mempool_entry->received_ts >= MEMPOOL_TX_EXPIRE_TIME)
+    if (get_current_time() - mempool_entry->received_ts >= MEMPOOL_TX_EXPIRE_TIME)
     {
       remove_tx_from_mempool(mempool_entry->transaction);
     }

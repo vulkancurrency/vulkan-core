@@ -34,8 +34,8 @@
 #include "mempool.h"
 #include "net.h"
 #include "protocol.h"
-#include "vulkan.pb-c.h"
 #include "util.h"
+#include "vulkan.pb-c.h"
 
 static sync_entry_t g_protocol_sync_entry;
 
@@ -625,7 +625,7 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
   g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.last_sync_height = 0;
-  g_protocol_sync_entry.last_sync_ts = time(0);
+  g_protocol_sync_entry.last_sync_ts = 0;
   g_protocol_sync_entry.last_sync_tries = 0;
 
   return 0;
@@ -659,7 +659,7 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.last_sync_height = 0;
-  g_protocol_sync_entry.last_sync_ts = time(0);
+  g_protocol_sync_entry.last_sync_ts = 0;
   g_protocol_sync_entry.last_sync_tries = 0;
 
   return 0;
@@ -713,7 +713,7 @@ int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipi
     g_protocol_sync_entry.last_sync_height = sync_height;
   }
 
-  g_protocol_sync_entry.last_sync_ts = time(NULL);
+  g_protocol_sync_entry.last_sync_ts = get_current_time();
   return 0;
 }
 
@@ -1129,7 +1129,7 @@ task_result_t resync_chain(task_t *task, va_list args)
 {
   if (g_protocol_sync_entry.sync_initiated)
   {
-    if (time(NULL) - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
+    if (get_current_time() - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
     {
       uint32_t block_height = g_protocol_sync_entry.last_sync_height;
       request_sync_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len, block_height, NULL);

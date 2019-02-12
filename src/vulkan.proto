@@ -68,7 +68,7 @@ message PBlock
   bytes previous_hash = 3;
   bytes hash = 4;
 
-  uint32 timestamp = 5;
+  int64 timestamp = 5;
   uint32 nonce = 6;
   uint64 already_generated_coins = 7;
 

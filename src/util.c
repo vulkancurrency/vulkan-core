@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #include <sodium.h>
 
@@ -107,4 +108,9 @@ int make_hash(char *digest, unsigned char *string)
   }
 
   return 0;
+}
+
+int64_t get_current_time(void)
+{
+  return (int64_t)time(NULL);
 }

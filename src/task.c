@@ -31,6 +31,7 @@
 
 #include "queue.h"
 #include "task.h"
+#include "util.h"
 
 static int taskmgr_next_task_id = -1;
 static int taskmgr_next_scheduler_id = -1;
@@ -65,7 +66,7 @@ int taskmgr_tick(void)
 
     if (task->delayable)
     {
-      if (time(NULL) - task->timestamp < task->delay)
+      if (get_current_time() - task->timestamp < task->delay)
       {
         // put the task back into the queue since it's not
         // time yet to call it...
@@ -91,7 +92,7 @@ int taskmgr_tick(void)
         break;
       case TASK_RESULT_WAIT:
         task->delayable = 1;
-        task->timestamp = time(NULL);
+        task->timestamp = get_current_time();
         queue_push_right(taskmgr_task_queue, task);
         break;
       case TASK_RESULT_DONE:
@@ -169,7 +170,7 @@ task_t* add_task(callable_func_t func, double delay, ...)
   task->args = &args;
   task->delayable = 1;
   task->delay = delay;
-  task->timestamp = time(NULL);
+  task->timestamp = get_current_time();
 
   pthread_mutex_init(&task->mutex, NULL);
   queue_push_right(taskmgr_task_queue, task);

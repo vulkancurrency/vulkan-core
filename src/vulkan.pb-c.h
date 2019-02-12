@@ -113,7 +113,7 @@ struct  _PBlock
   uint32_t bits;
   ProtobufCBinaryData previous_hash;
   ProtobufCBinaryData hash;
-  uint32_t timestamp;
+  int64_t timestamp;
   uint32_t nonce;
   uint64_t already_generated_coins;
   ProtobufCBinaryData merkle_root;

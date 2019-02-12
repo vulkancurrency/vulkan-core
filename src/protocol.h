@@ -27,7 +27,6 @@
 
 #include <stdint.h>
 #include <stdarg.h>
-#include <time.h>
 
 #include <gossip.h>
 
@@ -147,7 +146,7 @@ typedef struct SyncEntry
   int sync_start_height;
 
   uint32_t last_sync_height;
-  time_t last_sync_ts;
+  int64_t last_sync_ts;
   uint8_t last_sync_tries;
 } sync_entry_t;
 

@@ -46,6 +46,7 @@ int string_count(const char *string, const char *countstr, int countbreak);
 const char* string_copy(const char *string, const char *other_string);
 
 int make_hash(char *digest, unsigned char *string);
+int64_t get_current_time(void);
 
 #ifdef __cplusplus
 }

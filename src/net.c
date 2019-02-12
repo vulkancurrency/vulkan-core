@@ -300,7 +300,6 @@ int net_run_server(void)
   int recv_result = 0;
   int send_result = 0;
   int poll_result = 0;
-  time_t previous_data_msg_ts = time(NULL);
 
   while (g_net_server_running)
   {

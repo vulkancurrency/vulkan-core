@@ -26,14 +26,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <sodium.h>
 
-#include "chainparams.h"
 #include "block.h"
+#include "chainparams.h"
 #include "merkle.h"
-#include "vulkan.pb-c.h"
 #include "util.h"
+#include "vulkan.pb-c.h"
 
 /* Allocates a block for usage.
  *
@@ -81,13 +82,13 @@ int hash_block(block_t *block)
 // Returns 0 if invalid, 1 is valid.
 int valid_block(block_t *block)
 {
-  // Block must have a non-zero number of TXs.
+  // block must have a non-zero number of TXs.
   if (block->transaction_count < 1)
   {
     return 0;
   }
 
-  // First TX must always be a generational TX.
+  // first TX must always be a generational TX.
   if (!is_generation_tx(block->transactions[0]))
   {
     return 0;
