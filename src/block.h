@@ -98,6 +98,7 @@ block_t *make_block(void);
 int free_block(block_t *block);
 int hash_block(block_t *block);
 int get_block_header(uint8_t *block_header, block_t *block);
+uint32_t get_block_header_size(block_t *block);
 int valid_block_hash(block_t *block);
 int print_block(block_t *block);
 

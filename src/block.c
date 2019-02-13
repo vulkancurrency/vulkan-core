@@ -263,6 +263,17 @@ int get_block_header(uint8_t *block_header, block_t *block)
   return 0;
 }
 
+uint32_t get_block_header_size(block_t *block)
+{
+  uint32_t block_header_size = BLOCK_HEADER_SIZE;
+  for (int i = 0; i < block->transaction_count; i++)
+  {
+    block_header_size += get_tx_header_size(block->transactions[i]);
+  }
+
+  return block_header_size;
+}
+
 int print_block(block_t *block)
 {
   char hash[(crypto_hash_sha256_BYTES * 2) + 1];
