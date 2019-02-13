@@ -916,6 +916,7 @@ int get_top_block_key(uint8_t *buffer)
 uint64_t get_already_generated_coins(void)
 {
   block_t *current_block = get_current_block();
+  assert(current_block != NULL);
   uint64_t already_generated_coins = current_block->already_generated_coins;
   free_block(current_block);
   return already_generated_coins;
