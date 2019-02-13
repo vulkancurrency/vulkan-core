@@ -467,9 +467,13 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 block_t *get_block_from_height(uint32_t height)
 {
   uint32_t current_block_height = get_block_height();
+  if (height > current_block_height)
+  {
+    return NULL;
+  }
+
   block_t *block = get_current_block();
   assert(block != NULL);
-  assert(height <= current_block_height);
 
   if (height == 0)
   {
