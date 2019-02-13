@@ -262,10 +262,10 @@ int rollback_blockchain(uint32_t rollback_height)
       free_block(previous_block);
     }
 
-    printf("Rolled back block at height: %d.\n", i);
     free_block(block);
   }
 
+  printf("Successfully rolled blockchain back to height: %d.\n", rollback_height);
   return 0;
 }
 
@@ -274,7 +274,7 @@ int valid_median_timestamp(block_t *block)
   uint32_t current_block_height = get_block_height();
   if (current_block_height < TIMESTAMP_CHECK_WINDOW)
   {
-    return 0;
+    return 1;
   }
 
   block_t *median_block = get_block_from_height(current_block_height - (TIMESTAMP_CHECK_WINDOW / 2));
