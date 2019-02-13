@@ -245,8 +245,8 @@ int get_block_header(uint8_t *block_header, block_t *block)
   position += 4;
   memcpy(block_header + position, &block->nonce, 4);
   position += 4;
-  memcpy(block_header + position, &block->timestamp, 4);
-  position += 4;
+  memcpy(block_header + position, &block->timestamp, 8);
+  position += 8;
   memcpy(block_header + position, &block->already_generated_coins, 8);
   position += 8;
   memcpy(block_header + position, &block->previous_hash, HASH_SIZE);
