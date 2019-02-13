@@ -80,7 +80,7 @@ void stop_mining(void)
 block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
 {
   uint32_t nonce = 0;
-  int64_t current_time = get_current_time();
+  uint32_t current_time = get_current_time();
   uint32_t current_block_height = get_block_height();
 
   uint64_t already_generated_coins = previous_block->already_generated_coins;

@@ -1326,7 +1326,7 @@ static const ProtobufCFieldDescriptor pblock__field_descriptors[9] =
     "timestamp",
     5,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_INT64,
+    PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
     offsetof(PBlock, timestamp),
     NULL,

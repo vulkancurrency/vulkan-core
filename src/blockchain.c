@@ -269,28 +269,24 @@ int rollback_blockchain(uint32_t rollback_height)
   return 0;
 }
 
-int valid_timestamp(block_t *block)
+int valid_median_timestamp(block_t *block)
 {
-  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  uint32_t current_block_height = get_block_height();
+  if (current_block_height < TIMESTAMP_CHECK_WINDOW)
   {
     return 0;
   }
 
-  uint32_t current_block_height = get_block_height();
-  if (current_block_height >= TIMESTAMP_CHECK_WINDOW)
+  block_t *median_block = get_block_from_height(current_block_height - (TIMESTAMP_CHECK_WINDOW / 2));
+  assert(median_block != NULL);
+
+  if (block->timestamp <= median_block->timestamp)
   {
-    block_t *median_block = get_block_from_height(current_block_height - (TIMESTAMP_CHECK_WINDOW / 2));
-    assert(median_block != NULL);
-
-    if (block->timestamp <= median_block->timestamp)
-    {
-      free_block(median_block);
-      return 0;
-    }
-
     free_block(median_block);
+    return 0;
   }
 
+  free_block(median_block);
   return 1;
 }
 
@@ -319,8 +315,9 @@ int insert_block_into_blockchain(block_t *block)
     return 0;
   }
 
-  // check to see if this block's timestamp is within the valid range
-  if (!valid_timestamp(block))
+  // check to see if this block's timestamp is greater than the
+  // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
+  if (!valid_median_timestamp(block))
   {
     return 0;
   }
@@ -473,7 +470,7 @@ block_t *get_block_from_height(uint32_t height)
   block_t *block = get_current_block();
   assert(block != NULL);
   assert(height <= current_block_height);
-  
+
   if (height == 0)
   {
     return get_block_from_hash(genesis_block.hash);

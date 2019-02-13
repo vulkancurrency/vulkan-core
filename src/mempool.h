@@ -42,7 +42,7 @@ extern "C"
 typedef struct MempoolEntry
 {
   transaction_t *transaction;
-  int64_t received_ts;
+  uint32_t received_ts;
 } mempool_entry_t;
 
 int start_mempool(void);

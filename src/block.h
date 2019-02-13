@@ -37,7 +37,7 @@ extern "
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 8 + 4 + 4 + 4)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 4 + 4 + 4 + 4)
 
 typedef struct Block
 {
@@ -47,7 +47,7 @@ typedef struct Block
   uint8_t previous_hash[HASH_SIZE];
   uint8_t hash[HASH_SIZE];
 
-  int64_t timestamp;
+  uint32_t timestamp;
   uint32_t nonce;
   uint64_t already_generated_coins;
 

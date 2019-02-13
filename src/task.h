@@ -52,7 +52,7 @@ typedef struct Task
   va_list *args;
   int delayable;
   double delay;
-  int64_t timestamp;
+  uint32_t timestamp;
   pthread_mutex_t mutex;
 } task_t;
 

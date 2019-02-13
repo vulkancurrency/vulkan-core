@@ -82,6 +82,12 @@ int hash_block(block_t *block)
 // Returns 0 if invalid, 1 is valid.
 int valid_block(block_t *block)
 {
+  // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
+  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  {
+    return 0;
+  }
+
   // block must have a non-zero number of TXs.
   if (block->transaction_count < 1)
   {
@@ -245,8 +251,8 @@ int get_block_header(uint8_t *block_header, block_t *block)
   position += 4;
   memcpy(block_header + position, &block->nonce, 4);
   position += 4;
-  memcpy(block_header + position, &block->timestamp, 8);
-  position += 8;
+  memcpy(block_header + position, &block->timestamp, 4);
+  position += 4;
   memcpy(block_header + position, &block->already_generated_coins, 8);
   position += 8;
   memcpy(block_header + position, &block->previous_hash, HASH_SIZE);
