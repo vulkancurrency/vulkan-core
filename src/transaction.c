@@ -130,6 +130,11 @@ int valid_transaction(transaction_t *tx)
 {
   if (tx->txin_count > 0 && tx->txout_count > 0)
   {
+    if (get_tx_header_size(tx) > MAX_TX_SIZE)
+    {
+      return 0;
+    }
+
     return (is_generation_tx(tx) || (tx->txin_count > 0 && tx->txout_count > 0 && do_txins_reference_unspent_txouts(tx)));
   }
   else
