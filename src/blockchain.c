@@ -230,7 +230,7 @@ int restore_blockchain(void)
 int rollback_blockchain(uint32_t rollback_height)
 {
   uint32_t current_block_height = get_block_height();
-  assert(current_block_height <= rollback_height);
+  assert(rollback_height <= current_block_height);
   for (uint32_t i = current_block_height; i > 0; i--)
   {
     if (i == rollback_height)
@@ -472,7 +472,7 @@ block_t *get_block_from_height(uint32_t height)
   uint32_t current_block_height = get_block_height();
   block_t *block = get_current_block();
   assert(block != NULL);
-  assert(current_block_height <= height);
+  assert(height <= current_block_height);
   
   if (height == 0)
   {
