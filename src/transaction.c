@@ -122,6 +122,7 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
 
 /*
  * A transaction is valid if:
+ * - It's header size is less than that of defined as MAX_TX_SIZE
  * - It is a generation tx
  * - It has TXINs that reference valid unspent TXOUTs
  * - Its combined TXIN UTXO values equal the combined amount of TXOUTs.
@@ -137,10 +138,8 @@ int valid_transaction(transaction_t *tx)
 
     return (is_generation_tx(tx) || (tx->txin_count > 0 && tx->txout_count > 0 && do_txins_reference_unspent_txouts(tx)));
   }
-  else
-  {
-    return 0;
-  }
+
+  return 0;
 }
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)
