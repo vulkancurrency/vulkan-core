@@ -29,7 +29,7 @@
 
 #include <rocksdb/c.h>
 
-#include "core/chainparams.h"
+#include "core/blockchainparams.h"
 #include "core/vulkan.pb-c.h"
 
 #ifdef __cplusplus

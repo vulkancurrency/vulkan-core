@@ -42,7 +42,7 @@
 
 #include "common/task.h"
 
-#include "core/chainparams.h"
+#include "core/blockchainparams.h"
 #include "core/net.h"
 #include "core/protocol.h"
 #include "core/version.h"

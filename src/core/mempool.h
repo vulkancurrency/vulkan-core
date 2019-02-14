@@ -30,7 +30,7 @@
 
 #include "common/task.h"
 
-#include "core/chainparams.h"
+#include "core/blockchainparams.h"
 #include "core/transaction.h"
 
 #ifdef __cplusplus

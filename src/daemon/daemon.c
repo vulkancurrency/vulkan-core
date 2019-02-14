@@ -34,7 +34,7 @@
 
 #include "core/block.h"
 #include "core/blockchain.h"
-#include "core/chainparams.h"
+#include "core/blockchainparams.h"
 #include "core/mempool.h"
 #include "core/net.h"
 #include "core/version.h"

@@ -32,7 +32,7 @@
 #include <rocksdb/c.h>
 
 #include "core/blockchain.h"
-#include "core/chainparams.h"
+#include "core/blockchainparams.h"
 
 #include "wallet/wallet.h"
 

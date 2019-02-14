@@ -31,7 +31,7 @@
 #include <sodium.h>
 
 #include "block.h"
-#include "chainparams.h"
+#include "blockchainparams.h"
 #include "merkle.h"
 #include "util.h"
 #include "vulkan.pb-c.h"
