@@ -40,11 +40,12 @@
 #include <gossip.h>
 #include <config.h>
 
-#include "chainparams.h"
-#include "net.h"
-#include "protocol.h"
-#include "task.h"
-#include "version.h"
+#include "common/task.h"
+
+#include "core/chainparams.h"
+#include "core/net.h"
+#include "core/protocol.h"
+#include "core/version.h"
 
 static int g_net_server_running = 0;
 static int g_net_seed_mode = 0;

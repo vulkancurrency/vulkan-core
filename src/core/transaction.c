@@ -28,11 +28,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "blockchain.h"
-#include "transaction.h"
-#include "vulkan.pb-c.h"
-#include "util.h"
-#include "wallet.h"
+#include "common/util.h"
+
+#include "core/blockchain.h"
+#include "core/transaction.h"
+#include "core/vulkan.pb-c.h"
+
+#include "wallet/wallet.h"
 
 static uint8_t g_transaction_zero_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,

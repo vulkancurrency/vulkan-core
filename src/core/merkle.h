@@ -27,18 +27,34 @@
 
 #include <stdint.h>
 
-#include "block.h"
-#include "wallet.h"
+#include "common/util.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-int start_mining(void);
-void stop_mining(void);
+typedef struct MerkleNode merkle_node_t;
+typedef struct MerkleNode
+{
+  merkle_node_t *left;
+  merkle_node_t *right;
+  uint8_t hash[HASH_SIZE];
+} merkle_node_t;
 
-block_t *compute_next_block(PWallet *wallet, block_t *previous_block);
+typedef struct MerkleTree
+{
+  merkle_node_t *root;
+} merkle_tree_t;
+
+merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_of_hashes);
+merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right);
+
+int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
+int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
+
+int free_merkle_tree(merkle_tree_t *tree);
+int free_merkle_node(merkle_node_t *node);
 
 #ifdef __cplusplus
 }

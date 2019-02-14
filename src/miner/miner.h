@@ -27,24 +27,19 @@
 
 #include <stdint.h>
 
-#include <rocksdb/c.h>
+#include "core/block.h"
 
-#include "chainparams.h"
-#include "vulkan.pb-c.h"
+#include "wallet/wallet.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-rocksdb_t *open_wallet(const char *wallet_filename, char *err);
-int new_wallet(const char *wallet_filename);
-PWallet *get_wallet(void);
-void print_wallet(PWallet *wallet);
+int start_mining(void);
+void stop_mining(void);
 
-int public_key_to_address(unsigned char *address, unsigned char *pk);
-uint8_t get_address_id(uint8_t *address);
-int valid_address(uint8_t *address);
+block_t *compute_next_block(PWallet *wallet, block_t *previous_block);
 
 #ifdef __cplusplus
 }

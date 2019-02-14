@@ -23,101 +23,52 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-set(SOURCE_FILES
-  argparse.c
-  block.c
-  blockchain.c
-  main.c
-  mempool.c
-  merkle.c
-  miner.c
-  net.c
-  protocol.c
-  queue.c
-  task.c
-  transaction.c
-  util.c
-  vulkan.pb-c.c
-  wallet.c
-)
+file(GLOB_RECURSE COMMON common/*)
+file(GLOB_RECURSE CORE core/*)
+file(GLOB_RECURSE DAEMON daemon/*)
+file(GLOB_RECURSE MINER miner/*)
+file(GLOB_RECURSE WALLET wallet/*)
 
-set(HEADER_FILES
-  argparse.h
-  block.h
-  blockchain.h
-  chainparams.h
-  mempool.h
-  merkle.h
-  miner.h
-  net.h
-  protocol.h
-  queue.h
-  task.h
-  transaction.h
-  util.h
-  version.h
-  vulkan.pb-c.h
-  wallet.h
-)
+source_group(common FILES ${COMMON})
+source_group(core FILES ${CORE})
+source_group(daemon FILES ${DAEMON})
+source_group(miner FILES ${MINER})
+source_group(wallet FILES ${WALLET})
 
-add_executable(
-  ${PROJECT_NAME}
-  ${SOURCE_FILES}
-  ${HEADER_FILES}
-)
+add_library(common ${COMMON})
+add_library(core ${CORE})
+add_library(daemon ${DAEMON})
+add_library(miner ${MINER})
+add_library(wallet ${WALLET})
 
-target_link_libraries(
-  ${PROJECT_NAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
-if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-  target_link_libraries(
-    ${PROJECT_NAME}
-    ${SODIUM_LIBRARY_DEBUG}
-  )
-else()
-  target_link_libraries(
-    ${PROJECT_NAME}
-    ${SODIUM_LIBRARY_RELEASE}
-  )
-endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-
-target_link_libraries(
-  ${PROJECT_NAME}
-  ${ROCKSDB_LIBRARIES}
-)
-
-if(UPNPC_STATIC)
-  target_link_libraries(
-    ${PROJECT_NAME}
-    libminiupnpc-static
-  )
-else()
-  target_link_libraries(
-    ${PROJECT_NAME}
-    libminiupnpc
-  )
-endif()
-
-target_link_libraries(
-  ${PROJECT_NAME}
-  protobuf-c
-)
-
-target_link_libraries(
-  ${PROJECT_NAME}
-  protobuf-c-rpc
-)
+target_link_libraries(core common miner wallet)
+target_link_libraries(wallet common core)
+target_link_libraries(daemon common core miner wallet)
 
 if(PITTACUS_STATIC)
-  target_link_libraries(
-    ${PROJECT_NAME}
-    pittacus_static
-  )
+  target_link_libraries(core pittacus_static)
 else()
-  target_link_libraries(
-    ${PROJECT_NAME}
-    pittacus
-  )
+  target_link_libraries(core pittacus)
 endif()
+
+target_link_libraries(core protobuf-c)
+
+if(UPNP_STATIC)
+  target_link_libraries(core libminiupnpc-static)
+else()
+  target_link_libraries(core libminiupnpc)
+endif()
+
+if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+  target_link_libraries(core ${SODIUM_LIBRARY_DEBUG})
+else()
+  target_link_libraries(core ${SODIUM_LIBRARY_RELEASE})
+endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+
+target_link_libraries(core ${ROCKSDB_LIBRARIES})
+target_link_libraries(common ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(core ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(${PROJECT_NAME} ${DAEMON})
+
+target_link_libraries(${PROJECT_NAME} daemon)

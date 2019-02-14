@@ -25,12 +25,14 @@
 
 #include <sodium.h>
 
-#include "deps/greatest.h"
-#include "../src/transaction.h"
+#include "common/greatest.h"
+
+#include "core/transaction.h"
 
 SUITE(transaction_suite);
 
-TEST can_sign_txin(void) {
+TEST can_sign_txin(void)
+{
   input_transaction_t txin = {
     .transaction = {
       0x00, 0x00, 0x00, 0x00,
@@ -84,7 +86,8 @@ TEST can_sign_txin(void) {
   PASS();
 }
 
-TEST can_serialize_tx(void) {
+TEST can_serialize_tx(void)
+{
   input_transaction_t txin = {
     .transaction = {
       0x00, 0x00, 0x00, 0x00,
@@ -135,7 +138,8 @@ TEST can_serialize_tx(void) {
   PASS();
 }
 
-GREATEST_SUITE(transaction_suite) {
+GREATEST_SUITE(transaction_suite)
+{
   RUN_TEST(can_sign_txin);
   RUN_TEST(can_serialize_tx);
 }

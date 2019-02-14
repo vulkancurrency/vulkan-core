@@ -23,47 +23,45 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
-
 #include <stdlib.h>
-#include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
-#include <gossip.h>
+#include "argparse.h"
+#include "util.h"
 
-#include "task.h"
-
-#ifdef __cplusplus
-extern "C"
+argument_t argparse_get_argument_from_str(const char *arg)
 {
-#endif
+  // verify command argument prefix
+  if (!string_startswith(arg, "-") || string_count(arg, "-", 1) > 2)
+  {
+    return CMD_ARG_UNKNOWN;
+  }
 
-void net_set_gossip(pittacus_gossip_t *gossip);
-pittacus_gossip_t* net_get_gossip(void);
+  // determine the argument type
+  for (int i = 0; i < NUM_COMMANDS; i++)
+  {
+    argument_map_t *argument_map = &g_arguments_map[i];
+    if (string_endswith(arg, argument_map->name))
+    {
+      return argument_map->type;
+    }
+  }
 
-void net_set_disable_port_mapping(int disable_port_mapping);
-int net_get_disable_port_mapping(void);
-
-void net_set_bind_address(const char *bind_address);
-const char* net_get_bind_address(void);
-
-void net_set_bind_port(int bind_port);
-int net_get_bind_port(void);
-
-void net_setup_port_mapping(int port);
-
-void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
-int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
-int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
-
-int net_connect(const char *address, int port);
-int net_open_connection(void);
-
-int net_run_server(void);
-void* net_run_server_threaded();
-
-int net_start_server(int threaded, int seed_mode);
-void net_stop_server(void);
-
-#ifdef __cplusplus
+  return CMD_ARG_UNKNOWN;
 }
-#endif
+
+argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
+{
+  for (int i = 0; i < NUM_COMMANDS; i++)
+  {
+    argument_map_t *argument_map = &g_arguments_map[i];
+    if (argument_map->type == arg_type)
+    {
+      return argument_map;
+    }
+  }
+
+  return NULL;
+}

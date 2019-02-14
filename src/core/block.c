@@ -268,7 +268,9 @@ uint32_t get_block_header_size(block_t *block)
   uint32_t block_header_size = BLOCK_HEADER_SIZE;
   for (int i = 0; i < block->transaction_count; i++)
   {
-    block_header_size += get_tx_header_size(block->transactions[i]);
+    transaction_t *transaction = block->transactions[i];
+    assert(transaction != NULL);
+    block_header_size += get_tx_header_size(transaction);
   }
 
   return block_header_size;

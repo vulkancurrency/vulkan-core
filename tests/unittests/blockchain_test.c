@@ -23,10 +23,10 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include "deps/greatest.h"
+#include "common/greatest.h"
 
-#include "../src/block.h"
-#include "../src/blockchain.h"
+#include "core/block.h"
+#include "core/blockchain.h"
 
 SUITE(blockchain_suite);
 
@@ -52,14 +52,15 @@ static uint8_t tx_id[32] = {
   0x04, 0x03, 0x02, 0x01
 };
 
-TEST can_insert_block_into_blockchain(void) {
+TEST can_insert_block(void)
+{
   block_t *block = make_block();
   memcpy(block->hash, block_hash, 32);
   block->nonce = 123456;
   block->transaction_count = 0;
 
-  insert_block_into_blockchain(block);
-  block_t *block_from_db = get_block_by_hash(block->hash);
+  insert_block(block);
+  block_t *block_from_db = get_block_from_hash(block->hash);
 
   ASSERT_MEM_EQ(block->hash, block_hash, 32);
   ASSERT_EQ(block->nonce, 123456);
@@ -69,7 +70,8 @@ TEST can_insert_block_into_blockchain(void) {
   PASS();
 }
 
-TEST inserting_block_into_blockchain_also_inserts_tx(void) {
+TEST inserting_block_into_blockchain_also_inserts_tx(void)
+{
   transaction_t *tx = malloc(sizeof(transaction_t));
   memcpy(tx->id, tx_id, 32);
   tx->txin_count = 0;
@@ -80,23 +82,27 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void) {
   block_t *block = make_block();
   memcpy(block->hash, block_hash, 32);
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block_into_blockchain(block);
+  insert_block(block);
   uint8_t *block_hash_from_tx = get_block_hash_from_tx_id(tx_id);
 
-  if (block_hash_from_tx != NULL) {
+  if (block_hash_from_tx != NULL)
+  {
     ASSERT_MEM_EQ(block->hash, block_hash_from_tx, 32);
     free_block(block);
     PASS();
-  } else {
+  }
+  else
+  {
     free_block(block);
     FAIL();
   }
 }
 
-TEST can_get_block_from_tx_id(void) {
+TEST can_get_block_from_tx_id(void)
+{
   transaction_t *tx = malloc(sizeof(transaction_t));
   memcpy(tx->id, tx_id, 32);
   tx->txin_count = 0;
@@ -107,34 +113,38 @@ TEST can_get_block_from_tx_id(void) {
   block_t *block = make_block();
   memcpy(block->hash, block_hash, 32);
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block_into_blockchain(block);
+  insert_block(block);
   block_t *block_from_db = get_block_from_tx_id(tx_id);
 
-  if (block_from_db != NULL) {
+  if (block_from_db != NULL)
+  {
     ASSERT_MEM_EQ(block->hash, block_from_db->hash, 32);
     free_block(block);
     free_block(block_from_db);
     PASS();
-  } else {
+  }
+  else
+  {
     free_block(block);
     FAIL();
   }
 }
 
-TEST can_delete_block_from_blockchain(void) {
+TEST can_delete_block_from_blockchain(void)
+{
   block_t *block = make_block();
   memcpy(block->hash, block_hash, 32);
 
-  insert_block_into_blockchain(block);
-  block_t *block_from_db = get_block_by_hash(block_hash);
+  insert_block(block);
+  block_t *block_from_db = get_block_from_hash(block_hash);
 
   ASSERT(block_from_db != NULL);
 
   delete_block_from_blockchain(block_hash);
-  block_t *deleted_block = get_block_by_hash(block_hash);
+  block_t *deleted_block = get_block_from_hash(block_hash);
 
   ASSERT(deleted_block == NULL);
 
@@ -158,10 +168,11 @@ TEST can_delete_tx_from_index(void) {
   block->transactions = malloc(sizeof(transaction_t *) * 1);
   block->transactions[0] = tx;
 
-  insert_block_into_blockchain(block);
+  insert_block(block);
   block_t *block_from_db = get_block_from_tx_id(tx_id);
 
-  if (block_from_db != NULL) {
+  if (block_from_db != NULL)
+  {
     ASSERT_MEM_EQ(block->hash, block_from_db->hash, 32);
 
     delete_tx_from_index(tx_id);
@@ -173,13 +184,16 @@ TEST can_delete_tx_from_index(void) {
     free_block(block_from_db);
 
     PASS();
-  } else {
+  }
+  else
+  {
     free_block(block);
     FAIL();
   }
 }
 
-TEST can_insert_unspent_tx_into_index(void) {
+TEST can_insert_unspent_tx_into_index(void)
+{
   input_transaction_t txin = {
     .transaction = {
       0x00, 0x00, 0x00, 0x00,
@@ -220,7 +234,8 @@ TEST can_insert_unspent_tx_into_index(void) {
   insert_unspent_tx_into_index(&tx);
   PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx.id);
 
-  if (unspent_tx != NULL) {
+  if (unspent_tx != NULL)
+  {
     ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address.data, 32);
     delete_unspent_tx_from_index(tx.id);
     PUnspentTransaction *deleted_tx = get_unspent_tx_from_index(tx.id);
@@ -230,12 +245,15 @@ TEST can_insert_unspent_tx_into_index(void) {
     free_proto_unspent_transaction(unspent_tx);
 
     PASS();
-  } else {
+  }
+  else
+  {
     FAIL();
   }
 }
 
-TEST inserting_block_into_blockchain_marks_txouts_as_spent(void) {
+TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -264,7 +282,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void) {
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txout_count);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -274,20 +292,21 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void) {
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block_into_blockchain(block);
+  insert_block(block);
   PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
-  if (unspent_tx != NULL) {
+  if (unspent_tx != NULL)
+  {
     ASSERT(unspent_tx->n_unspent_txouts == 1);
     ASSERT(unspent_tx->unspent_txouts[0]->spent == 0);
 
@@ -317,13 +336,14 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void) {
     block_2->transactions = malloc(sizeof(transaction_t *) * 1);
     block_2->transactions[0] = tx_2;
 
-    insert_block_into_blockchain(block_2);
+    insert_block(block_2);
 
     PUnspentTransaction *unspent_tx_2 = get_unspent_tx_from_index(unspent_tx->id.data);
 
     ASSERT(unspent_tx_2 == NULL);
 
-    if (unspent_tx_2 != NULL) {
+    if (unspent_tx_2 != NULL)
+    {
       free_proto_unspent_transaction(unspent_tx_2);
     }
 
@@ -331,12 +351,15 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void) {
     free_block(block_2);
 
     PASS();
-  } else {
+  }
+  else
+  {
     FAIL();
   }
 }
 
-TEST tx_is_valid_only_if_it_has_money_unspent(void) {
+TEST tx_is_valid_only_if_it_has_money_unspent(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -375,20 +398,21 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void) {
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block_into_blockchain(block);
+  insert_block(block);
   PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
-  if (unspent_tx != NULL) {
+  if (unspent_tx != NULL)
+  {
     ASSERT(unspent_tx->n_unspent_txouts == 1);
     ASSERT(unspent_tx->unspent_txouts[0]->spent == 0);
 
@@ -402,14 +426,14 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void) {
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
     tx_2->txout_count = 1;
-    tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
+    tx_2->txouts = malloc(sizeof(output_transaction_t *) * tx_2->txout_count);
     tx_2->txouts[0] = txout_2;
 
     crypto_sign_keypair(pk, sk);
     sign_txin(txin_2, tx_2, pk, sk);
 
     tx_2->txin_count = 1;
-    tx_2->txins = malloc(sizeof(input_transaction_t *) * 1);
+    tx_2->txins = malloc(sizeof(input_transaction_t *) * tx_2->txin_count);
     tx_2->txins[0] = txin_2;
     compute_self_tx_id(tx_2);
 
@@ -418,13 +442,16 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void) {
     free_proto_unspent_transaction(unspent_tx);
 
     PASS();
-  } else {
+  }
+  else
+  {
     FAIL();
   }
 }
 
-GREATEST_SUITE(blockchain_suite) {
-  RUN_TEST(can_insert_block_into_blockchain);
+GREATEST_SUITE(blockchain_suite)
+{
+  RUN_TEST(can_insert_block);
   RUN_TEST(inserting_block_into_blockchain_also_inserts_tx);
   RUN_TEST(can_get_block_from_tx_id);
   RUN_TEST(can_delete_block_from_blockchain);

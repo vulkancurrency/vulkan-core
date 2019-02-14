@@ -30,9 +30,10 @@
 
 #include <gossip.h>
 
-#include "block.h"
-#include "task.h"
-#include "transaction.h"
+#include "common/task.h"
+
+#include "core/block.h"
+#include "core/transaction.h"
 
 #ifdef __cplusplus
 extern "C"

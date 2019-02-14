@@ -26,8 +26,9 @@
 #include <stdint.h>
 #include <sodium.h>
 
-#include "deps/greatest.h"
-#include "../src/merkle.h"
+#include "common/greatest.h"
+
+#include "core/merkle.h"
 
 SUITE(merkle_suite);
 
@@ -37,7 +38,8 @@ SUITE(merkle_suite);
  * C: 12f37a8a84034d3e623d726fe10e5031f4df997ac13f4d5571b5a90c41fb84fe
  */
 
-TEST can_construct_merkle_tree(void) {
+TEST can_construct_merkle_tree(void)
+{
   uint8_t hash_size = 32;
   uint32_t number_of_hashes = 3;
   uint8_t *hash_region = malloc(sizeof(uint8_t) * hash_size * number_of_hashes);
@@ -91,7 +93,7 @@ TEST can_construct_merkle_tree(void) {
   memcpy(hash_region + 32, hash_b, 32);
   memcpy(hash_region + 64, hash_c, 32);
 
-  struct MerkleTree *tree = construct_merkle_tree_from_leaves(hash_region, 3);
+  merkle_tree_t *tree = construct_merkle_tree_from_leaves(hash_region, 3);
 
   uint8_t *hash_ab = malloc(sizeof(uint8_t) * 32);
   uint8_t *hash_cc = malloc(sizeof(uint8_t) * 32);
@@ -123,6 +125,7 @@ TEST can_construct_merkle_tree(void) {
   PASS();
 }
 
-GREATEST_SUITE(merkle_suite) {
+GREATEST_SUITE(merkle_suite)
+{
   RUN_TEST(can_construct_merkle_tree);
 }

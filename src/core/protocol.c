@@ -793,7 +793,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
-        if (insert_block_into_blockchain(message->block))
+        if (validate_and_insert_block(message->block))
         {
           printf("Added incoming block at height: %d.\n", get_block_height());
         }
@@ -947,7 +947,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           }
           else
           {
-            if (insert_block_into_blockchain(message->block))
+            if (validate_and_insert_block(message->block))
             {
               printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
               if (check_sync_status())

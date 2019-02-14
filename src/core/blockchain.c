@@ -90,7 +90,7 @@ int open_blockchain(const char *blockchain_dir)
 
   if (!has_block_by_hash(genesis_block.hash))
   {
-    if (!insert_block_into_blockchain(&genesis_block))
+    if (!validate_and_insert_block(&genesis_block))
     {
       fprintf(stderr, "Could not insert genesis block into blockchain!\n");
       return 1;
@@ -230,7 +230,12 @@ int restore_blockchain(void)
 int rollback_blockchain(uint32_t rollback_height)
 {
   uint32_t current_block_height = get_block_height();
-  assert(rollback_height <= current_block_height);
+  if (rollback_height > current_block_height)
+  {
+    fprintf(stderr, "Could not rollback blockchain to height: %d, current blockchain top block height is: %d!\n", rollback_height, current_block_height);
+    return 1;
+  }
+
   for (uint32_t i = current_block_height; i > 0; i--)
   {
     if (i == rollback_height)
@@ -265,7 +270,7 @@ int rollback_blockchain(uint32_t rollback_height)
     free_block(block);
   }
 
-  printf("Successfully rolled blockchain back to height: %d.\n", rollback_height);
+  printf("Successfully rolled back blockchain to height: %d.\n", rollback_height);
   return 0;
 }
 
@@ -290,11 +295,7 @@ int valid_median_timestamp(block_t *block)
   return 1;
 }
 
-/* After we insert block into blockchain
- * Mark unspent txouts as spent for current txins
- * Add current TX w/ unspent txouts to unspent index
- */
-int insert_block_into_blockchain(block_t *block)
+int validate_and_insert_block(block_t *block)
 {
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
@@ -332,6 +333,15 @@ int insert_block_into_blockchain(block_t *block)
     return 0;
   }
 
+  return insert_block(block);
+}
+
+/* After we insert block into blockchain
+ * Mark unspent txouts as spent for current txins
+ * Add current TX w/ unspent txouts to unspent index
+ */
+int insert_block(block_t *block)
+{
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
@@ -658,8 +668,6 @@ PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL || serialized_tx == NULL)
   {
-    fprintf(stderr, "Could not retrieve unspent tx from index\n");
-
     rocksdb_free(err);
     rocksdb_free(roptions);
     return NULL;
@@ -685,8 +693,6 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 
   if (err != NULL || block_key == NULL)
   {
-    fprintf(stderr, "Could not retrieve block from tx id\n");
-
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     return NULL;

@@ -30,8 +30,10 @@
 #include <sodium.h>
 
 #include "vulkan.pb-c.h"
-#include "util.h"
-#include "wallet.h"
+
+#include "common/util.h"
+
+#include "wallet/wallet.h"
 
 /*
  * Transactions can contain multiple InputTXs and multiple OutputTXs.

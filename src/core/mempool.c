@@ -26,11 +26,12 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "mempool.h"
-#include "queue.h"
-#include "task.h"
-#include "transaction.h"
-#include "util.h"
+#include "common/queue.h"
+#include "common/task.h"
+#include "common/util.h"
+
+#include "core/mempool.h"
+#include "core/transaction.h"
 
 static int g_mempool_initialized = 0;
 
@@ -109,11 +110,11 @@ int push_tx_to_mempool(transaction_t *transaction)
     return 1;
   }
 
-  mempool_entry_t mempool_entry;
-  mempool_entry.transaction = transaction;
-  mempool_entry.received_ts = get_current_time();
+  mempool_entry_t *mempool_entry = malloc(sizeof(mempool_entry_t));
+  mempool_entry->transaction = transaction;
+  mempool_entry->received_ts = get_current_time();
 
-  queue_push_right(g_mempool, &mempool_entry);
+  queue_push_right(g_mempool, mempool_entry);
   return 0;
 }
 
@@ -188,7 +189,9 @@ transaction_t *pop_tx_from_mempool(void)
     return NULL;
   }
 
-  return mempool_entry->transaction;
+  transaction_t *transaction = mempool_entry->transaction;
+  free(mempool_entry);
+  return transaction;
 }
 
 int get_number_of_tx_from_mempool(void)

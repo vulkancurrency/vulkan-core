@@ -28,7 +28,8 @@
 #include <sodium.h>
 
 #include "merkle.h"
-#include "util.h"
+
+#include "common/util.h"
 
 /*
  * Constructing a Merkle Tree requires passing a large allocated uint8_t that contains

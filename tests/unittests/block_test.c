@@ -26,15 +26,16 @@
 #include <stdint.h>
 #include <sodium.h>
 
-#include "deps/greatest.h"
+#include "common/greatest.h"
 
-#include "../src/opal.pb-c.h"
-#include "../src/block.h"
-#include "../src/transaction.h"
+#include "core/block.h"
+#include "core/vulkan.pb-c.h"
+#include "core/transaction.h"
 
 SUITE(block_suite);
 
-TEST can_convert_block_to_proto(void) {
+TEST can_convert_block_to_proto(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -61,9 +62,9 @@ TEST can_convert_block_to_proto(void) {
   memcpy(txin->transaction, transaction, 32);
   memcpy(txout->address, address, 32);
 
-  transaction_t *tx = malloc(sizeof(transaction_t));
+  transaction_t *tx = malloc(sizeof(transaction_t*));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txin_count);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -73,12 +74,12 @@ TEST can_convert_block_to_proto(void) {
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
   tx->txins[0] = txin;
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
   block->transactions[0] = tx;
 
   PBlock *proto_block = block_to_proto(block);
@@ -91,7 +92,8 @@ TEST can_convert_block_to_proto(void) {
   PASS();
 }
 
-TEST can_serialize_block(void) {
+TEST can_serialize_block(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -111,7 +113,7 @@ TEST can_serialize_block(void) {
   };
 
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  output_transaction_t *txout = malloc(sizeof(output));
+  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
 
   txin->txout_index = 0;
   txout->amount = 50;
@@ -162,7 +164,8 @@ TEST can_serialize_block(void) {
   PASS();
 }
 
-TEST invalid_block_by_same_tx_hashes(void) {
+TEST invalid_block_by_same_tx_hashes(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -215,7 +218,8 @@ TEST invalid_block_by_same_tx_hashes(void) {
   PASS();
 }
 
-TEST invalid_block_by_reused_txout(void) {
+TEST invalid_block_by_reused_txout(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -226,12 +230,14 @@ TEST invalid_block_by_reused_txout(void) {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
   };
+
   uint8_t address[32] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
     0xc0, 0x7c, 0x06, 0x77
   };
+
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txin->txout_index = 0;
@@ -267,6 +273,7 @@ TEST invalid_block_by_reused_txout(void) {
     0x55, 0x50, 0x1c, 0xba,
     0xc0, 0x7c, 0x06, 0x77
   };
+
   input_transaction_t *txin_2 = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout_2 = malloc(sizeof(output_transaction_t));
   txin_2->txout_index = 0;
@@ -296,7 +303,8 @@ TEST invalid_block_by_reused_txout(void) {
   PASS();
 }
 
-TEST invalid_block_by_merkle_hash(void) {
+TEST invalid_block_by_merkle_hash(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -307,12 +315,14 @@ TEST invalid_block_by_merkle_hash(void) {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
   };
+
   uint8_t address[32] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
     0xc0, 0x7c, 0x06, 0x77
   };
+
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txin->txout_index = 0;
@@ -342,12 +352,14 @@ TEST invalid_block_by_merkle_hash(void) {
     0x01, 0x00, 0x00, 0x00,
     0x01, 0x00, 0x00, 0x00
   };
+
   uint8_t address_2[32] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
     0xc0, 0x7c, 0x06, 0x77
   };
+
   input_transaction_t *txin_2 = malloc(sizeof(input_transaction_t));
   output_transaction_t *txout_2 = malloc(sizeof(output_transaction_t));
   txin_2->txout_index = 0;
@@ -377,7 +389,8 @@ TEST invalid_block_by_merkle_hash(void) {
   PASS();
 }
 
-GREATEST_SUITE(block_suite) {
+GREATEST_SUITE(block_suite)
+{
   RUN_TEST(can_convert_block_to_proto);
   RUN_TEST(can_serialize_block);
   RUN_TEST(invalid_block_by_same_tx_hashes);

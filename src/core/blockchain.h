@@ -53,7 +53,9 @@ int restore_blockchain(void);
 int rollback_blockchain(uint32_t rollback_height);
 
 uint32_t get_block_height(void);
-int insert_block_into_blockchain(block_t *block);
+
+int insert_block(block_t *block);
+int validate_and_insert_block(block_t *block);
 
 block_t *get_block_from_hash(uint8_t *block_hash);
 block_t *get_block_from_height(uint32_t height);

@@ -23,38 +23,29 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
+#pragma once
 
-#include "deps/greatest.h"
+#include <stdint.h>
 
-#include "../src/blockchain.h"
+#include <rocksdb/c.h>
 
-SUITE_EXTERN(transaction_suite);
-SUITE_EXTERN(block_suite);
-SUITE_EXTERN(mempool_suite);
-SUITE_EXTERN(merkle_suite);
-SUITE_EXTERN(blockchain_suite);
+#include "core/chainparams.h"
+#include "core/vulkan.pb-c.h"
 
-GREATEST_MAIN_DEFS();
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-int main(int argc, char **argv) {
-  if (sodium_init() == -1) {
-    return 1;
-  }
+rocksdb_t *open_wallet(const char *wallet_filename, char *err);
+int new_wallet(const char *wallet_filename);
+PWallet *get_wallet(void);
+void print_wallet(PWallet *wallet);
 
-  init_blockchain();
+int public_key_to_address(unsigned char *address, unsigned char *pk);
+uint8_t get_address_id(uint8_t *address);
+int valid_address(uint8_t *address);
 
-  GREATEST_MAIN_BEGIN();
-
-  RUN_SUITE(transaction_suite);
-  RUN_SUITE(block_suite);
-  RUN_SUITE(mempool_suite);
-  RUN_SUITE(merkle_suite);
-  RUN_SUITE(blockchain_suite);
-
-  GREATEST_MAIN_END();
-
-  close_blockchain();
+#ifdef __cplusplus
 }
+#endif

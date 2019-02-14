@@ -23,55 +23,12 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+file(GLOB_RECURSE UNITTESTS unittests/*)
 
-cmake_minimum_required(VERSION 3.8)
-project(vulkan)
+source_group(unittests FILES ${UNITTESTS})
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
-endif()
+add_library(unittests ${UNITTESTS})
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+add_executable(tests ${UNITTESTS})
 
-set(CMAKE_C_FLAGS "-Wall -Wno-unused-variable")
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-
-set(PITTACUS_STATIC ON)
-set(UPNP_STATIC ON)
-
-find_package(Threads QUIET)
-if(NOT Threads_FOUND)
-  message(FATAL_ERROR "Failed to find pthreads dependency!")
-endif()
-
-find_package(Sodium QUIET)
-if(NOT SODIUM_FOUND)
-  message(FATAL_ERROR "Failed to find libsodium dependency!")
-endif()
-
-find_package(RocksDB QUIET)
-if(NOT ROCKSDB_FOUND)
-  message(FATAL_ERROR "Failed to find rocksdb dependency!")
-endif()
-
-include_directories(${SODIUM_INCLUDE_DIR})
-include_directories(${ROCKSDB_INCLUDE_DIR})
-
-add_subdirectory(external/miniupnp/miniupnpc)
-include_directories(external/miniupnp/miniupnpc)
-
-add_subdirectory(external/protobuf-c)
-include_directories(external/protobuf-c)
-
-add_subdirectory(external/pittacus)
-include_directories(external/pittacus/src)
-
-include_directories(src)
-add_subdirectory(src)
-
-include_directories(tests)
-add_subdirectory(tests)
+target_link_libraries(tests common core wallet)

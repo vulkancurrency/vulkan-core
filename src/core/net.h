@@ -25,45 +25,44 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
 
-#include "chainparams.h"
-#include "task.h"
-#include "transaction.h"
+#include <gossip.h>
+
+#include "common/task.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define FLUSH_MEMPOOL_TASK_DELAY 60
+void net_set_gossip(pittacus_gossip_t *gossip);
+pittacus_gossip_t* net_get_gossip(void);
 
-typedef struct MempoolEntry
-{
-  transaction_t *transaction;
-  uint32_t received_ts;
-} mempool_entry_t;
+void net_set_disable_port_mapping(int disable_port_mapping);
+int net_get_disable_port_mapping(void);
 
-int start_mempool(void);
-int stop_mempool(void);
+void net_set_bind_address(const char *bind_address);
+const char* net_get_bind_address(void);
 
-mempool_entry_t *get_mempool_entry_from_tx(transaction_t *transaction);
+void net_set_bind_port(int bind_port);
+int net_get_bind_port(void);
 
-int is_tx_in_mempool(transaction_t *transaction);
+void net_setup_port_mapping(int port);
 
-int push_tx_to_mempool(transaction_t *transaction);
-int remove_tx_from_mempool(transaction_t *transaction);
+void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
+int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size);
+int net_data_sendto(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
 
-transaction_t *get_tx_by_index_from_mempool(int index);
-transaction_t *get_tx_by_id_from_mempool(uint8_t *id);
+int net_connect(const char *address, int port);
+int net_open_connection(void);
 
-transaction_t *pop_tx_from_mempool(void);
+int net_run_server(void);
+void* net_run_server_threaded();
 
-int get_number_of_tx_from_mempool(void);
-int get_top_tx_index_from_mempool(void);
-
-task_result_t flush_mempool(task_t *task, va_list args);
+int net_start_server(int threaded, int seed_mode);
+void net_stop_server(void);
 
 #ifdef __cplusplus
 }

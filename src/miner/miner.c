@@ -28,12 +28,15 @@
 #include <time.h>
 #include <string.h>
 
-#include "block.h"
-#include "blockchain.h"
 #include "miner.h"
-#include "protocol.h"
-#include "util.h"
-#include "wallet.h"
+
+#include "common/util.h"
+
+#include "core/block.h"
+#include "core/blockchain.h"
+#include "core/protocol.h"
+
+#include "wallet/wallet.h"
 
 static int g_miner_is_mining = 0;
 
@@ -51,7 +54,7 @@ int start_mining(void)
   {
     block_t *previous_block = get_current_block();
     block_t *block = compute_next_block(wallet, previous_block);
-    if (insert_block_into_blockchain(block))
+    if (validate_and_insert_block(block))
     {
       printf("Inserted block #%d\n", get_block_height());
       print_block(block);

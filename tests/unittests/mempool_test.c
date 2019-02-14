@@ -23,14 +23,17 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include "deps/greatest.h"
+#include "common/greatest.h"
 
-#include "../src/transaction.h"
-#include "../src/mempool.h"
+#include "common/task.h"
+
+#include "core/mempool.h"
+#include "core/transaction.h"
 
 SUITE(mempool_suite);
 
-TEST can_add_to_mempool(void) {
+TEST can_add_to_mempool(void)
+{
   uint8_t transaction[32] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -59,7 +62,7 @@ TEST can_add_to_mempool(void) {
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txout_count);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -69,24 +72,28 @@ TEST can_add_to_mempool(void) {
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
   tx->txins[0] = txin;
 
+  taskmgr_init();
   start_mempool();
 
   ASSERT_EQ(get_number_of_tx_from_mempool(), 0);
   push_tx_to_mempool(tx);
   ASSERT_EQ(get_number_of_tx_from_mempool(), 1);
   transaction_t *mempool_tx = pop_tx_from_mempool();
+  ASSERT(mempool_tx != NULL);
   ASSERT_EQ(get_number_of_tx_from_mempool(), 0);
 
   ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, 32);
 
   stop_mempool();
+  taskmgr_shutdown();
 
   PASS();
 }
 
-GREATEST_SUITE(mempool_suite) {
+GREATEST_SUITE(mempool_suite)
+{
   RUN_TEST(can_add_to_mempool);
 }

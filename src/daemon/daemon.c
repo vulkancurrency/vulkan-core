@@ -29,16 +29,19 @@
 
 #include <sodium.h>
 
-#include "argparse.h"
-#include "block.h"
-#include "blockchain.h"
-#include "chainparams.h"
-#include "mempool.h"
-#include "miner.h"
-#include "net.h"
-#include "task.h"
-#include "version.h"
-#include "wallet.h"
+#include "common/argparse.h"
+#include "common/task.h"
+
+#include "core/block.h"
+#include "core/blockchain.h"
+#include "core/chainparams.h"
+#include "core/mempool.h"
+#include "core/net.h"
+#include "core/version.h"
+
+#include "miner/miner.h"
+
+#include "wallet/wallet.h"
 
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";

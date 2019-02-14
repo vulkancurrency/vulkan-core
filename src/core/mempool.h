@@ -26,35 +26,45 @@
 #pragma once
 
 #include <stdint.h>
+#include <time.h>
 
-#include "util.h"
+#include "common/task.h"
+
+#include "core/chainparams.h"
+#include "core/transaction.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-typedef struct MerkleNode merkle_node_t;
-typedef struct MerkleNode
+#define FLUSH_MEMPOOL_TASK_DELAY 60
+
+typedef struct MempoolEntry
 {
-  merkle_node_t *left;
-  merkle_node_t *right;
-  uint8_t hash[HASH_SIZE];
-} merkle_node_t;
+  transaction_t *transaction;
+  uint32_t received_ts;
+} mempool_entry_t;
 
-typedef struct MerkleTree
-{
-  merkle_node_t *root;
-} merkle_tree_t;
+int start_mempool(void);
+int stop_mempool(void);
 
-merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_of_hashes);
-merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right);
+mempool_entry_t *get_mempool_entry_from_tx(transaction_t *transaction);
 
-int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
-int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
+int is_tx_in_mempool(transaction_t *transaction);
 
-int free_merkle_tree(merkle_tree_t *tree);
-int free_merkle_node(merkle_node_t *node);
+int push_tx_to_mempool(transaction_t *transaction);
+int remove_tx_from_mempool(transaction_t *transaction);
+
+transaction_t *get_tx_by_index_from_mempool(int index);
+transaction_t *get_tx_by_id_from_mempool(uint8_t *id);
+
+transaction_t *pop_tx_from_mempool(void);
+
+int get_number_of_tx_from_mempool(void);
+int get_top_tx_index_from_mempool(void);
+
+task_result_t flush_mempool(task_t *task, va_list args);
 
 #ifdef __cplusplus
 }

@@ -25,44 +25,48 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <string.h>
+#include <assert.h>
 
-#include "argparse.h"
-#include "util.h"
-#include "version.h"
+#include <sodium.h>
 
-argument_t argparse_get_argument_from_str(const char *arg)
+#include "common/greatest.h"
+
+#include "core/blockchain.h"
+
+SUITE_EXTERN(transaction_suite);
+SUITE_EXTERN(block_suite);
+SUITE_EXTERN(mempool_suite);
+SUITE_EXTERN(merkle_suite);
+SUITE_EXTERN(blockchain_suite);
+
+GREATEST_MAIN_DEFS();
+
+int main(int argc, char **argv)
 {
-  // verify command argument prefix
-  if (!string_startswith(arg, "-") || string_count(arg, "-", 1) > 2)
+  if (sodium_init() == -1)
   {
-    return CMD_ARG_UNKNOWN;
+    return 1;
   }
 
-  // determine the argument type
-  for (int i = 0; i < NUM_COMMANDS; i++)
+  if (init_blockchain("blockchain_tests"))
   {
-    argument_map_t *argument_map = &g_arguments_map[i];
-    if (string_endswith(arg, argument_map->name))
-    {
-      return argument_map->type;
-    }
+    return 1;
   }
 
-  return CMD_ARG_UNKNOWN;
-}
+  GREATEST_MAIN_BEGIN();
 
-argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
-{
-  for (int i = 0; i < NUM_COMMANDS; i++)
+  RUN_SUITE(transaction_suite);
+  RUN_SUITE(block_suite);
+  RUN_SUITE(blockchain_suite);
+  RUN_SUITE(merkle_suite);
+  RUN_SUITE(mempool_suite);
+
+  GREATEST_MAIN_END();
+
+  if (close_blockchain())
   {
-    argument_map_t *argument_map = &g_arguments_map[i];
-    if (argument_map->type == arg_type)
-    {
-      return argument_map;
-    }
+    return 1;
   }
 
-  return NULL;
+  return 0;
 }
