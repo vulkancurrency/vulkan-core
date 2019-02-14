@@ -132,6 +132,7 @@ int remove_tx_from_mempool(transaction_t *transaction)
   }
 
   queue_remove_object(g_mempool, mempool_entry);
+  free(mempool_entry);
   return 0;
 }
 
