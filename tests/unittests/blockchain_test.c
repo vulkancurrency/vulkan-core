@@ -154,7 +154,8 @@ TEST can_delete_block_from_blockchain(void)
   return 0;
 }
 
-TEST can_delete_tx_from_index(void) {
+TEST can_delete_tx_from_index(void)
+{
   transaction_t *tx = malloc(sizeof(transaction_t));
   memcpy(tx->id, tx_id, 32);
   tx->txin_count = 0;
