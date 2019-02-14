@@ -58,8 +58,6 @@ int start_mining(void)
     {
       printf("Inserted block #%d\n", get_block_height());
       print_block(block);
-
-      set_current_block_hash(block->hash);
       handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
     }
 
