@@ -23,52 +23,63 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-
-#include <sodium.h>
-
 #include "common/greatest.h"
 
-#include "core/blockchain.h"
+#include "common/queue.h"
 
-SUITE_EXTERN(common_suite);
-SUITE_EXTERN(transaction_suite);
-SUITE_EXTERN(block_suite);
-SUITE_EXTERN(mempool_suite);
-SUITE_EXTERN(merkle_suite);
-SUITE_EXTERN(blockchain_suite);
-
-GREATEST_MAIN_DEFS();
-
-int main(int argc, char **argv)
+typedef struct TestQueueObject
 {
-  if (sodium_init() == -1)
-  {
-    return 1;
-  }
+  int a;
+  int b;
+  int c;
+} test_queue_object_t;
 
-  if (init_blockchain("blockchain_tests"))
-  {
-    return 1;
-  }
+SUITE(common_suite);
 
-  GREATEST_MAIN_BEGIN();
+TEST init_and_free_queue(void)
+{
+  queue_t *queue = queue_init();
+  ASSERT(queue != NULL);
+  queue_free(queue);
+  PASS();
+}
 
-  RUN_SUITE(common_suite);
-  RUN_SUITE(transaction_suite);
-  RUN_SUITE(block_suite);
-  RUN_SUITE(blockchain_suite);
-  RUN_SUITE(merkle_suite);
-  RUN_SUITE(mempool_suite);
+TEST insert_object_into_queue_and_pop(void)
+{
+  queue_t *queue = queue_init();
+  ASSERT(queue_get_size(queue) == 0);
 
-  GREATEST_MAIN_END();
+  int *a = 0;
+  queue_push_left(queue, a);
+  ASSERT(queue_pop_right(queue) == a);
+  ASSERT(queue_get_size(queue) == 0);
 
-  if (close_blockchain())
-  {
-    return 1;
-  }
+  int *b = 0;
+  queue_push_right(queue, b);
+  ASSERT(queue_pop_left(queue) == b);
+  ASSERT(queue_get_size(queue) == 0);
 
-  return 0;
+  test_queue_object_t *test_queue_object = malloc(sizeof(test_queue_object_t));
+  test_queue_object->a = 0;
+  test_queue_object->b = 1;
+  test_queue_object->c = 2;
+
+  queue_push_left(queue, test_queue_object);
+  ASSERT(queue_pop_left(queue) == test_queue_object);
+  ASSERT(queue_get_size(queue) == 0);
+
+  queue_push_right(queue, test_queue_object);
+  ASSERT(queue_pop_right(queue) == test_queue_object);
+  ASSERT(queue_get_size(queue) == 0);
+  ASSERT(queue_get_max_index(queue) == -1);
+
+  free(test_queue_object);
+  queue_free(queue);
+  PASS();
+}
+
+GREATEST_SUITE(common_suite)
+{
+  RUN_TEST(init_and_free_queue);
+  RUN_TEST(insert_object_into_queue_and_pop);
 }
