@@ -116,6 +116,9 @@ TEST add_remove_and_update_tasks(void)
   int tick_result2 = taskmgr_tick();
   int tick_result3 = taskmgr_tick();
 
+  ASSERT(has_task(task1) == 1);
+  ASSERT(has_task_by_id(task2->id) == 1);
+
   ASSERT_EQ(tick_result1, 0);
   ASSERT_EQ(tick_result2, 0);
   ASSERT_EQ(tick_result3, 0);
