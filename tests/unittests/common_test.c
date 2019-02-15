@@ -23,6 +23,8 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdint.h>
+
 #include "common/greatest.h"
 
 #include "common/queue.h"
@@ -67,12 +69,12 @@ TEST insert_object_into_queue_and_pop(void)
   queue_t *queue = queue_init();
   ASSERT(queue_get_size(queue) == 0);
 
-  int a = 0xFF;
+  uint16_t a = 0xFF;
   queue_push_left(queue, &a);
   ASSERT(queue_pop_right(queue) == &a);
   ASSERT(queue_get_size(queue) == 0);
 
-  int b = 0xFFFFFFFE;
+  uint64_t b = 0xFFFFFFFE;
   queue_push_right(queue, &b);
   ASSERT(queue_pop_left(queue) == &b);
   ASSERT(queue_get_size(queue) == 0);
