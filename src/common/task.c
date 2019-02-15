@@ -182,11 +182,17 @@ task_t* get_task_by_id(int id)
   for (int i = 0; i <= taskmgr_task_queue->max_index; i++)
   {
     task_t *task = queue_get(taskmgr_task_queue, i);
+    if (!task)
+    {
+      continue;
+    }
+
     if (task->id == id)
     {
       return task;
     }
   }
+
   return NULL;
 }
 

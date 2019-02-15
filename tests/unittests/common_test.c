@@ -26,6 +26,7 @@
 #include "common/greatest.h"
 
 #include "common/queue.h"
+#include "common/task.h"
 
 typedef struct TestQueueObject
 {
@@ -34,6 +35,16 @@ typedef struct TestQueueObject
   int c;
 } test_queue_object_t;
 
+static task_result_t task1_func(task_t *task)
+{
+  return TASK_RESULT_CONT;
+}
+
+static task_result_t task2_func(task_t *task)
+{
+  return TASK_RESULT_CONT;
+}
+
 SUITE(common_suite);
 
 TEST init_and_free_queue(void)
@@ -41,6 +52,13 @@ TEST init_and_free_queue(void)
   queue_t *queue = queue_init();
   ASSERT(queue != NULL);
   queue_free(queue);
+  PASS();
+}
+
+TEST init_and_shutdown_taskmgr(void)
+{
+  taskmgr_init();
+  taskmgr_shutdown();
   PASS();
 }
 
@@ -78,8 +96,41 @@ TEST insert_object_into_queue_and_pop(void)
   PASS();
 }
 
+TEST add_remove_and_update_tasks(void)
+{
+  taskmgr_init();
+
+  task_t *task1 = add_task(task1_func, 0);
+  task_t *task2 = add_task(task2_func, 0);
+
+  ASSERT(task1 != NULL);
+  ASSERT(task2 != NULL);
+
+  ASSERT(get_task_by_id(task1->id) != NULL);
+  ASSERT(get_task_by_id(task2->id) != NULL);
+
+  ASSERT(has_task(task1) == 1);
+  ASSERT(has_task_by_id(task2->id) == 1);
+
+  int tick_result1 = taskmgr_tick();
+  int tick_result2 = taskmgr_tick();
+  int tick_result3 = taskmgr_tick();
+
+  ASSERT_EQ(tick_result1, 0);
+  ASSERT_EQ(tick_result2, 0);
+  ASSERT_EQ(tick_result3, 0);
+
+  ASSERT(remove_task(task1) == 0);
+  ASSERT(remove_task_by_id(task2->id) == 0);
+
+  taskmgr_shutdown();
+  PASS();
+}
+
 GREATEST_SUITE(common_suite)
 {
   RUN_TEST(init_and_free_queue);
+  RUN_TEST(init_and_shutdown_taskmgr);
   RUN_TEST(insert_object_into_queue_and_pop);
+  RUN_TEST(add_remove_and_update_tasks);
 }
