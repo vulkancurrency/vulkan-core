@@ -67,14 +67,14 @@ TEST insert_object_into_queue_and_pop(void)
   queue_t *queue = queue_init();
   ASSERT(queue_get_size(queue) == 0);
 
-  int *a = 0;
-  queue_push_left(queue, a);
-  ASSERT(queue_pop_right(queue) == a);
+  int a = 0xFF;
+  queue_push_left(queue, &a);
+  ASSERT(queue_pop_right(queue) == &a);
   ASSERT(queue_get_size(queue) == 0);
 
-  int *b = 0;
-  queue_push_right(queue, b);
-  ASSERT(queue_pop_left(queue) == b);
+  int b = 0xFFFFFFFE;
+  queue_push_right(queue, &b);
+  ASSERT(queue_pop_left(queue) == &b);
   ASSERT(queue_get_size(queue) == 0);
 
   test_queue_object_t *test_queue_object = malloc(sizeof(test_queue_object_t));
