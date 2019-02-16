@@ -33,8 +33,9 @@
 #include "block.h"
 #include "blockchainparams.h"
 #include "merkle.h"
-#include "util.h"
 #include "vulkan.pb-c.h"
+
+#include "common/util.h"
 
 /* Allocates a block for usage.
  *

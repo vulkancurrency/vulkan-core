@@ -29,8 +29,9 @@
 
 #include "blockchainparams.h"
 #include "transaction.h"
-#include "util.h"
 #include "vulkan.pb-c.h"
+
+#include "common/util.h"
 
 #ifdef __cplusplus
 extern "

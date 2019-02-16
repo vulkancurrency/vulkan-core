@@ -34,8 +34,9 @@
 #include "mempool.h"
 #include "net.h"
 #include "protocol.h"
-#include "util.h"
 #include "vulkan.pb-c.h"
+
+#include "common/util.h"
 
 static sync_entry_t g_protocol_sync_entry;
 

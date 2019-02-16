@@ -29,7 +29,8 @@
 
 #include "block.h"
 #include "transaction.h"
-#include "util.h"
+
+#include "common/util.h"
 
 #ifdef __cplusplus
 extern "C"
