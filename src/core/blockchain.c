@@ -262,7 +262,7 @@ int rollback_blockchain(uint32_t rollback_height)
     // check to see if are rolling back the top block in the blockchain,
     // if so then we need to reset the top block to the previous block of
     // the block we just rolled back.
-    if (!compare_block_hash(get_current_block_hash(), block->hash))
+    if (compare_block_hash(get_current_block_hash(), block->hash))
     {
       block_t *previous_block = get_block_from_hash(block->previous_hash);
       assert(previous_block != NULL);
