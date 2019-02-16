@@ -37,7 +37,7 @@ extern "C"
 #define HASH_SIZE 32
 #define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
-int get_num_logical_cores(void);
+uint16_t get_num_logical_cores(void);
 
 int string_equals(const char *string, const char *equals);
 int string_startswith(const char *string, const char *prefix);

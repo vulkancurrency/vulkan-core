@@ -37,7 +37,7 @@
 
 #include "util.h"
 
-int get_num_logical_cores(void)
+uint16_t get_num_logical_cores(void)
 {
 #ifdef _WIN32
   SYSTEM_INFO sysinfo;
