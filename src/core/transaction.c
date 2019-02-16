@@ -138,7 +138,15 @@ int valid_transaction(transaction_t *tx)
       return 0;
     }
 
-    return (is_generation_tx(tx) || (tx->txin_count > 0 && tx->txout_count > 0 && do_txins_reference_unspent_txouts(tx)));
+    if (is_generation_tx(tx))
+    {
+      return 1;
+    }
+
+    if (do_txins_reference_unspent_txouts(tx))
+    {
+      return 1;
+    }
   }
 
   return 0;
@@ -460,8 +468,7 @@ transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64
   transaction_entries.num_entries = 1;
   transaction_entries.entries[0] = transaction_entry;
 
-  transaction_t *tx = make_tx(wallet, block_height, already_generated_coins, transaction_entries);
-  return tx;
+  return make_tx(wallet, block_height, already_generated_coins, transaction_entries);
 }
 
 int free_proto_transaction(PTransaction *proto_transaction)
@@ -483,7 +490,6 @@ int free_proto_transaction(PTransaction *proto_transaction)
   free(proto_transaction->txins);
   free(proto_transaction->txouts);
   free(proto_transaction);
-
   return 0;
 }
 
@@ -496,7 +502,6 @@ int free_proto_unspent_transaction(PUnspentTransaction *proto_unspent_tx)
   }
 
   free(proto_unspent_tx);
-
   return 0;
 }
 
