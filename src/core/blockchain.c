@@ -533,7 +533,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
   {
     block = get_block_from_height(i);
     assert(block != NULL);
-    if (!compare_block_hash(block->hash, block_hash))
+    if (compare_block_hash(block->hash, block_hash))
     {
       block_height = i;
       break;
