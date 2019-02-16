@@ -48,6 +48,8 @@ int taskmgr_init(void)
     return 1;
   }
 
+  taskmgr_running = 1;
+
   taskmgr_task_queue = queue_init();
   taskmgr_scheduler_queue = queue_init();
 

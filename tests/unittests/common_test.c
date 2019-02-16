@@ -54,20 +54,21 @@ TEST init_and_free_queue(void)
 {
   queue_t *queue = queue_init();
   ASSERT(queue != NULL);
-  queue_free(queue);
+  ASSERT_EQ(queue_free(queue), 0);
   PASS();
 }
 
 TEST init_and_shutdown_taskmgr(void)
 {
-  taskmgr_init();
-  taskmgr_shutdown();
+  ASSERT_EQ(taskmgr_init(), 0);
+  ASSERT_EQ(taskmgr_shutdown(), 0);
   PASS();
 }
 
 TEST insert_object_into_queue_and_pop(void)
 {
   queue_t *queue = queue_init();
+  ASSERT(queue != NULL);
   ASSERT(queue_get_size(queue) == 0);
 
   uint16_t a = 0xFF;
@@ -95,13 +96,13 @@ TEST insert_object_into_queue_and_pop(void)
   ASSERT(queue_get_max_index(queue) == -1);
 
   free(test_queue_object);
-  queue_free(queue);
+  ASSERT_EQ(queue_free(queue), 0);
   PASS();
 }
 
 TEST add_remove_and_update_tasks(void)
 {
-  taskmgr_init();
+  ASSERT_EQ(taskmgr_init(), 0);
 
   task_t *task1 = add_task(task1_func, 0);
   task_t *task2 = add_task(task2_func, 0);
@@ -129,7 +130,7 @@ TEST add_remove_and_update_tasks(void)
   ASSERT(remove_task(task1) == 0);
   ASSERT(remove_task_by_id(task2->id) == 0);
 
-  taskmgr_shutdown();
+  ASSERT_EQ(taskmgr_shutdown(), 0);
   PASS();
 }
 
