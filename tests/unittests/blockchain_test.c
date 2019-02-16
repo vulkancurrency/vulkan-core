@@ -55,6 +55,21 @@ static uint8_t tx_id[HASH_SIZE] = {
   0x04, 0x03, 0x02, 0x01
 };
 
+TEST check_blocks_in_blockchain(void)
+{
+  ASSERT_EQ(has_block_by_hash(genesis_block.hash), 1);
+  ASSERT_EQ(has_block_by_height(0), 1);
+
+  ASSERT(get_block_from_height(0) != NULL);
+  ASSERT(get_block_from_hash(genesis_block.hash) != NULL);
+
+  ASSERT_EQ(get_block_height_from_hash(genesis_block.hash), 0);
+  ASSERT_EQ(get_block_height_from_block(&genesis_block), 0);
+  ASSERT(compare_block_hash(get_block_hash_from_height(0), genesis_block.hash));
+
+  PASS();
+}
+
 TEST can_insert_block(void)
 {
   block_t *block = make_block();
@@ -455,6 +470,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
 GREATEST_SUITE(blockchain_suite)
 {
+  RUN_TEST(check_blocks_in_blockchain);
   RUN_TEST(can_insert_block);
   RUN_TEST(inserting_block_into_blockchain_also_inserts_tx);
   RUN_TEST(can_get_block_from_tx_id);

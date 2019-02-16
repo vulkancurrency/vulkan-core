@@ -331,7 +331,7 @@ int validate_and_insert_block(block_t *block)
   }
 
   // check this blocks previous has against our current top block hash
-  if (compare_block_hash(block->previous_hash, get_current_block_hash()))
+  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
   {
     return 0;
   }
