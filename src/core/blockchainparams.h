@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 #define BLOCK_VERSION 0x01
-#define MAX_BLOCK_SIZE 102400
+#define MAX_BLOCK_SIZE (1024 * 6)
 #define MAX_TX_SIZE (MAX_BLOCK_SIZE / 2)
 #define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
 #define TIMESTAMP_CHECK_WINDOW 32
