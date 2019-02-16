@@ -1,9 +1,6 @@
 [submodule "external/protobuf-c"]
 	path = external/protobuf-c
 	url = https://github.com/vulkancurrency/protobuf-c.git
-[submodule "external/protobuf-c-rpc"]
-	path = external/protobuf-c-rpc
-	url = https://github.com/vulkancurrency/protobuf-c-rpc.git
 [submodule "external/rocksdb"]
 	path = external/rocksdb
 	url = https://github.com/vulkancurrency/rocksdb.git
