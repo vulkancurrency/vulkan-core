@@ -23,9 +23,11 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#include "common/greatest.h"
+#include <stdint.h>
 
+#include "common/greatest.h"
 #include "common/task.h"
+#include "common/util.h"
 
 #include "core/mempool.h"
 #include "core/transaction.h"
@@ -34,7 +36,7 @@ SUITE(mempool_suite);
 
 TEST can_add_to_mempool(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -45,7 +47,7 @@ TEST can_add_to_mempool(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -57,8 +59,8 @@ TEST can_add_to_mempool(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -85,7 +87,7 @@ TEST can_add_to_mempool(void)
   ASSERT(mempool_tx != NULL);
   ASSERT_EQ(get_number_of_tx_from_mempool(), 0);
 
-  ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, 32);
+  ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, HASH_SIZE);
 
   stop_mempool();
   taskmgr_shutdown();

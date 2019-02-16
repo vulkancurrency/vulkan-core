@@ -27,6 +27,7 @@
 #include <sodium.h>
 
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "core/merkle.h"
 
@@ -40,11 +41,11 @@ SUITE(merkle_suite);
 
 TEST can_construct_merkle_tree(void)
 {
-  uint8_t hash_size = 32;
+  uint8_t hash_size = HASH_SIZE;
   uint32_t number_of_hashes = 3;
   uint8_t *hash_region = malloc(sizeof(uint8_t) * hash_size * number_of_hashes);
 
-  uint8_t hash_a[32] = {
+  uint8_t hash_a[HASH_SIZE] = {
     0x06, 0xf9, 0x61, 0xb8,
     0x02, 0xbc, 0x46, 0xee,
     0x16, 0x85, 0x55, 0xf0,
@@ -55,7 +56,7 @@ TEST can_construct_merkle_tree(void)
     0x04, 0xfc, 0x30, 0xa0
   };
 
-  uint8_t hash_b[32] = {
+  uint8_t hash_b[HASH_SIZE] = {
     0xc0, 0xcd, 0xe7, 0x7f,
     0xa8, 0xfe, 0xf9, 0x7d,
     0x47, 0x6c, 0x10, 0xaa,
@@ -66,7 +67,7 @@ TEST can_construct_merkle_tree(void)
     0x1e, 0x37, 0x9f, 0xd6
   };
 
-  uint8_t hash_c[32] = {
+  uint8_t hash_c[HASH_SIZE] = {
     0x12, 0xf3, 0x7a, 0x8a,
     0x84, 0x03, 0x4d, 0x3e,
     0x62, 0x3d, 0x72, 0x6f,
@@ -77,7 +78,7 @@ TEST can_construct_merkle_tree(void)
     0x41, 0xfb, 0x84, 0xfe
   };
 
-  uint8_t root_hash[32] = {
+  uint8_t root_hash[HASH_SIZE] = {
     0xb4, 0xc6, 0xbc, 0xf1,
     0x50, 0xb6, 0x2b, 0x09,
     0x3f, 0x5e, 0x43, 0x9a,
@@ -89,31 +90,31 @@ TEST can_construct_merkle_tree(void)
   };
 
 
-  memcpy(hash_region, hash_a, 32);
-  memcpy(hash_region + 32, hash_b, 32);
-  memcpy(hash_region + 64, hash_c, 32);
+  memcpy(hash_region, hash_a, HASH_SIZE);
+  memcpy(hash_region + HASH_SIZE, hash_b, HASH_SIZE);
+  memcpy(hash_region + 64, hash_c, HASH_SIZE);
 
   merkle_tree_t *tree = construct_merkle_tree_from_leaves(hash_region, 3);
 
-  uint8_t *hash_ab = malloc(sizeof(uint8_t) * 32);
-  uint8_t *hash_cc = malloc(sizeof(uint8_t) * 32);
-  uint8_t *hash_abcc = malloc(sizeof(uint8_t) * 32);
+  uint8_t *hash_ab = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *hash_cc = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *hash_abcc = malloc(sizeof(uint8_t) * HASH_SIZE);
 
-  uint8_t *hash_buffer = malloc(sizeof(uint8_t) * 32 * 2);
+  uint8_t *hash_buffer = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
 
-  memcpy(hash_buffer, hash_a, 32);
-  memcpy(hash_buffer + 32, hash_b, 32);
+  memcpy(hash_buffer, hash_a, HASH_SIZE);
+  memcpy(hash_buffer + HASH_SIZE, hash_b, HASH_SIZE);
   crypto_hash_sha256(hash_ab, hash_buffer, 64);
 
-  memcpy(hash_buffer, hash_c, 32);
-  memcpy(hash_buffer + 32, hash_c, 32);
+  memcpy(hash_buffer, hash_c, HASH_SIZE);
+  memcpy(hash_buffer + HASH_SIZE, hash_c, HASH_SIZE);
   crypto_hash_sha256(hash_cc, hash_buffer, 64);
 
-  memcpy(hash_buffer, hash_ab, 32);
-  memcpy(hash_buffer + 32, hash_cc, 32);
+  memcpy(hash_buffer, hash_ab, HASH_SIZE);
+  memcpy(hash_buffer + HASH_SIZE, hash_cc, HASH_SIZE);
   crypto_hash_sha256(hash_abcc, hash_buffer, 64);
 
-  ASSERT_MEM_EQ(tree->root->hash, hash_abcc, 32);
+  ASSERT_MEM_EQ(tree->root->hash, hash_abcc, HASH_SIZE);
 
   free(hash_ab);
   free(hash_cc);

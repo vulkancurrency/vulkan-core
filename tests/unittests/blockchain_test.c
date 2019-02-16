@@ -23,14 +23,17 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdint.h>
+
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "core/block.h"
 #include "core/blockchain.h"
 
 SUITE(blockchain_suite);
 
-static uint8_t block_hash[32] = {
+static uint8_t block_hash[HASH_SIZE] = {
   0x01, 0x02, 0x03, 0x04,
   0x01, 0x02, 0x03, 0x04,
   0x01, 0x02, 0x03, 0x04,
@@ -41,7 +44,7 @@ static uint8_t block_hash[32] = {
   0x01, 0x02, 0x03, 0x04
 };
 
-static uint8_t tx_id[32] = {
+static uint8_t tx_id[HASH_SIZE] = {
   0x04, 0x03, 0x02, 0x01,
   0x04, 0x03, 0x02, 0x01,
   0x04, 0x03, 0x02, 0x01,
@@ -55,14 +58,14 @@ static uint8_t tx_id[32] = {
 TEST can_insert_block(void)
 {
   block_t *block = make_block();
-  memcpy(block->hash, block_hash, 32);
+  memcpy(block->hash, block_hash, HASH_SIZE);
   block->nonce = 123456;
   block->transaction_count = 0;
 
   insert_block(block);
   block_t *block_from_db = get_block_from_hash(block->hash);
 
-  ASSERT_MEM_EQ(block->hash, block_hash, 32);
+  ASSERT_MEM_EQ(block->hash, block_hash, HASH_SIZE);
   ASSERT_EQ(block->nonce, 123456);
 
   free_block(block);
@@ -73,14 +76,14 @@ TEST can_insert_block(void)
 TEST inserting_block_into_blockchain_also_inserts_tx(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
-  memcpy(tx->id, tx_id, 32);
+  memcpy(tx->id, tx_id, HASH_SIZE);
   tx->txin_count = 0;
   tx->txout_count = 0;
   tx->txins = NULL;
   tx->txouts = NULL;
 
   block_t *block = make_block();
-  memcpy(block->hash, block_hash, 32);
+  memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
@@ -90,7 +93,7 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void)
 
   if (block_hash_from_tx != NULL)
   {
-    ASSERT_MEM_EQ(block->hash, block_hash_from_tx, 32);
+    ASSERT_MEM_EQ(block->hash, block_hash_from_tx, HASH_SIZE);
     free_block(block);
     PASS();
   }
@@ -104,14 +107,14 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void)
 TEST can_get_block_from_tx_id(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
-  memcpy(tx->id, tx_id, 32);
+  memcpy(tx->id, tx_id, HASH_SIZE);
   tx->txin_count = 0;
   tx->txout_count = 0;
   tx->txins = NULL;
   tx->txouts = NULL;
 
   block_t *block = make_block();
-  memcpy(block->hash, block_hash, 32);
+  memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
   block->transactions[0] = tx;
@@ -121,7 +124,7 @@ TEST can_get_block_from_tx_id(void)
 
   if (block_from_db != NULL)
   {
-    ASSERT_MEM_EQ(block->hash, block_from_db->hash, 32);
+    ASSERT_MEM_EQ(block->hash, block_from_db->hash, HASH_SIZE);
     free_block(block);
     free_block(block_from_db);
     PASS();
@@ -136,7 +139,7 @@ TEST can_get_block_from_tx_id(void)
 TEST can_delete_block_from_blockchain(void)
 {
   block_t *block = make_block();
-  memcpy(block->hash, block_hash, 32);
+  memcpy(block->hash, block_hash, HASH_SIZE);
 
   insert_block(block);
   block_t *block_from_db = get_block_from_hash(block_hash);
@@ -157,14 +160,14 @@ TEST can_delete_block_from_blockchain(void)
 TEST can_delete_tx_from_index(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
-  memcpy(tx->id, tx_id, 32);
+  memcpy(tx->id, tx_id, HASH_SIZE);
   tx->txin_count = 0;
   tx->txout_count = 0;
   tx->txins = NULL;
   tx->txouts = NULL;
 
   block_t *block = make_block();
-  memcpy(block->hash, block_hash, 32);
+  memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t *) * 1);
   block->transactions[0] = tx;
@@ -174,7 +177,7 @@ TEST can_delete_tx_from_index(void)
 
   if (block_from_db != NULL)
   {
-    ASSERT_MEM_EQ(block->hash, block_from_db->hash, 32);
+    ASSERT_MEM_EQ(block->hash, block_from_db->hash, HASH_SIZE);
 
     delete_tx_from_index(tx_id);
     block_t *deleted_block = get_block_from_tx_id(tx_id);
@@ -237,7 +240,7 @@ TEST can_insert_unspent_tx_into_index(void)
 
   if (unspent_tx != NULL)
   {
-    ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address.data, 32);
+    ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address.data, HASH_SIZE);
     delete_unspent_tx_from_index(tx.id);
     PUnspentTransaction *deleted_tx = get_unspent_tx_from_index(tx.id);
 
@@ -255,7 +258,7 @@ TEST can_insert_unspent_tx_into_index(void)
 
 TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -266,7 +269,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -278,8 +281,8 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -316,8 +319,8 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
     txin_2->txout_index = 0;
     txout_2->amount = 50;
-    memcpy(txin_2->transaction, unspent_tx->id.data, 32);
-    memcpy(txout_2->address, address, 32);
+    memcpy(txin_2->transaction, unspent_tx->id.data, HASH_SIZE);
+    memcpy(txout_2->address, address, HASH_SIZE);
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
     tx_2->txout_count = 1;
@@ -361,7 +364,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
 TEST tx_is_valid_only_if_it_has_money_unspent(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -372,7 +375,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -384,8 +387,8 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -422,8 +425,8 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
     txin_2->txout_index = 0;
     txout_2->amount = 50;
-    memcpy(txin_2->transaction, unspent_tx->id.data, 32);
-    memcpy(txout_2->address, address, 32);
+    memcpy(txin_2->transaction, unspent_tx->id.data, HASH_SIZE);
+    memcpy(txout_2->address, address, HASH_SIZE);
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
     tx_2->txout_count = 1;

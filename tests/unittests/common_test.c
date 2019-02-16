@@ -26,9 +26,12 @@
 #include <stdint.h>
 
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "common/queue.h"
 #include "common/task.h"
+
+SUITE(common_suite);
 
 typedef struct TestQueueObject
 {
@@ -46,8 +49,6 @@ static task_result_t task2_func(task_t *task)
 {
   return TASK_RESULT_CONT;
 }
-
-SUITE(common_suite);
 
 TEST init_and_free_queue(void)
 {

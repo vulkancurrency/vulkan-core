@@ -23,9 +23,11 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdint.h>
 #include <sodium.h>
 
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "core/transaction.h"
 
@@ -76,7 +78,7 @@ TEST can_sign_txin(void)
 
   uint32_t header_size = get_tx_sign_header_size(&tx) + TXIN_HEADER_SIZE;
   uint8_t header[header_size];
-  uint8_t hash[32];
+  uint8_t hash[HASH_SIZE];
 
   get_txin_header(header, &txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, &tx);

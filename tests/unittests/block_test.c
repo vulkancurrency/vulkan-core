@@ -27,6 +27,7 @@
 #include <sodium.h>
 
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "core/block.h"
 #include "core/vulkan.pb-c.h"
@@ -36,7 +37,7 @@ SUITE(block_suite);
 
 TEST can_convert_block_to_proto(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -47,7 +48,7 @@ TEST can_convert_block_to_proto(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -59,8 +60,8 @@ TEST can_convert_block_to_proto(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t*));
   tx->txout_count = 1;
@@ -84,7 +85,7 @@ TEST can_convert_block_to_proto(void)
 
   PBlock *proto_block = block_to_proto(block);
 
-  ASSERT_MEM_EQ(proto_block->hash.data, block->hash, 32);
+  ASSERT_MEM_EQ(proto_block->hash.data, block->hash, HASH_SIZE);
 
   free_block(block);
   free_proto_block(proto_block);
@@ -94,7 +95,7 @@ TEST can_convert_block_to_proto(void)
 
 TEST can_serialize_block(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -105,7 +106,7 @@ TEST can_serialize_block(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -117,8 +118,8 @@ TEST can_serialize_block(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -153,10 +154,10 @@ TEST can_serialize_block(void)
   ASSERT_EQ(block->nonce, deserialized_block->nonce);
   ASSERT_EQ(block->transaction_count, deserialized_block->transaction_count);
 
-  ASSERT_MEM_EQ(block->hash, deserialized_block->hash, 32);
-  ASSERT_MEM_EQ(block->previous_hash, deserialized_block->previous_hash, 32);
-  ASSERT_MEM_EQ(block->merkle_root, deserialized_block->merkle_root, 32);
-  ASSERT_MEM_EQ(txout->address, deserialized_block->transactions[0]->txouts[0]->address, 32);
+  ASSERT_MEM_EQ(block->hash, deserialized_block->hash, HASH_SIZE);
+  ASSERT_MEM_EQ(block->previous_hash, deserialized_block->previous_hash, HASH_SIZE);
+  ASSERT_MEM_EQ(block->merkle_root, deserialized_block->merkle_root, HASH_SIZE);
+  ASSERT_MEM_EQ(txout->address, deserialized_block->transactions[0]->txouts[0]->address, HASH_SIZE);
 
   free(buffer);
   free_block(block);
@@ -166,7 +167,7 @@ TEST can_serialize_block(void)
 
 TEST invalid_block_by_same_tx_hashes(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -177,7 +178,7 @@ TEST invalid_block_by_same_tx_hashes(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -189,8 +190,8 @@ TEST invalid_block_by_same_tx_hashes(void)
 
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
@@ -220,7 +221,7 @@ TEST invalid_block_by_same_tx_hashes(void)
 
 TEST invalid_block_by_reused_txout(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -231,7 +232,7 @@ TEST invalid_block_by_reused_txout(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -242,8 +243,8 @@ TEST invalid_block_by_reused_txout(void)
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
   tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
@@ -257,7 +258,7 @@ TEST invalid_block_by_reused_txout(void)
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
-  uint8_t transaction_2[32] = {
+  uint8_t transaction_2[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -267,7 +268,7 @@ TEST invalid_block_by_reused_txout(void)
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
   };
-  uint8_t address_2[32] = {
+  uint8_t address_2[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -278,8 +279,8 @@ TEST invalid_block_by_reused_txout(void)
   output_transaction_t *txout_2 = malloc(sizeof(output_transaction_t));
   txin_2->txout_index = 0;
   txout_2->amount = 50;
-  memcpy(txin_2->transaction, transaction_2, 32);
-  memcpy(txout_2->address, address_2, 32);
+  memcpy(txin_2->transaction, transaction_2, HASH_SIZE);
+  memcpy(txout_2->address, address_2, HASH_SIZE);
   transaction_t *tx_2 = malloc(sizeof(transaction_t));
   tx_2->txout_count = 1;
   tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
@@ -305,7 +306,7 @@ TEST invalid_block_by_reused_txout(void)
 
 TEST invalid_block_by_merkle_hash(void)
 {
-  uint8_t transaction[32] = {
+  uint8_t transaction[HASH_SIZE] = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -316,7 +317,7 @@ TEST invalid_block_by_merkle_hash(void)
     0x00, 0x00, 0x00, 0x00
   };
 
-  uint8_t address[32] = {
+  uint8_t address[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -327,8 +328,8 @@ TEST invalid_block_by_merkle_hash(void)
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txin->txout_index = 0;
   txout->amount = 50;
-  memcpy(txin->transaction, transaction, 32);
-  memcpy(txout->address, address, 32);
+  memcpy(txin->transaction, transaction, HASH_SIZE);
+  memcpy(txout->address, address, HASH_SIZE);
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
   tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
@@ -342,7 +343,7 @@ TEST invalid_block_by_merkle_hash(void)
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
-  uint8_t transaction_2[32] = {
+  uint8_t transaction_2[HASH_SIZE] = {
     0x01, 0x00, 0x00, 0x00,
     0x01, 0x00, 0x00, 0x00,
     0x01, 0x00, 0x00, 0x00,
@@ -353,7 +354,7 @@ TEST invalid_block_by_merkle_hash(void)
     0x01, 0x00, 0x00, 0x00
   };
 
-  uint8_t address_2[32] = {
+  uint8_t address_2[HASH_SIZE] = {
     0x01, 0x3e, 0x46, 0xa5,
     0xc6, 0x99, 0x4e, 0x35,
     0x55, 0x50, 0x1c, 0xba,
@@ -364,8 +365,8 @@ TEST invalid_block_by_merkle_hash(void)
   output_transaction_t *txout_2 = malloc(sizeof(output_transaction_t));
   txin_2->txout_index = 0;
   txout_2->amount = 50;
-  memcpy(txin_2->transaction, transaction_2, 32);
-  memcpy(txout_2->address, address_2, 32);
+  memcpy(txin_2->transaction, transaction_2, HASH_SIZE);
+  memcpy(txout_2->address, address_2, HASH_SIZE);
   transaction_t *tx_2 = malloc(sizeof(transaction_t));
   tx_2->txout_count = 1;
   tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
