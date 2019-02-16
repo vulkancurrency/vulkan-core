@@ -29,9 +29,9 @@
 
 #include <sodium.h>
 
-#include "vulkan.pb-c.h"
-
 #include "common/util.h"
+
+#include "vulkan.pb-c.h"
 
 #include "wallet/wallet.h"
 

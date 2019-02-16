@@ -114,7 +114,7 @@ int get_tx_sign_header(uint8_t *header, transaction_t *tx)
 
 int compare_transaction_hash(uint8_t *id, uint8_t *other_id)
 {
-  return memcmp(id, other_id, HASH_SIZE) != 0;
+  return memcmp(id, other_id, HASH_SIZE) == 0;
 }
 
 int compare_transaction(transaction_t *transaction, transaction_t *other_transaction)

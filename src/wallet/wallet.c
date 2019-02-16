@@ -31,6 +31,8 @@
 
 #include <rocksdb/c.h>
 
+#include "common/util.h"
+
 #include "core/blockchain.h"
 #include "core/blockchainparams.h"
 
@@ -176,6 +178,11 @@ void print_wallet(PWallet *wallet)
 
   printf("Public Address: %s\n", public_address);
   printf("Balance: %llu\n", balance);
+}
+
+int compare_addresses(uint8_t *address, uint8_t *other_address)
+{
+  return memcmp(address, other_address, ADDRESS_SIZE) == 0;
 }
 
 int public_key_to_address(uint8_t *address, uint8_t *pk)

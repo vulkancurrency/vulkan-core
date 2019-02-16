@@ -168,7 +168,7 @@ transaction_t *get_tx_by_id_from_mempool(uint8_t *id)
       continue;
     }
 
-    if (!compare_transaction_hash(transaction->id, id))
+    if (compare_transaction_hash(transaction->id, id))
     {
       return transaction;
     }

@@ -30,13 +30,13 @@
 
 #include <gossip.h>
 
+#include "common/util.h"
+
 #include "blockchain.h"
 #include "mempool.h"
 #include "net.h"
 #include "protocol.h"
 #include "vulkan.pb-c.h"
-
-#include "common/util.h"
 
 static sync_entry_t g_protocol_sync_entry;
 
@@ -907,7 +907,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
             if (known_block != NULL)
             {
-              if (!compare_block(message->block, known_block))
+              if (compare_block(message->block, known_block))
               {
                 found_starting_block = 1;
               }

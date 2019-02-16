@@ -29,11 +29,13 @@
 
 #include <rocksdb/c.h>
 
+#include "common/util.h"
+
 #include "block.h"
 #include "blockchain.h"
 #include "vulkan.pb-c.h"
 
-#include "common/util.h"
+#include "wallet/wallet.h"
 
 static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
@@ -368,14 +370,17 @@ int insert_block(block_t *block)
     // value has not been manipulated...
     if (is_generation_tx(tx))
     {
+      uint32_t current_block_height = get_block_height();
+
       block_t *current_block = get_current_block();
       assert(current_block != NULL);
 
-      uint64_t expected_block_reward = get_block_reward(get_block_height() + 1, current_block->already_generated_coins);
+      uint64_t expected_block_reward = get_block_reward(current_block_height, current_block->already_generated_coins);
 
       // check to ensure that the generation tx reward is valid
       // for it's height in the blockchain...
       output_transaction_t *txout = tx->txouts[0];
+      assert(txout != NULL);
       if (txout->amount != expected_block_reward)
       {
         free_block(current_block);
@@ -959,7 +964,7 @@ uint64_t get_balance_for_address(uint8_t *address)
       for (int i = 0; i < tx->n_unspent_txouts; i++)
       {
         PUnspentOutputTransaction *unspent_txout = tx->unspent_txouts[i];
-        if (memcmp(unspent_txout->address.data, address, ADDRESS_SIZE) != 0)
+        if (compare_addresses(unspent_txout->address.data, address))
         {
           continue;
         }

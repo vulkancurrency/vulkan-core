@@ -53,6 +53,9 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right);
 int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
 int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
 
+int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash);
+int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node);
+
 int free_merkle_tree(merkle_tree_t *tree);
 int free_merkle_node(merkle_node_t *node);
 

@@ -30,12 +30,12 @@
 
 #include <sodium.h>
 
+#include "common/util.h"
+
 #include "block.h"
 #include "blockchainparams.h"
 #include "merkle.h"
 #include "vulkan.pb-c.h"
-
-#include "common/util.h"
 
 /* Allocates a block for usage.
  *
@@ -129,7 +129,7 @@ int valid_block(block_t *block)
       }
 
       // check to see if any transactions have duplicate transaction hash ids
-      if (memcmp(first_tx->id, second_tx->id, HASH_SIZE) == 0)
+      if (compare_transaction_hash(first_tx->id, second_tx->id))
       {
         return 0;
       }
@@ -141,7 +141,7 @@ int valid_block(block_t *block)
         for (int second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
-          if (memcmp(txin_first->transaction, txin_second->transaction, HASH_SIZE) == 0 && txin_first->txout_index == txin_second->txout_index)
+          if (compare_transaction_hash(txin_first->transaction, txin_second->transaction) && txin_first->txout_index == txin_second->txout_index)
           {
             return 0;
           }
@@ -170,7 +170,7 @@ int valid_merkle_root(block_t *block)
   uint8_t *merkle_root = malloc(sizeof(uint8_t*) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
-  if (memcmp(merkle_root, block->merkle_root, HASH_SIZE) == 0)
+  if (compare_merkle_hash(merkle_root, block->merkle_root))
   {
     return 1;
   }
@@ -312,22 +312,12 @@ int print_block(block_t *block)
 
 int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
 {
-  return memcmp(hash, other_hash, HASH_SIZE) != 0;
+  return memcmp(hash, other_hash, HASH_SIZE) == 0;
 }
 
 int compare_block(block_t *block, block_t *other_block)
 {
-  if (compare_block_hash(block->hash, other_block->hash))
-  {
-    return 1;
-  }
-
-  if (memcmp(block->merkle_root, other_block->merkle_root, HASH_SIZE) != 0)
-  {
-    return 1;
-  }
-
-  return 0;
+  return (compare_block_hash(block->hash, other_block->hash) && compare_merkle_hash(block->merkle_root, other_block->merkle_root));
 }
 
 int compare_with_genesis_block(block_t *block)

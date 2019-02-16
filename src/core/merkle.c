@@ -27,9 +27,9 @@
 
 #include <sodium.h>
 
-#include "merkle.h"
-
 #include "common/util.h"
+
+#include "merkle.h"
 
 /*
  * Constructing a Merkle Tree requires passing a large allocated uint8_t that contains
@@ -132,6 +132,16 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
   free(node_hash);
 
   return node;
+}
+
+int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash)
+{
+  return memcmp(merkle_hash, other_merkle_hash, HASH_SIZE) == 0;
+}
+
+int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node)
+{
+  return compare_merkle_hash(merkle_node->hash, other_merkle_node->hash);
 }
 
 /*

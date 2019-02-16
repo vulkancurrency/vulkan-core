@@ -42,6 +42,8 @@ int new_wallet(const char *wallet_filename);
 PWallet *get_wallet(void);
 void print_wallet(PWallet *wallet);
 
+int compare_addresses(uint8_t *address, uint8_t *other_address);
+
 int public_key_to_address(unsigned char *address, unsigned char *pk);
 uint8_t get_address_id(uint8_t *address);
 int valid_address(uint8_t *address);
