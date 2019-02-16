@@ -497,7 +497,7 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
         MGetTransactionResponse *msg = malloc(sizeof(MGetTransactionResponse));
         mget_transaction_response__init(msg);
 
-        msg->transaction = transaction_to_proto(transaction);;
+        msg->transaction = transaction_to_proto(transaction);
 
         buffer_len = mget_transaction_response__get_packed_size(msg);
         buffer = malloc(buffer_len);
