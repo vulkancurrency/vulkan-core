@@ -362,6 +362,7 @@ int insert_block(block_t *block)
   for (int i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
 
     insert_tx_into_index(key, tx);
     insert_unspent_tx_into_index(tx);
