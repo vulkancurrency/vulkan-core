@@ -64,10 +64,19 @@ buffer_t* buffer_init(void)
   return buffer_init_offset(0);
 }
 
-int buffer_set_offset(buffer_t *buffer, int offset)
+void buffer_set_size(buffer_t *buffer, int size)
+{
+  buffer->size = size;
+}
+
+int buffer_get_size(buffer_t *buffer)
+{
+  return buffer->size;
+}
+
+void buffer_set_offset(buffer_t *buffer, int offset)
 {
   buffer->offset = offset;
-  return 0;
 }
 
 int buffer_get_offset(buffer_t *buffer)
@@ -98,7 +107,7 @@ int buffer_free(buffer_t *buffer)
   return 0;
 }
 
-void buffer_realloc(buffer_t *buffer, int size)
+int buffer_realloc(buffer_t *buffer, int size)
 {
   // resize the array if there isn't enough memory
   // pre-allocated...
@@ -109,26 +118,25 @@ void buffer_realloc(buffer_t *buffer, int size)
     buffer->data = data;
     buffer->size += size;
   }
+
+  return 0;
 }
 
-void buffer_write(buffer_t *buffer, const uint8_t *data, int size)
+int buffer_write(buffer_t *buffer, const uint8_t *data, int size)
 {
   buffer_realloc(buffer, size);
   memcpy(buffer->data + buffer->offset, data, size);
   buffer->offset += size;
+  return 0;
 }
 
-char* buffer_read(buffer_t *buffer, int size)
+uint8_t* buffer_read(buffer_t *buffer, int size)
 {
   uint8_t *data = malloc(size);
   memcpy(data, buffer->data + buffer->offset, size);
   buffer->offset += size;
-  return (char*)data;
-}
-
-int buffer_get_size(buffer_t *buffer)
-{
-  return buffer->size;
+  buffer->size -= size;
+  return data;
 }
 
 int buffer_get_remaining_size(buffer_t *buffer)
@@ -146,126 +154,143 @@ const unsigned char* buffer_get_remaining_data(buffer_t *buffer)
   return buffer->data + buffer->offset;
 }
 
-void buffer_write_uint8(buffer_t *buffer, uint8_t value)
+int buffer_write_uint8(buffer_t *buffer, uint8_t value)
 {
   buffer_realloc(buffer, 1);
   *(uint8_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 1;
+  return 0;
 }
 
 uint8_t buffer_read_uint8(buffer_t *buffer)
 {
   uint8_t value = *(uint8_t*)(buffer->data + buffer->offset);
-  buffer->offset += sizeof(uint8_t);
+  buffer->offset += 1;
+  buffer->size -= 1;
   return value;
 }
 
-void buffer_write_int8(buffer_t *buffer, int8_t value)
+int buffer_write_int8(buffer_t *buffer, int8_t value)
 {
   buffer_realloc(buffer, 1);
   *(int8_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 1;
+  return 0;
 }
 
 int8_t buffer_read_int8(buffer_t *buffer)
 {
   int8_t value = *(int8_t*)(buffer->data + buffer->offset);
   buffer->offset += 1;
+  buffer->size -= 1;
   return value;
 }
 
-void buffer_write_uint16(buffer_t *buffer, uint16_t value)
+int buffer_write_uint16(buffer_t *buffer, uint16_t value)
 {
   buffer_realloc(buffer, 2);
   *(uint16_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 2;
+  return 0;
 }
 
 uint16_t buffer_read_uint16(buffer_t *buffer)
 {
   uint16_t value = *(uint16_t*)(buffer->data + buffer->offset);
   buffer->offset += 2;
+  buffer->size -= 2;
   return value;
 }
 
-void buffer_write_int16(buffer_t *buffer, int16_t value)
+int buffer_write_int16(buffer_t *buffer, int16_t value)
 {
   buffer_realloc(buffer, 2);
   *(int16_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 2;
+  return 0;
 }
 
 int16_t buffer_read_int16(buffer_t *buffer)
 {
   int16_t value = *(int16_t*)(buffer->data + buffer->offset);
   buffer->offset += 2;
+  buffer->size -= 2;
   return value;
 }
 
-void buffer_write_uint32(buffer_t *buffer, uint32_t value)
+int buffer_write_uint32(buffer_t *buffer, uint32_t value)
 {
   buffer_realloc(buffer, 4);
   *(uint32_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 4;
+  return 0;
 }
 
 uint32_t buffer_read_uint32(buffer_t *buffer)
 {
   uint32_t value = *(uint32_t*)(buffer->data + buffer->offset);
   buffer->offset += 4;
+  buffer->size -= 4;
   return value;
 }
 
-void buffer_write_int32(buffer_t *buffer, int32_t value)
+int buffer_write_int32(buffer_t *buffer, int32_t value)
 {
   buffer_realloc(buffer, 4);
   *(int32_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 4;
+  return 0;
 }
 
 int32_t buffer_read_int32(buffer_t *buffer)
 {
   int32_t value = *(int32_t*)(buffer->data + buffer->offset);
   buffer->offset += 4;
+  buffer->size -= 4;
   return value;
 }
 
-void buffer_write_uint64(buffer_t *buffer, uint64_t value)
+int buffer_write_uint64(buffer_t *buffer, uint64_t value)
 {
   buffer_realloc(buffer, 8);
   *(uint64_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 8;
+  return 0;
 }
 
 uint64_t buffer_read_uint64(buffer_t *buffer)
 {
   uint64_t value = *(uint64_t*)(buffer->data + buffer->offset);
   buffer->offset += 8;
+  buffer->size -= 8;
   return value;
 }
 
-void buffer_write_int64(buffer_t *buffer, int64_t value)
+int buffer_write_int64(buffer_t *buffer, int64_t value)
 {
   buffer_realloc(buffer, 8);
   *(int64_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 8;
+  return 0;
 }
 
 int64_t buffer_read_int64(buffer_t *buffer)
 {
   int64_t value = *(int64_t*)(buffer->data + buffer->offset);
   buffer->offset += 8;
+  buffer->size -= 8;
   return value;
 }
 
-void buffer_write_string(buffer_t *buffer, const char *string, int size)
+int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
 {
-  int actual_size = sizeof(const char*) + size;
-  buffer_write_uint16(buffer, actual_size);
+  uint32_t actual_size = sizeof(const char*) + size;
+  buffer_write_uint32(buffer, actual_size);
   buffer_write(buffer, (const uint8_t*)string, actual_size);
+  return 0;
 }
 
 char* buffer_read_string(buffer_t *buffer)
 {
-  return (char*)buffer_read(buffer, buffer_read_uint16(buffer));
+  return (char*)buffer_read(buffer, buffer_read_uint32(buffer));
 }

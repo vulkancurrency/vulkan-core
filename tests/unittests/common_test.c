@@ -147,28 +147,29 @@ TEST pack_and_unpack_buffer(void)
 {
   buffer_t *buffer = buffer_init();
   ASSERT(buffer != NULL);
+  ASSERT_EQ(buffer_get_size(buffer), 0);
 
   // pack
 
   // write messages
   const char *msg = "Hello World!";
-  buffer_write_string(buffer, msg, strlen(msg));
+  ASSERT_EQ(buffer_write_string(buffer, msg, strlen(msg)), 0);
 
   const char *msg1 = "The quick brown fox jumps over the lazy dog.";
-  buffer_write_string(buffer, msg1, strlen(msg1));
+  ASSERT_EQ(buffer_write_string(buffer, msg1, strlen(msg1)), 0);
 
   const char *msg2 = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890";
-  buffer_write_string(buffer, msg2, strlen(msg2));
+  ASSERT_EQ(buffer_write_string(buffer, msg2, strlen(msg2)), 0);
 
   // write bytes
   const char *data = "\x00\x01\x12Hello World!";
-  buffer_write_string(buffer, data, 16);
+  ASSERT_EQ(buffer_write_string(buffer, data, 16), 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  buffer_write_string(buffer, data, 64);
+  ASSERT_EQ(buffer_write_string(buffer, data, 64), 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  buffer_write_string(buffer, data, 128);
+  ASSERT_EQ(buffer_write_string(buffer, data, 128), 0);
 
   // unpack
   buffer_set_offset(buffer, 0);
@@ -183,29 +184,39 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data1), 1);
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data2), 1);
 
+  ASSERT_EQ(buffer_get_size(buffer), 0);
   ASSERT_EQ(buffer_free(buffer), 0);
 
   buffer_t *buffer1 = buffer_init();
   ASSERT(buffer1 != NULL);
+  ASSERT_EQ(buffer_get_size(buffer1), 0);
 
   // write
 
   // unsigned
-  buffer_write_uint8(buffer1, 0xFF);
-  buffer_write_uint16(buffer1, 0xFFFF);
-  buffer_write_uint32(buffer1, 0xFFFFFFFF);
-  buffer_write_uint64(buffer1, 0xFFFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_write_uint8(buffer1, 0xFF), 0);
+  ASSERT_EQ(buffer_write_uint16(buffer1, 0xFFFF), 0);
+  ASSERT_EQ(buffer_write_uint32(buffer1, 0xFFFFFFFF), 0);
+  ASSERT_EQ(buffer_write_uint64(buffer1, 0xFFFFFFFFFFFFFFFF), 0);
 
   // signed
-  buffer_write_int8(buffer1, 0x7F);
-  buffer_write_int16(buffer1, 0x7FFF);
-  buffer_write_int32(buffer1, 0x7FFFFFFF);
-  buffer_write_int64(buffer1, 0x7FFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_write_int8(buffer1, 0x7F), 0);
+  ASSERT_EQ(buffer_write_int16(buffer1, 0x7FFF), 0);
+  ASSERT_EQ(buffer_write_int32(buffer1, 0x7FFFFFFF), 0);
+  ASSERT_EQ(buffer_write_int64(buffer1, 0x7FFFFFFFFFFFFFFF), 0);
 
-  buffer_write_int8(buffer1, -0x7F);
-  buffer_write_int16(buffer1, -0x7FFF);
-  buffer_write_int32(buffer1, -0x7FFFFFFF);
-  buffer_write_int64(buffer1, -0x7FFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_write_int8(buffer1, -0x7F), 0);
+  ASSERT_EQ(buffer_write_int16(buffer1, -0x7FFF), 0);
+  ASSERT_EQ(buffer_write_int32(buffer1, -0x7FFFFFFF), 0);
+  ASSERT_EQ(buffer_write_int64(buffer1, -0x7FFFFFFFFFFFFFFF), 0);
+
+  // copy the contents of buffer1 to buffer2
+  buffer_t *buffer2 = buffer_init();
+  ASSERT(buffer2 != NULL);
+  ASSERT_EQ(buffer_copy(buffer2, buffer1), 0);
+  ASSERT_EQ(buffer_get_size(buffer2), buffer_get_size(buffer1));
+  ASSERT_EQ(string_equals((char*)buffer_get_data(buffer1), (char*)buffer_get_data(buffer2)), 1);
+  ASSERT_EQ(buffer_free(buffer2), 0);
 
   // read
   buffer_set_offset(buffer1, 0);
@@ -227,6 +238,7 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(buffer_read_int32(buffer1), -0x7FFFFFFF);
   ASSERT_EQ(buffer_read_int64(buffer1), -0x7FFFFFFFFFFFFFFF);
 
+  ASSERT_EQ(buffer_get_size(buffer1), 0);
   ASSERT_EQ(buffer_free(buffer1), 0);
   PASS();
 }
