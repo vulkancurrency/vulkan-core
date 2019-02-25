@@ -164,12 +164,15 @@ TEST pack_and_unpack_buffer(void)
   // write bytes
   const char *data = "\x00\x01\x12Hello World!";
   ASSERT_EQ(buffer_write_string(buffer, data, 16), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data, 16), 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  ASSERT_EQ(buffer_write_string(buffer, data, 64), 0);
+  ASSERT_EQ(buffer_write_string(buffer, data1, 64), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data1, 64), 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  ASSERT_EQ(buffer_write_string(buffer, data, 128), 0);
+  ASSERT_EQ(buffer_write_string(buffer, data2, 128), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data2, 128), 0);
 
   // unpack
   buffer_set_offset(buffer, 0);
@@ -181,8 +184,11 @@ TEST pack_and_unpack_buffer(void)
 
   // read bytes
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data), 1);
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data1), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data1), 1);
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data2), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data2), 1);
 
   ASSERT_EQ(buffer_get_size(buffer), 0);
   ASSERT_EQ(buffer_free(buffer), 0);

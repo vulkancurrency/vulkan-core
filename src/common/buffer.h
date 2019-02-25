@@ -88,6 +88,9 @@ int64_t buffer_read_int64(buffer_t *buffer);
 int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
 char* buffer_read_string(buffer_t *buffer);
 
+int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size);
+uint8_t* buffer_read_bytes(buffer_t *buffer);
+
 #ifdef __cplusplus
 }
 #endif

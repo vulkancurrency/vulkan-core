@@ -294,3 +294,16 @@ char* buffer_read_string(buffer_t *buffer)
 {
   return (char*)buffer_read(buffer, buffer_read_uint32(buffer));
 }
+
+int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size)
+{
+  uint32_t actual_size = sizeof(uint8_t*) + size;
+  buffer_write_uint32(buffer, actual_size);
+  buffer_write(buffer, bytes, actual_size);
+  return 0;
+}
+
+uint8_t* buffer_read_bytes(buffer_t *buffer)
+{
+  return buffer_read(buffer, buffer_read_uint32(buffer));
+}
