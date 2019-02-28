@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <assert.h>
 #include <string.h>
 
 #include <gossip.h>
