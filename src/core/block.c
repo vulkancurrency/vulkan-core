@@ -304,9 +304,9 @@ uint32_t get_block_header_size(block_t *block)
   uint32_t block_header_size = BLOCK_HEADER_SIZE;
   for (int i = 0; i < block->transaction_count; i++)
   {
-    transaction_t *transaction = block->transactions[i];
-    assert(transaction != NULL);
-    block_header_size += get_tx_header_size(transaction);
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+    block_header_size += get_tx_header_size(tx);
   }
 
   return block_header_size;
@@ -422,7 +422,9 @@ int free_block(block_t *block)
   {
     for (int i = 0; i < block->transaction_count; i++)
     {
-      free_transaction(block->transactions[i]);
+      transaction_t *tx = block->transactions[i];
+      assert(tx != NULL);
+      free_transaction(tx);
     }
 
     free(block->transactions);
