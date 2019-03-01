@@ -334,6 +334,24 @@ int compare_with_genesis_block(block_t *block)
   return compare_block(block, &genesis_block);
 }
 
+int serialize_block_header(buffer_t *buffer, block_t *block)
+{
+  assert(block != NULL);
+  assert(buffer != NULL);
+
+  buffer_write_uint32(buffer, block->version);
+  buffer_write_uint32(buffer, block->bits);
+  buffer_write_uint32(buffer, block->nonce);
+  buffer_write_uint32(buffer, block->timestamp);
+  buffer_write_uint32(buffer, block->already_generated_coins);
+
+  // when serializing the block header, we do not want to include
+  // the size of the hashes below as that is extra data we do not need...
+  buffer_write_raw_bytes(buffer, block->previous_hash, HASH_SIZE);
+  buffer_write_raw_bytes(buffer, block->merkle_root, HASH_SIZE);
+  return 0;
+}
+
 int serialize_block(buffer_t *buffer, block_t *block)
 {
   assert(block != NULL);

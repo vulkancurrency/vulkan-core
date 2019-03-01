@@ -38,7 +38,7 @@ extern "
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (4 + 4 + HASH_SIZE + HASH_SIZE + 4 + 4 + 8 + HASH_SIZE + 4)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 4 + 4 + 4 + 4)
 
 typedef struct Block
 {
