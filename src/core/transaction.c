@@ -29,6 +29,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <sodium.h>
+
 #include "common/buffer.h"
 #include "common/util.h"
 
