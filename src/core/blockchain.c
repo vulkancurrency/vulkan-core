@@ -366,7 +366,7 @@ int insert_block(block_t *block)
     assert(tx != NULL);
 
     insert_tx_into_index(key, tx);
-    insert_unspent_tx_into_index(tx);
+    insert_tx_into_unspent_index(tx);
 
     // ensure that the genesis tx block reward and the block's already_generated_coins
     // value has not been manipulated...
@@ -406,20 +406,25 @@ int insert_block(block_t *block)
     for (int txin_index = 0; txin_index < tx->txin_count; txin_index++)
     {
       input_transaction_t *txin = tx->txins[txin_index];
-      PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(txin->transaction);
+      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
 
-      if (((unspent_tx->n_unspent_txouts - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
+      assert(txin != NULL);
+      assert(unspent_tx != NULL);
+
+      if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
-        free_proto_unspent_transaction(unspent_tx);
+        free_unspent_transaction(unspent_tx);
         fprintf(stderr, "A txin tried to mark a unspent txout as spent, but it was not found\n");
         continue;
       }
       else
       {
-        PUnspentOutputTransaction *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
+        unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
+        assert(unspent_txout != NULL);
+
         if (unspent_txout->spent == 1)
         {
-          free_proto_unspent_transaction(unspent_tx);
+          free_unspent_transaction(unspent_tx);
           fprintf(stderr, "A txin tried to mark a unspent txout as spent, but it was already spent\n");
           continue;
         }
@@ -427,7 +432,7 @@ int insert_block(block_t *block)
         unspent_txout->spent = 1;
 
         int spent_txs = 0;
-        for (int j = 0; j < unspent_tx->n_unspent_txouts; j++)
+        for (int j = 0; j < unspent_tx->unspent_txout_count; j++)
         {
           if (unspent_txout->spent == 1)
           {
@@ -435,16 +440,16 @@ int insert_block(block_t *block)
           }
         }
 
-        if (spent_txs == unspent_tx->n_unspent_txouts)
+        if (spent_txs == unspent_tx->unspent_txout_count)
         {
-          delete_unspent_tx_from_index(unspent_tx->id.data);
+          delete_unspent_tx_from_index(unspent_tx->id);
         }
         else
         {
-          insert_proto_unspent_tx_into_index(unspent_tx);
+          insert_unspent_tx_into_index(unspent_tx);
         }
 
-        free_proto_unspent_transaction(unspent_tx);
+        free_unspent_transaction(unspent_tx);
       }
     }
   }
@@ -484,6 +489,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   }
 
   block_t *block = block_from_serialized(serialized_block, read_len);
+  assert(block != NULL);
 
   rocksdb_free(serialized_block);
   rocksdb_free(err);
@@ -612,7 +618,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
   return 0;
 }
 
-int insert_unspent_tx_into_index(transaction_t *tx)
+int insert_tx_into_unspent_index(transaction_t *tx)
 {
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
@@ -620,7 +626,10 @@ int insert_unspent_tx_into_index(transaction_t *tx)
 
   uint8_t *buffer = NULL;
   uint32_t buffer_len = 0;
-  unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
+
+  unspent_transaction_t *unspent_tx = transaction_to_unspent_transaction(tx);
+  unspent_transaction_to_serialized(&buffer, &buffer_len, unspent_tx);
+  free_unspent_transaction(unspent_tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
@@ -638,15 +647,15 @@ int insert_unspent_tx_into_index(transaction_t *tx)
   return 0;
 }
 
-int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
+int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 {
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
-  get_unspent_tx_key(key, tx->id.data);
+  get_unspent_tx_key(key, unspent_tx->id);
 
   uint8_t *buffer = NULL;
   uint32_t buffer_len = 0;
-  proto_unspent_transaction_to_serialized(&buffer, &buffer_len, tx);
+  unspent_transaction_to_serialized(&buffer, &buffer_len, unspent_tx);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
@@ -655,7 +664,7 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not insert tx into blockchain: %s\n", err);
+    fprintf(stderr, "Could not insert unspent tx into blockchain: %s\n", err);
     return 1;
   }
 
@@ -664,7 +673,7 @@ int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx)
   return 0;
 }
 
-PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
+unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
@@ -681,12 +690,13 @@ PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id)
     return NULL;
   }
 
-  PUnspentTransaction *tx = unspent_transaction_from_serialized(serialized_tx, read_len);
+  unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(serialized_tx, read_len);
+  assert(unspent_tx != NULL);
 
   rocksdb_free(serialized_tx);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
-  return tx;
+  return unspent_tx;
 }
 
 uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
@@ -962,11 +972,11 @@ uint64_t get_balance_for_address(uint8_t *address)
     {
       size_t value_length;
       uint8_t *value = (uint8_t*)rocksdb_iter_value(iterator, &value_length);
-      PUnspentTransaction *tx = unspent_transaction_from_serialized(value, value_length);
-      for (int i = 0; i < tx->n_unspent_txouts; i++)
+      unspent_transaction_t *tx = unspent_transaction_from_serialized(value, value_length);
+      for (int i = 0; i < tx->unspent_txout_count; i++)
       {
-        PUnspentOutputTransaction *unspent_txout = tx->unspent_txouts[i];
-        if (!compare_addresses(unspent_txout->address.data, address))
+        unspent_output_transaction_t *unspent_txout = tx->unspent_txouts[i];
+        if (!compare_addresses(unspent_txout->address, address))
         {
           continue;
         }

@@ -95,7 +95,7 @@ static block_t genesis_block = {
   }
 };
 
-block_t *make_block(void);
+block_t* make_block(void);
 int free_block(block_t *block);
 int hash_block(block_t *block);
 int get_block_header(uint8_t *block_header, block_t *block);
@@ -113,11 +113,11 @@ int valid_merkle_root(block_t *block);
 int compute_merkle_root(uint8_t *merkle_root, block_t *block);
 int compute_self_merkle_root(block_t *block);
 
-PBlock *block_to_proto(block_t *block);
-int free_proto_block(PBlock *proto_block);
-int block_to_serialized(uint8_t **buffer, uint32_t *buffer_len, block_t *block);
-block_t *block_from_proto(PBlock *proto_block);
-block_t *block_from_serialized(uint8_t *buffer, uint32_t buffer_len);
+int serialize_block(buffer_t *buffer, block_t *block);
+block_t* deserialize_block(buffer_t *buffer);
+
+int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
+block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
 
 #ifdef __cplusplus
 }

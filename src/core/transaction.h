@@ -29,6 +29,7 @@
 
 #include <sodium.h>
 
+#include "common/buffer.h"
 #include "common/util.h"
 
 #include "vulkan.pb-c.h"
@@ -90,6 +91,21 @@ typedef struct Transaction
   output_transaction_t **txouts;
 } transaction_t;
 
+typedef struct UnspentOutputTransaction
+{
+  uint64_t amount;
+  uint8_t address[ADDRESS_SIZE];
+  uint8_t spent;
+} unspent_output_transaction_t;
+
+typedef struct UnspentTransaction
+{
+  uint8_t id[HASH_SIZE];
+  uint8_t coinbase;
+  uint8_t unspent_txout_count;
+  unspent_output_transaction_t **unspent_txouts;
+} unspent_transaction_t;
+
 typedef struct TransactionEntry
 {
   uint8_t *address;
@@ -119,24 +135,32 @@ int do_txins_reference_unspent_txouts(transaction_t *tx);
 int compute_tx_id(uint8_t *header, transaction_t *tx);
 int compute_self_tx_id(transaction_t *tx);
 
-PTransaction *transaction_to_proto(transaction_t *tx);
-PUnspentTransaction *unspent_transaction_to_proto(transaction_t *tx);
-output_transaction_t *txout_from_proto(POutputTransaction *proto_txout);
-transaction_t *transaction_from_proto(PTransaction *proto_tx);
-int unspent_transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, transaction_t *tx);
-int proto_unspent_transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, PUnspentTransaction *tx);
-int transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, transaction_t *tx);
-transaction_t *transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len);
-PUnspentTransaction *unspent_transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len);
+int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
+input_transaction_t* deserialize_txin(buffer_t *buffer);
+int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
+output_transaction_t* deserialize_txout(buffer_t *buffer);
+int serialize_transaction(buffer_t *buffer, transaction_t *tx);
+transaction_t* deserialize_transaction(buffer_t *buffer);
 
-input_transaction_t *make_input_tx(uint32_t block_height);
-output_transaction_t *make_output_tx(uint8_t *address, uint64_t amount);
-transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries);
-transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward);
+int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx);
+transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len);
 
-int free_proto_transaction(PTransaction *proto_transaction);
-int free_proto_unspent_transaction(PUnspentTransaction *proto_unspent_tx);
+int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unspent_txout);
+unspent_output_transaction_t* deserialize_unspent_txout(buffer_t *buffer);
+int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx);
+unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer);
+
+unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);
+int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx);
+unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);
+
+input_transaction_t* make_txin(uint32_t block_height);
+output_transaction_t* make_txout(uint8_t *address, uint64_t amount);
+transaction_t* make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries);
+transaction_t* make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward);
+
 int free_transaction(transaction_t *tx);
+int free_unspent_transaction(unspent_transaction_t *unspent_tx);
 
 #ifdef __cplusplus
 }

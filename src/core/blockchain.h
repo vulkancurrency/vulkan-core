@@ -69,9 +69,9 @@ int has_block_by_hash(uint8_t *block_hash);
 int has_block_by_height(uint32_t height);
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx);
-int insert_unspent_tx_into_index(transaction_t *tx);
-int insert_proto_unspent_tx_into_index(PUnspentTransaction *tx);
-PUnspentTransaction *get_unspent_tx_from_index(uint8_t *tx_id);
+int insert_tx_into_unspent_index(transaction_t *tx);
+int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx);
+unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id);
 
 uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id);
 block_t *get_block_from_tx_id(uint8_t *tx_id);

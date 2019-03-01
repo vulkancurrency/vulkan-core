@@ -26,8 +26,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 #include <string.h>
 
+#include "common/buffer.h"
 #include "common/util.h"
 
 #include "core/blockchain.h"
@@ -161,17 +163,20 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
   for (int i = 0; i < tx->txin_count; i++)
   {
     input_transaction_t *txin = tx->txins[i];
-    PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(txin->transaction);
+    assert(txin != NULL);
+
+    unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
     if (unspent_tx != NULL)
     {
-      if (((unspent_tx->n_unspent_txouts - 1) < txin->txout_index) ||
+      if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
           (unspent_tx->unspent_txouts[txin->txout_index] == NULL))
       {
 
       }
       else
       {
-        PUnspentOutputTransaction *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
+        unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
+        assert(unspent_txout != NULL);
 
         if (unspent_txout->spent == 0)
         {
@@ -180,13 +185,14 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
         }
       }
 
-      free_proto_unspent_transaction(unspent_tx);
+      free_unspent_transaction(unspent_tx);
     }
   }
 
   for (int i = 0; i < tx->txout_count; i++)
   {
     output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
     required_money += txout->amount;
 
     if (valid_address(txout->address) == 0)
@@ -221,201 +227,295 @@ int compute_self_tx_id(transaction_t *tx)
   return 0;
 }
 
-/*
- * Converts an allocated tx to a newly allocated protobuf
- * tx struct.
- *
- * Later to be free'd with `free_proto_transaction`
- */
-PTransaction *transaction_to_proto(transaction_t *tx)
+int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
 {
-  PTransaction *msg = malloc(sizeof(PTransaction));
-  ptransaction__init(msg);
+  assert(buffer != NULL);
+  assert(txin != NULL);
 
-  msg->id.len = HASH_SIZE;
-  msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-  memcpy(msg->id.data, tx->id, HASH_SIZE);
+  buffer_write_bytes(buffer, txin->transaction, HASH_SIZE);
+  buffer_write_uint32(buffer, txin->txout_index);
 
-  msg->n_txins = tx->txin_count;
-  msg->n_txouts = tx->txout_count;
-
-  msg->txins = malloc(sizeof(PInputTransaction*) * msg->n_txins);
-  msg->txouts = malloc(sizeof(POutputTransaction*) * msg->n_txouts);
-
-  for (int i = 0; i < msg->n_txins; i++)
-  {
-    msg->txins[i] = malloc(sizeof(PInputTransaction));
-    pinput_transaction__init(msg->txins[i]);
-
-    msg->txins[i]->txout_index = tx->txins[i]->txout_index;
-
-    msg->txins[i]->transaction.len = HASH_SIZE;
-    msg->txins[i]->transaction.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-    memcpy(msg->txins[i]->transaction.data, tx->txins[i]->transaction, HASH_SIZE);
-
-    msg->txins[i]->signature.len = crypto_sign_BYTES;
-    msg->txins[i]->signature.data = malloc(crypto_sign_BYTES);
-    memcpy(msg->txins[i]->signature.data, tx->txins[i]->signature, crypto_sign_BYTES);
-
-    msg->txins[i]->public_key.len = crypto_sign_PUBLICKEYBYTES;
-    msg->txins[i]->public_key.data = malloc(crypto_sign_PUBLICKEYBYTES);
-    memcpy(msg->txins[i]->public_key.data, tx->txins[i]->public_key, crypto_sign_PUBLICKEYBYTES);
-  }
-
-  for (int i = 0; i < msg->n_txouts; i++)
-  {
-    msg->txouts[i] = malloc(sizeof(POutputTransaction));
-    poutput_transaction__init(msg->txouts[i]);
-
-    msg->txouts[i]->amount = tx->txouts[i]->amount;
-
-    msg->txouts[i]->address.len = ADDRESS_SIZE;
-    msg->txouts[i]->address.data = malloc(sizeof(uint8_t) * ADDRESS_SIZE);
-    memcpy(msg->txouts[i]->address.data, tx->txouts[i]->address, ADDRESS_SIZE);
-  }
-
-  return msg;
-}
-
-PUnspentTransaction *unspent_transaction_to_proto(transaction_t *tx)
-{
-  PUnspentTransaction *msg = malloc(sizeof(PTransaction));
-  punspent_transaction__init(msg);
-
-  msg->id.len = HASH_SIZE;
-  msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-  memcpy(msg->id.data, tx->id, HASH_SIZE);
-
-  msg->coinbase = is_generation_tx(tx);
-  msg->n_unspent_txouts = tx->txout_count;
-  msg->unspent_txouts = malloc(sizeof(POutputTransaction*) * msg->n_unspent_txouts);
-
-  for (int i = 0; i < msg->n_unspent_txouts; i++)
-  {
-    msg->unspent_txouts[i] = malloc(sizeof(PUnspentOutputTransaction));
-    punspent_output_transaction__init(msg->unspent_txouts[i]);
-
-    msg->unspent_txouts[i]->amount = tx->txouts[i]->amount;
-
-    msg->unspent_txouts[i]->address.len = ADDRESS_SIZE;
-    msg->unspent_txouts[i]->address.data = malloc(sizeof(uint8_t) * ADDRESS_SIZE);
-    memcpy(msg->unspent_txouts[i]->address.data, tx->txouts[i]->address, ADDRESS_SIZE);
-
-    msg->unspent_txouts[i]->spent = 0;
-  }
-
-  return msg;
-}
-
-int transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, transaction_t *tx)
-{
-  PTransaction *msg = transaction_to_proto(tx);
-  unsigned int len = ptransaction__get_packed_size(msg);
-  *buffer_len = len;
-
-  *buffer = malloc(len);
-  ptransaction__pack(msg, *buffer);
-  free_proto_transaction(msg);
-
+  // when writing the signature and public key bytes,
+  // pull the size of the reference instead of manually specifying
+  // the size, as this value could potentially change...
+  buffer_write_bytes(buffer, txin->signature, sizeof(txin->signature));
+  buffer_write_bytes(buffer, txin->public_key, sizeof(txin->public_key));
   return 0;
 }
 
-int unspent_transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, transaction_t *tx)
+input_transaction_t* deserialize_txin(buffer_t *buffer)
 {
-  PUnspentTransaction *msg = unspent_transaction_to_proto(tx);
-  unsigned int len = punspent_transaction__get_packed_size(msg);
-  *buffer_len = len;
+  assert(buffer != NULL);
 
-  *buffer = malloc(len);
-  punspent_transaction__pack(msg, *buffer);
-  free_proto_unspent_transaction(msg);
-
-  return 0;
-}
-
-int proto_unspent_transaction_to_serialized(uint8_t **buffer, uint32_t *buffer_len, PUnspentTransaction *msg)
-{
-  unsigned int len = punspent_transaction__get_packed_size(msg);
-  *buffer_len = len;
-
-  *buffer = malloc(len);
-  punspent_transaction__pack(msg, *buffer);
-
-  return 0;
-}
-
-input_transaction_t *txin_from_proto(PInputTransaction *proto_txin)
-{
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
 
-  memcpy(txin->transaction, proto_txin->transaction.data, HASH_SIZE);
-  txin->txout_index = proto_txin->txout_index;
-  memcpy(txin->signature, proto_txin->signature.data, crypto_sign_BYTES);
-  memcpy(txin->public_key, proto_txin->public_key.data, crypto_sign_PUBLICKEYBYTES);
+  uint8_t *prev_tx_id = buffer_read_bytes(buffer);
+  memcpy(txin->transaction, prev_tx_id, HASH_SIZE);
+
+  txin->txout_index = buffer_read_uint32(buffer);
+
+  uint8_t *signature = buffer_read_bytes(buffer);
+  memcpy(txin->signature, signature, sizeof(txin->signature));
+
+  uint8_t *public_key = buffer_read_bytes(buffer);
+  memcpy(txin->public_key, public_key, sizeof(txin->public_key));
+
+  free(prev_tx_id);
+  free(signature);
+  free(public_key);
 
   return txin;
 }
 
-output_transaction_t *txout_from_proto(POutputTransaction *proto_txout)
+int serialize_txout(buffer_t *buffer, output_transaction_t *txout)
 {
+  assert(buffer != NULL);
+  assert(txout != NULL);
+
+  buffer_write_uint64(buffer, txout->amount);
+  buffer_write_bytes(buffer, txout->address, ADDRESS_SIZE);
+  return 0;
+}
+
+output_transaction_t* deserialize_txout(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  txout->amount = buffer_read_uint64(buffer);
 
-  txout->amount = proto_txout->amount;
-  memcpy(txout->address, proto_txout->address.data, ADDRESS_SIZE);
+  uint8_t *address = buffer_read_bytes(buffer);
+  memcpy(txout->address, address, ADDRESS_SIZE);
 
+  free(address);
   return txout;
 }
 
-output_transaction_t *unspent_txout_from_proto(PUnspentOutputTransaction *proto_txout)
+int serialize_transaction(buffer_t *buffer, transaction_t *tx)
 {
-  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  assert(buffer != NULL);
+  assert(tx != NULL);
 
-  txout->amount = proto_txout->amount;
-  memcpy(txout->address, proto_txout->address.data, ADDRESS_SIZE);
+  buffer_write_bytes(buffer, tx->id, HASH_SIZE);
+  buffer_write_uint8(buffer, tx->txin_count);
+  buffer_write_uint8(buffer, tx->txout_count);
 
-  return txout;
-}
-
-transaction_t *transaction_from_proto(PTransaction *proto_tx)
-{
-  transaction_t *tx = malloc(sizeof(transaction_t));
-
-  memcpy(tx->id, proto_tx->id.data, HASH_SIZE);
-  tx->txin_count = proto_tx->n_txins;
-  tx->txout_count = proto_tx->n_txouts;
-
-  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
-  tx->txouts = malloc(sizeof(output_transaction_t*) * tx->txout_count);
-
+  // write txins
   for (int i = 0; i < tx->txin_count; i++)
   {
-    tx->txins[i] = txin_from_proto(proto_tx->txins[i]);
+    input_transaction_t *txin = tx->txins[i];
+    assert(txin != NULL);
+
+    if (serialize_txin(buffer, txin))
+    {
+      return 1;
+    }
   }
 
+  // write txouts
   for (int i = 0; i < tx->txout_count; i++)
   {
-    tx->txouts[i] = txout_from_proto(proto_tx->txouts[i]);
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
+
+    if (serialize_txout(buffer, txout))
+    {
+      return 1;
+    }
   }
 
+  return 0;
+}
+
+transaction_t* deserialize_transaction(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+
+  transaction_t *tx = malloc(sizeof(transaction_t));
+
+  uint8_t *id = buffer_read_bytes(buffer);
+  memcpy(tx->id, id, HASH_SIZE);
+
+  tx->txin_count = buffer_read_uint8(buffer);
+  tx->txout_count = buffer_read_uint8(buffer);
+
+  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
+  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
+
+  // read txins
+  for (int i = 0; i < tx->txin_count; i++)
+  {
+    input_transaction_t *txin = deserialize_txin(buffer);
+    assert(txin != NULL);
+    tx->txins[i] = txin;
+  }
+
+  // read txouts
+  for (int i = 0; i < tx->txout_count; i++)
+  {
+    output_transaction_t *txout = deserialize_txout(buffer);
+    assert(txout != NULL);
+    tx->txouts[i] = txout;
+  }
+
+  free(id);
   return tx;
 }
 
-transaction_t *transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len)
+int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx)
 {
-  PTransaction *proto_tx = ptransaction__unpack(NULL, buffer_len, buffer);
-  transaction_t *tx = transaction_from_proto(proto_tx);
-  ptransaction__free_unpacked(proto_tx, NULL);
+  assert(tx != NULL);
 
+  buffer_t *buffer = buffer_init();
+  if (serialize_transaction(buffer, tx))
+  {
+    return 1;
+  }
+
+  *data_len = buffer_get_size(buffer);
+  *data = malloc(*data_len);
+
+  memcpy(*data, buffer->data, *data_len);
+  buffer_free(buffer);
+
+  return 0;
+}
+
+transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len)
+{
+  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
+  transaction_t *tx = deserialize_transaction(buffer);
+  buffer_free(buffer);
   return tx;
 }
 
-PUnspentTransaction *unspent_transaction_from_serialized(uint8_t *buffer, uint32_t buffer_len)
+int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unspent_txout)
 {
-  PUnspentTransaction *proto_unspent_tx = punspent_transaction__unpack(NULL, buffer_len, buffer);
-  return proto_unspent_tx;
+  assert(buffer != NULL);
+  assert(unspent_txout != NULL);
+
+  buffer_write_uint64(buffer, unspent_txout->amount);
+  buffer_write_bytes(buffer, unspent_txout->address, ADDRESS_SIZE);
+  buffer_write_uint8(buffer, unspent_txout->spent);
+  return 0;
 }
 
-input_transaction_t *make_input_tx(uint32_t block_height)
+unspent_output_transaction_t* deserialize_unspent_txout(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+
+  unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+  unspent_txout->amount = buffer_read_uint64(buffer);
+
+  uint8_t *address = buffer_read_bytes(buffer);
+  memcpy(unspent_txout->address, address, ADDRESS_SIZE);
+
+  unspent_txout->spent = buffer_read_uint8(buffer);
+
+  free(address);
+  return unspent_txout;
+}
+
+int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx)
+{
+  assert(buffer != NULL);
+  assert(unspent_tx != NULL);
+
+  buffer_write_bytes(buffer, unspent_tx->id, HASH_SIZE);
+  buffer_write_uint8(buffer, unspent_tx->coinbase);
+  buffer_write_uint8(buffer, unspent_tx->unspent_txout_count);
+
+  // write unspent txouts
+  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  {
+    unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
+    assert(unspent_txout != NULL);
+
+    if (serialize_unspent_txout(buffer, unspent_txout))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+
+  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+
+  uint8_t *id = buffer_read_bytes(buffer);
+  memcpy(unspent_tx->id, id, HASH_SIZE);
+
+  unspent_tx->coinbase = buffer_read_uint32(buffer);
+  unspent_tx->unspent_txout_count = buffer_read_uint8(buffer);
+
+  // read unspent txouts
+  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  {
+    unspent_output_transaction_t *unspent_txout = deserialize_unspent_txout(buffer);
+    assert(unspent_txout != NULL);
+    unspent_tx->unspent_txouts[i] = unspent_txout;
+  }
+
+  free(id);
+  return unspent_tx;
+}
+
+unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
+{
+  assert(tx != NULL);
+
+  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+  memcpy(unspent_tx->id, tx->id, HASH_SIZE);
+
+  unspent_tx->coinbase = is_generation_tx(tx);
+  unspent_tx->unspent_txout_count = tx->txout_count;
+  unspent_tx->unspent_txouts = malloc(sizeof(unspent_transaction_t) * tx->txout_count);
+
+  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  {
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
+
+    unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+    unspent_txout->amount = txout->amount;
+    memcpy(unspent_txout->address, txout->address, ADDRESS_SIZE);
+    unspent_txout->spent = 0;
+  }
+
+  return unspent_tx;
+}
+
+int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx)
+{
+  assert(unspent_tx != NULL);
+  buffer_t *buffer = buffer_init();
+  if (serialize_unspent_transaction(buffer, unspent_tx))
+  {
+    return 1;
+  }
+
+  *data_len = buffer_get_size(buffer);
+  *data = malloc(*data_len);
+
+  memcpy(*data, buffer->data, *data_len);
+  buffer_free(buffer);
+
+  return 0;
+}
+
+unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len)
+{
+  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
+  unspent_transaction_t *unspent_tx = deserialize_unspent_transaction(buffer);
+  buffer_free(buffer);
+  return unspent_tx;
+}
+
+input_transaction_t* make_txin(uint32_t block_height)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   memset(txin->transaction, 0, HASH_SIZE);
@@ -423,7 +523,7 @@ input_transaction_t *make_input_tx(uint32_t block_height)
   return txin;
 }
 
-output_transaction_t *make_output_tx(uint8_t *address, uint64_t amount)
+output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
 {
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txout->amount = amount;
@@ -431,7 +531,7 @@ output_transaction_t *make_output_tx(uint8_t *address, uint64_t amount)
   return txout;
 }
 
-transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries)
+transaction_t* make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
 
@@ -445,8 +545,11 @@ transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_
   {
     transaction_entry_t transaction_entry = transaction_entries.entries[i];
 
-    input_transaction_t *txin = make_input_tx(block_height);
-    output_transaction_t *txout = make_output_tx(transaction_entry.address, transaction_entry.amount);
+    input_transaction_t *txin = make_txin(block_height);
+    output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
+
+    assert(txin != NULL);
+    assert(txout != NULL);
 
     tx->txins[i] = txin;
     tx->txouts[i] = txout;
@@ -458,7 +561,7 @@ transaction_t *make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_
   return tx;
 }
 
-transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward)
+transaction_t* make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward)
 {
   transaction_entry_t transaction_entry;
   transaction_entry.address = wallet->address.data;
@@ -471,58 +574,37 @@ transaction_t *make_generation_tx(PWallet *wallet, uint32_t block_height, uint64
   return make_tx(wallet, block_height, already_generated_coins, transaction_entries);
 }
 
-int free_proto_transaction(PTransaction *proto_transaction)
-{
-  for (int i = 0; i < proto_transaction->n_txins; i++)
-  {
-    free(proto_transaction->txins[i]->transaction.data);
-    free(proto_transaction->txins[i]->signature.data);
-    free(proto_transaction->txins[i]->public_key.data);
-    free(proto_transaction->txins[i]);
-  }
-
-  for (int i = 0; i < proto_transaction->n_txouts; i++)
-  {
-    free(proto_transaction->txouts[i]->address.data);
-    free(proto_transaction->txouts[i]);
-  }
-
-  free(proto_transaction->txins);
-  free(proto_transaction->txouts);
-  free(proto_transaction);
-  return 0;
-}
-
-int free_proto_unspent_transaction(PUnspentTransaction *proto_unspent_tx)
-{
-  for (int i = 0; i < proto_unspent_tx->n_unspent_txouts; i++)
-  {
-    free(proto_unspent_tx->unspent_txouts[i]->address.data);
-    free(proto_unspent_tx->unspent_txouts[i]);
-  }
-
-  free(proto_unspent_tx);
-  return 0;
-}
-
-/*
- * Frees an allocated TX, and its corresponding allocated
- * TXINs and TXOUTs.
- */
 int free_transaction(transaction_t *tx)
 {
   for (int i = 0; i < tx->txin_count; i++)
   {
-    free(tx->txins[i]);
+    input_transaction_t *txin = tx->txins[i];
+    assert(txin != NULL);
+    free(txin);
   }
 
   for (int i = 0; i < tx->txout_count; i++)
   {
-    free(tx->txouts[i]);
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
+    free(txout);
   }
 
   free(tx->txins);
   free(tx->txouts);
   free(tx);
+  return 0;
+}
+
+int free_unspent_transaction(unspent_transaction_t *unspent_tx)
+{
+  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  {
+    unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
+    assert(unspent_txout != NULL);
+    free(unspent_txout);
+  }
+
+  free(unspent_tx);
   return 0;
 }

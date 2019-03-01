@@ -31,6 +31,7 @@
 
 #include <sodium.h>
 
+#include "common/buffer.h"
 #include "common/util.h"
 
 #include "block.h"
@@ -42,7 +43,7 @@
  *
  * Later to be free'd with `free_block`
  */
-block_t *make_block(void)
+block_t* make_block(void)
 {
   block_t *block = malloc(sizeof(block_t));
 
@@ -108,6 +109,7 @@ int valid_block(block_t *block)
   for (int first_tx_index = 0; first_tx_index < block->transaction_count; first_tx_index++)
   {
     transaction_t *first_tx = block->transactions[first_tx_index];
+    assert(first_tx != NULL);
 
     // check to see if we have more than one generational transaction
     if (first_tx_index != 0 && is_generation_tx(first_tx))
@@ -124,6 +126,8 @@ int valid_block(block_t *block)
     for (int second_tx_index = 0; second_tx_index < block->transaction_count; second_tx_index++)
     {
       transaction_t *second_tx = block->transactions[second_tx_index];
+      assert(second_tx != NULL);
+
       if (first_tx_index == second_tx_index)
       {
         continue;
@@ -139,9 +143,13 @@ int valid_block(block_t *block)
       for (int first_txin_index = 0; first_txin_index < block->transactions[first_tx_index]->txin_count; first_txin_index++)
       {
         input_transaction_t *txin_first = first_tx->txins[first_tx_index];
+        assert(txin_first != NULL);
+
         for (int second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
+          assert(txin_second != NULL);
+
           if (compare_transaction_hash(txin_first->transaction, txin_second->transaction) && txin_first->txout_index == txin_second->txout_index)
           {
             return 0;
@@ -329,112 +337,77 @@ int compare_with_genesis_block(block_t *block)
   return compare_block(block, &genesis_block);
 }
 
-/*
- * Converts an allocated block to a newly allocated protobuf
- * block struct.
- *
- * Later to be free'd with `free_proto_block`
- */
-PBlock *block_to_proto(block_t *block)
+int serialize_block(buffer_t *buffer, block_t *block)
 {
-  PBlock *msg = malloc(sizeof(PBlock));
-  pblock__init(msg);
+  buffer_write_uint32(buffer, block->version);
+  buffer_write_uint32(buffer, block->bits);
 
-  msg->version = block->version;
-  msg->bits = block->bits;
+  buffer_write_bytes(buffer, block->previous_hash, HASH_SIZE);
+  buffer_write_bytes(buffer, block->hash, HASH_SIZE);
 
-  msg->previous_hash.len = HASH_SIZE;
-  msg->previous_hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-  memcpy(msg->previous_hash.data, block->previous_hash, HASH_SIZE);
+  buffer_write_uint32(buffer, block->timestamp);
+  buffer_write_uint32(buffer, block->nonce);
+  buffer_write_uint32(buffer, block->already_generated_coins);
 
-  msg->hash.len = HASH_SIZE;
-  msg->hash.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-  memcpy(msg->hash.data, block->hash, HASH_SIZE);
-
-  msg->timestamp = block->timestamp;
-  msg->nonce = block->nonce;
-  msg->already_generated_coins = block->already_generated_coins;
-
-  msg->merkle_root.len = HASH_SIZE;
-  msg->merkle_root.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-  memcpy(msg->merkle_root.data, block->merkle_root, HASH_SIZE);
-
-  msg->n_transactions = block->transaction_count;
-  msg->transactions = malloc(sizeof(PTransaction*) * msg->n_transactions);
-
-  for (int i = 0; i < msg->n_transactions; i++)
-  {
-    msg->transactions[i] = transaction_to_proto(block->transactions[i]);
-  }
-
-  return msg;
-}
-
-int block_to_serialized(uint8_t **buffer, uint32_t *buffer_len, block_t *block)
-{
-  PBlock *msg = block_to_proto(block);
-
-  *buffer_len = pblock__get_packed_size(msg);
-  *buffer = malloc(*buffer_len);
-
-  pblock__pack(msg, *buffer);
-  free_proto_block(msg);
-
+  buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
+  buffer_write_uint32(buffer, block->transaction_count);
   return 0;
 }
 
-block_t *block_from_proto(PBlock *proto_block)
+block_t* deserialize_block(buffer_t *buffer)
 {
-  block_t *block = malloc(sizeof(block_t));
+  block_t *block = make_block();
+  assert(block != NULL);
 
-  block->version = proto_block->version;
-  block->bits = proto_block->bits;
+  block->version = buffer_read_uint32(buffer);
+  block->bits = buffer_read_uint32(buffer);
 
-  memcpy(block->previous_hash, proto_block->previous_hash.data, HASH_SIZE);
-  memcpy(block->hash, proto_block->hash.data, HASH_SIZE);
+  uint8_t *previous_hash = buffer_read_bytes(buffer);
+  memcpy(block->previous_hash, previous_hash, HASH_SIZE);
 
-  block->timestamp = proto_block->timestamp;
-  block->nonce = proto_block->nonce;
-  block->already_generated_coins = proto_block->already_generated_coins;
+  uint8_t *hash = buffer_read_bytes(buffer);
+  memcpy(block->hash, hash, HASH_SIZE);
 
-  memcpy(block->merkle_root, proto_block->merkle_root.data, HASH_SIZE);
+  block->timestamp = buffer_read_uint32(buffer);
+  block->nonce = buffer_read_uint32(buffer);
+  block->already_generated_coins = buffer_read_uint32(buffer);
 
-  block->transaction_count = proto_block->n_transactions;
-  if (block->transaction_count > 0)
-  {
-    block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
-    for (int i = 0; i < block->transaction_count; i++)
-    {
-      block->transactions[i] = transaction_from_proto(proto_block->transactions[i]);
-    }
-  }
+  uint8_t *merkle_root = buffer_read_bytes(buffer);
+  memcpy(block->merkle_root, merkle_root, HASH_SIZE);
+
+  block->transaction_count = buffer_read_uint32(buffer);
+
+  free(previous_hash);
+  free(hash);
+  free(merkle_root);
 
   return block;
 }
 
-block_t *block_from_serialized(uint8_t *buffer, uint32_t buffer_len)
+int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)
 {
-  PBlock *proto_block = pblock__unpack(NULL, buffer_len, buffer);
-  block_t *block = block_from_proto(proto_block);
-  pblock__free_unpacked(proto_block, NULL);
-
-  return block;
-}
-
-int free_proto_block(PBlock *proto_block)
-{
-  free(proto_block->previous_hash.data);
-  free(proto_block->hash.data);
-  free(proto_block->merkle_root.data);
-
-  for (int i = 0; i < proto_block->n_transactions; i++)
+  assert(block != NULL);
+  buffer_t *buffer = buffer_init();
+  if (serialize_block(buffer, block))
   {
-    free_proto_transaction(proto_block->transactions[i]);
+    return 1;
   }
 
-  free(proto_block->transactions);
-  free(proto_block);
+  *data_len = buffer_get_size(buffer);
+  *data = malloc(*data_len);
+
+  memcpy(*data, buffer->data, *data_len);
+  buffer_free(buffer);
+
   return 0;
+}
+
+block_t* block_from_serialized(uint8_t *data, uint32_t data_len)
+{
+  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
+  block_t *block = deserialize_block(buffer);
+  buffer_free(buffer);
+  return block;
 }
 
 /*
