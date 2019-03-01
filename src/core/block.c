@@ -65,11 +65,16 @@ block_t* make_block(void)
 
 int hash_block(block_t *block)
 {
+  assert(block != NULL);
+
+  buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
+  serialize_block(buffer, block);
+
   uint8_t header[BLOCK_HEADER_SIZE];
+  memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
-  get_block_header(header, block);
+  buffer_free(buffer);
   crypto_hash_sha256(block->hash, header, HASH_SIZE);
-
   return 0;
 }
 
@@ -85,6 +90,8 @@ int hash_block(block_t *block)
 // Returns 0 if invalid, 1 is valid.
 int valid_block(block_t *block)
 {
+  assert(block != NULL);
+
   // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
   if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
   {
@@ -176,6 +183,7 @@ int valid_block(block_t *block)
 
 int valid_merkle_root(block_t *block)
 {
+  assert(block != NULL);
   uint8_t *merkle_root = malloc(sizeof(uint8_t*) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
@@ -189,8 +197,69 @@ int valid_merkle_root(block_t *block)
   }
 }
 
+int compute_merkle_root(uint8_t *merkle_root, block_t *block)
+{
+  assert(block != NULL);
+  uint8_t *hashes = malloc(sizeof(uint8_t*) * HASH_SIZE * block->transaction_count);
+  for (int i = 0; i < block->transaction_count; i++)
+  {
+    compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
+  }
+
+  merkle_tree_t *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
+  memcpy(merkle_root, tree->root->hash, HASH_SIZE);
+
+  free_merkle_tree(tree);
+  free(hashes);
+  return 0;
+}
+
+int compute_self_merkle_root(block_t *block)
+{
+  assert(block != NULL);
+  compute_merkle_root(block->merkle_root, block);
+  return 0;
+}
+
+int print_block(block_t *block)
+{
+  assert(block != NULL);
+
+  char hash[(crypto_hash_sha256_BYTES * 2) + 1];
+  char previous_hash[(crypto_hash_sha256_BYTES * 2) + 1];
+  char merkle_root[(crypto_hash_sha256_BYTES * 2) + 1];
+
+  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
+  {
+    sprintf(&hash[i*2], "%02x", (unsigned int) block->hash[i]);
+  }
+
+  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
+  {
+    sprintf(&previous_hash[i*2], "%02x", (unsigned int) block->previous_hash[i]);
+  }
+
+  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
+  {
+    sprintf(&merkle_root[i*2], "%02x", (unsigned int) block->merkle_root[i]);
+  }
+
+  printf("Block:\n");
+  printf("Version: %d\n", block->version);
+  printf("Bits: %d\n", block->bits);
+  printf("Nonce: %d\n", block->nonce);
+  printf("Timestamp (epoch): %d\n", block->timestamp);
+  printf("Emission: %llu\n", block->already_generated_coins);
+  printf("Previous Hash: %s\n", previous_hash);
+  printf("Merkle Root: %s\n", merkle_root);
+  printf("Hash: %s\n", hash);
+  return 0;
+}
+
 int valid_block_hash(block_t *block)
 {
+  assert(block != NULL);
+
   uint32_t target = block->bits;
   uint32_t current_target = 0;
 
@@ -229,52 +298,9 @@ int valid_block_hash(block_t *block)
   }
 }
 
-int compute_merkle_root(uint8_t *merkle_root, block_t *block)
-{
-  uint8_t *hashes = malloc(sizeof(uint8_t*) * HASH_SIZE * block->transaction_count);
-  for (int i = 0; i < block->transaction_count; i++)
-  {
-    compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
-  }
-
-  merkle_tree_t *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
-  memcpy(merkle_root, tree->root->hash, HASH_SIZE);
-
-  free_merkle_tree(tree);
-  free(hashes);
-  return 0;
-}
-
-int compute_self_merkle_root(block_t *block)
-{
-  compute_merkle_root(block->merkle_root, block);
-  return 0;
-}
-
-int get_block_header(uint8_t *block_header, block_t *block)
-{
-  uint32_t position = 0;
-
-  memcpy(block_header + position, &block->version, 4);
-  position += 4;
-  memcpy(block_header + position, &block->bits, 4);
-  position += 4;
-  memcpy(block_header + position, &block->nonce, 4);
-  position += 4;
-  memcpy(block_header + position, &block->timestamp, 4);
-  position += 4;
-  memcpy(block_header + position, &block->already_generated_coins, 8);
-  position += 8;
-  memcpy(block_header + position, &block->previous_hash, HASH_SIZE);
-  position += HASH_SIZE;
-  memcpy(block_header + position, &block->merkle_root, HASH_SIZE);
-  position += HASH_SIZE;
-
-  return 0;
-}
-
 uint32_t get_block_header_size(block_t *block)
 {
+  assert(block != NULL);
   uint32_t block_header_size = BLOCK_HEADER_SIZE;
   for (int i = 0; i < block->transaction_count; i++)
   {
@@ -286,39 +312,6 @@ uint32_t get_block_header_size(block_t *block)
   return block_header_size;
 }
 
-int print_block(block_t *block)
-{
-  char hash[(crypto_hash_sha256_BYTES * 2) + 1];
-  char previous_hash[(crypto_hash_sha256_BYTES * 2) + 1];
-  char merkle_root[(crypto_hash_sha256_BYTES * 2) + 1];
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&hash[i*2], "%02x", (unsigned int) block->hash[i]);
-  }
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&previous_hash[i*2], "%02x", (unsigned int) block->previous_hash[i]);
-  }
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&merkle_root[i*2], "%02x", (unsigned int) block->merkle_root[i]);
-  }
-
-  printf("Block:\n");
-  printf("Version: %d\n", block->version);
-  printf("Bits: %d\n", block->bits);
-  printf("Nonce: %d\n", block->nonce);
-  printf("Timestamp (epoch): %d\n", block->timestamp);
-  printf("Emission: %llu\n", block->already_generated_coins);
-  printf("Previous Hash: %s\n", previous_hash);
-  printf("Merkle Root: %s\n", merkle_root);
-  printf("Hash: %s\n", hash);
-  return 0;
-}
-
 int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
 {
   return memcmp(hash, other_hash, HASH_SIZE) == 0;
@@ -326,11 +319,15 @@ int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
 
 int compare_block(block_t *block, block_t *other_block)
 {
+  assert(block != NULL);
+  assert(other_block != NULL);
   return (compare_block_hash(block->hash, other_block->hash) && compare_merkle_hash(block->merkle_root, other_block->merkle_root));
 }
 
 int compare_with_genesis_block(block_t *block)
 {
+  assert(block != NULL);
+
   hash_block(block);
   hash_block(&genesis_block);
 
@@ -339,6 +336,9 @@ int compare_with_genesis_block(block_t *block)
 
 int serialize_block(buffer_t *buffer, block_t *block)
 {
+  assert(block != NULL);
+  assert(buffer != NULL);
+
   buffer_write_uint32(buffer, block->version);
   buffer_write_uint32(buffer, block->bits);
 
@@ -356,6 +356,8 @@ int serialize_block(buffer_t *buffer, block_t *block)
 
 block_t* deserialize_block(buffer_t *buffer)
 {
+  assert(buffer != NULL);
+
   block_t *block = make_block();
   assert(block != NULL);
 
@@ -415,6 +417,7 @@ block_t* block_from_serialized(uint8_t *data, uint32_t data_len)
  */
 int free_block(block_t *block)
 {
+  assert(block != NULL);
   if (block->transaction_count > 0)
   {
     for (int i = 0; i < block->transaction_count; i++)

@@ -38,7 +38,7 @@ extern "
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 4 + 4 + 4 + 4)
+#define BLOCK_HEADER_SIZE (4 + 4 + HASH_SIZE + HASH_SIZE + 4 + 4 + 8 + HASH_SIZE + 4)
 
 typedef struct Block
 {
@@ -98,10 +98,11 @@ static block_t genesis_block = {
 block_t* make_block(void);
 int free_block(block_t *block);
 int hash_block(block_t *block);
-int get_block_header(uint8_t *block_header, block_t *block);
-uint32_t get_block_header_size(block_t *block);
-int valid_block_hash(block_t *block);
 int print_block(block_t *block);
+
+int valid_block_hash(block_t *block);
+
+uint32_t get_block_header_size(block_t *block);
 
 int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
 int compare_block(block_t *block, block_t *other_block);
