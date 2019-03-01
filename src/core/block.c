@@ -68,7 +68,7 @@ int hash_block(block_t *block)
   assert(block != NULL);
 
   buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
-  serialize_block(buffer, block);
+  serialize_block_header(buffer, block);
 
   uint8_t header[BLOCK_HEADER_SIZE];
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);

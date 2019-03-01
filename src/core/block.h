@@ -114,6 +114,7 @@ int valid_merkle_root(block_t *block);
 int compute_merkle_root(uint8_t *merkle_root, block_t *block);
 int compute_self_merkle_root(block_t *block);
 
+int serialize_block_header(buffer_t *buffer, block_t *block);
 int serialize_block(buffer_t *buffer, block_t *block);
 block_t* deserialize_block(buffer_t *buffer);
 
