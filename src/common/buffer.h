@@ -91,6 +91,9 @@ char* buffer_read_string(buffer_t *buffer);
 int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size);
 uint8_t* buffer_read_bytes(buffer_t *buffer);
 
+int buffer_write_raw_string(buffer_t *buffer, const char *string, uint32_t size);
+int buffer_write_raw_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size);
+
 #ifdef __cplusplus
 }
 #endif
