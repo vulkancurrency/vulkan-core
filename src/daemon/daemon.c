@@ -123,6 +123,9 @@ static int parse_commandline_args(int argc, char **argv)
         i++;
         g_blockchain_data_dir = (const char*)argv[i];
         break;
+      case CMD_ARG_CLEAR_BLOCKCHAIN:
+        remove_blockchain(g_blockchain_data_dir);
+        break;
       case CMD_ARG_WALLET_FILENAME:
         i++;
         g_wallet_filename = (const char*)argv[i];
