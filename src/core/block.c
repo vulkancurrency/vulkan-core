@@ -345,10 +345,9 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint32(buffer, block->already_generated_coins);
 
-  // when serializing the block header, we do not want to include
-  // the size of the hashes below as that is extra data we do not need...
-  buffer_write_raw_bytes(buffer, block->previous_hash, HASH_SIZE);
-  buffer_write_raw_bytes(buffer, block->merkle_root, HASH_SIZE);
+  // write raw hash's
+  buffer_write(buffer, block->previous_hash, HASH_SIZE);
+  buffer_write(buffer, block->merkle_root, HASH_SIZE);
   return 0;
 }
 
@@ -428,6 +427,41 @@ block_t* block_from_serialized(uint8_t *data, uint32_t data_len)
   block_t *block = deserialize_block(buffer);
   buffer_free(buffer);
   return block;
+}
+
+int serialize_transactions_from_block(buffer_t *buffer, block_t *block)
+{
+  assert(buffer != NULL);
+  assert(block != NULL);
+
+  for (int i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    if (serialize_transaction(buffer, tx))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
+{
+  assert(buffer != NULL);
+  assert(block != NULL);
+
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+  for (int i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = deserialize_transaction(buffer);
+    assert(tx != NULL);
+    block->transactions[i] = tx;
+  }
+
+  return 0;
 }
 
 /*

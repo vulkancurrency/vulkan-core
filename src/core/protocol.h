@@ -89,19 +89,19 @@ typedef struct
 
 typedef struct
 {
-  uint64_t height;
+  uint32_t height;
   uint8_t *hash;
 } get_block_height_response_t;
 
 typedef struct
 {
-  int64_t height;
+  int32_t height;
   uint8_t *hash;
 } get_block_request_t;
 
 typedef struct
 {
-  uint64_t height;
+  uint32_t height;
   block_t *block;
 } get_block_response_t;
 

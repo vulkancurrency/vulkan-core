@@ -374,12 +374,14 @@ int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t 
     return 1;
   }
 
-  *data_len = buffer_get_size(buffer);
-  *data = malloc(*data_len);
+  uint32_t raw_data_len = buffer_get_size(buffer);
+  uint8_t *raw_data = malloc(raw_data_len);
+  memcpy(raw_data, buffer->data, raw_data_len);
 
-  memcpy(*data, buffer->data, *data_len);
+  *data_len = raw_data_len;
+  *data = raw_data;
+
   buffer_free(buffer);
-
   return 0;
 }
 

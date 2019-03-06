@@ -33,14 +33,19 @@
 buffer_t* buffer_init_data(int offset, const uint8_t *data, int size)
 {
   buffer_t *buffer = malloc(sizeof(buffer_t));
+  buffer->data = NULL;
+
   if (size > 0)
   {
     buffer->data = malloc(size);
-    memcpy(buffer->data, data, size);
-  }
-  else
-  {
-    buffer->data = NULL;
+    if (data != NULL)
+    {
+      memcpy(buffer->data, data, size);
+    }
+    else
+    {
+      memset(buffer->data, 0, size);
+    }
   }
 
   buffer->size = size;
@@ -306,18 +311,4 @@ int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size)
 uint8_t* buffer_read_bytes(buffer_t *buffer)
 {
   return buffer_read(buffer, buffer_read_uint32(buffer));
-}
-
-int buffer_write_raw_string(buffer_t *buffer, const char *string, uint32_t size)
-{
-  uint32_t actual_size = sizeof(const char*) + size;
-  buffer_write(buffer, (const uint8_t*)string, actual_size);
-  return 0;
-}
-
-int buffer_write_raw_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size)
-{
-  uint32_t actual_size = sizeof(uint8_t*) + size;
-  buffer_write(buffer, bytes, actual_size);
-  return 0;
 }

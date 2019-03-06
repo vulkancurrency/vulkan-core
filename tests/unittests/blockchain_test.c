@@ -250,18 +250,18 @@ TEST can_insert_unspent_tx_into_index(void)
   crypto_sign_keypair(pk, sk);
   sign_txin(&txin, &tx, pk, sk);
 
-  insert_unspent_tx_into_index(&tx);
-  PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx.id);
+  insert_tx_into_unspent_index(&tx);
+  unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(tx.id);
 
   if (unspent_tx != NULL)
   {
-    ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address.data, HASH_SIZE);
+    ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address, HASH_SIZE);
     delete_unspent_tx_from_index(tx.id);
-    PUnspentTransaction *deleted_tx = get_unspent_tx_from_index(tx.id);
+    unspent_transaction_t *deleted_tx = get_unspent_tx_from_index(tx.id);
 
     ASSERT(deleted_tx == NULL);
 
-    free_proto_unspent_transaction(unspent_tx);
+    free_unspent_transaction(unspent_tx);
 
     PASS();
   }
@@ -321,12 +321,12 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
   block->transactions[0] = tx;
 
   insert_block(block);
-  PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx->id);
+  unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
   if (unspent_tx != NULL)
   {
-    ASSERT(unspent_tx->n_unspent_txouts == 1);
+    ASSERT(unspent_tx->unspent_txout_count == 1);
     ASSERT(unspent_tx->unspent_txouts[0]->spent == 0);
 
     input_transaction_t *txin_2 = malloc(sizeof(input_transaction_t));
@@ -334,7 +334,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
     txin_2->txout_index = 0;
     txout_2->amount = 50;
-    memcpy(txin_2->transaction, unspent_tx->id.data, HASH_SIZE);
+    memcpy(txin_2->transaction, unspent_tx->id, HASH_SIZE);
     memcpy(txout_2->address, address, HASH_SIZE);
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
@@ -357,16 +357,16 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
     insert_block(block_2);
 
-    PUnspentTransaction *unspent_tx_2 = get_unspent_tx_from_index(unspent_tx->id.data);
+    unspent_transaction_t *unspent_tx_2 = get_unspent_tx_from_index(unspent_tx->id);
 
     ASSERT(unspent_tx_2 == NULL);
 
     if (unspent_tx_2 != NULL)
     {
-      free_proto_unspent_transaction(unspent_tx_2);
+      free_unspent_transaction(unspent_tx_2);
     }
 
-    free_proto_unspent_transaction(unspent_tx);
+    free_unspent_transaction(unspent_tx);
     free_block(block_2);
 
     PASS();
@@ -427,12 +427,12 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
   block->transactions[0] = tx;
 
   insert_block(block);
-  PUnspentTransaction *unspent_tx = get_unspent_tx_from_index(tx->id);
+  unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
   if (unspent_tx != NULL)
   {
-    ASSERT(unspent_tx->n_unspent_txouts == 1);
+    ASSERT(unspent_tx->unspent_txout_count == 1);
     ASSERT(unspent_tx->unspent_txouts[0]->spent == 0);
 
     input_transaction_t *txin_2 = malloc(sizeof(input_transaction_t));
@@ -440,7 +440,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
     txin_2->txout_index = 0;
     txout_2->amount = 50;
-    memcpy(txin_2->transaction, unspent_tx->id.data, HASH_SIZE);
+    memcpy(txin_2->transaction, unspent_tx->id, HASH_SIZE);
     memcpy(txout_2->address, address, HASH_SIZE);
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
@@ -458,7 +458,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
     ASSERT(valid_transaction(tx_2) == 1);
 
-    free_proto_unspent_transaction(unspent_tx);
+    free_unspent_transaction(unspent_tx);
 
     PASS();
   }

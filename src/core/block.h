@@ -121,6 +121,9 @@ block_t* deserialize_block(buffer_t *buffer);
 int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
 block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
 
+int serialize_transactions_from_block(buffer_t *buffer, block_t *block);
+int deserialize_transactions_to_block(buffer_t *buffer, block_t *block);
+
 #ifdef __cplusplus
 }
 #endif
