@@ -100,7 +100,7 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void)
   block_t *block = make_block();
   memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
   insert_block(block);
@@ -131,7 +131,7 @@ TEST can_get_block_from_tx_id(void)
   block_t *block = make_block();
   memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
   insert_block(block);
@@ -184,7 +184,7 @@ TEST can_delete_tx_from_index(void)
   block_t *block = make_block();
   memcpy(block->hash, block_hash, HASH_SIZE);
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t) * 1);
   block->transactions[0] = tx;
 
   insert_block(block);
@@ -255,12 +255,13 @@ TEST can_insert_unspent_tx_into_index(void)
 
   if (unspent_tx != NULL)
   {
-    ASSERT_MEM_EQ(tx.txouts[0]->address, unspent_tx->unspent_txouts[0]->address, HASH_SIZE);
+    output_transaction_t *txout = tx.txouts[0];
+    unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[0];
+    ASSERT_MEM_EQ(txout->address, unspent_txout->address, HASH_SIZE);
+
     delete_unspent_tx_from_index(tx.id);
     unspent_transaction_t *deleted_tx = get_unspent_tx_from_index(tx.id);
-
     ASSERT(deleted_tx == NULL);
-
     free_unspent_transaction(unspent_tx);
 
     PASS();
@@ -317,7 +318,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
   insert_block(block);
@@ -352,7 +353,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
     block_t *block_2 = make_block();
     block_2->transaction_count = 1;
-    block_2->transactions = malloc(sizeof(transaction_t *) * 1);
+    block_2->transactions = malloc(sizeof(transaction_t) * 1);
     block_2->transactions[0] = tx_2;
 
     insert_block(block_2);
@@ -423,7 +424,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
   block_t *block = make_block();
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * block->transaction_count);
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
   insert_block(block);

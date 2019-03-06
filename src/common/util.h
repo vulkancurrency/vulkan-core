@@ -47,6 +47,7 @@ const char* string_copy(const char *string, const char *other_string);
 
 int make_hash(char *digest, unsigned char *string);
 uint32_t get_current_time(void);
+int rmrf(const char *path);
 
 #ifdef __cplusplus
 }

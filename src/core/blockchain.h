@@ -38,7 +38,7 @@ extern "C"
 #endif
 
 const char* get_blockchain_dir(void);
-const char* get_blockchain_backup_dir(void);
+const char* get_blockchain_backup_dir(const char *blockchain_dir);
 
 int open_blockchain(const char *blockchain_dir);
 int close_blockchain(void);
@@ -49,6 +49,7 @@ int close_backup_blockchain(void);
 int valid_median_timestamp(block_t *block);
 
 int init_blockchain(const char *blockchain_dir);
+int remove_blockchain(const char *blockchain_dir);
 int backup_blockchain(void);
 int restore_blockchain(void);
 int rollback_blockchain(uint32_t rollback_height);

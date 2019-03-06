@@ -33,6 +33,8 @@
 
 #include "core/blockchain.h"
 
+static const char *g_blockchain_dir = "blockchain_tests";
+
 SUITE_EXTERN(common_suite);
 SUITE_EXTERN(transaction_suite);
 SUITE_EXTERN(block_suite);
@@ -49,7 +51,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if (init_blockchain("blockchain_tests"))
+  remove_blockchain(g_blockchain_dir);
+  if (init_blockchain(g_blockchain_dir))
   {
     return 1;
   }
@@ -59,9 +62,9 @@ int main(int argc, char **argv)
   RUN_SUITE(common_suite);
   RUN_SUITE(transaction_suite);
   RUN_SUITE(block_suite);
-  //RUN_SUITE(blockchain_suite);
-  //RUN_SUITE(merkle_suite);
-  //RUN_SUITE(mempool_suite);
+  RUN_SUITE(blockchain_suite);
+  RUN_SUITE(merkle_suite);
+  RUN_SUITE(mempool_suite);
 
   GREATEST_MAIN_END();
 

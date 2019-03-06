@@ -453,8 +453,9 @@ unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer)
   uint8_t *id = buffer_read_bytes(buffer);
   memcpy(unspent_tx->id, id, HASH_SIZE);
 
-  unspent_tx->coinbase = buffer_read_uint32(buffer);
+  unspent_tx->coinbase = buffer_read_uint8(buffer);
   unspent_tx->unspent_txout_count = buffer_read_uint8(buffer);
+  unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * unspent_tx->unspent_txout_count);
 
   // read unspent txouts
   for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
@@ -477,7 +478,7 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
 
   unspent_tx->coinbase = is_generation_tx(tx);
   unspent_tx->unspent_txout_count = tx->txout_count;
-  unspent_tx->unspent_txouts = malloc(sizeof(unspent_transaction_t) * tx->txout_count);
+  unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * tx->txout_count);
 
   for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
@@ -488,6 +489,7 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
     unspent_txout->amount = txout->amount;
     memcpy(unspent_txout->address, txout->address, ADDRESS_SIZE);
     unspent_txout->spent = 0;
+    unspent_tx->unspent_txouts[i] = unspent_txout;
   }
 
   return unspent_tx;
@@ -594,8 +596,16 @@ int free_transaction(transaction_t *tx)
     free(txout);
   }
 
-  free(tx->txins);
-  free(tx->txouts);
+  if (tx->txins != NULL)
+  {
+    free(tx->txins);
+  }
+
+  if (tx->txouts != NULL)
+  {
+    free(tx->txouts);
+  }
+
   free(tx);
   return 0;
 }

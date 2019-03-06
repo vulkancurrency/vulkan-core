@@ -149,12 +149,12 @@ int buffer_get_remaining_size(buffer_t *buffer)
   return buffer_get_size(buffer) - buffer->offset;
 }
 
-const unsigned char* buffer_get_data(buffer_t *buffer)
+const uint8_t* buffer_get_data(buffer_t *buffer)
 {
   return buffer->data;
 }
 
-const unsigned char* buffer_get_remaining_data(buffer_t *buffer)
+const uint8_t* buffer_get_remaining_data(buffer_t *buffer)
 {
   return buffer->data + buffer->offset;
 }

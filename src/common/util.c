@@ -24,7 +24,9 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <ftw.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
@@ -113,4 +115,20 @@ int make_hash(char *digest, unsigned char *string)
 uint32_t get_current_time(void)
 {
   return (uint32_t)time(NULL);
+}
+
+static int unlink_callback(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+{
+  int rv = remove(fpath);
+  if (rv)
+  {
+    perror(fpath);
+  }
+
+  return rv;
+}
+
+int rmrf(const char *path)
+{
+  return nftw(path, unlink_callback, 64, FTW_DEPTH | FTW_PHYS);
 }

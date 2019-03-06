@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <assert.h>
 
 #include <rocksdb/c.h>
@@ -63,9 +64,9 @@ const char* get_blockchain_dir(void)
   return g_blockchain_dir;
 }
 
-const char* get_blockchain_backup_dir(void)
+const char* get_blockchain_backup_dir(const char *blockchain_dir)
 {
-  return string_copy(g_blockchain_dir, g_blockchain_backup_dir);
+  return string_copy(blockchain_dir, g_blockchain_backup_dir);
 }
 
 int open_blockchain(const char *blockchain_dir)
@@ -120,6 +121,22 @@ int open_blockchain(const char *blockchain_dir)
   return 0;
 }
 
+int remove_blockchain(const char *blockchain_dir)
+{
+  if (rmrf(blockchain_dir) != 0)
+  {
+    return 1;
+  }
+
+  const char *blockchain_backup_dir = get_blockchain_backup_dir(blockchain_dir);
+  if (rmrf(blockchain_backup_dir) != 0)
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
 int close_blockchain(void)
 {
   if (!g_blockchain_is_open)
@@ -145,7 +162,8 @@ int open_backup_blockchain(void)
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
 
-  g_blockchain_backup_db = rocksdb_backup_engine_open(options, get_blockchain_backup_dir(), &err);
+  const char *blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
+  g_blockchain_backup_db = rocksdb_backup_engine_open(options, blockchain_backup_dir, &err);
 
   if (err != NULL)
   {
@@ -346,19 +364,22 @@ int validate_and_insert_block(block_t *block)
  */
 int insert_block(block_t *block)
 {
+  assert(block != NULL);
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + 1];
   get_block_key(key, block->hash);
 
-  uint8_t *buffer = NULL;
-  uint32_t buffer_len = 0;
+  buffer_t *buffer = buffer_init();
+  serialize_block(buffer, block);
+  serialize_transactions_from_block(buffer, block);
 
-  block_to_serialized(&buffer, &buffer_len, block);
+  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
-
-  free(buffer);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+  buffer_free(buffer);
 
   for (int i = 0; i < block->transaction_count; i++)
   {
@@ -488,13 +509,20 @@ block_t *get_block_from_hash(uint8_t *block_hash)
     return NULL;
   }
 
-  block_t *block = block_from_serialized(serialized_block, read_len);
+  buffer_t *buffer = buffer_init_data(0, serialized_block, read_len);
+  assert(buffer != NULL);
+
+  // deserialize the block
+  block_t *block = deserialize_block(buffer);
   assert(block != NULL);
+
+  // deserialize the block's transactions
+  deserialize_transactions_to_block(buffer, block);
+  buffer_free(buffer);
 
   rocksdb_free(serialized_block);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
-
   return block;
 }
 
@@ -624,17 +652,17 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, tx->id);
 
-  uint8_t *buffer = NULL;
-  uint32_t buffer_len = 0;
-
+  buffer_t *buffer = buffer_init();
   unspent_transaction_t *unspent_tx = transaction_to_unspent_transaction(tx);
-  unspent_transaction_to_serialized(&buffer, &buffer_len, unspent_tx);
+  serialize_unspent_transaction(buffer, unspent_tx);
   free_unspent_transaction(unspent_tx);
 
-  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
+  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  uint32_t data_len = buffer_get_size(buffer);
 
-  free(buffer);
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+  buffer_free(buffer);
 
   if (err != NULL)
   {
@@ -719,7 +747,7 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(block_hash, block_key + 1, HASH_SIZE);
 
   rocksdb_free(block_key);
@@ -734,7 +762,9 @@ block_t *get_block_from_tx_id(uint8_t *tx_id)
     return NULL;
   }
 
-  return get_block_from_hash(block_hash);
+  block_t *block = get_block_from_hash(block_hash);
+  free(block_hash);
+  return block;
 }
 
 /*

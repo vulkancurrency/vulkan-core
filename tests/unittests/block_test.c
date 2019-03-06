@@ -84,8 +84,12 @@ TEST can_serialize_block(void)
   block->transactions = malloc(sizeof(transaction_t *) * 1);
   block->transactions[0] = tx;
 
+  // serialize block
   buffer_t *buffer = buffer_init();
   serialize_block(buffer, block);
+  serialize_transactions_from_block(buffer, block);
+
+  // deserialize block
   buffer_set_offset(buffer, 0);
   block_t *deserialized_block = deserialize_block(buffer);
   deserialize_transactions_to_block(buffer, deserialized_block);
@@ -337,7 +341,7 @@ TEST invalid_block_by_merkle_hash(void)
 GREATEST_SUITE(block_suite)
 {
   RUN_TEST(can_serialize_block);
-  //RUN_TEST(invalid_block_by_same_tx_hashes);
-  //RUN_TEST(invalid_block_by_reused_txout);
-  //RUN_TEST(invalid_block_by_merkle_hash);
+  RUN_TEST(invalid_block_by_same_tx_hashes);
+  RUN_TEST(invalid_block_by_reused_txout);
+  RUN_TEST(invalid_block_by_merkle_hash);
 }
