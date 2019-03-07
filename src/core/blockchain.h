@@ -81,6 +81,8 @@ int delete_block_from_blockchain(uint8_t *block_hash);
 int delete_tx_from_index(uint8_t *tx_id);
 int delete_unspent_tx_from_index(uint8_t *tx_id);
 
+int set_top_block_hash(uint8_t *block_hash);
+uint8_t* get_top_block_hash(void);
 int set_top_block(block_t *block);
 block_t *get_top_block(void);
 

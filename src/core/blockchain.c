@@ -595,7 +595,7 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(block_hash, block->hash, HASH_SIZE);
 
   free_block(block);
@@ -869,14 +869,14 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   return 1;
 }
 
-int set_top_block(block_t *block)
+int set_top_block_hash(uint8_t *block_hash)
 {
   char *err = NULL;
   uint8_t key[2];
   get_top_block_key(key);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block->hash, HASH_SIZE, &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_hash, HASH_SIZE, &err);
 
   if (err != NULL)
   {
@@ -889,7 +889,7 @@ int set_top_block(block_t *block)
   return 0;
 }
 
-block_t *get_top_block(void)
+uint8_t* get_top_block_hash(void)
 {
   char *err = NULL;
   uint8_t key[2];
@@ -906,13 +906,20 @@ block_t *get_top_block(void)
     return NULL;
   }
 
-  block_t *block = get_block_from_hash(block_hash);
-
-  rocksdb_free(block_hash);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
+  return block_hash;
+}
 
-  return block;
+int set_top_block(block_t *block)
+{
+  assert(block != NULL);
+  return set_top_block_hash(block->hash);
+}
+
+block_t *get_top_block(void)
+{
+  return get_block_from_hash(get_top_block_hash());
 }
 
 int set_current_block_hash(uint8_t *hash)
