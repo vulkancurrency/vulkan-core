@@ -681,14 +681,15 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   uint8_t key[HASH_SIZE + 1];
   get_unspent_tx_key(key, unspent_tx->id);
 
-  uint8_t *buffer = NULL;
-  uint32_t buffer_len = 0;
-  unspent_transaction_to_serialized(&buffer, &buffer_len, unspent_tx);
+  buffer_t *buffer = buffer_init();
+  serialize_unspent_transaction(buffer, unspent_tx);
+
+  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)buffer, buffer_len, &err);
-
-  free(buffer);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+  buffer_free(buffer);
 
   if (err != NULL)
   {
@@ -792,7 +793,7 @@ uint32_t get_block_height(void)
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
-  
+
   if (block_height < 0)
   {
     return 0;
