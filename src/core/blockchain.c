@@ -775,7 +775,7 @@ block_t *get_block_from_tx_id(uint8_t *tx_id)
  */
 uint32_t get_block_height(void)
 {
-  uint32_t block_height = 0;
+  int32_t block_height = -1;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
@@ -790,15 +790,17 @@ uint32_t get_block_height(void)
     }
   }
 
-  if (block_height > 0)
-  {
-    block_height--;
-  }
-
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
-
-  return block_height;
+  
+  if (block_height < 0)
+  {
+    return 0;
+  }
+  else
+  {
+    return block_height;
+  }
 }
 
 int delete_block_from_blockchain(uint8_t *block_hash)
