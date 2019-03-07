@@ -98,6 +98,9 @@ int open_blockchain(const char *blockchain_dir)
     if (!validate_and_insert_block(&genesis_block))
     {
       fprintf(stderr, "Could not insert genesis block into blockchain!\n");
+
+      rocksdb_free(err);
+      rocksdb_free(options);
       return 1;
     }
   }
@@ -107,6 +110,9 @@ int open_blockchain(const char *blockchain_dir)
     if (!top_block)
     {
       fprintf(stderr, "Could not get unknown blockchain top block!\n");
+
+      rocksdb_free(err);
+      rocksdb_free(options);
       return 1;
     }
 
@@ -638,6 +644,9 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
   if (err != NULL)
   {
     fprintf(stderr, "Could not insert tx into blockchain: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
     return 1;
   }
 
@@ -667,6 +676,9 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   if (err != NULL)
   {
     fprintf(stderr, "Could not insert tx into blockchain: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
     return 1;
   }
 
@@ -694,6 +706,9 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   if (err != NULL)
   {
     fprintf(stderr, "Could not insert unspent tx into blockchain: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
     return 1;
   }
 
@@ -745,13 +760,12 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
     return NULL;
   }
 
-  rocksdb_free(err);
-  rocksdb_readoptions_destroy(roptions);
-
   uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(block_hash, block_key + 1, HASH_SIZE);
 
   rocksdb_free(block_key);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
   return block_hash;
 }
 
@@ -816,12 +830,13 @@ int delete_block_from_blockchain(uint8_t *block_hash)
   if (err != NULL)
   {
     fprintf(stderr, "Could not delete block from blockchain\n");
-    rocksdb_writeoptions_destroy(woptions);
-    free(err);
 
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
     return 0;
   }
 
+  rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
   return 1;
 }
@@ -838,11 +853,13 @@ int delete_tx_from_index(uint8_t *tx_id)
   if (err != NULL)
   {
     fprintf(stderr, "Could not delete tx from index\n");
+
+    rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
-    free(err);
     return 0;
   }
 
+  rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
   return 1;
 }
@@ -860,11 +877,12 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   {
     fprintf(stderr, "Could not delete tx from unspent index\n");
 
+    rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
-    free(err);
     return 0;
   }
 
+  rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
   return 1;
 }
@@ -880,7 +898,10 @@ int set_top_block_hash(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not set blockchain top block: %s\n", err);
+    fprintf(stderr, "Could not set blockchain top block hash: %s\n", err);
+
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
     return 1;
   }
 
@@ -1031,6 +1052,5 @@ uint64_t get_balance_for_address(uint8_t *address)
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
-
   return balance;
 }
