@@ -257,6 +257,8 @@ TEST can_insert_unspent_tx_into_index(void)
   {
     output_transaction_t *txout = tx.txouts[0];
     unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[0];
+    ASSERT(txout != NULL);
+    ASSERT(unspent_txout != NULL);
     ASSERT_MEM_EQ(txout->address, unspent_txout->address, HASH_SIZE);
 
     delete_unspent_tx_from_index(tx.id);
