@@ -127,6 +127,8 @@ TEST can_serialize_deserialize_packet(void)
   ASSERT_MEM_EQ(deserialized_block->merkle_root, block->merkle_root, HASH_SIZE);
   ASSERT_EQ(deserialized_block->transaction_count, block->transaction_count);
 
+  free_block(block);
+  free_block(deserialized_block);
   PASS();
 }
 
