@@ -59,6 +59,7 @@ block_t* make_block(void)
 
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
   block->transaction_count = 0;
+  block->transactions = NULL;
 
   return block;
 }
@@ -491,7 +492,7 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
 int free_block(block_t *block)
 {
   assert(block != NULL);
-  if (block->transaction_count > 0)
+  if (block->transaction_count > 0 && block->transactions != NULL)
   {
     for (int i = 0; i < block->transaction_count; i++)
     {

@@ -101,6 +101,7 @@ TEST can_serialize_deserialize_packet(void)
   buffer_t *buffer2 = buffer_init();
   serialize_packet(buffer2, packet);
   buffer_free(buffer);
+  free_packet(packet);
 
   // deserialize packet
   buffer_set_offset(buffer2, 0);
@@ -108,10 +109,11 @@ TEST can_serialize_deserialize_packet(void)
   deserialize_packet(packet2, buffer2);
   buffer_free(buffer2);
 
-  buffer_t *buffer3 = buffer_init_data(0, packet->data, packet->size);
+  buffer_t *buffer3 = buffer_init_data(0, packet2->data, packet2->size);
   block_t *deserialized_block = deserialize_block(buffer3);
   ASSERT(deserialized_block != NULL);
   buffer_free(buffer3);
+  free_packet(packet2);
 
   // check the block to see if it was properly constructed
   ASSERT_EQ(deserialized_block->version, block->version);

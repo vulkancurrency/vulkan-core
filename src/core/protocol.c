@@ -81,13 +81,15 @@ int deserialize_packet(packet_t *packet, buffer_t *buffer)
 int free_packet(packet_t *packet)
 {
   assert(packet != NULL);
-
   packet->id = 0;
   packet->size = 0;
 
-  free(packet->data);
-  free(packet);
+  if (packet->data != NULL)
+  {
+    free(packet->data);
+  }
 
+  free(packet);
   return 0;
 }
 
