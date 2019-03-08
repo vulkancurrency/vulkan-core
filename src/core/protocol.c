@@ -38,102 +38,74 @@
 #include "mempool.h"
 #include "net.h"
 #include "protocol.h"
-#include "vulkan.pb-c.h"
 
 static sync_entry_t g_protocol_sync_entry;
 
-packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message)
+packet_t *make_packet(void)
 {
   packet_t *packet = malloc(sizeof(packet_t));
-
-  packet->id = packet_id;
-  packet->message_size = message_size;
-  packet->message = message;
-
+  packet->id = 0;
+  packet->size = 0;
+  packet->data = NULL;
   return packet;
+}
+
+int serialize_packet(buffer_t *buffer, packet_t *packet)
+{
+  assert(buffer != NULL);
+  assert(packet != NULL);
+
+  buffer_write_uint32(buffer, packet->id);
+  buffer_write_uint32(buffer, packet->size);
+  buffer_write_bytes(buffer, packet->data, packet->size);
+
+  return 0;
+}
+
+int deserialize_packet(packet_t *packet, buffer_t *buffer)
+{
+  assert(packet != NULL);
+  assert(buffer != NULL);
+
+  packet->id = buffer_read_uint32(buffer);
+  packet->size = buffer_read_uint32(buffer);
+
+  uint8_t *data = buffer_read_bytes(buffer);
+  packet->data = malloc(packet->size);
+  memcpy(packet->data, data, packet->size);
+  free(data);
+
+  return 0;
 }
 
 int free_packet(packet_t *packet)
 {
-  free(packet->message);
+  assert(packet != NULL);
+
+  packet->id = 0;
+  packet->size = 0;
+
+  free(packet->data);
   free(packet);
-  return 0;
-}
-
-PPacket *packet_to_proto(packet_t *packet)
-{
-  PPacket *msg = malloc(sizeof(PPacket));
-  ppacket__init(msg);
-
-  msg->id = packet->id;
-  msg->message_size = packet->message_size;
-
-  msg->message.len = packet->message_size;
-  msg->message.data = malloc(sizeof(uint8_t*) * packet->message_size);
-  memcpy(msg->message.data, packet->message, packet->message_size);
-
-  return msg;
-}
-
-int free_proto_packet(PPacket *proto_packet)
-{
-  free(proto_packet->message.data);
-  free(proto_packet);
-  return 0;
-}
-
-int packet_to_serialized(uint8_t **buffer, size_t *buffer_len, packet_t *packet)
-{
-  PPacket *msg = packet_to_proto(packet);
-
-  size_t buff_len = ppacket__get_packed_size(msg);
-  uint8_t *buff = malloc(buff_len);
-
-  ppacket__pack(msg, buff);
-  free_proto_packet(msg);
-
-  *buffer_len = buff_len;
-  *buffer = buff;
 
   return 0;
 }
 
-packet_t *packet_from_proto(PPacket *proto_packet)
-{
-  packet_t *packet = malloc(sizeof(packet_t));
-
-  packet->id = proto_packet->id;
-  packet->message_size = proto_packet->message_size;
-
-  packet->message = malloc(proto_packet->message_size);
-  memcpy(packet->message, proto_packet->message.data, proto_packet->message_size);
-
-  return packet;
-}
-
-packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len)
-{
-  PPacket *proto_packet = ppacket__unpack(NULL, buffer_len, buffer);
-  packet_t *packet = packet_from_proto(proto_packet);
-  ppacket__free_unpacked(proto_packet, NULL);
-
-  return packet;
-}
-
-void* deserialize_packet(packet_t *packet)
+void* deserialize_message(packet_t *packet)
 {
   void *message = NULL;
-  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)packet->message, packet->message_size);
+  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)packet->data, packet->size);
   switch (packet->id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
-        block_t * block = deserialize_block(buffer);
+        block_t *block = deserialize_block(buffer);
         assert(block != NULL);
 
         incoming_block_t *message = malloc(sizeof(incoming_block_t));
         message->block = block;
       }
+      break;
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
         transaction_t *transaction = deserialize_transaction(buffer);
@@ -142,10 +114,12 @@ void* deserialize_packet(packet_t *packet)
         incoming_transaction_t *message = malloc(sizeof(incoming_transaction_t));
         message->transaction = transaction;
       }
+      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = malloc(sizeof(get_block_height_request_t));
       }
+      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
         uint32_t height = buffer_read_uint32(buffer);
@@ -156,6 +130,7 @@ void* deserialize_packet(packet_t *packet)
         message->height = height;
         message->hash = hash;
       }
+      break;
     case PKT_TYPE_GET_BLOCK_REQ:
       {
         uint8_t has_hash = buffer_read_uint8(buffer);
@@ -172,6 +147,7 @@ void* deserialize_packet(packet_t *packet)
         message->height = height;
         message->hash = hash;
       }
+      break;
     case PKT_TYPE_GET_BLOCK_RESP:
       {
         uint32_t height = buffer_read_uint32(buffer);
@@ -182,6 +158,7 @@ void* deserialize_packet(packet_t *packet)
         message->height = height;
         message->block = block;
       }
+      break;
     /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
       {
         MGetNumTransactionsRequest *proto_message = mget_num_transactions_request__unpack(NULL,
@@ -267,7 +244,7 @@ void* deserialize_packet(packet_t *packet)
   return message;
 }
 
-packet_t* serialize_packet(uint32_t packet_id, va_list args)
+packet_t* serialize_message(uint32_t packet_id, va_list args)
 {
   buffer_t *buffer = buffer_init();
   switch (packet_id)
@@ -438,7 +415,14 @@ packet_t* serialize_packet(uint32_t packet_id, va_list args)
       return NULL;
   }
 
-  packet_t *packet = make_packet(packet_id, buffer_get_size(buffer), buffer->data);
+  const uint8_t *data = buffer_get_data(buffer);
+  uint32_t data_len = buffer_get_size(buffer);
+
+  packet_t *packet = make_packet();
+  packet->size = data_len;
+  packet->data = malloc(data_len);
+  memcpy(packet->data, data, data_len);
+
   buffer_free(buffer);
   return packet;
 }
@@ -972,13 +956,16 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
 int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
-  packet_t *packet = packet_from_serialized(data, data_size);
-  if (!packet)
+  buffer_t *buffer = buffer_init_data(0, data, data_size);
+  packet_t *packet = make_packet();
+  if (deserialize_packet(packet, buffer))
   {
+    buffer_free(buffer);
     return 1;
   }
 
-  void *message = deserialize_packet(packet);
+  buffer_free(buffer);
+  void *message = deserialize_message(packet);
   if (!message)
   {
     free_packet(packet);
@@ -999,30 +986,31 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
 
 int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args)
 {
-  packet_t *packet = serialize_packet(packet_id, args);
+  packet_t *packet = serialize_message(packet_id, args);
   if (!packet)
   {
     return 1;
   }
 
-  uint8_t *raw_buffer = NULL;
-  size_t buffer_len = 0;
-
-  packet_to_serialized(&raw_buffer, &buffer_len, packet);
+  buffer_t *buffer = buffer_init();
+  serialize_packet(buffer, packet);
   free_packet(packet);
 
-  uint8_t buffer[buffer_len];
-  memcpy(&buffer, raw_buffer, buffer_len);
-  free(raw_buffer);
+  const uint8_t *data = buffer_get_data(buffer);
+  size_t data_len = buffer_get_size(buffer);
 
-  int result;
+  uint8_t raw_data[data_len];
+  memcpy(&raw_data, data, data_len);
+  buffer_free(buffer);
+
+  int result = 0;
   if (broadcast)
   {
-    result = net_send_data(gossip, (const uint8_t*)&buffer, buffer_len);
+    result = net_send_data(gossip, (const uint8_t*)&raw_data, data_len);
   }
   else
   {
-    result = net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)&buffer, buffer_len);
+    result = net_data_sendto(gossip, recipient, recipient_len, (const uint8_t*)&raw_data, data_len);
   }
 
   return result;

@@ -380,7 +380,7 @@ int insert_block(block_t *block)
   serialize_block(buffer, block);
   serialize_transactions_from_block(buffer, block);
 
-  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -666,7 +666,7 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   serialize_unspent_transaction(buffer, unspent_tx);
   free_unspent_transaction(unspent_tx);
 
-  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -696,7 +696,7 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   buffer_t *buffer = buffer_init();
   serialize_unspent_transaction(buffer, unspent_tx);
 
-  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();

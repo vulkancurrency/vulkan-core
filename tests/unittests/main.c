@@ -36,11 +36,12 @@
 static const char *g_blockchain_dir = "blockchain_tests";
 
 SUITE_EXTERN(common_suite);
-SUITE_EXTERN(transaction_suite);
 SUITE_EXTERN(block_suite);
-SUITE_EXTERN(mempool_suite);
-SUITE_EXTERN(merkle_suite);
 SUITE_EXTERN(blockchain_suite);
+SUITE_EXTERN(transaction_suite);
+SUITE_EXTERN(merkle_suite);
+SUITE_EXTERN(mempool_suite);
+SUITE_EXTERN(protocol_suite);
 
 GREATEST_MAIN_DEFS();
 
@@ -60,11 +61,12 @@ int main(int argc, char **argv)
   GREATEST_MAIN_BEGIN();
 
   RUN_SUITE(common_suite);
-  RUN_SUITE(transaction_suite);
   RUN_SUITE(block_suite);
   RUN_SUITE(blockchain_suite);
-  RUN_SUITE(merkle_suite);
+  RUN_SUITE(transaction_suite);
   RUN_SUITE(mempool_suite);
+  RUN_SUITE(merkle_suite);
+  RUN_SUITE(protocol_suite);
 
   GREATEST_MAIN_END();
 

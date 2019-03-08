@@ -68,8 +68,8 @@ enum
 typedef struct
 {
   uint32_t id;
-  uint32_t message_size;
-  uint8_t *message;
+  uint32_t size;
+  uint8_t *data;
 } packet_t;
 
 typedef struct
@@ -151,18 +151,13 @@ typedef struct SyncEntry
   uint8_t last_sync_tries;
 } sync_entry_t;
 
-packet_t *make_packet(uint32_t packet_id, uint32_t message_size, uint8_t *message);
+packet_t *make_packet(void);
+int serialize_packet(buffer_t *buffer, packet_t *packet);
+int deserialize_packet(packet_t *packet, buffer_t *buffer);
 int free_packet(packet_t *packet);
 
-PPacket *packet_to_proto(packet_t *packet);
-int free_proto_packet(PPacket *proto_packet);
-int packet_to_serialized(uint8_t **buffer, size_t *buffer_len, packet_t *packet);
-packet_t *packet_from_proto(PPacket *proto_packet);
-packet_t *packet_from_serialized(const uint8_t *buffer, size_t buffer_len);
-
-packet_t* serialize_packet(uint32_t packet_id, va_list args);
-void* deserialize_packet(packet_t *packet);
-
+packet_t* serialize_message(uint32_t packet_id, va_list args);
+void* deserialize_message(packet_t *packet);
 void free_message(uint32_t packet_id, void *message_object);
 
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
@@ -170,7 +165,6 @@ int clear_sync_request(int sync_success);
 int check_sync_status(void);
 int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash);
 int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
-
 int rollback_blockchain_and_resync(void);
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);

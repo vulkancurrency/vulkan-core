@@ -246,6 +246,7 @@ TEST pack_and_unpack_buffer(void)
 
   ASSERT_EQ(buffer_get_size(buffer1), 0);
   ASSERT_EQ(buffer_free(buffer1), 0);
+
   PASS();
 }
 
