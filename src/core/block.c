@@ -39,6 +39,8 @@
 #include "merkle.h"
 #include "vulkan.pb-c.h"
 
+#include "crypto/sha256d.h"
+
 /* Allocates a block for usage.
  *
  * Later to be free'd with `free_block`
@@ -75,7 +77,7 @@ int hash_block(block_t *block)
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
   buffer_free(buffer);
-  crypto_hash_sha256(block->hash, header, HASH_SIZE);
+  crypto_hash_sha256d(block->hash, header, HASH_SIZE);
   return 0;
 }
 

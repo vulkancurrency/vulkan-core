@@ -39,6 +39,8 @@
 
 #include "util.h"
 
+#include "crypto/sha256d.h"
+
 uint16_t get_num_logical_cores(void)
 {
 #ifdef _WIN32
@@ -102,7 +104,7 @@ const char* string_copy(const char *string, const char *other_string)
 int make_hash(char *digest, unsigned char *string)
 {
   unsigned char hash[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256(hash, string, strlen((char*)string));
+  crypto_hash_sha256d(hash, string, strlen((char*)string));
 
   for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
   {

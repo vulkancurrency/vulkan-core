@@ -31,6 +31,8 @@
 
 #include "merkle.h"
 
+#include "crypto/sha256d.h"
+
 /*
  * Constructing a Merkle Tree requires passing a large allocated uint8_t that contains
  * a series of 32 byte hashes. (non-separated). A second parameter determines the number
@@ -121,7 +123,7 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
   memcpy(combined_hash, left->hash, HASH_SIZE);
   memcpy(combined_hash + HASH_SIZE, right->hash, HASH_SIZE);
 
-  crypto_hash_sha256(node_hash, combined_hash, HASH_SIZE * 2);
+  crypto_hash_sha256d(node_hash, combined_hash, HASH_SIZE * 2);
 
   merkle_node_t *node = malloc(sizeof(merkle_node_t));
   memcpy(node->hash, node_hash, HASH_SIZE);

@@ -25,25 +25,28 @@
 
 file(GLOB_RECURSE COMMON common/*)
 file(GLOB_RECURSE CORE core/*)
+file(GLOB_RECURSE CRYPTO crypto/*)
 file(GLOB_RECURSE DAEMON daemon/*)
 file(GLOB_RECURSE MINER miner/*)
 file(GLOB_RECURSE WALLET wallet/*)
 
 source_group(common FILES ${COMMON})
 source_group(core FILES ${CORE})
+source_group(crypto FILES ${CRYPTO})
 source_group(daemon FILES ${DAEMON})
 source_group(miner FILES ${MINER})
 source_group(wallet FILES ${WALLET})
 
 add_library(common ${COMMON})
 add_library(core ${CORE})
+add_library(crypto ${CRYPTO})
 add_library(daemon ${DAEMON})
 add_library(miner ${MINER})
 add_library(wallet ${WALLET})
 
-target_link_libraries(core common miner wallet)
-target_link_libraries(wallet common core)
-target_link_libraries(daemon common core miner wallet)
+target_link_libraries(core common crypto miner wallet)
+target_link_libraries(wallet common core crypto)
+target_link_libraries(daemon common core crypto miner wallet)
 
 if(PITTACUS_STATIC)
   target_link_libraries(core pittacus_static)

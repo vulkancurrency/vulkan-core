@@ -36,6 +36,8 @@
 #include "core/blockchain.h"
 #include "core/blockchainparams.h"
 
+#include "crypto/sha256d.h"
+
 #include "wallet/wallet.h"
 
 static const char *g_wallet_filename = NULL;
@@ -189,7 +191,7 @@ int public_key_to_address(uint8_t *address, uint8_t *pk)
 {
   uint8_t address_id = MAINNET_ADDRESS_ID;
   memcpy(address, &address_id, sizeof(uint8_t) * 1);
-  crypto_hash_sha256(address + 1, pk, crypto_sign_PUBLICKEYBYTES);
+  crypto_hash_sha256d(address + 1, pk, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 

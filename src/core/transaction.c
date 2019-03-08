@@ -38,6 +38,8 @@
 #include "core/transaction.h"
 #include "core/vulkan.pb-c.h"
 
+#include "crypto/sha256d.h"
+
 #include "wallet/wallet.h"
 
 static uint8_t g_transaction_zero_hash[HASH_SIZE] = {
@@ -66,7 +68,7 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
 
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
-  crypto_hash_sha256(hash, header, header_size);
+  crypto_hash_sha256d(hash, header, header_size);
   crypto_sign_detached(txin->signature, NULL, header, header_size, secret_key);
   memcpy(&txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
 
@@ -219,7 +221,7 @@ int compute_tx_id(uint8_t *header, transaction_t *tx)
   uint32_t buffer_len = 0;
 
   transaction_to_serialized(&buffer, &buffer_len, tx);
-  crypto_hash_sha256(header, buffer, buffer_len);
+  crypto_hash_sha256d(header, buffer, buffer_len);
   free(buffer);
 
   return 0;
