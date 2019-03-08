@@ -94,6 +94,7 @@ TEST can_serialize_block(void)
   buffer_set_offset(buffer, 0);
   block_t *deserialized_block = deserialize_block(buffer);
   deserialize_transactions_to_block(buffer, deserialized_block);
+  buffer_free(buffer);
 
   ASSERT_EQ(block->version, deserialized_block->version);
   ASSERT_EQ(block->timestamp, deserialized_block->timestamp);
@@ -108,9 +109,8 @@ TEST can_serialize_block(void)
   output_transaction_t *deserialized_txout = deserialized_tx->txouts[0];
   ASSERT_MEM_EQ(txout->address, deserialized_txout->address, HASH_SIZE);
 
-  buffer_free(buffer);
+  free_block(deserialized_block);
   free_block(block);
-
   PASS();
 }
 
@@ -265,6 +265,7 @@ TEST invalid_block_by_reused_txout(void)
   block->transactions[1] = tx_2;
 
   ASSERT(valid_block(block) == 0);
+  free_block(block);
   PASS();
 }
 
@@ -351,6 +352,7 @@ TEST invalid_block_by_merkle_hash(void)
   block->transactions[1] = tx_2;
 
   ASSERT(valid_block(block) == 0);
+  free_block(block);
   PASS();
 }
 

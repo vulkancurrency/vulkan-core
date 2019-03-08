@@ -84,7 +84,7 @@ TEST can_insert_block(void)
   ASSERT_EQ(block->nonce, 123456);
 
   free_block(block);
-
+  free_block(block_from_db);
   PASS();
 }
 
@@ -110,6 +110,7 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void)
   {
     ASSERT_MEM_EQ(block->hash, block_hash_from_tx, HASH_SIZE);
     free_block(block);
+    free(block_hash_from_tx);
     PASS();
   }
   else
