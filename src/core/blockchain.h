@@ -46,8 +46,6 @@ int close_blockchain(void);
 int open_backup_blockchain(void);
 int close_backup_blockchain(void);
 
-int valid_median_timestamp(block_t *block);
-
 int init_blockchain(const char *blockchain_dir);
 int remove_blockchain(const char *blockchain_dir);
 int backup_blockchain(void);
@@ -56,6 +54,7 @@ int rollback_blockchain(uint32_t rollback_height);
 
 uint32_t get_block_height(void);
 
+int valid_block_median_timestamp(block_t *block);
 int validate_and_insert_block(block_t *block);
 int insert_block(block_t *block);
 

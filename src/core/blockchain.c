@@ -302,7 +302,7 @@ int rollback_blockchain(uint32_t rollback_height)
   return 0;
 }
 
-int valid_median_timestamp(block_t *block)
+int valid_block_median_timestamp(block_t *block)
 {
   uint32_t current_block_height = get_block_height();
   if (current_block_height < TIMESTAMP_CHECK_WINDOW)
@@ -334,18 +334,9 @@ int validate_and_insert_block(block_t *block)
 
   // check to see if this block's timestamp is greater than the
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
-  if (!valid_median_timestamp(block))
+  if (!valid_block_median_timestamp(block))
   {
     fprintf(stderr, "Could not insert block into blockchain, block has expired timestamp: %d!\n", block->timestamp);
-    return 0;
-  }
-
-  // check to ensure that the block header size is less than the
-  // maximum allowed block size...
-  uint32_t block_header_size = get_block_header_size(block);
-  if (block_header_size > MAX_BLOCK_SIZE)
-  {
-    fprintf(stderr, "Could not insert block into blockchain, block has too big header size: %d!\n", block_header_size);
     return 0;
   }
 

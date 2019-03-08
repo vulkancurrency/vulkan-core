@@ -108,6 +108,7 @@ int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
 int compare_block(block_t *block, block_t *other_block);
 int compare_with_genesis_block(block_t *block);
 
+int valid_block_timestamp(block_t *block);
 int valid_block(block_t *block);
 int valid_merkle_root(block_t *block);
 

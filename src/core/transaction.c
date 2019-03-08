@@ -137,8 +137,10 @@ int valid_transaction(transaction_t *tx)
 {
   if (tx->txin_count > 0 && tx->txout_count > 0)
   {
-    if (get_tx_header_size(tx) > MAX_TX_SIZE)
+    uint32_t tx_header_size = get_tx_header_size(tx);
+    if (tx_header_size > MAX_TX_SIZE)
     {
+      fprintf(stderr, "Transaction has too big header blob size: %d!\n", tx_header_size);
       return 0;
     }
 

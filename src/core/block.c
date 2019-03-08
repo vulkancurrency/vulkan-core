@@ -78,6 +78,17 @@ int hash_block(block_t *block)
   return 0;
 }
 
+int valid_block_timestamp(block_t *block)
+{
+  assert(block != NULL);
+  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
 // Block is valid if:
 // - Timestamp is stamped for a 2 hour drift
 // - The first TX is a generational TX
@@ -93,8 +104,9 @@ int valid_block(block_t *block)
   assert(block != NULL);
 
   // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
-  if (block->timestamp > get_current_time() + MAX_FUTURE_BLOCK_TIME)
+  if (!valid_block_timestamp(block))
   {
+    fprintf(stderr, "Block has timestamp that is too far in the future: %d!\n", block->timestamp);
     return 0;
   }
 
@@ -164,6 +176,15 @@ int valid_block(block_t *block)
         }
       }
     }
+  }
+
+  // check to ensure that the block header size is less than the
+  // maximum allowed block size...
+  uint32_t block_header_size = get_block_header_size(block);
+  if (block_header_size > MAX_BLOCK_SIZE)
+  {
+    fprintf(stderr, "Block has too big header blob size: %d!\n", block_header_size);
+    return 0;
   }
 
   // check the block hash
