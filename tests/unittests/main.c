@@ -36,6 +36,7 @@
 static const char *g_blockchain_dir = "blockchain_tests";
 
 SUITE_EXTERN(common_suite);
+SUITE_EXTERN(crypto_suite);
 SUITE_EXTERN(block_suite);
 SUITE_EXTERN(blockchain_suite);
 SUITE_EXTERN(transaction_suite);
@@ -61,6 +62,7 @@ int main(int argc, char **argv)
   GREATEST_MAIN_BEGIN();
 
   RUN_SUITE(common_suite);
+  RUN_SUITE(crypto_suite);
   RUN_SUITE(block_suite);
   RUN_SUITE(blockchain_suite);
   RUN_SUITE(transaction_suite);

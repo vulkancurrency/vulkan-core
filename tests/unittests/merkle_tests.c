@@ -31,6 +31,8 @@
 
 #include "core/merkle.h"
 
+#include "crypto/sha256d.h"
+
 SUITE(merkle_suite);
 
 /*
@@ -104,15 +106,15 @@ TEST can_construct_merkle_tree(void)
 
   memcpy(hash_buffer, hash_a, HASH_SIZE);
   memcpy(hash_buffer + HASH_SIZE, hash_b, HASH_SIZE);
-  crypto_hash_sha256(hash_ab, hash_buffer, 64);
+  crypto_hash_sha256d(hash_ab, hash_buffer, 64);
 
   memcpy(hash_buffer, hash_c, HASH_SIZE);
   memcpy(hash_buffer + HASH_SIZE, hash_c, HASH_SIZE);
-  crypto_hash_sha256(hash_cc, hash_buffer, 64);
+  crypto_hash_sha256d(hash_cc, hash_buffer, 64);
 
   memcpy(hash_buffer, hash_ab, HASH_SIZE);
   memcpy(hash_buffer + HASH_SIZE, hash_cc, HASH_SIZE);
-  crypto_hash_sha256(hash_abcc, hash_buffer, 64);
+  crypto_hash_sha256d(hash_abcc, hash_buffer, 64);
 
   ASSERT_MEM_EQ(tree->root->hash, hash_abcc, HASH_SIZE);
 
