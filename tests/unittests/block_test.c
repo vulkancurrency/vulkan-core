@@ -30,6 +30,7 @@
 #include "common/util.h"
 
 #include "core/block.h"
+#include "core/blockchainparams.h"
 #include "core/vulkan.pb-c.h"
 #include "core/transaction.h"
 
@@ -110,6 +111,21 @@ TEST can_serialize_block(void)
   buffer_free(buffer);
   free_block(block);
 
+  PASS();
+}
+
+TEST invalid_block_by_timestamp(void)
+{
+  block_t *block = make_block();
+  block->timestamp = get_current_time() + (MAX_FUTURE_BLOCK_TIME * 2);
+  ASSERT(valid_block_timestamp(block) == 0);
+  block->timestamp = get_current_time();
+  ASSERT(valid_block_timestamp(block) == 1);
+  block->timestamp = get_current_time() + (MAX_FUTURE_BLOCK_TIME + 1);
+  ASSERT(valid_block_timestamp(block) == 0);
+  block->timestamp = get_current_time() + MAX_FUTURE_BLOCK_TIME;
+  ASSERT(valid_block_timestamp(block) == 1);
+  free_block(block);
   PASS();
 }
 
@@ -341,6 +357,7 @@ TEST invalid_block_by_merkle_hash(void)
 GREATEST_SUITE(block_suite)
 {
   RUN_TEST(can_serialize_block);
+  RUN_TEST(invalid_block_by_timestamp);
   RUN_TEST(invalid_block_by_same_tx_hashes);
   RUN_TEST(invalid_block_by_reused_txout);
   RUN_TEST(invalid_block_by_merkle_hash);
