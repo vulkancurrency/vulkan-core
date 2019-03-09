@@ -391,6 +391,8 @@ uint64_t get_block_difficulty(uint32_t block_height)
     vector_push_back(g_timestamps, block->timestamp);
     vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
 
+    free_block(block);
+
     g_num_timestamps++;
     g_num_cumulative_difficulties++;
 
@@ -432,6 +434,8 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
       vector_push_back(g_timestamps, block->timestamp);
       vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
+
+      free_block(block);
 
       g_num_timestamps++;
       g_num_cumulative_difficulties++;
