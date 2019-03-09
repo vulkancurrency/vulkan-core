@@ -28,10 +28,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <pthread.h>
 
 #include <rocksdb/c.h>
 
 #include "common/util.h"
+#include "common/vector.h"
 
 #include "block.h"
 #include "blockchain.h"
@@ -39,6 +41,8 @@
 #include "vulkan.pb-c.h"
 
 #include "wallet/wallet.h"
+
+static pthread_mutex_t g_blockchain_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
@@ -59,6 +63,14 @@ static int g_blockchain_backup_is_open = 0;
 
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
+
+static uint32_t *g_timestamps = NULL;
+static uint64_t *g_cumulative_difficulties = NULL;
+
+static size_t g_num_timestamps = 0;
+static size_t g_num_cumulative_difficulties = 0;
+
+static uint32_t g_timestamps_and_difficulties_height = 0;
 
 const char* get_blockchain_dir(void)
 {
@@ -335,29 +347,78 @@ uint64_t get_block_cumulative_difficulty(uint32_t block_height)
 uint64_t get_block_difficulty(uint32_t block_height)
 {
   difficulty_info_t difficulty_info;
+  uint32_t height = block_height;
+  height++;
 
-  // skip over the genesis block
-  uint32_t difficulty_height = 1;
-  if (block_height > DIFFICULTY_WINDOW)
+  pthread_mutex_lock(&g_blockchain_lock);
+  if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
-    difficulty_height = block_height - DIFFICULTY_WINDOW;
-  }
-
-  int current_index = 0;
-  for (int height = difficulty_height; height <= block_height; height++)
-  {
-    block_t *block = get_block_from_height(height);
+    uint32_t index = height - 1;
+    block_t *block = get_block_from_height(index);
     assert(block != NULL);
-    difficulty_info.timestamps[current_index] = block->timestamp;
-    difficulty_info.cumulative_difficulties[current_index] = block->cumulative_difficulty;
-    current_index++;
-    free_block(block);
+
+    vector_push_back(g_timestamps, block->timestamp);
+    vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
+
+    g_num_timestamps++;
+    g_num_cumulative_difficulties++;
+
+    while (g_num_timestamps > DIFFICULTY_BLOCKS_COUNT)
+    {
+      vector_erase(g_timestamps, 0);
+      g_num_timestamps--;
+    }
+
+    while (g_num_cumulative_difficulties > DIFFICULTY_BLOCKS_COUNT)
+    {
+      vector_erase(g_cumulative_difficulties, 0);
+      g_num_cumulative_difficulties--;
+    }
+
+    g_timestamps_and_difficulties_height = height;
+  }
+  else
+  {
+    uint32_t offset = height - (uint32_t)(MIN(height, (uint32_t)DIFFICULTY_BLOCKS_COUNT));
+    if (offset == 0)
+    {
+      offset++;
+    }
+
+    vector_free(g_timestamps);
+    vector_free(g_cumulative_difficulties);
+
+    g_num_timestamps = 0;
+    g_num_cumulative_difficulties = 0;
+
+    g_timestamps = NULL;
+    g_cumulative_difficulties = NULL;
+
+    for (; offset < height; offset++)
+    {
+      block_t *block = get_block_from_height(offset);
+      assert(block != NULL);
+
+      vector_push_back(g_timestamps, block->timestamp);
+      vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
+
+      g_num_timestamps++;
+      g_num_cumulative_difficulties++;
+    }
+
+    g_timestamps_and_difficulties_height = height;
   }
 
-  difficulty_info.num_timestamps = current_index;
-  difficulty_info.num_cumulative_difficulties = current_index;
+  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * MIN(g_num_timestamps, DIFFICULTY_WINDOW));
+  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW));
+
+  difficulty_info.num_timestamps = g_num_timestamps;
+  difficulty_info.num_cumulative_difficulties = g_num_cumulative_difficulties;
   difficulty_info.target_seconds = DIFFICULTY_TARGET;
-  return get_next_difficulty(difficulty_info);
+
+  uint64_t difficulty = get_next_difficulty(difficulty_info);
+  pthread_mutex_unlock(&g_blockchain_lock);
+  return difficulty;
 }
 
 uint64_t get_next_block_difficulty(void)
