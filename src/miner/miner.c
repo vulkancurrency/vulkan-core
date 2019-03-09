@@ -34,6 +34,7 @@
 
 #include "core/block.h"
 #include "core/blockchain.h"
+#include "core/difficulty.h"
 #include "core/protocol.h"
 
 #include "wallet/wallet.h"
@@ -85,12 +86,14 @@ block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
   uint32_t current_block_height = get_block_height();
 
   uint64_t already_generated_coins = previous_block->already_generated_coins;
-  uint64_t block_reward = get_block_reward(current_block_height + 1, already_generated_coins);
+  uint64_t block_reward = get_block_reward(current_block_height, already_generated_coins);
 
   block_t *block = make_block();
   memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
 
   block->timestamp = current_time;
+  block->difficulty = get_next_block_difficulty();
+  block->cumulative_difficulty = previous_block->cumulative_difficulty + block->difficulty;
   block->already_generated_coins = already_generated_coins + block_reward;
 
   block->transaction_count = 1;

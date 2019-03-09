@@ -35,6 +35,7 @@
 
 #include "block.h"
 #include "blockchain.h"
+#include "difficulty.h"
 #include "vulkan.pb-c.h"
 
 #include "wallet/wallet.h"
@@ -302,6 +303,68 @@ int rollback_blockchain(uint32_t rollback_height)
   return 0;
 }
 
+uint64_t get_already_generated_coins(void)
+{
+  block_t *current_block = get_current_block();
+  assert(current_block != NULL);
+  uint64_t already_generated_coins = current_block->already_generated_coins;
+  free_block(current_block);
+  return already_generated_coins;
+}
+
+uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
+{
+  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
+  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
+  {
+    block_reward = GENESIS_REWARD;
+  }
+
+  return block_reward;
+}
+
+uint64_t get_block_cumulative_difficulty(uint32_t block_height)
+{
+  block_t *block = get_block_from_height(block_height);
+  assert(block != NULL);
+  uint64_t cumulative_difficulty = block->cumulative_difficulty;
+  free_block(block);
+  return cumulative_difficulty;
+}
+
+uint64_t get_block_difficulty(uint32_t block_height)
+{
+  difficulty_info_t difficulty_info;
+
+  // skip over the genesis block
+  uint32_t difficulty_height = 1;
+  if (block_height > DIFFICULTY_WINDOW)
+  {
+    difficulty_height = block_height - DIFFICULTY_WINDOW;
+  }
+
+  int current_index = 0;
+  for (int height = difficulty_height; height <= block_height; height++)
+  {
+    block_t *block = get_block_from_height(height);
+    assert(block != NULL);
+    difficulty_info.timestamps[current_index] = block->timestamp;
+    difficulty_info.cumulative_difficulties[current_index] = block->cumulative_difficulty;
+    current_index++;
+    free_block(block);
+  }
+
+  difficulty_info.num_timestamps = current_index;
+  difficulty_info.num_cumulative_difficulties = current_index;
+  difficulty_info.target_seconds = DIFFICULTY_TARGET;
+  return get_next_difficulty(difficulty_info);
+}
+
+uint64_t get_next_block_difficulty(void)
+{
+  return get_block_difficulty(get_block_height());
+}
+
 int valid_block_median_timestamp(block_t *block)
 {
   uint32_t current_block_height = get_block_height();
@@ -325,9 +388,11 @@ int valid_block_median_timestamp(block_t *block)
 
 int validate_and_insert_block(block_t *block)
 {
+  uint32_t current_block_height = get_block_height();
+
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
-  if (!valid_block(block) && get_block_height() > 0)
+  if (!valid_block(block) && current_block_height > 0)
   {
     return 0;
   }
@@ -338,6 +403,31 @@ int validate_and_insert_block(block_t *block)
   {
     fprintf(stderr, "Could not insert block into blockchain, block has expired timestamp: %d!\n", block->timestamp);
     return 0;
+  }
+
+  // check the block's difficulty value, also check the block's
+  // hash to see if it's difficulty is valid.
+  if (current_block_height > 0)
+  {
+    uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
+    if (block->cumulative_difficulty != expected_cumulative_difficulty)
+    {
+      fprintf(stderr, "Could not insert block into blockchain, block has invalid cumulative difficulty: %llu expected: %llu!\n", block->cumulative_difficulty, expected_cumulative_difficulty);
+      return 0;
+    }
+
+    uint64_t expected_difficulty = get_next_block_difficulty();
+    if (block->difficulty != expected_difficulty)
+    {
+      fprintf(stderr, "Could not insert block into blockchain, block has invalid difficulty: %llu expected: %llu!\n", block->difficulty, expected_difficulty);
+      return 0;
+    }
+
+    if (!check_hash(block->hash, expected_difficulty))
+    {
+      fprintf(stderr, "Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!\n", block->difficulty, expected_difficulty);
+      return 0;
+    }
   }
 
   // ensure we are not adding a block that already exists in the blockchain...
@@ -987,26 +1077,6 @@ int get_top_block_key(uint8_t *buffer)
 {
   memcpy(buffer, "tb", 2);
   return 0;
-}
-
-uint64_t get_already_generated_coins(void)
-{
-  block_t *current_block = get_current_block();
-  assert(current_block != NULL);
-  uint64_t already_generated_coins = current_block->already_generated_coins;
-  free_block(current_block);
-  return already_generated_coins;
-}
-
-uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
-{
-  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
-  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
-  {
-    block_reward = GENESIS_REWARD;
-  }
-
-  return block_reward;
 }
 
 uint64_t get_balance_for_address(uint8_t *address)

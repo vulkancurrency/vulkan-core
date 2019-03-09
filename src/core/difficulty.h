@@ -27,42 +27,20 @@
 
 #include <stdint.h>
 
-#define BLOCK_VERSION 0x01
-#define MAX_BLOCK_SIZE 500000000
-#define MAX_TX_SIZE (1024 * 500)
-#define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
-#define TIMESTAMP_CHECK_WINDOW 32
+extern inline uint32_t ident32(uint32_t x);
+extern inline uint64_t ident64(uint64_t x);
 
-#define COIN ((uint64_t)100000000)
-#define TOTAL_SUPPLY 64000000
-#define MAX_MONEY ((uint64_t)(COIN * TOTAL_SUPPLY))
+#define swap32le ident32
+#define swap64le ident64
 
-#define MAINNET_ADDRESS_ID 0x01
-#define TESTNET_ADDRESS_ID 0x02
-
-#define GENESIS_NONCE 0
-#define GENESIS_TIMESTAMP 1504395525
-#define GENESIS_REWARD ((uint64_t)0)
-
-#define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
-
-#define DIFFICULTY_TARGET 120
-#define DIFFICULTY_WINDOW 720
-#define DIFFICULTY_CUT 60
-
-#define BLOCK_REWARD_EMISSION_FACTOR 18
-
-#define P2P_PORT 9899
-#define RPC_PORT 9898
-
-typedef struct SeedNodeEntry
+typedef struct DifficultyInfo
 {
-  const char *address;
-  int port;
-} seed_node_entry_t;
+  uint32_t timestamps[DIFFICULTY_WINDOW];
+  size_t num_timestamps;
+  uint64_t cumulative_difficulties[DIFFICULTY_WINDOW];
+  size_t num_cumulative_difficulties;
+  uint32_t target_seconds;
+} difficulty_info_t;
 
-static seed_node_entry_t SEED_NODES[] = {
-  {"127.0.0.1", P2P_PORT}
-};
-
-#define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
+int check_hash(uint8_t *hash, uint64_t difficulty);
+uint64_t get_next_difficulty(difficulty_info_t difficulty_info);

@@ -38,18 +38,19 @@ extern "
 {
 #endif
 
-#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 4 + 4 + 4 + 4)
+#define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 8 + 8 + 4 + 4 + 4)
 
 typedef struct Block
 {
   uint32_t version;
-  uint32_t bits;
 
   uint8_t previous_hash[HASH_SIZE];
   uint8_t hash[HASH_SIZE];
 
   uint32_t timestamp;
   uint32_t nonce;
+  uint64_t difficulty;
+  uint64_t cumulative_difficulty;
   uint64_t already_generated_coins;
 
   uint8_t merkle_root[HASH_SIZE];
@@ -59,7 +60,6 @@ typedef struct Block
 
 static block_t genesis_block = {
   .version = BLOCK_VERSION,
-  .bits = INITIAL_DIFFICULTY_BITS,
   .previous_hash = {
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
@@ -82,6 +82,8 @@ static block_t genesis_block = {
   },
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
+  .difficulty = 0,
+  .cumulative_difficulty = 0,
   .already_generated_coins = 0,
   .merkle_root = {
     0xe3, 0xb0, 0xc4, 0x42,

@@ -117,13 +117,14 @@ TEST can_serialize_deserialize_packet(void)
 
   // check the block to see if it was properly constructed
   ASSERT_EQ(deserialized_block->version, block->version);
-  ASSERT_EQ(deserialized_block->bits, block->bits);
 
   ASSERT_MEM_EQ(deserialized_block->previous_hash, block->previous_hash, HASH_SIZE);
   ASSERT_MEM_EQ(deserialized_block->hash, block->hash, HASH_SIZE);
 
   ASSERT_EQ(deserialized_block->timestamp, block->timestamp);
   ASSERT_EQ(deserialized_block->nonce, block->nonce);
+  ASSERT_EQ(deserialized_block->difficulty, block->difficulty);
+  ASSERT_EQ(deserialized_block->cumulative_difficulty, block->cumulative_difficulty);
   ASSERT_EQ(deserialized_block->already_generated_coins, block->already_generated_coins);
 
   ASSERT_MEM_EQ(deserialized_block->merkle_root, block->merkle_root, HASH_SIZE);

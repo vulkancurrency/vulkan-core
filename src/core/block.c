@@ -36,6 +36,7 @@
 
 #include "block.h"
 #include "blockchainparams.h"
+#include "difficulty.h"
 #include "merkle.h"
 #include "vulkan.pb-c.h"
 
@@ -50,13 +51,14 @@ block_t* make_block(void)
   block_t *block = malloc(sizeof(block_t));
 
   block->version = BLOCK_VERSION;
-  block->bits = INITIAL_DIFFICULTY_BITS;
 
   memset(block->previous_hash, 0, HASH_SIZE);
   memset(block->hash, 0, HASH_SIZE);
 
   block->timestamp = 0;
   block->nonce = 0;
+  block->difficulty = 0;
+  block->cumulative_difficulty = 0;
   block->already_generated_coins = 0;
 
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
@@ -270,9 +272,10 @@ int print_block(block_t *block)
 
   printf("Block:\n");
   printf("Version: %d\n", block->version);
-  printf("Bits: %d\n", block->bits);
   printf("Nonce: %d\n", block->nonce);
   printf("Timestamp (epoch): %d\n", block->timestamp);
+  printf("Difficulty: %llu\n", block->difficulty);
+  printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
   printf("Emission: %llu\n", block->already_generated_coins);
   printf("Previous Hash: %s\n", previous_hash);
   printf("Merkle Root: %s\n", merkle_root);
@@ -283,43 +286,7 @@ int print_block(block_t *block)
 int valid_block_hash(block_t *block)
 {
   assert(block != NULL);
-
-  uint32_t target = block->bits;
-  uint32_t current_target = 0;
-
-  for (int i = 0; i <= HASH_SIZE; i++)
-  {
-    uint8_t byte = block->hash[i];
-    uint32_t n = 0;
-
-    if (byte <= 0x0F)
-    {
-      n = n + 4;
-      byte = byte << 4;
-    }
-
-    if (byte <= 0x3F)
-    {
-      n = n + 2;
-      byte = byte << 2;
-    }
-
-    if (byte <= 0x7F)
-    {
-      n = n + 1;
-    }
-
-    current_target += n;
-  }
-
-  if (current_target > target)
-  {
-    return 1;
-  }
-  else
-  {
-    return 0;
-  }
+  return check_hash(block->hash, block->difficulty);
 }
 
 uint32_t get_block_header_size(block_t *block)
@@ -364,10 +331,11 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
 
   buffer_write_uint32(buffer, block->version);
-  buffer_write_uint32(buffer, block->bits);
   buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint32(buffer, block->timestamp);
-  buffer_write_uint32(buffer, block->already_generated_coins);
+  buffer_write_uint64(buffer, block->difficulty);
+  buffer_write_uint64(buffer, block->cumulative_difficulty);
+  buffer_write_uint64(buffer, block->already_generated_coins);
 
   // write raw hash's
   buffer_write(buffer, block->previous_hash, HASH_SIZE);
@@ -381,14 +349,15 @@ int serialize_block(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
 
   buffer_write_uint32(buffer, block->version);
-  buffer_write_uint32(buffer, block->bits);
 
   buffer_write_bytes(buffer, block->previous_hash, HASH_SIZE);
   buffer_write_bytes(buffer, block->hash, HASH_SIZE);
 
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint32(buffer, block->already_generated_coins);
+  buffer_write_uint64(buffer, block->difficulty);
+  buffer_write_uint64(buffer, block->cumulative_difficulty);
+  buffer_write_uint64(buffer, block->already_generated_coins);
 
   buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
   buffer_write_uint32(buffer, block->transaction_count);
@@ -403,7 +372,6 @@ block_t* deserialize_block(buffer_t *buffer)
   assert(block != NULL);
 
   block->version = buffer_read_uint32(buffer);
-  block->bits = buffer_read_uint32(buffer);
 
   uint8_t *previous_hash = buffer_read_bytes(buffer);
   memcpy(block->previous_hash, previous_hash, HASH_SIZE);
@@ -413,7 +381,9 @@ block_t* deserialize_block(buffer_t *buffer)
 
   block->timestamp = buffer_read_uint32(buffer);
   block->nonce = buffer_read_uint32(buffer);
-  block->already_generated_coins = buffer_read_uint32(buffer);
+  block->difficulty = buffer_read_uint64(buffer);
+  block->cumulative_difficulty = buffer_read_uint64(buffer);
+  block->already_generated_coins = buffer_read_uint64(buffer);
 
   uint8_t *merkle_root = buffer_read_bytes(buffer);
   memcpy(block->merkle_root, merkle_root, HASH_SIZE);
