@@ -72,6 +72,19 @@ static size_t g_num_cumulative_difficulties = 0;
 
 static uint32_t g_timestamps_and_difficulties_height = 0;
 
+static uint8_t g_difficulty_for_next_block_top_hash[HASH_SIZE] = {
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00
+};
+
+static uint32_t g_difficulty_for_next_block = 1;
+
 const char* get_blockchain_dir(void)
 {
   return g_blockchain_dir;
@@ -181,6 +194,8 @@ int close_blockchain(void)
   g_num_timestamps = 0;
   g_num_cumulative_difficulties = 0;
   g_timestamps_and_difficulties_height = 0;
+
+  g_difficulty_for_next_block = 0;
 
   close_backup_blockchain();
   return 0;
@@ -439,7 +454,20 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
 uint64_t get_next_block_difficulty(void)
 {
-  return get_block_difficulty(get_block_height());
+  uint32_t current_block_height = get_block_height();
+  uint8_t *current_block_hash = get_current_block_hash();
+
+  if (compare_block_hash(current_block_hash, (uint8_t*)&g_difficulty_for_next_block_top_hash))
+  {
+    return g_difficulty_for_next_block;
+  }
+
+  uint64_t difficulty = get_block_difficulty(current_block_height);
+
+  memcpy(g_difficulty_for_next_block_top_hash, current_block_hash, HASH_SIZE);
+  g_difficulty_for_next_block = difficulty;
+
+  return difficulty;
 }
 
 int valid_block_median_timestamp(block_t *block)
