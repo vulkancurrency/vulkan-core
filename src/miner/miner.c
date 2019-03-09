@@ -81,7 +81,7 @@ void stop_mining(void)
 
 block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
 {
-  uint32_t nonce = 0;
+  uint32_t nonce = (uint32_t)RANDOM_RANGE(0, UINT32_MAX);
   uint32_t current_time = get_current_time();
   uint32_t current_block_height = get_block_height();
 
@@ -92,12 +92,13 @@ block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
   memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
 
   block->timestamp = current_time;
+  block->nonce = nonce;
   block->difficulty = get_next_block_difficulty();
   block->cumulative_difficulty = previous_block->cumulative_difficulty + block->difficulty;
   block->already_generated_coins = already_generated_coins + block_reward;
 
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t*) * block->transaction_count);
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
   transaction_t *tx = make_generation_tx(wallet, current_block_height, already_generated_coins, block_reward);
   block->transactions[0] = tx;
@@ -107,10 +108,9 @@ block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
 
   while (!valid_block_hash(block))
   {
-    block->nonce = nonce;
-
-    hash_block(block);
     nonce++;
+    block->nonce = nonce;
+    hash_block(block);
   }
 
   return block;

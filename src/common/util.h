@@ -40,6 +40,8 @@ extern "C"
 #define HASH_SIZE 32
 #define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
+#define RANDOM_RANGE(min, max) MAX(rand() % max, min)
+
 uint16_t get_num_logical_cores(void);
 
 int string_equals(const char *string, const char *equals);
