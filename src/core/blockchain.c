@@ -444,11 +444,14 @@ uint64_t get_block_difficulty(uint32_t block_height)
     g_timestamps_and_difficulties_height = height;
   }
 
-  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * MIN(g_num_timestamps, DIFFICULTY_WINDOW));
-  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW));
+  size_t num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
+  size_t num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
 
-  difficulty_info.num_timestamps = g_num_timestamps;
-  difficulty_info.num_cumulative_difficulties = g_num_cumulative_difficulties;
+  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * num_timestamps);
+  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * num_cumulative_difficulties);
+
+  difficulty_info.num_timestamps = num_timestamps;
+  difficulty_info.num_cumulative_difficulties = num_cumulative_difficulties;
   difficulty_info.target_seconds = DIFFICULTY_TARGET;
 
   uint64_t difficulty = get_next_difficulty(difficulty_info);
