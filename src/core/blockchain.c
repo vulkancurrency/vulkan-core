@@ -166,6 +166,22 @@ int close_blockchain(void)
   rocksdb_close(g_blockchain_db);
   g_blockchain_is_open = 0;
 
+  if (g_timestamps != NULL)
+  {
+    vector_free(g_timestamps);
+    g_timestamps = NULL;
+  }
+
+  if (g_cumulative_difficulties != NULL)
+  {
+    vector_free(g_cumulative_difficulties);
+    g_cumulative_difficulties = NULL;
+  }
+
+  g_num_timestamps = 0;
+  g_num_cumulative_difficulties = 0;
+  g_timestamps_and_difficulties_height = 0;
+
   close_backup_blockchain();
   return 0;
 }
