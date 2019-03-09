@@ -130,7 +130,7 @@ inline uint64_t ident64(uint64_t x)
   return x;
 }
 
-int check_hash(uint8_t *hash, uint64_t difficulty)
+int check_hash(const uint8_t *hash, uint64_t difficulty)
 {
   uint64_t low = 0, high = 0, top = 0, cur = 0;
   mul(swap64le(((const uint64_t*)hash)[3]), difficulty, &top, &high);

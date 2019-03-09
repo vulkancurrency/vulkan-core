@@ -42,5 +42,5 @@ typedef struct DifficultyInfo
   uint32_t target_seconds;
 } difficulty_info_t;
 
-int check_hash(uint8_t *hash, uint64_t difficulty);
+int check_hash(const uint8_t *hash, uint64_t difficulty);
 uint64_t get_next_difficulty(difficulty_info_t difficulty_info);
