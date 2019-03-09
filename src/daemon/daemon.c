@@ -53,14 +53,17 @@ static block_t* create_genesis_block(void)
 {
   block_t *block = make_block();
   block->timestamp = genesis_block.timestamp;
+  block->nonce = genesis_block.nonce;
+  block->difficulty = 1;
+  block->cumulative_difficulty = block->difficulty;
   hash_block(block);
 
-  int i = 0;
+  int nonce = 0;
   while (!valid_block_hash(block))
   {
-    block->nonce = i;
+    block->nonce = nonce;
     hash_block(block);
-    i++;
+    nonce++;
   }
 
   return block;
@@ -92,6 +95,7 @@ static int parse_commandline_args(int argc, char **argv)
       fprintf(stderr, "Usage: -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->usage);
       return 1;
     }
+
     switch (arg_type)
     {
       case CMD_ARG_HELP:
@@ -138,6 +142,7 @@ static int parse_commandline_args(int argc, char **argv)
           block_t *block = create_genesis_block();
           printf("Generated new genesis block.\n");
           print_block(block);
+          free_block(block);
         }
         return 1;
       case CMD_ARG_MINE:
@@ -151,6 +156,7 @@ static int parse_commandline_args(int argc, char **argv)
         return 1;
     }
   }
+
   return 0;
 }
 
