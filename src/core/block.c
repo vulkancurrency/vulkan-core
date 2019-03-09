@@ -79,7 +79,7 @@ int hash_block(block_t *block)
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
   buffer_free(buffer);
-  crypto_hash_sha256d(block->hash, header, HASH_SIZE);
+  crypto_hash_sha256d(block->hash, header, BLOCK_HEADER_SIZE);
   return 0;
 }
 
