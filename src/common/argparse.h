@@ -64,7 +64,7 @@ static argument_map_t g_arguments_map[] = {
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
-  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "", 0},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "<num_worker_threads>", 1},
   {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", "", 0}
 };
 

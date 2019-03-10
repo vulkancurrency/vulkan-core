@@ -59,9 +59,7 @@ int net_connect(const char *address, int port);
 int net_open_connection(void);
 
 int net_run_server(void);
-void* net_run_server_threaded();
-
-int net_start_server(int threaded, int seed_mode);
+int net_start_server(int seed_mode);
 void net_stop_server(void);
 
 #ifdef __cplusplus

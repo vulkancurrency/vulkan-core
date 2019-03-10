@@ -26,7 +26,9 @@
 #pragma once
 
 #include <stdlib.h>
-#include <pthread.h>
+#include <stdint.h>
+
+#include "tinycthread.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -40,7 +42,7 @@ typedef struct Queue
   int num_objects;
   int max_index;
   void *queue_objects[MAX_QUEUE_SIZE];
-  pthread_mutex_t mutex;
+  mtx_t lock;
 } queue_t;
 
 queue_t* queue_init(void);

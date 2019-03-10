@@ -41,6 +41,7 @@
 #include <config.h>
 
 #include "common/task.h"
+#include "common/tinycthread.h"
 
 #include "core/blockchainparams.h"
 #include "core/net.h"
@@ -56,7 +57,7 @@ static int g_net_bind_port = P2P_PORT;
 static pittacus_gossip_t *g_net_gossip = NULL;
 static task_t *g_net_resync_chain_task = NULL;
 
-static pthread_mutex_t g_net_recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+static mtx_t g_net_recv_mutex;
 
 void net_set_gossip(pittacus_gossip_t *gossip)
 {
@@ -161,13 +162,13 @@ void net_setup_port_mapping(int port)
 
 void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size)
 {
-  pthread_mutex_lock(&g_net_recv_mutex);
+  mtx_lock(&g_net_recv_mutex);
   if (handle_receive_packet(gossip, recipient, recipient_len, data, data_size))
   {
     fprintf(stderr, "Failed to handle an incoming packet!\n");
   }
 
-  pthread_mutex_unlock(&g_net_recv_mutex);
+  mtx_unlock(&g_net_recv_mutex);
 }
 
 int net_send_data(pittacus_gossip_t *gossip, const uint8_t *data, size_t data_size)
@@ -355,34 +356,21 @@ int net_run_server(void)
   return 0;
 }
 
-void* net_run_server_threaded()
-{
-  net_run_server();
-  return NULL;
-}
-
-int net_start_server(int threaded, int seed_mode)
+int net_start_server(int seed_mode)
 {
   if(g_net_server_running)
   {
     return 1;
   }
 
+  mtx_init(&g_net_recv_mutex, mtx_plain);
+
   g_net_server_running = 1;
   g_net_seed_mode = seed_mode;
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
 
-  if (threaded)
-  {
-    pthread_t thread;
-    pthread_create(&thread, NULL, net_run_server_threaded, NULL);
-    return 0;
-  }
-  else
-  {
-    return net_run_server();
-  }
+  return net_run_server();
 }
 
 void net_stop_server(void)
@@ -391,5 +379,7 @@ void net_stop_server(void)
   {
     return;
   }
+
+  mtx_destroy(&g_net_recv_mutex);
   g_net_server_running = 0;
 }

@@ -26,41 +26,40 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
-#include <sched.h>
-#include <pthread.h>
 
 #include "queue.h"
 #include "task.h"
+#include "tinycthread.h"
 #include "util.h"
 
-static int taskmgr_next_task_id = -1;
-static int taskmgr_next_scheduler_id = -1;
+static int g_taskmgr_next_task_id = -1;
+static int g_taskmgr_next_scheduler_id = -1;
 
-static queue_t *taskmgr_task_queue = NULL;
-static queue_t *taskmgr_scheduler_queue = NULL;
+static queue_t *g_taskmgr_task_queue = NULL;
+static queue_t *g_taskmgr_scheduler_queue = NULL;
 
-static int taskmgr_running = 0;
+static int g_taskmgr_running = 0;
 
 int taskmgr_init(void)
 {
-  if (taskmgr_running)
+  if (g_taskmgr_running)
   {
     return 1;
   }
 
-  taskmgr_running = 1;
+  g_taskmgr_running = 1;
 
-  taskmgr_task_queue = queue_init();
-  taskmgr_scheduler_queue = queue_init();
+  g_taskmgr_task_queue = queue_init();
+  g_taskmgr_scheduler_queue = queue_init();
 
   return 0;
 }
 
 int taskmgr_tick(void)
 {
-  if (!queue_get_empty(taskmgr_task_queue))
+  if (!queue_get_empty(g_taskmgr_task_queue))
   {
-    task_t *task = queue_pop_left(taskmgr_task_queue);
+    task_t *task = queue_pop_left(g_taskmgr_task_queue);
     if (!task)
     {
       return 1;
@@ -72,17 +71,17 @@ int taskmgr_tick(void)
       {
         // put the task back into the queue since it's not
         // time yet to call it...
-        queue_push_right(taskmgr_task_queue, task);
+        queue_push_right(g_taskmgr_task_queue, task);
         return 0;
       }
     }
 
-    pthread_mutex_lock(&task->mutex);
+    mtx_lock(&task->lock);
     va_list args;
     va_copy(args, *task->args);
     task_result_t result = task->func(task, args);
     va_end(args);
-    pthread_mutex_unlock(&task->mutex);
+    mtx_unlock(&task->lock);
 
     // process the task result and determine what the
     // task should do next...
@@ -90,12 +89,12 @@ int taskmgr_tick(void)
     {
       case TASK_RESULT_CONT:
         task->delayable = 0;
-        queue_push_right(taskmgr_task_queue, task);
+        queue_push_right(g_taskmgr_task_queue, task);
         break;
       case TASK_RESULT_WAIT:
         task->delayable = 1;
         task->timestamp = get_current_time();
-        queue_push_right(taskmgr_task_queue, task);
+        queue_push_right(g_taskmgr_task_queue, task);
         break;
       case TASK_RESULT_DONE:
       default:
@@ -109,49 +108,62 @@ int taskmgr_tick(void)
 
 int taskmgr_run(void)
 {
-  if (taskmgr_running)
+  if (g_taskmgr_running)
   {
     return 1;
   }
 
-  taskmgr_running = 1;
-  while (taskmgr_running)
+  g_taskmgr_running = 1;
+  while (g_taskmgr_running)
   {
     if (taskmgr_tick())
     {
       return 1;
     }
 
-    sched_yield();
+    // call yield and give another thread a chance
+    // to use the CPU resources for other tasks...
+    thrd_yield();
   }
 
   return 0;
 }
 
-void* taskmgr_scheduler_run()
+int taskmgr_scheduler_run()
 {
-  taskmgr_run();
-  return NULL;
+  while (g_taskmgr_running)
+  {
+    if (taskmgr_tick())
+    {
+      return 1;
+    }
+
+    // call yield and give another thread a chance
+    // to use the CPU resources for other tasks...
+    thrd_yield();
+  }
+
+  return 0;
 }
 
 int taskmgr_shutdown(void)
 {
-  if (!taskmgr_running)
+  if (!g_taskmgr_running)
   {
     return 1;
   }
 
-  taskmgr_running = 0;
+  g_taskmgr_running = 0;
 
-  queue_free(taskmgr_task_queue);
-  queue_free(taskmgr_scheduler_queue);
+  queue_free(g_taskmgr_task_queue);
+  queue_free(g_taskmgr_scheduler_queue);
 
   return 0;
 }
 
 int has_task(task_t *task)
 {
-  return queue_get_index(taskmgr_task_queue, task) != -1;
+  return queue_get_index(g_taskmgr_task_queue, task) != -1;
 }
 
 int has_task_by_id(int id)
@@ -164,26 +176,26 @@ task_t* add_task(callable_func_t func, double delay, ...)
   va_list args;
   va_start(args, delay);
 
-  taskmgr_next_task_id++;
+  g_taskmgr_next_task_id++;
 
   task_t* task = malloc(sizeof(task_t));
-  task->id = taskmgr_next_task_id;
+  task->id = g_taskmgr_next_task_id;
   task->func = func;
   task->args = &args;
   task->delayable = 1;
   task->delay = delay;
   task->timestamp = get_current_time();
 
-  pthread_mutex_init(&task->mutex, NULL);
-  queue_push_right(taskmgr_task_queue, task);
+  mtx_init(&task->lock, mtx_plain);
+  queue_push_right(g_taskmgr_task_queue, task);
   return task;
 }
 
 task_t* get_task_by_id(int id)
 {
-  for (int i = 0; i <= taskmgr_task_queue->max_index; i++)
+  for (int i = 0; i <= g_taskmgr_task_queue->max_index; i++)
   {
-    task_t *task = queue_get(taskmgr_task_queue, i);
+    task_t *task = queue_get(g_taskmgr_task_queue, i);
     if (!task)
     {
       continue;
@@ -200,7 +212,7 @@ task_t* get_task_by_id(int id)
 
 int remove_task(task_t *task)
 {
-  if (queue_remove_object(taskmgr_task_queue, task))
+  if (queue_remove_object(g_taskmgr_task_queue, task))
   {
     return 1;
   }
@@ -229,7 +241,7 @@ int free_task(task_t *task)
   task->delay = 0;
   task->timestamp = 0;
 
-  pthread_mutex_destroy(&task->mutex);
+  mtx_destroy(&task->lock);
   free(task);
   return 0;
 }
@@ -247,7 +259,7 @@ int free_task_by_id(int id)
 
 int has_scheduler(task_scheduler_t *task_scheduler)
 {
-  return queue_get_index(taskmgr_scheduler_queue, task_scheduler) != -1;
+  return queue_get_index(g_taskmgr_scheduler_queue, task_scheduler) != -1;
 }
 
 int has_scheduler_by_id(int id)
@@ -257,33 +269,26 @@ int has_scheduler_by_id(int id)
 
 task_scheduler_t* add_scheduler(void)
 {
-  taskmgr_next_scheduler_id++;
+  g_taskmgr_next_scheduler_id++;
 
   task_scheduler_t* task_scheduler = malloc(sizeof(task_scheduler_t));
-  task_scheduler->id = taskmgr_next_scheduler_id;
+  task_scheduler->id = g_taskmgr_next_scheduler_id;
 
-  if (pthread_attr_init(&task_scheduler->thread_attr) != 0)
+  if (thrd_create(&task_scheduler->thread, taskmgr_scheduler_run, NULL) != thrd_success)
   {
-    fprintf(stderr, "Failed to initialize thread attribute!\n");
+    fprintf(stderr, "Failed to initialize thread: %d!\n", g_taskmgr_next_scheduler_id);
     return NULL;
   }
 
-  if (pthread_create(&task_scheduler->thread, &task_scheduler->thread_attr,
-    taskmgr_scheduler_run, NULL) != 0)
-  {
-    fprintf(stderr, "Failed to initialize thread!\n");
-    return NULL;
-  }
-
-  queue_push_right(taskmgr_scheduler_queue, task_scheduler);
+  queue_push_right(g_taskmgr_scheduler_queue, task_scheduler);
   return task_scheduler;
 }
 
 task_scheduler_t* get_scheduler_by_id(int id)
 {
-  for (int i = 0; i <= taskmgr_scheduler_queue->max_index; i++)
+  for (int i = 0; i <= g_taskmgr_scheduler_queue->max_index; i++)
   {
-    task_scheduler_t *task_scheduler = queue_get(taskmgr_scheduler_queue, i);
+    task_scheduler_t *task_scheduler = queue_get(g_taskmgr_scheduler_queue, i);
     if (task_scheduler->id == id)
     {
       return task_scheduler;
@@ -295,7 +300,7 @@ task_scheduler_t* get_scheduler_by_id(int id)
 
 int remove_scheduler(task_scheduler_t *task_scheduler)
 {
-  if (queue_remove_object(taskmgr_scheduler_queue, task_scheduler))
+  if (queue_remove_object(g_taskmgr_scheduler_queue, task_scheduler))
   {
     return 1;
   }
@@ -322,7 +327,6 @@ int remove_scheduler_by_id(int id)
 int free_scheduler(task_scheduler_t *task_scheduler)
 {
   task_scheduler->id = -1;
-  pthread_attr_destroy(&task_scheduler->thread_attr);
   free(task_scheduler);
   return 0;
 }

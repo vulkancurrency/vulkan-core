@@ -24,9 +24,10 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
-#include <pthread.h>
+#include <stdint.h>
 
 #include "queue.h"
+#include "tinycthread.h"
 
 queue_t* queue_init(void)
 {
@@ -34,7 +35,7 @@ queue_t* queue_init(void)
   queue->num_objects = 0;
   queue->max_index = -1;
 
-  pthread_mutex_init(&queue->mutex, NULL);
+  mtx_init(&queue->lock, mtx_plain);
   return queue;
 }
 
@@ -48,7 +49,7 @@ int queue_free(queue_t *queue)
   queue->num_objects = 0;
   queue->max_index = -1;
 
-  pthread_mutex_destroy(&queue->mutex);
+  mtx_destroy(&queue->lock);
   free(queue);
   return 0;
 }
@@ -123,7 +124,7 @@ int queue_push(queue_t *queue, int index, void *queue_object)
 
 int queue_push_left(queue_t *queue, void *queue_object)
 {
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   for (int i = queue->max_index + 1; i >= 0; i--)
   {
     // shift all object over right by one index
@@ -131,15 +132,15 @@ int queue_push_left(queue_t *queue, void *queue_object)
   }
 
   int result = queue_push(queue, 0, queue_object);
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   return result;
 }
 
 int queue_push_right(queue_t *queue, void *queue_object)
 {
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   int result = queue_push(queue, queue->max_index + 1, queue_object);
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   return result;
 }
 
@@ -167,17 +168,17 @@ int queue_remove_object(queue_t *queue, void *queue_object)
     return 1;
   }
 
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   int index = queue_get_index(queue, queue_object);
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   if (index == -1)
   {
     return 1;
   }
 
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   int result = queue_remove(queue, index);
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   return result;
 }
 
@@ -190,7 +191,7 @@ void* queue_pop(queue_t *queue, int index)
 
 void* queue_pop_left(queue_t *queue)
 {
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   void *queue_object = queue_pop(queue, 0);
   for (int i = 1; i <= queue->max_index; i++)
   {
@@ -202,14 +203,14 @@ void* queue_pop_left(queue_t *queue)
   // will remain unused in memory until cleared
   queue->queue_objects[queue->max_index] = NULL;
   queue->max_index--;
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   return queue_object;
 }
 
 void* queue_pop_right(queue_t *queue)
 {
-  pthread_mutex_lock(&queue->mutex);
+  mtx_lock(&queue->lock);
   void *queue_object = queue_pop(queue, queue->max_index);
-  pthread_mutex_unlock(&queue->mutex);
+  mtx_unlock(&queue->lock);
   return queue_object;
 }

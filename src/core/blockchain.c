@@ -28,10 +28,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include <pthread.h>
 
 #include <rocksdb/c.h>
 
+#include "common/tinycthread.h"
 #include "common/util.h"
 #include "common/vector.h"
 
@@ -41,7 +41,7 @@
 
 #include "wallet/wallet.h"
 
-static pthread_mutex_t g_blockchain_lock = PTHREAD_MUTEX_INITIALIZER;
+static mtx_t g_blockchain_lock;
 
 static uint8_t g_blockchain_current_block_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
@@ -101,6 +101,7 @@ int open_blockchain(const char *blockchain_dir)
     return 0;
   }
 
+  mtx_init(&g_blockchain_lock, mtx_plain);
   g_blockchain_dir = blockchain_dir;
 
   char *err = NULL;
@@ -174,6 +175,8 @@ int close_blockchain(void)
   {
     return 1;
   }
+
+  mtx_destroy(&g_blockchain_lock);
 
   rocksdb_close(g_blockchain_db);
   g_blockchain_is_open = 0;
@@ -380,7 +383,7 @@ uint64_t get_block_difficulty(uint32_t block_height)
   uint32_t height = block_height;
   height++;
 
-  pthread_mutex_lock(&g_blockchain_lock);
+  mtx_lock(&g_blockchain_lock);
   if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
     uint32_t index = height - 1;
@@ -454,7 +457,7 @@ uint64_t get_block_difficulty(uint32_t block_height)
   difficulty_info.target_seconds = DIFFICULTY_TARGET;
 
   uint64_t difficulty = get_next_difficulty(difficulty_info);
-  pthread_mutex_unlock(&g_blockchain_lock);
+  mtx_unlock(&g_blockchain_lock);
   return difficulty;
 }
 
@@ -553,9 +556,9 @@ int validate_and_insert_block(block_t *block)
     return 0;
   }
 
-  pthread_mutex_lock(&g_blockchain_lock);
+  mtx_lock(&g_blockchain_lock);
   int result = insert_block(block);
-  pthread_mutex_unlock(&g_blockchain_lock);
+  mtx_unlock(&g_blockchain_lock);
   return result;
 }
 
@@ -1200,7 +1203,7 @@ uint64_t get_balance_for_address(uint8_t *address)
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
-  pthread_mutex_lock(&g_blockchain_lock);
+  mtx_lock(&g_blockchain_lock);
   for (rocksdb_iter_seek(iterator, "c", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
     size_t key_length;
@@ -1230,7 +1233,7 @@ uint64_t get_balance_for_address(uint8_t *address)
     }
   }
 
-  pthread_mutex_unlock(&g_blockchain_lock);
+  mtx_unlock(&g_blockchain_lock);
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);

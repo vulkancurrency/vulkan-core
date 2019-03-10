@@ -25,11 +25,13 @@
 
 #pragma once
 
+#include <stdlib.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <time.h>
-#include <pthread.h>
 
 #include "queue.h"
+#include "tinycthread.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -53,20 +55,19 @@ typedef struct Task
   int delayable;
   double delay;
   uint32_t timestamp;
-  pthread_mutex_t mutex;
+  mtx_t lock;
 } task_t;
 
 typedef struct TaskScheduler
 {
   int id;
-  pthread_t thread;
-  pthread_attr_t thread_attr;
+  thrd_t thread;
 } task_scheduler_t;
 
 int taskmgr_init(void);
 int taskmgr_tick(void);
 int taskmgr_run(void);
-void* taskmgr_scheduler_run();
+int taskmgr_scheduler_run();
 int taskmgr_shutdown(void);
 
 int has_task(task_t *task);
