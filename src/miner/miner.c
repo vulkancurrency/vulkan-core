@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
-#include "assert.h"
+#include <assert.h>
 
 #include "common/logger.h"
 #include "common/task.h"
