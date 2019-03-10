@@ -1200,6 +1200,7 @@ uint64_t get_balance_for_address(uint8_t *address)
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
+  pthread_mutex_lock(&g_blockchain_lock);
   for (rocksdb_iter_seek(iterator, "c", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
     size_t key_length;
@@ -1209,9 +1210,13 @@ uint64_t get_balance_for_address(uint8_t *address)
       size_t value_length;
       uint8_t *value = (uint8_t*)rocksdb_iter_value(iterator, &value_length);
       unspent_transaction_t *tx = unspent_transaction_from_serialized(value, value_length);
+      assert(tx != NULL);
+
       for (int i = 0; i < tx->unspent_txout_count; i++)
       {
         unspent_output_transaction_t *unspent_txout = tx->unspent_txouts[i];
+        assert(unspent_txout != NULL);
+
         if (!compare_addresses(unspent_txout->address, address))
         {
           continue;
@@ -1225,7 +1230,10 @@ uint64_t get_balance_for_address(uint8_t *address)
     }
   }
 
+  pthread_mutex_unlock(&g_blockchain_lock);
+
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+
   return balance;
 }
