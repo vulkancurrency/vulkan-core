@@ -105,7 +105,7 @@ block_t *compute_next_block(wallet_t *wallet, block_t *previous_block)
   return block;
 }
 
-int worker_mining_thread(void *arg)
+static int worker_mining_thread(void *arg)
 {
   size_t worker_index = (size_t)arg;
 

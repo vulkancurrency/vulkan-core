@@ -44,10 +44,10 @@ size_t get_num_worker_threads(void);
 void set_current_wallet(wallet_t *current_wallet);
 wallet_t *get_current_wallet(void);
 
+block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);
+
 int start_mining(void);
 void stop_mining(void);
-
-block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);
 
 #ifdef __cplusplus
 }
