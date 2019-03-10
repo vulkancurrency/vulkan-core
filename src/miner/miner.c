@@ -180,10 +180,6 @@ static int worker_mining_thread(void *arg)
 
     free_block(previous_block);
     free_block(block);
-
-    // yield thread to give other threads a chance to
-    // find a block and submit it...
-    thrd_yield();
   }
 
   return 0;
