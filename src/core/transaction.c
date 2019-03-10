@@ -545,10 +545,10 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t already
   transaction_t *tx = malloc(sizeof(transaction_t));
 
   tx->txout_count = transaction_entries.num_entries;
-  tx->txouts = malloc(sizeof(output_transaction_t*) * tx->txout_count);
+  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
 
   tx->txin_count = transaction_entries.num_entries;
-  tx->txins = malloc(sizeof(input_transaction_t*) * tx->txin_count);
+  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
 
   for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
   {
