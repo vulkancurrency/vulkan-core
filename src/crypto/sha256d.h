@@ -25,4 +25,6 @@
 
 #pragma once
 
+#include <stdint.h>
+
 int crypto_hash_sha256d(unsigned char *out, const unsigned char *in, unsigned long long inlen);

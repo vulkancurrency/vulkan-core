@@ -23,6 +23,8 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdint.h>
+
 #include <sodium.h>
 
 #include "sha256d.h"
