@@ -146,7 +146,7 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   return block;
 }
 
-static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_height, block_t *block)
+static void worker_submit_block(miner_worker_t *worker, block_t *block)
 {
   assert(worker != NULL);
   assert(block != NULL);
@@ -155,7 +155,7 @@ static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_h
   // into the blockchain before the other workers...
   if (validate_and_insert_block(block))
   {
-    LOG_INFO("Worker: %hu found block at height: %d!", worker->id, current_block_height);
+    LOG_INFO("Worker: %hu found block at height: %d!", worker->id, get_block_height());
     print_block(block);
     handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
   }
@@ -166,18 +166,16 @@ static int worker_mining_thread(void *arg)
   miner_worker_t *worker = (miner_worker_t*)arg;
   assert(worker != NULL);
 
-  uint32_t current_block_height = 0;
   block_t *previous_block = NULL;
   block_t *block = NULL;
 
   while (g_miner_is_mining)
   {
-    current_block_height = get_block_height();
     previous_block = get_current_block();
     block = compute_next_block(worker, g_current_wallet, previous_block);
 
     mtx_lock(&g_worker_lock);
-    worker_submit_block(worker, current_block_height, block);
+    worker_submit_block(worker, block);
     mtx_unlock(&g_worker_lock);
 
     free_block(previous_block);
