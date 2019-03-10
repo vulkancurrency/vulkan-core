@@ -31,7 +31,6 @@
 
 #include "core/block.h"
 #include "core/blockchainparams.h"
-#include "core/vulkan.pb-c.h"
 #include "core/transaction.h"
 
 SUITE(block_suite);

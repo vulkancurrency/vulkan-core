@@ -48,7 +48,7 @@ int start_mining(void)
     return 1;
   }
   g_miner_is_mining = 1;
-  PWallet *wallet = get_wallet();
+  wallet_t *wallet = get_wallet();
   printf("Started mining...\n");
 
   while (g_miner_is_mining)
@@ -66,7 +66,6 @@ int start_mining(void)
     free_block(block);
   }
 
-  pwallet__free_unpacked(wallet, NULL);
   return 0;
 }
 
@@ -79,7 +78,7 @@ void stop_mining(void)
   g_miner_is_mining = 0;
 }
 
-block_t *compute_next_block(PWallet *wallet, block_t *previous_block)
+block_t *compute_next_block(wallet_t *wallet, block_t *previous_block)
 {
   uint32_t nonce = (uint32_t)RANDOM_RANGE(0, UINT32_MAX);
   uint32_t current_time = get_current_time();

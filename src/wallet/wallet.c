@@ -24,13 +24,16 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include <sodium.h>
 
 #include <rocksdb/c.h>
 
+#include "common/buffer.h"
 #include "common/util.h"
 
 #include "core/blockchain.h"
@@ -41,6 +44,57 @@
 #include "wallet/wallet.h"
 
 static const char *g_wallet_filename = NULL;
+
+wallet_t* make_wallet(void)
+{
+  wallet_t *wallet = malloc(sizeof(wallet));
+  wallet->balance = 0;
+  return wallet;
+}
+
+int free_wallet(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+  free(wallet);
+  return 0;
+}
+
+int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
+{
+  assert(buffer != NULL);
+  assert(wallet != NULL);
+
+  buffer_write_bytes(buffer, wallet->secret_key, crypto_sign_SECRETKEYBYTES);
+  buffer_write_bytes(buffer, wallet->public_key, crypto_sign_PUBLICKEYBYTES);
+  buffer_write_bytes(buffer, wallet->address, ADDRESS_SIZE);
+  buffer_write_uint64(buffer, wallet->balance);
+
+  return 0;
+}
+
+wallet_t* deserialize_wallet(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+
+  wallet_t *wallet = make_wallet();
+
+  uint8_t *secret_key = buffer_read_bytes(buffer);
+  memcpy(&wallet->secret_key, secret_key, crypto_sign_SECRETKEYBYTES);
+
+  uint8_t *public_key = buffer_read_bytes(buffer);
+  memcpy(&wallet->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
+
+  uint8_t *address = buffer_read_bytes(buffer);
+  memcpy(&wallet->address, address, ADDRESS_SIZE);
+
+  wallet->balance = buffer_read_uint64(buffer);
+
+  free(secret_key);
+  free(public_key);
+  free(address);
+
+  return wallet;
+}
 
 /*
  * open_wallet()
@@ -103,32 +157,21 @@ int new_wallet(const char *wallet_filename)
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
 
-  PWallet *wallet = malloc(sizeof(PWallet));
-  pwallet__init(wallet);
-
-  wallet->secret_key.len = crypto_sign_SECRETKEYBYTES;
-  wallet->secret_key.data = malloc(sizeof(uint8_t) * crypto_sign_SECRETKEYBYTES);
-  memcpy(wallet->secret_key.data, sk, crypto_sign_SECRETKEYBYTES);
-
-  wallet->public_key.len = crypto_sign_PUBLICKEYBYTES;
-  wallet->public_key.data = malloc(sizeof(uint8_t) * crypto_sign_PUBLICKEYBYTES);
-  memcpy(wallet->public_key.data, pk, crypto_sign_PUBLICKEYBYTES);
-
-  wallet->address.len = ADDRESS_SIZE;
-  wallet->address.data = malloc(sizeof(uint8_t) * ADDRESS_SIZE);
-  public_key_to_address(wallet->address.data, pk);
-
+  wallet_t *wallet = make_wallet();
+  memcpy(&wallet->secret_key, &sk, crypto_sign_SECRETKEYBYTES);
+  memcpy(&wallet->public_key, &pk, crypto_sign_PUBLICKEYBYTES);
+  memcpy(&wallet->address, &address, ADDRESS_SIZE);
   wallet->balance = 0;
 
-  uint32_t buffer_len = pwallet__get_packed_size(wallet);
-  uint8_t *buffer = malloc(buffer_len);
+  buffer_t *buffer = buffer_init();
+  serialize_wallet(buffer, wallet);
 
-  pwallet__pack(wallet, buffer);
+  const uint8_t *data = buffer_get_data(buffer);
+  uint32_t data_len = buffer_get_size(buffer);
 
-  rocksdb_put(db, woptions, "0", 1, (char *) buffer, buffer_len, &err);
-
-  pwallet__free_unpacked(wallet, NULL);
-  free(buffer);
+  rocksdb_put(db, woptions, "0", 1, (char*)data, data_len, &err);
+  buffer_free(buffer);
+  free_wallet(wallet);
 
   if (err != NULL)
   {
@@ -144,7 +187,7 @@ int new_wallet(const char *wallet_filename)
   return 0;
 }
 
-PWallet *get_wallet(void)
+wallet_t *get_wallet(void)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(g_wallet_filename, err);
@@ -155,28 +198,40 @@ PWallet *get_wallet(void)
     rocksdb_free(err);
   }
 
-  size_t buffer_len;
+  size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *buffer = (uint8_t *) rocksdb_get(db, roptions, "0", 1, &buffer_len, &err);
-  PWallet *proto_wallet = pwallet__unpack(NULL, buffer_len, buffer);
+  uint8_t *wallet_data = (uint8_t*)rocksdb_get(db, roptions, "0", 1, &read_len, &err);
 
-  rocksdb_free(roptions);
+  if (err != NULL || wallet_data == NULL)
+  {
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    return NULL;
+  }
+
+  buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
+  wallet_t *wallet = deserialize_wallet(buffer);
+  buffer_free(buffer);
+
+  rocksdb_free(wallet_data);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+
   rocksdb_close(db);
-
-  return proto_wallet;
+  return wallet;
 }
 
-void print_wallet(PWallet *wallet)
+void print_wallet(wallet_t *wallet)
 {
   int public_address_len = (ADDRESS_SIZE * 2) + 1;
   char public_address[public_address_len];
 
   for (int i = 0; i < ADDRESS_SIZE; i++)
   {
-    sprintf(&public_address[i*2], "%02x", (int) wallet->address.data[i]);
+    sprintf(&public_address[i*2], "%02x", (int) wallet->address[i]);
   }
 
-  uint64_t balance = get_balance_for_address(wallet->address.data) / COIN;
+  uint64_t balance = get_balance_for_address(wallet->address) / COIN;
 
   printf("Public Address: %s\n", public_address);
   printf("Balance: %llu\n", balance);

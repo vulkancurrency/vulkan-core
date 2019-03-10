@@ -38,7 +38,6 @@
 #include "blockchainparams.h"
 #include "difficulty.h"
 #include "merkle.h"
-#include "vulkan.pb-c.h"
 
 #include "crypto/sha256d.h"
 

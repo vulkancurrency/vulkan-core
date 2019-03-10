@@ -27,20 +27,37 @@
 
 #include <stdint.h>
 
+#include <sodium.h>
+
 #include <rocksdb/c.h>
 
+#include "common/util.h"
+
 #include "core/blockchainparams.h"
-#include "core/vulkan.pb-c.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+typedef struct Wallet
+{
+  uint8_t secret_key[crypto_sign_SECRETKEYBYTES];
+  uint8_t public_key[crypto_sign_PUBLICKEYBYTES];
+  uint8_t address[ADDRESS_SIZE];
+  uint64_t balance;
+} wallet_t;
+
+wallet_t* make_wallet(void);
+int free_wallet(wallet_t *wallet);
+
+int serialize_wallet(buffer_t *buffer, wallet_t *wallet);
+wallet_t* deserialize_wallet(buffer_t *buffer);
+
 rocksdb_t *open_wallet(const char *wallet_filename, char *err);
 int new_wallet(const char *wallet_filename);
-PWallet *get_wallet(void);
-void print_wallet(PWallet *wallet);
+wallet_t *get_wallet(void);
+void print_wallet(wallet_t *wallet);
 
 int compare_addresses(uint8_t *address, uint8_t *other_address);
 

@@ -38,7 +38,6 @@
 #include "block.h"
 #include "blockchain.h"
 #include "difficulty.h"
-#include "vulkan.pb-c.h"
 
 #include "wallet/wallet.h"
 

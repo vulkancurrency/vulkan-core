@@ -27,11 +27,11 @@
 
 #include <stdint.h>
 
+#include "common/buffer.h"
 #include "common/util.h"
 
 #include "blockchainparams.h"
 #include "transaction.h"
-#include "vulkan.pb-c.h"
 
 #ifdef __cplusplus
 extern "

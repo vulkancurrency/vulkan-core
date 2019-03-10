@@ -36,7 +36,6 @@
 
 #include "core/blockchain.h"
 #include "core/transaction.h"
-#include "core/vulkan.pb-c.h"
 
 #include "crypto/sha256d.h"
 
@@ -541,7 +540,7 @@ output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
   return txout;
 }
 
-transaction_t* make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries)
+transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t already_generated_coins, transaction_entries_t transaction_entries)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
 
@@ -564,17 +563,17 @@ transaction_t* make_tx(PWallet *wallet, uint32_t block_height, uint64_t already_
     tx->txins[i] = txin;
     tx->txouts[i] = txout;
 
-    sign_txin(txin, tx, wallet->public_key.data, wallet->secret_key.data);
+    sign_txin(txin, tx, wallet->public_key, wallet->secret_key);
   }
 
   compute_self_tx_id(tx);
   return tx;
 }
 
-transaction_t* make_generation_tx(PWallet *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward)
+transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t already_generated_coins, uint64_t block_reward)
 {
   transaction_entry_t transaction_entry;
-  transaction_entry.address = wallet->address.data;
+  transaction_entry.address = wallet->address;
   transaction_entry.amount = block_reward;
 
   transaction_entries_t transaction_entries;

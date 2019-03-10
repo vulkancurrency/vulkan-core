@@ -39,7 +39,7 @@ extern "C"
 int start_mining(void);
 void stop_mining(void);
 
-block_t *compute_next_block(PWallet *wallet, block_t *previous_block);
+block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);
 
 #ifdef __cplusplus
 }
