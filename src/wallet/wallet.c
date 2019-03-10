@@ -43,11 +43,9 @@
 
 #include "wallet/wallet.h"
 
-static const char *g_wallet_filename = NULL;
-
-wallet_t* make_wallet(void)
+wallet_t *make_wallet(void)
 {
-  wallet_t *wallet = malloc(sizeof(wallet));
+  wallet_t *wallet = malloc(sizeof(wallet_t));
   wallet->balance = 0;
   return wallet;
 }
@@ -72,7 +70,7 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   return 0;
 }
 
-wallet_t* deserialize_wallet(buffer_t *buffer)
+wallet_t *deserialize_wallet(buffer_t *buffer)
 {
   assert(buffer != NULL);
 
@@ -102,8 +100,6 @@ wallet_t* deserialize_wallet(buffer_t *buffer)
  */
 rocksdb_t *open_wallet(const char *wallet_filename, char *err)
 {
-  g_wallet_filename = wallet_filename;
-
   rocksdb_t *db;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
@@ -111,38 +107,29 @@ rocksdb_t *open_wallet(const char *wallet_filename, char *err)
   return rocksdb_open(options, wallet_filename, &err);
 }
 
-int new_wallet(const char *wallet_filename)
+wallet_t *new_wallet(const char *wallet_filename)
 {
-  // Open DB
-
   char *err = NULL;
   rocksdb_t *db = open_wallet(wallet_filename, err);
 
   if (err != NULL)
   {
     fprintf(stderr, "Could not open wallet\n");
-    return 1;
+    rocksdb_free(err);
+    return NULL;
   }
-
-  rocksdb_free(err);
-  err = NULL;
-
-  // ----
 
   size_t read_len;
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  char *initialized = rocksdb_get(db, roptions, "0", 1, &read_len, &err);
+  uint8_t *initialized = (uint8_t*)rocksdb_get(db, roptions, "0", 1, &read_len, &err);
 
   if (initialized != NULL)
   {
-    rocksdb_free(initialized);
-    fprintf(stderr, "Already initialized.\n");
-    return 1;
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    rocksdb_close(db);
+    return NULL;
   }
-
-  rocksdb_free(err);
-
-  // ----
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
@@ -152,10 +139,6 @@ int new_wallet(const char *wallet_filename)
   crypto_sign_keypair(pk, sk);
   crypto_sign_ed25519_sk_to_seed(seed, sk);
   public_key_to_address(address, pk);
-
-  // ---
-
-  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
 
   wallet_t *wallet = make_wallet();
   memcpy(&wallet->secret_key, &sk, crypto_sign_SECRETKEYBYTES);
@@ -169,33 +152,39 @@ int new_wallet(const char *wallet_filename)
   const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(db, woptions, "0", 1, (char*)data, data_len, &err);
   buffer_free(buffer);
-  free_wallet(wallet);
 
   if (err != NULL)
   {
     fprintf(stderr, "Could not write to wallet database\n");
-    return 1;
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    rocksdb_writeoptions_destroy(woptions);
+    rocksdb_close(db);
+    return NULL;
   }
 
   rocksdb_free(err);
-  err = NULL;
-
-  // Close DB
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_writeoptions_destroy(woptions);
   rocksdb_close(db);
-  return 0;
+  return wallet;
 }
 
-wallet_t *get_wallet(void)
+wallet_t *get_wallet(const char *wallet_filename)
 {
   char *err = NULL;
-  rocksdb_t *db = open_wallet(g_wallet_filename, err);
+  rocksdb_t *db = open_wallet(wallet_filename, err);
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not open wallet database\n");
+    fprintf(stderr, "Could not open wallet database!\n");
+
     rocksdb_free(err);
+    rocksdb_close(db);
+    return NULL;
   }
 
   size_t read_len;
@@ -204,8 +193,11 @@ wallet_t *get_wallet(void)
 
   if (err != NULL || wallet_data == NULL)
   {
+    fprintf(stderr, "Could not open wallet database!\n");
+
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+    rocksdb_close(db);
     return NULL;
   }
 
@@ -216,7 +208,6 @@ wallet_t *get_wallet(void)
   rocksdb_free(wallet_data);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
-
   rocksdb_close(db);
   return wallet;
 }

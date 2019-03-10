@@ -41,16 +41,15 @@
 
 static int g_miner_is_mining = 0;
 
-int start_mining(void)
+int start_mining(wallet_t *wallet)
 {
   if (g_miner_is_mining)
   {
     return 1;
   }
-  g_miner_is_mining = 1;
-  wallet_t *wallet = get_wallet();
-  printf("Started mining...\n");
 
+  g_miner_is_mining = 1;
+  printf("Started mining...\n");
   while (g_miner_is_mining)
   {
     block_t *previous_block = get_current_block();

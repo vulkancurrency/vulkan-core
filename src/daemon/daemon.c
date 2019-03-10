@@ -24,8 +24,11 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <signal.h>
 #include <string.h>
+#include <assert.h>
 
 #include <sodium.h>
 
@@ -105,6 +108,7 @@ static int parse_commandline_args(int argc, char **argv)
           argument_map_t *argument_map = &g_arguments_map[i];
           printf("  -%s, --%s: %s\n", argument_map->name, argument_map->name, argument_map->help);
         }
+
         printf("\n");
         return 1;
       case CMD_ARG_VERSION:
@@ -133,9 +137,6 @@ static int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_WALLET_FILENAME:
         i++;
         g_wallet_filename = (const char*)argv[i];
-        break;
-      case CMD_ARG_NEW_WALLET:
-        new_wallet(g_wallet_filename);
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
         {
@@ -186,8 +187,16 @@ int main(int argc, char **argv)
 
   if (g_enable_miner)
   {
+    wallet_t *wallet = new_wallet(g_wallet_filename);
+    if (wallet == NULL)
+    {
+      wallet = get_wallet(g_wallet_filename);
+    }
+
+    assert(wallet != NULL);
     net_start_server(1, g_enable_seed_mode);
-    start_mining();
+    start_mining(wallet);
+    free_wallet(wallet);
   }
   else
   {

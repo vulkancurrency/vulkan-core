@@ -36,7 +36,7 @@ extern "C"
 {
 #endif
 
-int start_mining(void);
+int start_mining(wallet_t *wallet);
 void stop_mining(void);
 
 block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);
