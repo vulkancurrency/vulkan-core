@@ -64,9 +64,6 @@ include_directories(${ROCKSDB_INCLUDE_DIR})
 add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
 
-add_subdirectory(external/protobuf-c)
-include_directories(external/protobuf-c)
-
 add_subdirectory(external/pittacus)
 include_directories(external/pittacus/src)
 

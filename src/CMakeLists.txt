@@ -54,8 +54,6 @@ else()
   target_link_libraries(core pittacus)
 endif()
 
-target_link_libraries(core protobuf-c)
-
 if(UPNP_STATIC)
   target_link_libraries(core libminiupnpc-static)
 else()
