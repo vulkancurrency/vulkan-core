@@ -32,6 +32,7 @@
 #include <gossip.h>
 
 #include "common/buffer.h"
+#include "common/logger.h"
 #include "common/util.h"
 
 #include "blockchain.h"
@@ -237,7 +238,7 @@ void* deserialize_message(packet_t *packet)
         return message;
       }*/
     default:
-      fprintf(stderr, "Could not deserialize packet with unknown packet id: %d\n", packet->id);
+      LOG_DEBUG("Could not deserialize packet with unknown packet id: %d!", packet->id);
       buffer_free(buffer);
       return NULL;
   }
@@ -413,7 +414,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
       }
       break;*/
     default:
-      fprintf(stderr, "Could not serialize packet with unknown packet id: %d\n", packet_id);
+      LOG_DEBUG("Could not serialize packet with unknown packet id: %d!", packet_id);
       return NULL;
   }
 
@@ -519,7 +520,7 @@ void free_message(uint32_t packet_id, void *message_object)
       }
       break;*/
     default:
-      fprintf(stderr, "Could not free packet with unknown packet id: %d\n", packet_id);
+      LOG_DEBUG("Could not free packet with unknown packet id: %d!", packet_id);
       break;
   }
 }
@@ -557,11 +558,11 @@ int clear_sync_request(int sync_success)
   {
     if (!restore_blockchain())
     {
-      printf("Successfully restored blockchain after sync to alternative blockchain failed.\n");
+      LOG_INFO("Successfully restored blockchain after sync to alternative blockchain failed.");
     }
     else
     {
-      fprintf(stderr, "Could not restore blockchain after sync to alternative blockchain failed!\n");
+      LOG_WARNING("Could not restore blockchain after sync to alternative blockchain failed!");
     }
   }
 
@@ -587,7 +588,7 @@ int check_sync_status(void)
   {
     if (!clear_sync_request(1))
     {
-      printf("Successfully synced blockchain at block height: %d.\n", current_block_height);
+      LOG_INFO("Successfully synced blockchain at block height: %d.", current_block_height);
       return 0;
     }
     else
@@ -609,7 +610,7 @@ int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipi
 
   if (sync_height < 0)
   {
-    fprintf(stderr, "Could not request block at an unknown sync height!\n");
+    LOG_ERROR("Could not request block at an unknown sync height!");
     return 1;
   }
 
@@ -639,7 +640,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
   {
     if (clear_sync_request(0))
     {
-      fprintf(stderr, "Timed out when requesting block at height: %d!\n", block_height);
+      LOG_WARNING("Timed out when requesting block at height: %d!", block_height);
     }
 
     return 1;
@@ -647,7 +648,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
 
   if (!has_block_by_height(block_height))
   {
-    fprintf(stderr, "Cannot request next block when previous block at height: %d, was not found in the blockchain!\n", block_height);
+    LOG_ERROR("Cannot request next block when previous block at height: %d, was not found in the blockchain!", block_height);
     return 1;
   }
 
@@ -676,7 +677,7 @@ int rollback_blockchain_and_resync(void)
   uint32_t current_block_height = get_block_height();
   if (current_block_height > 0)
   {
-    printf("Backing up blockchain in preparation for resync...\n");
+    LOG_INFO("Backing up blockchain in preparation for resync...");
     if (backup_blockchain())
     {
       return 1;
@@ -685,7 +686,7 @@ int rollback_blockchain_and_resync(void)
     g_protocol_sync_entry.sync_did_backup_blockchain = 1;
     if (current_block_height > g_protocol_sync_entry.sync_start_height)
     {
-      printf("Rolling blockchain back to height: %d...\n", g_protocol_sync_entry.sync_start_height);
+      LOG_INFO("Rolling blockchain back to height: %d...", g_protocol_sync_entry.sync_start_height);
       if (rollback_blockchain(g_protocol_sync_entry.sync_start_height))
       {
         return 1;
@@ -710,7 +711,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         incoming_block_t *message = (incoming_block_t*)message_object;
         if (validate_and_insert_block(message->block))
         {
-          printf("Added incoming block at height: %d.\n", get_block_height());
+          LOG_INFO("Added incoming block at height: %d.", get_block_height());
         }
       }
       break;
@@ -743,7 +744,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             {
               if (message->height > g_protocol_sync_entry.sync_height)
               {
-                printf("Updating sync height with presumed top block: %u...\n", message->height);
+                LOG_INFO("Updating sync height with presumed top block: %u...", message->height);
                 g_protocol_sync_entry.sync_height = message->height;
               }
 
@@ -753,14 +754,14 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
           if (can_initiate_sync)
           {
-            printf("Found potential alternative blockchain at height: %u.\n", message->height);
+            LOG_INFO("Found potential alternative blockchain at height: %u.", message->height);
             clear_sync_request(0);
 
             if (!init_sync_request(message->height, recipient, recipient_len))
             {
               if (current_block_height > 0)
               {
-                printf("Determining best sync starting height...\n");
+                LOG_INFO("Determining best sync starting height...");
                 g_protocol_sync_entry.last_sync_height = current_block_height + 1;
                 if (request_sync_previous_block(recipient, recipient_len))
                 {
@@ -770,7 +771,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
               else
               {
                 g_protocol_sync_entry.sync_start_height = 0;
-                printf("Beginning sync with presumed top block: %u...\n", message->height);
+                LOG_INFO("Beginning sync with presumed top block: %u...", message->height);
                 if (request_sync_next_block(recipient, recipient_len))
                 {
                   return 1;
@@ -831,13 +832,13 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
             if (found_starting_block)
             {
-              printf("Found sync starting block at height: %d!\n", g_protocol_sync_entry.last_sync_height);
+              LOG_INFO("Found sync starting block at height: %d!", g_protocol_sync_entry.last_sync_height);
               g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
               can_rollback_and_resync = 1;
             }
             else if (g_protocol_sync_entry.last_sync_height <= 0)
             {
-              printf("Unable to find sync starting height, continuing anyway.\n");
+              LOG_WARNING("Unable to find sync starting height, continuing anyway...");
               g_protocol_sync_entry.sync_start_height = 0;
               can_rollback_and_resync = 1;
             }
@@ -864,7 +865,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
           {
             if (validate_and_insert_block(message->block))
             {
-              printf("Received block at height: %d.\n", g_protocol_sync_entry.last_sync_height);
+              LOG_INFO("Received block at height: %d.", g_protocol_sync_entry.last_sync_height);
               if (check_sync_status())
               {
                 if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
@@ -949,7 +950,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       }
       break;
     default:
-      fprintf(stderr, "Could not handle packet with unknown packet id: %d\n", packet_id);
+      LOG_DEBUG("Could not handle packet with unknown packet id: %d!", packet_id);
       return 1;
   }
 

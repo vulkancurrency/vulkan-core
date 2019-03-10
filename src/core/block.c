@@ -31,6 +31,7 @@
 
 #include <sodium.h>
 
+#include "common/logger.h"
 #include "common/buffer.h"
 #include "common/util.h"
 
@@ -110,7 +111,7 @@ int valid_block(block_t *block)
   // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
   if (!valid_block_timestamp(block))
   {
-    fprintf(stderr, "Block has timestamp that is too far in the future: %d!\n", block->timestamp);
+    LOG_DEBUG("Block has timestamp that is too far in the future: %d!", block->timestamp);
     return 0;
   }
 
@@ -187,7 +188,7 @@ int valid_block(block_t *block)
   uint32_t block_header_size = get_block_header_size(block);
   if (block_header_size > MAX_BLOCK_SIZE)
   {
-    fprintf(stderr, "Block has too big header blob size: %d!\n", block_header_size);
+    LOG_DEBUG("Block has too big header blob size: %d!", block_header_size);
     return 0;
   }
 
@@ -250,25 +251,6 @@ int print_block(block_t *block)
 {
   assert(block != NULL);
 
-  char hash[(crypto_hash_sha256_BYTES * 2) + 1];
-  char previous_hash[(crypto_hash_sha256_BYTES * 2) + 1];
-  char merkle_root[(crypto_hash_sha256_BYTES * 2) + 1];
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&hash[i*2], "%02x", (unsigned int) block->hash[i]);
-  }
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&previous_hash[i*2], "%02x", (unsigned int) block->previous_hash[i]);
-  }
-
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(&merkle_root[i*2], "%02x", (unsigned int) block->merkle_root[i]);
-  }
-
   printf("Block:\n");
   printf("Version: %d\n", block->version);
   printf("Nonce: %d\n", block->nonce);
@@ -276,9 +258,10 @@ int print_block(block_t *block)
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
   printf("Emission: %llu\n", block->already_generated_coins);
-  printf("Previous Hash: %s\n", previous_hash);
-  printf("Merkle Root: %s\n", merkle_root);
-  printf("Hash: %s\n", hash);
+  printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
+  printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
+  printf("Hash: %s\n", hash_to_str(block->hash));
+
   return 0;
 }
 

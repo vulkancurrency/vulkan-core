@@ -31,6 +31,7 @@
 
 #include <rocksdb/c.h>
 
+#include "common/logger.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
 #include "common/vector.h"
@@ -112,7 +113,7 @@ int open_blockchain(const char *blockchain_dir)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not open blockchain database: %s\n", err);
+    LOG_ERROR("Could not open blockchain database: %s!", err);
 
     rocksdb_free(err);
     rocksdb_free(options);
@@ -123,7 +124,7 @@ int open_blockchain(const char *blockchain_dir)
   {
     if (!validate_and_insert_block(&genesis_block))
     {
-      fprintf(stderr, "Could not insert genesis block into blockchain!\n");
+      LOG_ERROR("Could not insert genesis block into blockchain!");
 
       rocksdb_free(err);
       rocksdb_free(options);
@@ -133,9 +134,9 @@ int open_blockchain(const char *blockchain_dir)
   else
   {
     block_t *top_block = get_top_block();
-    if (!top_block)
+    if (top_block == NULL)
     {
-      fprintf(stderr, "Could not get unknown blockchain top block!\n");
+      LOG_ERROR("Could not get unknown blockchain top block!");
 
       rocksdb_free(err);
       rocksdb_free(options);
@@ -146,6 +147,7 @@ int open_blockchain(const char *blockchain_dir)
     free_block(top_block);
   }
 
+  LOG_INFO("Successfully initialized blockchain.");
   g_blockchain_is_open = 1;
 
   rocksdb_free(err);
@@ -176,9 +178,8 @@ int close_blockchain(void)
     return 1;
   }
 
-  mtx_destroy(&g_blockchain_lock);
-
   rocksdb_close(g_blockchain_db);
+  mtx_destroy(&g_blockchain_lock);
   g_blockchain_is_open = 0;
 
   if (g_timestamps != NULL)
@@ -219,7 +220,7 @@ int open_backup_blockchain(void)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not open backup blockchain database: %s\n", err);
+    LOG_ERROR("Could not open backup blockchain database: %s!", err);
 
     rocksdb_free(err);
     rocksdb_free(options);
@@ -264,7 +265,7 @@ int backup_blockchain(void)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not backup database: %s\n", err);
+    LOG_ERROR("Could not backup blockchain database: %s!", err);
 
     rocksdb_free(err);
     return 1;
@@ -289,7 +290,7 @@ int restore_blockchain(void)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not restore database from backup: %s\n", err);
+    LOG_ERROR("Could not restore blockchain database from backup: %s!", err);
 
     rocksdb_restore_options_destroy(restore_options);
     rocksdb_free(err);
@@ -306,7 +307,7 @@ int rollback_blockchain(uint32_t rollback_height)
   uint32_t current_block_height = get_block_height();
   if (rollback_height > current_block_height)
   {
-    fprintf(stderr, "Could not rollback blockchain to height: %d, current blockchain top block height is: %d!\n", rollback_height, current_block_height);
+    LOG_WARNING("Could not rollback blockchain to height: %d, current blockchain top block height is: %d!", rollback_height, current_block_height);
     return 1;
   }
 
@@ -320,7 +321,7 @@ int rollback_blockchain(uint32_t rollback_height)
     block_t *block = get_block_from_height(i);
     if (!block)
     {
-      fprintf(stderr, "Could not reset blockchain, unknown block at height: %d!\n", i);
+      LOG_WARNING("Could not reset blockchain, unknown block at height: %d!", i);
       return 1;
     }
 
@@ -344,7 +345,7 @@ int rollback_blockchain(uint32_t rollback_height)
     free_block(block);
   }
 
-  printf("Successfully rolled back blockchain to height: %d.\n", rollback_height);
+  LOG_INFO("Successfully rolled back blockchain to height: %d!", rollback_height);
   return 0;
 }
 
@@ -515,7 +516,7 @@ int validate_and_insert_block(block_t *block)
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
   if (!valid_block_median_timestamp(block))
   {
-    fprintf(stderr, "Could not insert block into blockchain, block has expired timestamp: %d!\n", block->timestamp);
+    LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %d!", block->timestamp);
     return 0;
   }
 
@@ -526,20 +527,20 @@ int validate_and_insert_block(block_t *block)
     uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
     if (block->cumulative_difficulty != expected_cumulative_difficulty)
     {
-      fprintf(stderr, "Could not insert block into blockchain, block has invalid cumulative difficulty: %llu expected: %llu!\n", block->cumulative_difficulty, expected_cumulative_difficulty);
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid cumulative difficulty: %llu expected: %llu!", block->cumulative_difficulty, expected_cumulative_difficulty);
       return 0;
     }
 
     uint64_t expected_difficulty = get_next_block_difficulty();
     if (block->difficulty != expected_difficulty)
     {
-      fprintf(stderr, "Could not insert block into blockchain, block has invalid difficulty: %llu expected: %llu!\n", block->difficulty, expected_difficulty);
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %llu expected: %llu!", block->difficulty, expected_difficulty);
       return 0;
     }
 
     if (!check_hash(block->hash, expected_difficulty))
     {
-      fprintf(stderr, "Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!\n", block->difficulty, expected_difficulty);
+      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
       return 0;
     }
   }
@@ -639,7 +640,7 @@ int insert_block(block_t *block)
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
         free_unspent_transaction(unspent_tx);
-        fprintf(stderr, "A txin tried to mark a unspent txout as spent, but it was not found\n");
+        LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was not found!");
         continue;
       }
       else
@@ -650,7 +651,7 @@ int insert_block(block_t *block)
         if (unspent_txout->spent == 1)
         {
           free_unspent_transaction(unspent_tx);
-          fprintf(stderr, "A txin tried to mark a unspent txout as spent, but it was already spent\n");
+          LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was already spent!");
           continue;
         }
 
@@ -681,7 +682,7 @@ int insert_block(block_t *block)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not insert block into blockchain: %s\n", err);
+    LOG_ERROR("Could not insert block into blockchain storage: %s!", err);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -841,7 +842,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not insert tx into blockchain: %s\n", err);
+    LOG_ERROR("Could not insert tx into blockchain: %s!", err);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -873,7 +874,7 @@ int insert_tx_into_unspent_index(transaction_t *tx)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not insert tx into blockchain: %s\n", err);
+    LOG_ERROR("Could not insert tx into blockchain: %s!", err);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -903,7 +904,7 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not insert unspent tx into blockchain: %s\n", err);
+    LOG_ERROR("Could not insert unspent tx into blockchain: %s!", err);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -1027,7 +1028,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not delete block from blockchain\n");
+    LOG_ERROR("Could not delete block: %s from blockchain storage!", hash_to_str(block_hash));
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -1050,7 +1051,7 @@ int delete_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not delete tx from index\n");
+    LOG_ERROR("Could not delete tx: %s from index!", hash_to_str(tx_id));
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -1073,7 +1074,7 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not delete tx from unspent index\n");
+    LOG_ERROR("Could not delete tx: %s from unspent index!", hash_to_str(tx_id));
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -1096,7 +1097,7 @@ int set_top_block_hash(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not set blockchain top block hash: %s\n", err);
+    LOG_ERROR("Could not set blockchain storage top block hash: %s!", err);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);

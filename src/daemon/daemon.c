@@ -33,6 +33,7 @@
 #include <sodium.h>
 
 #include "common/argparse.h"
+#include "common/logger.h"
 #include "common/task.h"
 
 #include "core/block.h"
@@ -48,6 +49,7 @@
 
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";
+static const char *g_logger_log_filename = NULL;
 
 static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
@@ -74,8 +76,19 @@ static block_t* create_genesis_block(void)
 
 static void perform_shutdown(int sig)
 {
-  close_blockchain();
-  exit(1);
+  if (logger_close())
+  {
+    exit(1);
+    return;
+  }
+
+  if (close_blockchain())
+  {
+    exit(1);
+    return;
+  }
+
+  exit(0);
 }
 
 static int parse_commandline_args(int argc, char **argv)
@@ -111,6 +124,10 @@ static int parse_commandline_args(int argc, char **argv)
 
         printf("\n");
         return 1;
+      case CMD_ARG_LOGGING_FILENAME:
+        i++;
+        g_logger_log_filename = (const char*)argv[i];
+        break;
       case CMD_ARG_VERSION:
         printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
         return 1;
@@ -175,13 +192,19 @@ static int parse_commandline_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  if (sodium_init() == -1)
+  signal(SIGINT, perform_shutdown);
+  if (parse_commandline_args(argc, argv))
   {
     return 1;
   }
 
-  signal(SIGINT, perform_shutdown);
-  if (parse_commandline_args(argc, argv))
+  logger_set_log_filename(g_logger_log_filename);
+  if (logger_open())
+  {
+    return 1;
+  }
+
+  if (sodium_init() == -1)
   {
     return 1;
   }

@@ -34,6 +34,7 @@
 #include <rocksdb/c.h>
 
 #include "common/buffer.h"
+#include "common/logger.h"
 #include "common/util.h"
 
 #include "core/blockchain.h"
@@ -114,8 +115,10 @@ wallet_t *new_wallet(const char *wallet_filename)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not open wallet\n");
+    LOG_ERROR("Could not open wallet: %s!", wallet_filename);
+
     rocksdb_free(err);
+    rocksdb_close(db);
     return NULL;
   }
 
@@ -158,13 +161,16 @@ wallet_t *new_wallet(const char *wallet_filename)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not write to wallet database\n");
+    LOG_ERROR("Could not write to wallet: %s database!", wallet_filename);
+
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     rocksdb_writeoptions_destroy(woptions);
     rocksdb_close(db);
     return NULL;
   }
+
+  LOG_INFO("Successfully created new wallet: %s", wallet_filename);
 
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
@@ -180,7 +186,7 @@ wallet_t *get_wallet(const char *wallet_filename)
 
   if (err != NULL)
   {
-    fprintf(stderr, "Could not open wallet database!\n");
+    LOG_ERROR("Could not open wallet database: %s!", wallet_filename);
 
     rocksdb_free(err);
     rocksdb_close(db);
@@ -193,7 +199,7 @@ wallet_t *get_wallet(const char *wallet_filename)
 
   if (err != NULL || wallet_data == NULL)
   {
-    fprintf(stderr, "Could not open wallet database!\n");
+    LOG_ERROR("Could not open wallet database: %s!", wallet_filename);
 
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
@@ -204,6 +210,7 @@ wallet_t *get_wallet(const char *wallet_filename)
   buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
   wallet_t *wallet = deserialize_wallet(buffer);
   buffer_free(buffer);
+  LOG_INFO("Successfully opened wallet: %s", wallet_filename);
 
   rocksdb_free(wallet_data);
   rocksdb_free(err);
@@ -214,17 +221,10 @@ wallet_t *get_wallet(const char *wallet_filename)
 
 void print_wallet(wallet_t *wallet)
 {
-  int public_address_len = (ADDRESS_SIZE * 2) + 1;
-  char public_address[public_address_len];
-
-  for (int i = 0; i < ADDRESS_SIZE; i++)
-  {
-    sprintf(&public_address[i*2], "%02x", (int) wallet->address[i]);
-  }
-
+  assert(wallet != NULL);
   uint64_t balance = get_balance_for_address(wallet->address) / COIN;
 
-  printf("Public Address: %s\n", public_address);
+  printf("Public Address: %s\n", address_to_str(wallet->address));
   printf("Balance: %llu\n", balance);
 }
 

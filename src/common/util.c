@@ -114,6 +114,30 @@ int make_hash(char *digest, unsigned char *string)
   return 0;
 }
 
+const char* hash_to_str(uint8_t in_hash[HASH_SIZE])
+{
+  int hash_len = (crypto_hash_sha256_BYTES * 2) + 1;
+  char *out_hash = malloc(sizeof(char) * hash_len);
+  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
+  {
+    sprintf(out_hash + (i * 2), "%02x", (unsigned int)in_hash[i]);
+  }
+
+  return (const char*)out_hash;
+}
+
+const char* address_to_str(uint8_t in_address[ADDRESS_SIZE])
+{
+  int address_len = (ADDRESS_SIZE * 2) + 1;
+  char *out_address = malloc(sizeof(char) * address_len);
+  for (int i = 0; i < ADDRESS_SIZE; i++)
+  {
+    sprintf(out_address + (i * 2), "%02x", (unsigned int)in_address[i]);
+  }
+
+  return (const char*)out_address;
+}
+
 uint32_t get_current_time(void)
 {
   return (uint32_t)time(NULL);

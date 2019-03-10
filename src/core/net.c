@@ -40,6 +40,7 @@
 #include <gossip.h>
 #include <config.h>
 
+#include "common/logger.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
 
@@ -101,7 +102,7 @@ int net_get_bind_port(void)
 
 void net_setup_port_mapping(int port)
 {
-  printf("Tring to add IGD port mapping...\n");
+  LOG_INFO("Tring to add IGD port mapping...");
   int result;
 
 #if MINIUPNPC_API_VERSION > 13
@@ -130,33 +131,33 @@ void net_setup_port_mapping(int port)
 
       if (portMappingResult != 0)
       {
-        fprintf(stderr, "Failed to add IGD port mapping!\n");
+        LOG_WARNING("Failed to add IGD port mapping!");
       }
       else
       {
-        printf("Added IGD port mapping.\n");
+        LOG_INFO("Added IGD port mapping.");
       }
 
       free(port_string);
     }
     else if (result == 2)
     {
-      fprintf(stderr, "Failed to add IGD port mapping, could not connect IGD port mapping!\n");
+      LOG_WARNING("Failed to add IGD port mapping, could not connect IGD port mapping!");
     }
     else if (result == 3)
     {
-      fprintf(stderr, "Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!\n");
+      LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
     }
     else
     {
-      fprintf(stderr, "Failed to add IGD port mapping, invalid code returned: %d!", result);
+      LOG_WARNING("Failed to add IGD port mapping, invalid code returned: %d!", result);
     }
 
     FreeUPNPUrls(&urls);
   }
   else
   {
-    fprintf(stderr, "Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!\n");
+    LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
   }
 }
 
@@ -165,7 +166,7 @@ void net_receive_data(void *context, pittacus_gossip_t *gossip, const pt_sockadd
   mtx_lock(&g_net_recv_mutex);
   if (handle_receive_packet(gossip, recipient, recipient_len, data, data_size))
   {
-    fprintf(stderr, "Failed to handle an incoming packet!\n");
+    LOG_DEBUG("Failed to handle an incoming packet!");
   }
 
   mtx_unlock(&g_net_recv_mutex);
@@ -201,7 +202,7 @@ int net_connect(const char *address, int port)
   pittacus_gossip_t *gossip = pittacus_gossip_create(&self_addr, &net_receive_data, NULL);
   if (gossip == NULL)
   {
-    fprintf(stderr, "Gossip initialization failed: %s\n", strerror(errno));
+    LOG_ERROR("Gossip initialization failed: %s!", strerror(errno));
     return 1;
   }
 
@@ -218,7 +219,7 @@ int net_connect(const char *address, int port)
   int join_result = pittacus_gossip_join(gossip, &seed_node_addr, 1);
   if (join_result < 0)
   {
-    fprintf(stderr, "Gossip join failed: %d\n", join_result);
+    LOG_ERROR("Gossip join failed: %d!", join_result);
     pittacus_gossip_destroy(gossip);
     return 1;
   }
@@ -247,14 +248,14 @@ int net_open_connection(void)
   pittacus_gossip_t *gossip = pittacus_gossip_create(&self_addr, &net_receive_data, NULL);
   if (gossip == NULL)
   {
-    fprintf(stderr, "Gossip initialization failed: %s\n", strerror(errno));
+    LOG_ERROR("Gossip initialization failed: %s!", strerror(errno));
     return 1;
   }
 
   int join_result = pittacus_gossip_join(gossip, NULL, 0);
   if (join_result < 0)
   {
-    fprintf(stderr, "Gossip join failed: %d\n", join_result);
+    LOG_ERROR("Gossip join failed: %d!", join_result);
     pittacus_gossip_destroy(gossip);
     return 1;
   }
@@ -270,7 +271,7 @@ int net_run_server(void)
   {
     if (net_open_connection())
     {
-      fprintf(stderr, "Failed to open seed node connection!");
+      LOG_ERROR("Failed to open seed node connection!");
       return 1;
     }
   }
@@ -281,7 +282,7 @@ int net_run_server(void)
       seed_node_entry_t seed_node_entry = SEED_NODES[i];
       if (net_connect(seed_node_entry.address, seed_node_entry.port))
       {
-        fprintf(stderr, "Failed to connect to seed with address: %s:%d!\n", seed_node_entry.address, seed_node_entry.port);
+        LOG_ERROR("Failed to connect to seed with address: %s:%d!", seed_node_entry.address, seed_node_entry.port);
         return 1;
       }
       else
@@ -311,7 +312,7 @@ int net_run_server(void)
     {
       if (gossip_poll_fd.revents & POLLERR)
       {
-        fprintf(stderr, "Gossip socket failure: %s\n", strerror(errno));
+        LOG_ERROR("Gossip socket failure: %s!", strerror(errno));
         pittacus_gossip_destroy(g_net_gossip);
         return 1;
       }
@@ -320,7 +321,7 @@ int net_run_server(void)
         recv_result = pittacus_gossip_process_receive(g_net_gossip);
         if (recv_result < 0)
         {
-          //fprintf(stderr, "Gossip receive failed: %d\n", recv_result);
+          //LOG_DEBUG(stderr, "Gossip receive failed: %d!", recv_result);
           //pittacus_gossip_destroy(g_net_gossip);
           //return 1;
         }
@@ -328,7 +329,7 @@ int net_run_server(void)
     }
     else if (poll_result < 0)
     {
-      fprintf(stderr, "Poll failed: %s\n", strerror(errno));
+      LOG_ERROR("Poll failed: %s!", strerror(errno));
       pittacus_gossip_destroy(g_net_gossip);
       return 1;
     }
@@ -336,14 +337,14 @@ int net_run_server(void)
     poll_interval = pittacus_gossip_tick(g_net_gossip);
     if (poll_interval < 0)
     {
-      fprintf(stderr, "Gossip tick failed: %d\n", poll_interval);
+      LOG_ERROR("Gossip tick failed: %d!", poll_interval);
       return 1;
     }
 
     send_result = pittacus_gossip_process_send(g_net_gossip);
     if (send_result < 0)
     {
-      fprintf(stderr, "Gossip send failed: %d, %s\n", send_result, strerror(errno));
+      LOG_ERROR("Gossip send failed: %d, %s!", send_result, strerror(errno));
       pittacus_gossip_destroy(g_net_gossip);
       return 1;
     }

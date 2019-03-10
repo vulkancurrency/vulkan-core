@@ -32,6 +32,7 @@
 #include <sodium.h>
 
 #include "common/buffer.h"
+#include "common/logger.h"
 #include "common/util.h"
 
 #include "core/blockchain.h"
@@ -141,7 +142,7 @@ int valid_transaction(transaction_t *tx)
     uint32_t tx_header_size = get_tx_header_size(tx);
     if (tx_header_size > MAX_TX_SIZE)
     {
-      fprintf(stderr, "Transaction has too big header blob size: %d!\n", tx_header_size);
+      LOG_DEBUG("Transaction has too big header blob size: %d!", tx_header_size);
       return 0;
     }
 

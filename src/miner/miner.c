@@ -29,6 +29,7 @@
 #include <string.h>
 #include "assert.h"
 
+#include "common/logger.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
@@ -154,7 +155,7 @@ static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_h
   // into the blockchain before the other workers...
   if (validate_and_insert_block(block))
   {
-    printf("Worker: %hu found block at height: %d\n", worker->id, current_block_height);
+    LOG_INFO("Worker: %hu found block at height: %d!", worker->id, current_block_height);
     print_block(block);
     handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
   }
@@ -196,7 +197,7 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   {
     miner_worker_t *worker = g_miner_workers[i];
     assert(worker != NULL);
-    printf("Worker: %d running %u h/s\n", worker->id, worker->last_hashrate);
+    LOG_INFO("Worker: %d running %u h/s.", worker->id, worker->last_hashrate);
   }
 
   return TASK_RESULT_WAIT;
@@ -220,14 +221,14 @@ int start_mining(void)
     worker->id = i;
     if (thrd_create(&worker->thread, worker_mining_thread, worker) != thrd_success)
     {
-      fprintf(stderr, "Failed to start mining thread: %hu!\n", i);
+      LOG_ERROR("Failed to start mining thread: %hu!", i);
       return 1;
     }
 
     g_miner_workers[i] = worker;
   }
 
-  printf("Started mining on %hu threads...\n", g_num_worker_threads);
+  LOG_INFO("Started mining on %hu threads...", g_num_worker_threads);
   return 0;
 }
 

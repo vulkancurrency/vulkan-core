@@ -29,7 +29,7 @@ typedef enum Argument
 {
   CMD_ARG_HELP = 0,
   CMD_ARG_VERSION,
-
+  CMD_ARG_LOGGING_FILENAME,
   CMD_ARG_BIND_ADDRESS,
   CMD_ARG_BIND_PORT,
   CMD_ARG_DISABLE_PORT_MAPPING,
@@ -40,7 +40,6 @@ typedef enum Argument
   CMD_ARG_CREATE_GENESIS_BLOCK,
   CMD_ARG_MINE,
   CMD_ARG_SEED_MODE,
-
   CMD_ARG_UNKNOWN
 } argument_t;
 
@@ -56,6 +55,7 @@ typedef struct ArgumentMap
 static argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information.", "", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information.", "", 0},
+  {"logging-filename", CMD_ARG_LOGGING_FILENAME, "Sets the logger output log filename.", "<logger_filename>.log", 1},
   {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", "<bind_address>", 1},
   {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 1},
   {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", "", 0},
