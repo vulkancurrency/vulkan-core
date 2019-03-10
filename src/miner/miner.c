@@ -241,6 +241,7 @@ int stop_mining(void)
   for (int i = 0; i < g_num_worker_threads; i++)
   {
     miner_worker_t *worker = g_miner_workers[i];
+    assert(worker != NULL);
     free_worker(worker);
   }
 
