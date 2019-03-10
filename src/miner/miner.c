@@ -50,6 +50,7 @@ static size_t g_num_worker_threads = 0;
 
 void set_num_worker_threads(size_t num_worker_threads)
 {
+  assert(num_worker_threads <= MAX_NUM_WORKER_THREADS);
   g_num_worker_threads = num_worker_threads;
 }
 
