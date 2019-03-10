@@ -147,6 +147,7 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
 
 static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_height, block_t *block)
 {
+  assert(worker != NULL);
   assert(block != NULL);
 
   // see if we got lucky and found a block, attempt to insert the block
@@ -162,6 +163,7 @@ static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_h
 static int worker_mining_thread(void *arg)
 {
   miner_worker_t *worker = (miner_worker_t*)arg;
+  assert(worker != NULL);
 
   uint32_t current_block_height = 0;
   block_t *previous_block = NULL;
@@ -193,6 +195,7 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   for (int i = 0; i < g_num_worker_threads; i++)
   {
     miner_worker_t *worker = g_miner_workers[i];
+    assert(worker != NULL);
     printf("Worker: %d running %u h/s\n", worker->id, worker->last_hashrate);
   }
 
