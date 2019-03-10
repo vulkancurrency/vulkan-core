@@ -36,6 +36,7 @@ typedef enum Argument
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_CLEAR_BLOCKCHAIN,
   CMD_ARG_WALLET_FILENAME,
+  CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
   CMD_ARG_MINE,
   CMD_ARG_SEED_MODE,
@@ -61,6 +62,7 @@ static argument_map_t g_arguments_map[] = {
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
+  {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
   {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "", 0},
   {"seed-mode", CMD_ARG_SEED_MODE, "Run daemon in seed mode, do not connect to other peers.", "", 0}
