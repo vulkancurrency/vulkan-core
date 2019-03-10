@@ -37,17 +37,30 @@ extern "C"
 #endif
 
 #define MAX_NUM_WORKER_THREADS 1024
+#define WORKER_STATUS_TASK_DELAY 10
 
-void set_num_worker_threads(size_t num_worker_threads);
-size_t get_num_worker_threads(void);
+typedef struct MinerWorker
+{
+  uint16_t id;
+  thrd_t thread;
+  uint32_t last_timestamp;
+  uint32_t last_hashrate;
+} miner_worker_t;
+
+void set_num_worker_threads(uint16_t num_worker_threads);
+uint16_t get_num_worker_threads(void);
 
 void set_current_wallet(wallet_t *current_wallet);
 wallet_t *get_current_wallet(void);
 
-block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);
+miner_worker_t* init_worker(void);
+int free_worker(miner_worker_t *worker);
+
+block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
+task_result_t report_worker_mining_status(task_t *task, va_list args);
 
 int start_mining(void);
-void stop_mining(void);
+int stop_mining(void);
 
 #ifdef __cplusplus
 }

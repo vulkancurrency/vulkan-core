@@ -29,6 +29,7 @@
 #include <string.h>
 #include "assert.h"
 
+#include "common/task.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
 
@@ -43,18 +44,19 @@
 
 static int g_miner_is_mining = 0;
 static wallet_t *g_current_wallet = NULL;
+static task_t *g_miner_worker_status_task = NULL;
 
-static thrd_t g_worker_threads[MAX_NUM_WORKER_THREADS];
+static miner_worker_t *g_miner_workers[MAX_NUM_WORKER_THREADS];
 static mtx_t g_worker_lock;
-static size_t g_num_worker_threads = 0;
+static uint16_t g_num_worker_threads = 0;
 
-void set_num_worker_threads(size_t num_worker_threads)
+void set_num_worker_threads(uint16_t num_worker_threads)
 {
-  assert(num_worker_threads <= MAX_NUM_WORKER_THREADS);
+  assert(num_worker_threads <= (uint16_t)MAX_NUM_WORKER_THREADS);
   g_num_worker_threads = num_worker_threads;
 }
 
-size_t get_num_worker_threads(void)
+uint16_t get_num_worker_threads(void)
 {
   return g_num_worker_threads;
 }
@@ -69,8 +71,44 @@ wallet_t *get_current_wallet(void)
   return g_current_wallet;
 }
 
-block_t *compute_next_block(wallet_t *wallet, block_t *previous_block)
+miner_worker_t* init_worker(void)
 {
+  miner_worker_t *worker = malloc(sizeof(miner_worker_t));
+  worker->id = 0;
+  worker->last_timestamp = get_current_time();
+  worker->last_hashrate = 0;
+  return worker;
+}
+
+int free_worker(miner_worker_t *worker)
+{
+  assert(worker != NULL);
+  worker->id = 0;
+  worker->last_timestamp = 0;
+  worker->last_hashrate = 0;
+  free(worker);
+  return 0;
+}
+
+static void update_worker_hashrate(miner_worker_t *worker)
+{
+  assert(worker != NULL);
+  uint32_t current_timestamp = get_current_time();
+  if (current_timestamp - worker->last_timestamp >= 1)
+  {
+    worker->last_timestamp = current_timestamp;
+    worker->last_hashrate = 0;
+  }
+
+  worker->last_hashrate++;
+}
+
+block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+{
+  assert(worker != NULL);
+  assert(wallet != NULL);
+  assert(previous_block != NULL);
+
   uint32_t nonce = (uint32_t)RANDOM_RANGE(0, UINT32_MAX);
   uint32_t current_time = get_current_time();
   uint32_t current_block_height = get_block_height();
@@ -101,14 +139,29 @@ block_t *compute_next_block(wallet_t *wallet, block_t *previous_block)
     nonce++;
     block->nonce = nonce;
     hash_block(block);
+    update_worker_hashrate(worker);
   }
 
   return block;
 }
 
+static void worker_submit_block(miner_worker_t *worker, uint32_t current_block_height, block_t *block)
+{
+  assert(block != NULL);
+
+  // see if we got lucky and found a block, attempt to insert the block
+  // into the blockchain before the other workers...
+  if (validate_and_insert_block(block))
+  {
+    printf("Worker: %hu found block at height: %d\n", worker->id, current_block_height);
+    print_block(block);
+    handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
+  }
+}
+
 static int worker_mining_thread(void *arg)
 {
-  size_t worker_index = (size_t)arg;
+  miner_worker_t *worker = (miner_worker_t*)arg;
 
   uint32_t current_block_height = 0;
   block_t *previous_block = NULL;
@@ -118,18 +171,10 @@ static int worker_mining_thread(void *arg)
   {
     current_block_height = get_block_height();
     previous_block = get_current_block();
-    block = compute_next_block(g_current_wallet, previous_block);
+    block = compute_next_block(worker, g_current_wallet, previous_block);
 
-    // see if we got lucky and found a block, attempt to insert the block
-    // into the blockchain before the other workers...
     mtx_lock(&g_worker_lock);
-    if (validate_and_insert_block(block))
-    {
-      printf("Worker: %zu inserted block at height %d!\n", worker_index, current_block_height);
-      print_block(block);
-      handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
-    }
-
+    worker_submit_block(worker, current_block_height, block);
     mtx_unlock(&g_worker_lock);
 
     free_block(previous_block);
@@ -143,7 +188,18 @@ static int worker_mining_thread(void *arg)
   return 0;
 }
 
-int start_mining()
+task_result_t report_worker_mining_status(task_t *task, va_list args)
+{
+  for (int i = 0; i < g_num_worker_threads; i++)
+  {
+    miner_worker_t *worker = g_miner_workers[i];
+    printf("Worker: %d running %u h/s\n", worker->id, worker->last_hashrate);
+  }
+
+  return TASK_RESULT_WAIT;
+}
+
+int start_mining(void)
 {
   assert(g_current_wallet != NULL);
   if (g_miner_is_mining)
@@ -153,30 +209,45 @@ int start_mining()
 
   mtx_init(&g_worker_lock, mtx_plain);
   g_miner_is_mining = 1;
+  g_miner_worker_status_task = add_task(report_worker_mining_status, WORKER_STATUS_TASK_DELAY);
 
-  for (size_t i = 0; i <= g_num_worker_threads; i++)
+  for (uint16_t i = 0; i < g_num_worker_threads; i++)
   {
-    thrd_t t = g_worker_threads[i];
-    if (thrd_create(&t, worker_mining_thread, (void*)i) != thrd_success)
+    miner_worker_t *worker = init_worker();
+    worker->id = i;
+    if (thrd_create(&worker->thread, worker_mining_thread, worker) != thrd_success)
     {
-      fprintf(stderr, "Failed to start mining thread: %zu!\n", i);
+      fprintf(stderr, "Failed to start mining thread: %hu!\n", i);
       return 1;
     }
+
+    g_miner_workers[i] = worker;
   }
 
-  printf("Started mining on %zu threads...\n", g_num_worker_threads);
+  printf("Started mining on %hu threads...\n", g_num_worker_threads);
   return 0;
 }
 
-void stop_mining(void)
+int stop_mining(void)
 {
   if (!g_miner_is_mining)
   {
-    return;
+    return 1;
   }
 
   mtx_destroy(&g_worker_lock);
+  remove_task(g_miner_worker_status_task);
 
-  g_current_wallet = NULL;
+  for (int i = 0; i < g_num_worker_threads; i++)
+  {
+    miner_worker_t *worker = g_miner_workers[i];
+    free_worker(worker);
+  }
+
   g_miner_is_mining = 0;
+  g_current_wallet = NULL;
+  g_miner_worker_status_task = NULL;
+
+  g_num_worker_threads = 0;
+  return 0;
 }
