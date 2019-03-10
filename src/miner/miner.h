@@ -36,7 +36,15 @@ extern "C"
 {
 #endif
 
-int start_mining(wallet_t *wallet);
+#define MAX_NUM_WORKER_THREADS 1024
+
+void set_num_worker_threads(size_t num_worker_threads);
+size_t get_num_worker_threads(void);
+
+void set_current_wallet(wallet_t *current_wallet);
+wallet_t *get_current_wallet(void);
+
+int start_mining(void);
 void stop_mining(void);
 
 block_t *compute_next_block(wallet_t *wallet, block_t *previous_block);

@@ -150,7 +150,16 @@ static int parse_commandline_args(int argc, char **argv)
         }
         return 1;
       case CMD_ARG_MINE:
+        i++;
+        size_t num_worker_threads = atoi(argv[i]);
+        if (num_worker_threads < 1)
+        {
+          fprintf(stderr, "Invalid number of worker threads: %zu!\n", num_worker_threads);
+          return 1;
+        }
+
         g_enable_miner = 1;
+        set_num_worker_threads(num_worker_threads);
         break;
       case CMD_ARG_SEED_MODE:
         g_enable_seed_mode = 1;
@@ -188,22 +197,24 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
-    wallet_t *wallet = new_wallet(g_wallet_filename);
+    wallet = new_wallet(g_wallet_filename);
     if (wallet == NULL)
     {
       wallet = get_wallet(g_wallet_filename);
     }
 
     assert(wallet != NULL);
-    net_start_server(1, g_enable_seed_mode);
-    start_mining(wallet);
-    free_wallet(wallet);
+    set_current_wallet(wallet);
+    start_mining();
   }
-  else
+
+  net_start_server(g_enable_seed_mode);
+  if (wallet != NULL)
   {
-    net_start_server(0, g_enable_seed_mode);
+    free_wallet(wallet);
   }
 
   if (stop_mempool())
