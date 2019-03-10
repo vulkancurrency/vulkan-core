@@ -49,7 +49,7 @@
 
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";
-static const char *g_logger_log_filename = NULL;
+static const char *g_logger_log_filename = "daemon.log";
 
 static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
