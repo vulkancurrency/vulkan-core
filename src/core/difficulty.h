@@ -27,6 +27,8 @@
 
 #include <stdint.h>
 
+#include "blockchainparams.h"
+
 extern inline uint32_t ident32(uint32_t x);
 extern inline uint64_t ident64(uint64_t x);
 
