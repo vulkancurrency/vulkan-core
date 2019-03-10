@@ -554,7 +554,10 @@ int validate_and_insert_block(block_t *block)
     return 0;
   }
 
-  return insert_block(block);
+  pthread_mutex_lock(&g_blockchain_lock);
+  int result = insert_block(block);
+  pthread_mutex_unlock(&g_blockchain_lock);
+  return result;
 }
 
 /* After we insert block into blockchain
