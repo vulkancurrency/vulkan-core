@@ -57,8 +57,8 @@ static block_t* create_genesis_block(void)
   block_t *block = make_block();
   block->timestamp = genesis_block.timestamp;
   block->nonce = genesis_block.nonce;
-  block->difficulty = 1;
-  block->cumulative_difficulty = block->difficulty;
+  block->difficulty = genesis_block.difficulty;
+  block->cumulative_difficulty = genesis_block.cumulative_difficulty;
   hash_block(block);
 
   int nonce = 0;
