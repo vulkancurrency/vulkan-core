@@ -666,7 +666,7 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulat
     sign_txin(txin, tx, wallet->public_key, wallet->secret_key);
   }
 
-  //compute_self_tx_id(tx);
+  compute_self_tx_id(tx);
   return tx;
 }
 
