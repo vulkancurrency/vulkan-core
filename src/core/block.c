@@ -72,7 +72,7 @@ block_t* make_block(void)
 int valid_block_timestamp(block_t *block)
 {
   assert(block != NULL);
-  return block->timestamp < (get_current_time() + MAX_FUTURE_BLOCK_TIME);
+  return block->timestamp <= (get_current_time() + MAX_FUTURE_BLOCK_TIME);
 }
 
 // Block is valid if:
