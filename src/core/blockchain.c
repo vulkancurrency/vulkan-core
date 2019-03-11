@@ -1009,11 +1009,12 @@ uint32_t get_block_height(void)
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
-  for (rocksdb_iter_seek(iterator, "b", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+  for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
+    rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
     size_t key_length;
     uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
-    if (key_length > 0 && key[0] == 'b')
+    if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_BLOCK)
     {
       block_height++;
     }
@@ -1246,11 +1247,12 @@ uint64_t get_balance_for_address(uint8_t *address)
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
   mtx_lock(&g_blockchain_lock);
-  for (rocksdb_iter_seek(iterator, "c", 1); rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+  for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
+    rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
     size_t key_length;
     char *key = (char*)rocksdb_iter_key(iterator, &key_length);
-    if (key_length > 0 && key[0] == 'c')
+    if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_UNSPENT_TX)
     {
       size_t value_length;
       uint8_t *value = (uint8_t*)rocksdb_iter_value(iterator, &value_length);
