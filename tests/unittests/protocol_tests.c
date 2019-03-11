@@ -66,7 +66,7 @@ TEST can_serialize_deserialize_packet(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -76,13 +76,13 @@ TEST can_serialize_deserialize_packet(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t) * 1);
   tx->txins[0] = txin;
 
   block_t *block = make_block();
   block->nonce = 50;
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t) * 1);
   block->transactions[0] = tx;
 
   // serialize packet

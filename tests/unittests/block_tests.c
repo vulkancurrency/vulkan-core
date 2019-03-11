@@ -65,7 +65,7 @@ TEST can_serialize_block(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -75,13 +75,13 @@ TEST can_serialize_block(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t) * 1);
   tx->txins[0] = txin;
 
   block_t *block = make_block();
   block->nonce = 50;
   block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t *) * 1);
+  block->transactions = malloc(sizeof(transaction_t) * 1);
   block->transactions[0] = tx;
 
   // serialize block
@@ -158,7 +158,7 @@ TEST invalid_block_by_same_tx_hashes(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -168,13 +168,13 @@ TEST invalid_block_by_same_tx_hashes(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t) * 1);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
   block_t *block = make_block();
   block->transaction_count = 2;
-  block->transactions = malloc(sizeof(transaction_t *) * 2);
+  block->transactions = malloc(sizeof(transaction_t) * 2);
   block->transactions[0] = tx;
   block->transactions[1] = tx;
 
@@ -210,14 +210,14 @@ TEST invalid_block_by_reused_txout(void)
   memcpy(txout->address, address, HASH_SIZE);
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
   crypto_sign_keypair(pk, sk);
   sign_txin(txin, tx, pk, sk);
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t) * 1);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
@@ -246,20 +246,20 @@ TEST invalid_block_by_reused_txout(void)
   memcpy(txout_2->address, address_2, HASH_SIZE);
   transaction_t *tx_2 = malloc(sizeof(transaction_t));
   tx_2->txout_count = 1;
-  tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx_2->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx_2->txouts[0] = txout_2;
   unsigned char pk_2[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk_2[crypto_sign_SECRETKEYBYTES];
   crypto_sign_keypair(pk_2, sk_2);
   sign_txin(txin_2, tx_2, pk_2, sk_2);
   tx_2->txin_count = 1;
-  tx_2->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx_2->txins = malloc(sizeof(input_transaction_t) * 1);
   tx_2->txins[0] = txin_2;
   compute_self_tx_id(tx_2);
 
   block_t *block = make_block();
   block->transaction_count = 2;
-  block->transactions = malloc(sizeof(transaction_t *) * 2);
+  block->transactions = malloc(sizeof(transaction_t) * 2);
   block->transactions[0] = tx;
   block->transactions[1] = tx_2;
 
@@ -296,14 +296,14 @@ TEST invalid_block_by_merkle_hash(void)
   memcpy(txout->address, address, HASH_SIZE);
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
   crypto_sign_keypair(pk, sk);
   sign_txin(txin, tx, pk, sk);
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx->txins = malloc(sizeof(input_transaction_t) * 1);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
@@ -333,20 +333,20 @@ TEST invalid_block_by_merkle_hash(void)
   memcpy(txout_2->address, address_2, HASH_SIZE);
   transaction_t *tx_2 = malloc(sizeof(transaction_t));
   tx_2->txout_count = 1;
-  tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx_2->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx_2->txouts[0] = txout_2;
   unsigned char pk_2[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk_2[crypto_sign_SECRETKEYBYTES];
   crypto_sign_keypair(pk_2, sk_2);
   sign_txin(txin_2, tx_2, pk_2, sk_2);
   tx_2->txin_count = 1;
-  tx_2->txins = malloc(sizeof(input_transaction_t *) * 1);
+  tx_2->txins = malloc(sizeof(input_transaction_t) * 1);
   tx_2->txins[0] = txin_2;
   compute_self_tx_id(tx_2);
 
   block_t *block = make_block();
   block->transaction_count = 2;
-  block->transactions = malloc(sizeof(transaction_t *) * 2);
+  block->transactions = malloc(sizeof(transaction_t) * 2);
   block->transactions[0] = tx;
   block->transactions[1] = tx_2;
 
