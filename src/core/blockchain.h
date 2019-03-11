@@ -37,6 +37,16 @@ extern "C"
 {
 #endif
 
+#define DB_KEY_PREFIX_TX "t"
+#define DB_KEY_PREFIX_UNSPENT_TX "ut"
+#define DB_KEY_PREFIX_BLOCK "b"
+#define DB_KEY_PREFIX_TOP_BLOCK "tb"
+
+#define DB_KEY_PREFIX_SIZE_TX 1
+#define DB_KEY_PREFIX_SIZE_UNSPENT_TX 2
+#define DB_KEY_PREFIX_SIZE_BLOCK 1
+#define DB_KEY_PREFIX_SIZE_TOP_BLOCK 2
+
 const char* get_blockchain_dir(void);
 const char* get_blockchain_backup_dir(const char *blockchain_dir);
 

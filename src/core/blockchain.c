@@ -615,7 +615,7 @@ int insert_block(block_t *block)
   assert(block != NULL);
 
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block->hash);
 
   buffer_t *buffer = buffer_init();
@@ -714,7 +714,7 @@ int insert_block(block_t *block)
 block_t *get_block_from_hash(uint8_t *block_hash)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
 
   size_t read_len;
@@ -803,6 +803,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
 
 int32_t get_block_height_from_block(block_t *block)
 {
+  assert(block != NULL);
   return get_block_height_from_hash(block->hash);
 }
 
@@ -848,7 +849,7 @@ int has_block_by_height(uint32_t height)
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx->id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -871,7 +872,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 int insert_tx_into_unspent_index(transaction_t *tx)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx->id);
 
   buffer_t *buffer = buffer_init();
@@ -903,7 +904,7 @@ int insert_tx_into_unspent_index(transaction_t *tx)
 int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, unspent_tx->id);
 
   buffer_t *buffer = buffer_init();
@@ -933,7 +934,7 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx_id);
 
   size_t read_len;
@@ -959,7 +960,7 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx_id);
 
   size_t read_len;
@@ -1034,7 +1035,7 @@ uint32_t get_block_height(void)
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1057,7 +1058,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 int delete_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1080,7 +1081,7 @@ int delete_tx_from_index(uint8_t *tx_id)
 int delete_unspent_tx_from_index(uint8_t *tx_id)
 {
   char *err = NULL;
-  uint8_t key[HASH_SIZE + 1];
+  uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx_id);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1103,7 +1104,7 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 int set_top_block_hash(uint8_t *block_hash)
 {
   char *err = NULL;
-  uint8_t key[2];
+  uint8_t key[DB_KEY_PREFIX_SIZE_TOP_BLOCK];
   get_top_block_key(key);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1126,7 +1127,7 @@ int set_top_block_hash(uint8_t *block_hash)
 uint8_t* get_top_block_hash(void)
 {
   char *err = NULL;
-  uint8_t key[2];
+  uint8_t key[DB_KEY_PREFIX_SIZE_TOP_BLOCK];
   get_top_block_key(key);
 
   size_t read_len;
@@ -1186,28 +1187,28 @@ block_t *get_current_block(void)
 
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
-  buffer[0] = 't';
-  memcpy(buffer + 1, tx_id, HASH_SIZE);
+  memcpy(buffer, DB_KEY_PREFIX_TX, DB_KEY_PREFIX_SIZE_TX);
+  memcpy(buffer + DB_KEY_PREFIX_SIZE_TX, tx_id, HASH_SIZE);
   return 0;
 }
 
 int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
-  buffer[0] = 'c';
-  memcpy(buffer + 1, tx_id, HASH_SIZE);
+  memcpy(buffer, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
+  memcpy(buffer + DB_KEY_PREFIX_SIZE_UNSPENT_TX, tx_id, HASH_SIZE);
   return 0;
 }
 
 int get_block_key(uint8_t *buffer, uint8_t *block_hash)
 {
-  buffer[0] = 'b';
-  memcpy(buffer + 1, block_hash, HASH_SIZE);
+  memcpy(buffer, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
+  memcpy(buffer + DB_KEY_PREFIX_SIZE_BLOCK, block_hash, HASH_SIZE);
   return 0;
 }
 
 int get_top_block_key(uint8_t *buffer)
 {
-  memcpy(buffer, "tb", 2);
+  memcpy(buffer, DB_KEY_PREFIX_TOP_BLOCK, DB_KEY_PREFIX_SIZE_TOP_BLOCK);
   return 0;
 }
 
