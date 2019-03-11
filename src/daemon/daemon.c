@@ -61,13 +61,13 @@ static block_t* create_genesis_block(void)
   block->nonce = genesis_block.nonce;
   block->difficulty = genesis_block.difficulty;
   block->cumulative_difficulty = genesis_block.cumulative_difficulty;
-  hash_block(block);
+  compute_self_block_hash(block);
 
   int nonce = 0;
   while (!valid_block_hash(block))
   {
     block->nonce = nonce;
-    hash_block(block);
+    compute_self_block_hash(block);
     nonce++;
   }
 

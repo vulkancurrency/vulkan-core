@@ -99,7 +99,6 @@ static block_t genesis_block = {
 
 block_t* make_block(void);
 int free_block(block_t *block);
-int hash_block(block_t *block);
 int print_block(block_t *block);
 
 int valid_block_hash(block_t *block);
@@ -116,6 +115,9 @@ int valid_merkle_root(block_t *block);
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block);
 int compute_self_merkle_root(block_t *block);
+
+int compute_block_hash(uint8_t *hash, block_t *block);
+int compute_self_block_hash(block_t *block);
 
 int serialize_block_header(buffer_t *buffer, block_t *block);
 int serialize_block(buffer_t *buffer, block_t *block);

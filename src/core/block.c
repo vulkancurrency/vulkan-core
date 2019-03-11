@@ -68,21 +68,6 @@ block_t* make_block(void)
   return block;
 }
 
-int hash_block(block_t *block)
-{
-  assert(block != NULL);
-
-  buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
-  serialize_block_header(buffer, block);
-
-  uint8_t header[BLOCK_HEADER_SIZE];
-  memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
-
-  buffer_free(buffer);
-  crypto_hash_sha256d(block->hash, header, BLOCK_HEADER_SIZE);
-  return 0;
-}
-
 int valid_block_timestamp(block_t *block)
 {
   assert(block != NULL);
@@ -243,8 +228,7 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 int compute_self_merkle_root(block_t *block)
 {
   assert(block != NULL);
-  compute_merkle_root(block->merkle_root, block);
-  return 0;
+  return compute_merkle_root(block->merkle_root, block);
 }
 
 int print_block(block_t *block)
@@ -268,7 +252,36 @@ int print_block(block_t *block)
 int valid_block_hash(block_t *block)
 {
   assert(block != NULL);
-  return check_hash(block->hash, block->difficulty);
+
+  // find the expected block hash for this block
+  uint8_t expected_block_hash[HASH_SIZE];
+  compute_block_hash(expected_block_hash, block);
+
+  // check the expected hash against the block's hash
+  // to see if the block has the correct corresponding hash;
+  // also check to see if the block's hash target matches
+  // it's corresponding proof-of-work difficulty...
+  return (compare_block_hash(expected_block_hash, block->hash) && check_hash(block->hash, block->difficulty));
+}
+
+int compute_block_hash(uint8_t *hash, block_t *block)
+{
+  assert(block != NULL);
+  buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
+  serialize_block_header(buffer, block);
+
+  uint8_t header[BLOCK_HEADER_SIZE];
+  memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
+
+  buffer_free(buffer);
+  crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE);
+  return 0;
+}
+
+int compute_self_block_hash(block_t *block)
+{
+  assert(block != NULL);
+  return compute_block_hash(block->hash, block);
 }
 
 uint32_t get_block_header_size(block_t *block)
@@ -301,8 +314,8 @@ int compare_with_genesis_block(block_t *block)
 {
   assert(block != NULL);
 
-  hash_block(block);
-  hash_block(&genesis_block);
+  compute_self_block_hash(block);
+  compute_self_block_hash(&genesis_block);
 
   return compare_block(block, &genesis_block);
 }

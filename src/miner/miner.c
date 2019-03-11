@@ -133,13 +133,13 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   block->transactions[0] = tx;
 
   compute_self_merkle_root(block);
-  hash_block(block);
+  compute_self_block_hash(block);
 
   while (!valid_block_hash(block))
   {
     nonce++;
     block->nonce = nonce;
-    hash_block(block);
+    compute_self_block_hash(block);
     update_worker_hashrate(worker);
   }
 
