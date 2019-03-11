@@ -326,8 +326,8 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
 
   buffer_write_uint32(buffer, block->version);
-  buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint32(buffer, block->timestamp);
+  buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint64(buffer, block->difficulty);
   buffer_write_uint64(buffer, block->cumulative_difficulty);
   buffer_write_uint64(buffer, block->cumulative_emission);
