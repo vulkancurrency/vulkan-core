@@ -480,12 +480,17 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
   assert(block != NULL);
 
-  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-  for (uint32_t i = 0; i < block->transaction_count; i++)
+  if (block->transaction_count > 0)
   {
-    transaction_t *tx = deserialize_transaction(buffer);
-    assert(tx != NULL);
-    block->transactions[i] = tx;
+    block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+
+    // deserialize the transactions
+    for (uint32_t i = 0; i < block->transaction_count; i++)
+    {
+      transaction_t *tx = deserialize_transaction(buffer);
+      assert(tx != NULL);
+      block->transactions[i] = tx;
+    }
   }
 
   return 0;
