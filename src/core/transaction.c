@@ -292,11 +292,9 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
   buffer_write_bytes(buffer, txin->transaction, HASH_SIZE);
   buffer_write_uint32(buffer, txin->txout_index);
 
-  // when writing the signature and public key bytes,
-  // pull the size of the reference instead of manually specifying
-  // the size, as this value could potentially change...
-  buffer_write_bytes(buffer, txin->signature, sizeof(txin->signature));
-  buffer_write_bytes(buffer, txin->public_key, sizeof(txin->public_key));
+  buffer_write_bytes(buffer, txin->signature, crypto_sign_BYTES);
+  buffer_write_bytes(buffer, txin->public_key, crypto_sign_PUBLICKEYBYTES);
+
   return 0;
 }
 
@@ -312,10 +310,10 @@ input_transaction_t* deserialize_txin(buffer_t *buffer)
   txin->txout_index = buffer_read_uint32(buffer);
 
   uint8_t *signature = buffer_read_bytes(buffer);
-  memcpy(txin->signature, signature, sizeof(txin->signature));
+  memcpy(txin->signature, signature, crypto_sign_BYTES);
 
   uint8_t *public_key = buffer_read_bytes(buffer);
-  memcpy(txin->public_key, public_key, sizeof(txin->public_key));
+  memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
 
   free(prev_tx_id);
   free(signature);
