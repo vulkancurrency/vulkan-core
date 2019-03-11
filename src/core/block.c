@@ -257,7 +257,7 @@ int print_block(block_t *block)
   printf("Timestamp (epoch): %d\n", block->timestamp);
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
-  printf("Emission: %llu\n", block->cumulative_emission);
+  printf("Cumulative Emission: %llu\n", block->cumulative_emission);
   printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
   printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
   printf("Hash: %s\n", hash_to_str(block->hash));
