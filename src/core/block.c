@@ -36,6 +36,7 @@
 #include "common/util.h"
 
 #include "block.h"
+#include "blockchain.h"
 #include "blockchainparams.h"
 #include "difficulty.h"
 #include "merkle.h"
@@ -66,21 +67,6 @@ block_t* make_block(void)
   block->transactions = NULL;
 
   return block;
-}
-
-int hash_block(block_t *block)
-{
-  assert(block != NULL);
-
-  buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
-  serialize_block_header(buffer, block);
-
-  uint8_t header[BLOCK_HEADER_SIZE];
-  memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
-
-  buffer_free(buffer);
-  crypto_hash_sha256d(block->hash, header, BLOCK_HEADER_SIZE);
-  return 0;
 }
 
 int valid_block_timestamp(block_t *block)
@@ -210,7 +196,7 @@ int valid_block(block_t *block)
 int valid_merkle_root(block_t *block)
 {
   assert(block != NULL);
-  uint8_t *merkle_root = malloc(sizeof(uint8_t*) * HASH_SIZE);
+  uint8_t *merkle_root = malloc(sizeof(uint8_t) * HASH_SIZE);
   compute_merkle_root(merkle_root, block);
 
   if (compare_merkle_hash(merkle_root, block->merkle_root))
@@ -226,7 +212,7 @@ int valid_merkle_root(block_t *block)
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
   assert(block != NULL);
-  uint8_t *hashes = malloc(sizeof(uint8_t*) * HASH_SIZE * block->transaction_count);
+  uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
   for (int i = 0; i < block->transaction_count; i++)
   {
     compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
@@ -243,32 +229,75 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 int compute_self_merkle_root(block_t *block)
 {
   assert(block != NULL);
-  compute_merkle_root(block->merkle_root, block);
-  return 0;
+  return compute_merkle_root(block->merkle_root, block);
 }
 
-int print_block(block_t *block)
+void print_block(block_t *block)
 {
   assert(block != NULL);
 
   printf("Block:\n");
   printf("Version: %d\n", block->version);
-  printf("Nonce: %d\n", block->nonce);
+
+  printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
+  printf("Hash: %s\n", hash_to_str(block->hash));
+
   printf("Timestamp (epoch): %d\n", block->timestamp);
+  printf("Nonce: %d\n", block->nonce);
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
   printf("Cumulative Emission: %llu\n", block->cumulative_emission);
-  printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
-  printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
-  printf("Hash: %s\n", hash_to_str(block->hash));
 
-  return 0;
+  printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
+  printf("Transaction Count: %d\n", block->transaction_count);
+}
+
+void print_block_transactions(block_t *block)
+{
+  assert(block != NULL);
+
+  for (int i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    print_transaction(tx);
+  }
 }
 
 int valid_block_hash(block_t *block)
 {
   assert(block != NULL);
-  return check_hash(block->hash, block->difficulty);
+
+  // find the expected block hash for this block
+  uint8_t expected_block_hash[HASH_SIZE];
+  compute_block_hash(expected_block_hash, block);
+
+  // check the expected hash against the block's hash
+  // to see if the block has the correct corresponding hash;
+  // also check to see if the block's hash target matches
+  // it's corresponding proof-of-work difficulty...
+  return (compare_block_hash(expected_block_hash, block->hash) && check_hash(block->hash, block->difficulty));
+}
+
+int compute_block_hash(uint8_t *hash, block_t *block)
+{
+  assert(block != NULL);
+  buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
+  serialize_block_header(buffer, block);
+
+  uint8_t header[BLOCK_HEADER_SIZE];
+  memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
+
+  buffer_free(buffer);
+  crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE);
+  return 0;
+}
+
+int compute_self_block_hash(block_t *block)
+{
+  assert(block != NULL);
+  return compute_block_hash(block->hash, block);
 }
 
 uint32_t get_block_header_size(block_t *block)
@@ -301,10 +330,37 @@ int compare_with_genesis_block(block_t *block)
 {
   assert(block != NULL);
 
-  hash_block(block);
-  hash_block(&genesis_block);
+  compute_self_block_hash(block);
+  compute_self_block_hash(&genesis_block);
 
   return compare_block(block, &genesis_block);
+}
+
+block_t* compute_genesis_block(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+
+  block_t *block = make_block();
+  block->timestamp = GENESIS_TIMESTAMP;
+  block->nonce = GENESIS_NONCE;
+  block->difficulty = 1;
+  block->cumulative_difficulty = 1;
+
+  uint64_t block_reward = get_block_reward(0, 0);
+  block->cumulative_emission = block_reward;
+
+  block->transaction_count = 1;
+  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+
+  transaction_t *tx = make_generation_tx(wallet, 0, block->cumulative_emission, block_reward);
+  block->transactions[0] = tx;
+
+  compute_self_merkle_root(block);
+  compute_self_block_hash(block);
+
+  assert(valid_merkle_root(block) == 1);
+  assert(valid_block_hash(block) == 1);
+  return block;
 }
 
 int serialize_block_header(buffer_t *buffer, block_t *block)
@@ -313,8 +369,8 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
 
   buffer_write_uint32(buffer, block->version);
-  buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint32(buffer, block->timestamp);
+  buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint64(buffer, block->difficulty);
   buffer_write_uint64(buffer, block->cumulative_difficulty);
   buffer_write_uint64(buffer, block->cumulative_emission);
@@ -440,10 +496,70 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
   return 0;
 }
 
-/*
- * Frees an allocated block, and its corresponding TXs.
- */
-int free_block(block_t *block)
+int copy_block_transactions(block_t *block, block_t *other_block)
+{
+  assert(block != NULL);
+  assert(other_block != NULL);
+
+  // free old transactions for the block we are copying to
+  if (free_block_transactions(other_block))
+  {
+    return 1;
+  }
+
+  if (block->transaction_count > 0 && block->transactions != NULL)
+  {
+    // allocate the transaction array for the block we are copying to
+    other_block->transaction_count = block->transaction_count;
+    other_block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+
+    // copy the transactions to the block we are copying to
+    for (int i = 0; i < block->transaction_count; i++)
+    {
+      transaction_t *tx = block->transactions[i];
+      assert(tx != NULL);
+
+      transaction_t *other_tx = NULL;
+      if (copy_transaction(tx, other_tx))
+      {
+        return 1;
+      }
+
+      assert(other_tx != NULL);
+      other_block->transactions[i] = other_tx;
+    }
+  }
+
+  return 0;
+}
+
+int copy_block(block_t *block, block_t *other_block)
+{
+  assert(block != NULL);
+  assert(other_block != NULL);
+
+  other_block->version = block->version;
+
+  memcpy(&other_block->previous_hash, &block->previous_hash, HASH_SIZE);
+  memcpy(&other_block->hash, &block->hash, HASH_SIZE);
+
+  other_block->timestamp = block->timestamp;
+  other_block->nonce = block->nonce;
+  other_block->difficulty = block->difficulty;
+  other_block->cumulative_difficulty = block->cumulative_difficulty;
+  other_block->cumulative_emission = block->cumulative_emission;
+
+  memcpy(&other_block->merkle_root, &block->merkle_root, HASH_SIZE);
+  other_block->transaction_count = block->transaction_count;
+  if (copy_block_transactions(block, other_block))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+int free_block_transactions(block_t *block)
 {
   assert(block != NULL);
   if (block->transaction_count > 0 && block->transactions != NULL)
@@ -452,10 +568,27 @@ int free_block(block_t *block)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
-      free_transaction(tx);
+      if (free_transaction(tx))
+      {
+        return 1;
+      }
     }
 
     free(block->transactions);
+  }
+
+  return 0;
+}
+
+/*
+ * Frees an allocated block, and its corresponding TXs.
+ */
+int free_block(block_t *block)
+{
+  assert(block != NULL);
+  if (free_block_transactions(block))
+  {
+    return 1;
   }
 
   free(block);

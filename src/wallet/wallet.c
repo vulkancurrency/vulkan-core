@@ -44,7 +44,7 @@
 
 #include "wallet/wallet.h"
 
-wallet_t *make_wallet(void)
+wallet_t* make_wallet(void)
 {
   wallet_t *wallet = malloc(sizeof(wallet_t));
   wallet->balance = 0;
@@ -71,7 +71,7 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   return 0;
 }
 
-wallet_t *deserialize_wallet(buffer_t *buffer)
+wallet_t* deserialize_wallet(buffer_t *buffer)
 {
   assert(buffer != NULL);
 
@@ -99,7 +99,7 @@ wallet_t *deserialize_wallet(buffer_t *buffer)
  * open_wallet()
  * Opens a LevelDB instance for the wallet
  */
-rocksdb_t *open_wallet(const char *wallet_filename, char *err)
+rocksdb_t* open_wallet(const char *wallet_filename, char *err)
 {
   rocksdb_t *db;
   rocksdb_options_t *options = rocksdb_options_create();
@@ -108,7 +108,7 @@ rocksdb_t *open_wallet(const char *wallet_filename, char *err)
   return rocksdb_open(options, wallet_filename, &err);
 }
 
-wallet_t *new_wallet(const char *wallet_filename)
+wallet_t* new_wallet(const char *wallet_filename)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(wallet_filename, err);
@@ -179,7 +179,7 @@ wallet_t *new_wallet(const char *wallet_filename)
   return wallet;
 }
 
-wallet_t *get_wallet(const char *wallet_filename)
+wallet_t* get_wallet(const char *wallet_filename)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(wallet_filename, err);
@@ -216,6 +216,17 @@ wallet_t *get_wallet(const char *wallet_filename)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
   rocksdb_close(db);
+  return wallet;
+}
+
+wallet_t* init_wallet(const char *wallet_filename)
+{
+  wallet_t *wallet = new_wallet(wallet_filename);
+  if (wallet == NULL)
+  {
+    wallet = get_wallet(wallet_filename);
+  }
+
   return wallet;
 }
 

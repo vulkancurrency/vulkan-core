@@ -305,7 +305,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txout_count);
+  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -315,7 +315,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
+  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
@@ -343,14 +343,14 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
     tx_2->txout_count = 1;
-    tx_2->txouts = malloc(sizeof(output_transaction_t *) * 1);
+    tx_2->txouts = malloc(sizeof(output_transaction_t) * 1);
     tx_2->txouts[0] = txout_2;
 
     crypto_sign_keypair(pk, sk);
     sign_txin(txin_2, tx_2, pk, sk);
 
     tx_2->txin_count = 1;
-    tx_2->txins = malloc(sizeof(input_transaction_t *) * 1);
+    tx_2->txins = malloc(sizeof(input_transaction_t) * 1);
     tx_2->txins[0] = txin_2;
     compute_self_tx_id(tx_2);
 
@@ -411,7 +411,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * 1);
+  tx->txouts = malloc(sizeof(output_transaction_t) * 1);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -421,7 +421,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
+  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txins[0] = txin;
   compute_self_tx_id(tx);
 
@@ -449,14 +449,14 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
     transaction_t *tx_2 = malloc(sizeof(transaction_t));
     tx_2->txout_count = 1;
-    tx_2->txouts = malloc(sizeof(output_transaction_t *) * tx_2->txout_count);
+    tx_2->txouts = malloc(sizeof(output_transaction_t) * tx_2->txout_count);
     tx_2->txouts[0] = txout_2;
 
     crypto_sign_keypair(pk, sk);
     sign_txin(txin_2, tx_2, pk, sk);
 
     tx_2->txin_count = 1;
-    tx_2->txins = malloc(sizeof(input_transaction_t *) * tx_2->txin_count);
+    tx_2->txins = malloc(sizeof(input_transaction_t) * tx_2->txin_count);
     tx_2->txins[0] = txin_2;
     compute_self_tx_id(tx_2);
 

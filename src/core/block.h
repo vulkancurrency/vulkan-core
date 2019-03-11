@@ -58,6 +58,7 @@ typedef struct Block
   transaction_t **transactions;
 } block_t;
 
+
 static block_t genesis_block = {
   .version = BLOCK_VERSION,
   .previous_hash = {
@@ -94,21 +95,20 @@ static block_t genesis_block = {
     0x50, 0xc7, 0x4a, 0x3f,
     0xac, 0x9d, 0x24, 0x9e,
     0x60, 0x4b, 0xf9, 0x52
-  }
+  },
+  .transaction_count = 0
 };
 
 block_t* make_block(void);
-int free_block(block_t *block);
-int hash_block(block_t *block);
-int print_block(block_t *block);
-
-int valid_block_hash(block_t *block);
 
 uint32_t get_block_header_size(block_t *block);
 
+int valid_block_hash(block_t *block);
 int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
 int compare_block(block_t *block, block_t *other_block);
+
 int compare_with_genesis_block(block_t *block);
+block_t* compute_genesis_block(wallet_t *wallet);
 
 int valid_block_timestamp(block_t *block);
 int valid_block(block_t *block);
@@ -116,6 +116,12 @@ int valid_merkle_root(block_t *block);
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block);
 int compute_self_merkle_root(block_t *block);
+
+void print_block(block_t *block);
+void print_block_transactions(block_t *block);
+
+int compute_block_hash(uint8_t *hash, block_t *block);
+int compute_self_block_hash(block_t *block);
 
 int serialize_block_header(buffer_t *buffer, block_t *block);
 int serialize_block(buffer_t *buffer, block_t *block);
@@ -126,6 +132,12 @@ block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
 
 int serialize_transactions_from_block(buffer_t *buffer, block_t *block);
 int deserialize_transactions_to_block(buffer_t *buffer, block_t *block);
+
+int copy_block_transactions(block_t *block, block_t *other_block);
+int copy_block(block_t *block, block_t *other_block);
+
+int free_block_transactions(block_t *block);
+int free_block(block_t *block);
 
 #ifdef __cplusplus
 }

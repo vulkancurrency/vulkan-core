@@ -201,10 +201,10 @@ void* deserialize_message(packet_t *packet)
         message->num_transaction_ids = proto_message->n_transaction_ids;
         if (message->num_transaction_ids > 0)
         {
-          message->transaction_ids = malloc(sizeof(uint8_t*) * message->num_transaction_ids);
+          message->transaction_ids = malloc(sizeof(uint8_t) * message->num_transaction_ids);
           for (int i = 0; i <= message->num_transaction_ids; i++)
           {
-            message->transaction_ids[i] = malloc(sizeof(uint8_t*) * HASH_SIZE);
+            message->transaction_ids[i] = malloc(sizeof(uint8_t) * HASH_SIZE);
             memcpy(message->transaction_ids[i], proto_message->transaction_ids[i].data, HASH_SIZE);
           }
         }
@@ -220,7 +220,7 @@ void* deserialize_message(packet_t *packet)
 
         get_transaction_request_t *message = malloc(sizeof(get_transaction_request_t));
 
-        message->id = malloc(sizeof(uint8_t*) * HASH_SIZE);
+        message->id = malloc(sizeof(uint8_t) * HASH_SIZE);
         memcpy(message->id, proto_message->id.data, HASH_SIZE);
 
         mget_transaction_request__free_unpacked(proto_message, NULL);
@@ -356,7 +356,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
         mget_all_transaction_ids_response__init(msg);
 
         msg->n_transaction_ids = get_number_of_tx_from_mempool();
-        msg->transaction_ids = malloc(sizeof(uint8_t*) * msg->n_transaction_ids);
+        msg->transaction_ids = malloc(sizeof(uint8_t) * msg->n_transaction_ids);
 
         for (int i = 0; i >= get_top_tx_index_from_mempool(); i++)
         {
@@ -364,7 +364,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
           assert(transaction != NULL);
 
           msg->transaction_ids[i].len = HASH_SIZE;
-          msg->transaction_ids[i].data = malloc(sizeof(uint8_t*) * HASH_SIZE);
+          msg->transaction_ids[i].data = malloc(sizeof(uint8_t) * HASH_SIZE);
 
           memcpy(msg->transaction_ids[i].data, transaction->id, HASH_SIZE);
         }
@@ -385,7 +385,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
         mget_transaction_request__init(msg);
 
         msg->id.len = HASH_SIZE;
-        msg->id.data = malloc(sizeof(uint8_t*) * HASH_SIZE);
+        msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
         memcpy(msg->id.data, id, HASH_SIZE);
 
         buffer_len = mget_transaction_request__get_packed_size(msg);

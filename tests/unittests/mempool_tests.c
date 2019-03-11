@@ -64,7 +64,7 @@ TEST can_add_to_mempool(void)
 
   transaction_t *tx = malloc(sizeof(transaction_t));
   tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t *) * tx->txout_count);
+  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
   tx->txouts[0] = txout;
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -74,7 +74,7 @@ TEST can_add_to_mempool(void)
   sign_txin(txin, tx, pk, sk);
 
   tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t *) * tx->txin_count);
+  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txins[0] = txin;
 
   taskmgr_init();
