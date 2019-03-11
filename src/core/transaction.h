@@ -134,13 +134,14 @@ int valid_transaction(transaction_t *tx);
 int is_generation_tx(transaction_t *tx);
 int do_txins_reference_unspent_txouts(transaction_t *tx);
 
-int compute_tx_id(uint8_t *header, transaction_t *tx);
+int compute_tx_id(uint8_t *tx_id, transaction_t *tx);
 int compute_self_tx_id(transaction_t *tx);
 
 int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
 input_transaction_t* deserialize_txin(buffer_t *buffer);
 int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
 output_transaction_t* deserialize_txout(buffer_t *buffer);
+int serialize_transaction_header(buffer_t *buffer, transaction_t *tx);
 int serialize_transaction(buffer_t *buffer, transaction_t *tx);
 transaction_t* deserialize_transaction(buffer_t *buffer);
 

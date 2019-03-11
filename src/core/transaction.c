@@ -266,15 +266,20 @@ int is_generation_tx(transaction_t *tx)
   return (tx->txin_count == 1 && tx->txout_count == 1 && memcmp(tx->txins[0]->transaction, g_transaction_zero_hash, HASH_SIZE) == 0);
 }
 
-int compute_tx_id(uint8_t *header, transaction_t *tx)
+int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
 {
-  uint8_t *buffer = NULL;
-  uint32_t buffer_len = 0;
+  assert(tx != NULL);
 
-  transaction_to_serialized(&buffer, &buffer_len, tx);
-  crypto_hash_sha256d(header, buffer, buffer_len);
-  free(buffer);
+  uint32_t tx_header_size = get_tx_header_size(tx);
+  assert(tx_header_size > 0);
 
+  buffer_t *buffer = buffer_init_size(0, tx_header_size);
+
+  uint8_t header[tx_header_size];
+  memcpy(header, buffer->data, tx_header_size);
+
+  buffer_free(buffer);
+  crypto_hash_sha256d(tx_id, header, tx_header_size);
   return 0;
 }
 
@@ -294,7 +299,6 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
 
   buffer_write_bytes(buffer, txin->signature, crypto_sign_BYTES);
   buffer_write_bytes(buffer, txin->public_key, crypto_sign_PUBLICKEYBYTES);
-
   return 0;
 }
 
@@ -344,6 +348,38 @@ output_transaction_t* deserialize_txout(buffer_t *buffer)
 
   free(address);
   return txout;
+}
+
+int serialize_transaction_header(buffer_t *buffer, transaction_t *tx)
+{
+  assert(buffer != NULL);
+  assert(tx != NULL);
+
+  // write txins
+  for (uint32_t i = 0; i < tx->txin_count; i++)
+  {
+    input_transaction_t *txin = tx->txins[i];
+    assert(txin != NULL);
+
+    if (serialize_txin(buffer, txin))
+    {
+      return 1;
+    }
+  }
+
+  // write txouts
+  for (uint32_t i = 0; i < tx->txout_count; i++)
+  {
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
+
+    if (serialize_txout(buffer, txout))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
 }
 
 int serialize_transaction(buffer_t *buffer, transaction_t *tx)
@@ -630,7 +666,7 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulat
     sign_txin(txin, tx, wallet->public_key, wallet->secret_key);
   }
 
-  compute_self_tx_id(tx);
+  //compute_self_tx_id(tx);
   return tx;
 }
 
