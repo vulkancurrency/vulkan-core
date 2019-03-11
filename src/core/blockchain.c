@@ -479,6 +479,7 @@ uint64_t get_next_block_difficulty(void)
 
 int valid_block_median_timestamp(block_t *block)
 {
+  assert(block != NULL);
   uint32_t current_block_height = get_block_height();
   if (current_block_height < TIMESTAMP_CHECK_WINDOW)
   {
@@ -488,14 +489,10 @@ int valid_block_median_timestamp(block_t *block)
   block_t *median_block = get_block_from_height(current_block_height - (TIMESTAMP_CHECK_WINDOW / 2));
   assert(median_block != NULL);
 
-  if (block->timestamp <= median_block->timestamp)
-  {
-    free_block(median_block);
-    return 0;
-  }
-
+  uint32_t median_timestamp = median_block->timestamp;
   free_block(median_block);
-  return 1;
+
+  return block->timestamp > median_timestamp;
 }
 
 int valid_block_generation_transaction(block_t *block, uint32_t block_height)
