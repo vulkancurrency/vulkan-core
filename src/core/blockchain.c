@@ -498,6 +498,48 @@ int valid_block_median_timestamp(block_t *block)
   return 1;
 }
 
+int valid_block_generation_transaction(block_t *block, uint32_t block_height)
+{
+  assert(block != NULL);
+
+  // if the genesis block has no transactions, there's no need to
+  // check it; but if it does indeed have transactions
+  // then we can check it as we would normally...
+  if (block_height == 0 && block->transaction_count == 0)
+  {
+    return 1;
+  }
+
+  transaction_t *tx = block->transactions[0];
+  assert(tx != NULL);
+
+  output_transaction_t *txout = tx->txouts[0];
+  assert(txout != NULL);
+
+  uint64_t expected_block_reward = 0;
+  uint64_t expected_cumulative_emission = 0;
+
+  if (block_height > 0)
+  {
+    block_t *previous_block = get_block_from_hash(block->previous_hash);
+    assert(previous_block != NULL);
+
+    int32_t previous_height = get_block_height_from_block(previous_block);
+    assert(previous_height >= 0);
+
+    expected_block_reward = get_block_reward(previous_height, previous_block->cumulative_emission);
+    expected_cumulative_emission = previous_block->cumulative_emission + expected_block_reward;
+    free_block(previous_block);
+  }
+  else
+  {
+    expected_block_reward = get_block_reward(0, 0);
+    expected_cumulative_emission = expected_block_reward;
+  }
+
+  return (txout->amount == expected_block_reward && block->cumulative_emission == expected_cumulative_emission);
+}
+
 int validate_and_insert_block(block_t *block)
 {
   uint32_t current_block_height = get_block_height();
@@ -514,6 +556,13 @@ int validate_and_insert_block(block_t *block)
   if (!valid_block_median_timestamp(block))
   {
     LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %d!", block->timestamp);
+    return 0;
+  }
+
+  // validate the block's generation transaction
+  if (!valid_block_generation_transaction(block, current_block_height))
+  {
+    LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
     return 0;
   }
 
@@ -583,7 +632,7 @@ int insert_block(block_t *block)
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
   buffer_free(buffer);
 
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
@@ -591,37 +640,8 @@ int insert_block(block_t *block)
     insert_tx_into_index(key, tx);
     insert_tx_into_unspent_index(tx);
 
-    // ensure that the genesis tx block reward and the block's cumulative_emission
-    // value has not been manipulated...
     if (is_generation_tx(tx))
     {
-      uint32_t current_block_height = get_block_height();
-
-      block_t *current_block = get_current_block();
-      assert(current_block != NULL);
-
-      uint64_t expected_block_reward = get_block_reward(current_block_height, current_block->cumulative_emission);
-
-      // check to ensure that the generation tx reward is valid
-      // for it's height in the blockchain...
-      output_transaction_t *txout = tx->txouts[0];
-      assert(txout != NULL);
-      if (txout->amount != expected_block_reward)
-      {
-        free_block(current_block);
-        return 0;
-      }
-
-      // check to ensure that the block's cumulative_emission value
-      // is equivalent to the previous cumulative_emission plus the block reward...
-      uint64_t expected_cumulative_emission = current_block->cumulative_emission + expected_block_reward;
-      if (block->cumulative_emission != expected_cumulative_emission)
-      {
-        free_block(current_block);
-        return 0;
-      }
-
-      free_block(current_block);
       continue;
     }
 
@@ -654,8 +674,8 @@ int insert_block(block_t *block)
 
         unspent_txout->spent = 1;
 
-        int spent_txs = 0;
-        for (int j = 0; j < unspent_tx->unspent_txout_count; j++)
+        uint32_t spent_txs = 0;
+        for (uint32_t j = 0; j < unspent_tx->unspent_txout_count; j++)
         {
           if (unspent_txout->spent == 1)
           {
@@ -730,6 +750,11 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
 block_t *get_block_from_height(uint32_t height)
 {
+  if (height == 0)
+  {
+    return get_block_from_hash(genesis_block.hash);
+  }
+
   uint32_t current_block_height = get_block_height();
   if (height > current_block_height)
   {
@@ -738,11 +763,6 @@ block_t *get_block_from_height(uint32_t height)
 
   block_t *block = get_current_block();
   assert(block != NULL);
-
-  if (height == 0)
-  {
-    return get_block_from_hash(genesis_block.hash);
-  }
 
   for (uint32_t i = current_block_height; i > 0; i--)
   {
