@@ -319,7 +319,7 @@ int rollback_blockchain(uint32_t rollback_height)
     }
 
     block_t *block = get_block_from_height(i);
-    if (!block)
+    if (block == NULL)
     {
       LOG_WARNING("Could not reset blockchain, unknown block at height: %d!", i);
       return 1;
@@ -792,7 +792,7 @@ int32_t get_block_height_from_block(block_t *block)
 uint8_t *get_block_hash_from_height(uint32_t height)
 {
   block_t *block = get_block_from_height(height);
-  if (!block)
+  if (block == NULL)
   {
     return NULL;
   }
@@ -807,7 +807,7 @@ uint8_t *get_block_hash_from_height(uint32_t height)
 int has_block_by_hash(uint8_t *block_hash)
 {
   block_t *block = get_block_from_hash(block_hash);
-  if (!block)
+  if (block == NULL)
   {
     return 0;
   }
@@ -819,7 +819,7 @@ int has_block_by_hash(uint8_t *block_hash)
 int has_block_by_height(uint32_t height)
 {
   block_t *block = get_block_from_height(height);
-  if (!block)
+  if (block == NULL)
   {
     return 0;
   }
