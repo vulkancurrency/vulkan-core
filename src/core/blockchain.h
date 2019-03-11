@@ -109,6 +109,9 @@ uint8_t *get_current_block_hash(void);
 int set_current_block(block_t *block);
 block_t *get_current_block(void);
 
+uint32_t get_blocks_since_hash(uint8_t *block_hash);
+uint32_t get_blocks_since_block(block_t *block);
+
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_block_key(uint8_t *buffer, uint8_t *block_hash);

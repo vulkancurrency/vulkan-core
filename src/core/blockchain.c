@@ -1185,6 +1185,32 @@ block_t *get_current_block(void)
   return get_block_from_hash(get_current_block_hash());
 }
 
+uint32_t get_blocks_since_hash(uint8_t *block_hash)
+{
+  block_t *block = get_block_from_hash(block_hash);
+  assert(block != NULL);
+
+  int32_t block_height = get_block_height_from_hash(block_hash);
+  assert(block_height >= 0);
+  free_block(block);
+
+  uint32_t current_block_height = get_block_height();
+  if (current_block_height > block_height)
+  {
+    return current_block_height - block_height;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+uint32_t get_blocks_since_block(block_t *block)
+{
+  assert(block != NULL);
+  return get_blocks_since_hash(block->hash);
+}
+
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
   memcpy(buffer, DB_KEY_PREFIX_TX, DB_KEY_PREFIX_SIZE_TX);
