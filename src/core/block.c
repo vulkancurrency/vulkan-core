@@ -59,7 +59,7 @@ block_t* make_block(void)
   block->nonce = 0;
   block->difficulty = 0;
   block->cumulative_difficulty = 0;
-  block->already_generated_coins = 0;
+  block->cumulative_emission = 0;
 
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
   block->transaction_count = 0;
@@ -257,7 +257,7 @@ int print_block(block_t *block)
   printf("Timestamp (epoch): %d\n", block->timestamp);
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
-  printf("Emission: %llu\n", block->already_generated_coins);
+  printf("Emission: %llu\n", block->cumulative_emission);
   printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
   printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
   printf("Hash: %s\n", hash_to_str(block->hash));
@@ -317,7 +317,7 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint64(buffer, block->difficulty);
   buffer_write_uint64(buffer, block->cumulative_difficulty);
-  buffer_write_uint64(buffer, block->already_generated_coins);
+  buffer_write_uint64(buffer, block->cumulative_emission);
 
   // write raw hash's
   buffer_write(buffer, block->previous_hash, HASH_SIZE);
@@ -339,7 +339,7 @@ int serialize_block(buffer_t *buffer, block_t *block)
   buffer_write_uint32(buffer, block->nonce);
   buffer_write_uint64(buffer, block->difficulty);
   buffer_write_uint64(buffer, block->cumulative_difficulty);
-  buffer_write_uint64(buffer, block->already_generated_coins);
+  buffer_write_uint64(buffer, block->cumulative_emission);
 
   buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
   buffer_write_uint32(buffer, block->transaction_count);
@@ -365,7 +365,7 @@ block_t* deserialize_block(buffer_t *buffer)
   block->nonce = buffer_read_uint32(buffer);
   block->difficulty = buffer_read_uint64(buffer);
   block->cumulative_difficulty = buffer_read_uint64(buffer);
-  block->already_generated_coins = buffer_read_uint64(buffer);
+  block->cumulative_emission = buffer_read_uint64(buffer);
 
   uint8_t *merkle_root = buffer_read_bytes(buffer);
   memcpy(block->merkle_root, merkle_root, HASH_SIZE);

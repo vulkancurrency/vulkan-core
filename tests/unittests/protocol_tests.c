@@ -125,7 +125,7 @@ TEST can_serialize_deserialize_packet(void)
   ASSERT_EQ(deserialized_block->nonce, block->nonce);
   ASSERT_EQ(deserialized_block->difficulty, block->difficulty);
   ASSERT_EQ(deserialized_block->cumulative_difficulty, block->cumulative_difficulty);
-  ASSERT_EQ(deserialized_block->already_generated_coins, block->already_generated_coins);
+  ASSERT_EQ(deserialized_block->cumulative_emission, block->cumulative_emission);
 
   ASSERT_MEM_EQ(deserialized_block->merkle_root, block->merkle_root, HASH_SIZE);
   ASSERT_EQ(deserialized_block->transaction_count, block->transaction_count);

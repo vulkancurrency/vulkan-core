@@ -349,19 +349,19 @@ int rollback_blockchain(uint32_t rollback_height)
   return 0;
 }
 
-uint64_t get_already_generated_coins(void)
+uint64_t get_cumulative_emission(void)
 {
   block_t *current_block = get_current_block();
   assert(current_block != NULL);
-  uint64_t already_generated_coins = current_block->already_generated_coins;
+  uint64_t cumulative_emission = current_block->cumulative_emission;
   free_block(current_block);
-  return already_generated_coins;
+  return cumulative_emission;
 }
 
-uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins)
+uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission)
 {
-  uint64_t block_reward = (MAX_MONEY - already_generated_coins) >> BLOCK_REWARD_EMISSION_FACTOR;
-  if (already_generated_coins == 0 && GENESIS_REWARD > 0)
+  uint64_t block_reward = (MAX_MONEY - cumulative_emission) >> BLOCK_REWARD_EMISSION_FACTOR;
+  if (cumulative_emission == 0 && GENESIS_REWARD > 0)
   {
     block_reward = GENESIS_REWARD;
   }
@@ -447,15 +447,12 @@ uint64_t get_block_difficulty(uint32_t block_height)
     g_timestamps_and_difficulties_height = height;
   }
 
-  size_t num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
-  size_t num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
-
-  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * num_timestamps);
-  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * num_cumulative_difficulties);
-
-  difficulty_info.num_timestamps = num_timestamps;
-  difficulty_info.num_cumulative_difficulties = num_cumulative_difficulties;
+  difficulty_info.num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
+  difficulty_info.num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
   difficulty_info.target_seconds = DIFFICULTY_TARGET;
+
+  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * difficulty_info.num_timestamps);
+  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * difficulty_info.num_cumulative_difficulties);
 
   uint64_t difficulty = get_next_difficulty(difficulty_info);
   mtx_unlock(&g_blockchain_lock);
@@ -594,7 +591,7 @@ int insert_block(block_t *block)
     insert_tx_into_index(key, tx);
     insert_tx_into_unspent_index(tx);
 
-    // ensure that the genesis tx block reward and the block's already_generated_coins
+    // ensure that the genesis tx block reward and the block's cumulative_emission
     // value has not been manipulated...
     if (is_generation_tx(tx))
     {
@@ -603,7 +600,7 @@ int insert_block(block_t *block)
       block_t *current_block = get_current_block();
       assert(current_block != NULL);
 
-      uint64_t expected_block_reward = get_block_reward(current_block_height, current_block->already_generated_coins);
+      uint64_t expected_block_reward = get_block_reward(current_block_height, current_block->cumulative_emission);
 
       // check to ensure that the generation tx reward is valid
       // for it's height in the blockchain...
@@ -615,10 +612,10 @@ int insert_block(block_t *block)
         return 0;
       }
 
-      // check to ensure that the block's already_generated_coins value
-      // is equivalent to the previous already_generated_coins plus the block reward...
-      uint64_t expected_already_generated_coins = current_block->already_generated_coins + expected_block_reward;
-      if (block->already_generated_coins != expected_already_generated_coins)
+      // check to ensure that the block's cumulative_emission value
+      // is equivalent to the previous cumulative_emission plus the block reward...
+      uint64_t expected_cumulative_emission = current_block->cumulative_emission + expected_block_reward;
+      if (block->cumulative_emission != expected_cumulative_emission)
       {
         free_block(current_block);
         return 0;
@@ -1155,7 +1152,7 @@ uint8_t *get_current_block_hash(void)
 
 int set_current_block(block_t *block)
 {
-  if (!block)
+  if (block == NULL)
   {
     return 1;
   }

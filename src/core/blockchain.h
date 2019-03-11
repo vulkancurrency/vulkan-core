@@ -54,8 +54,8 @@ int rollback_blockchain(uint32_t rollback_height);
 
 uint32_t get_block_height(void);
 
-uint64_t get_already_generated_coins(void);
-uint64_t get_block_reward(uint32_t block_height, uint64_t already_generated_coins);
+uint64_t get_cumulative_emission(void);
+uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission);
 
 uint64_t get_block_cumulative_difficulty(uint32_t block_height);
 uint64_t get_block_difficulty(uint32_t block_height);

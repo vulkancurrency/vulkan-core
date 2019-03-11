@@ -114,8 +114,8 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   uint32_t current_time = get_current_time();
   uint32_t current_block_height = get_block_height();
 
-  uint64_t already_generated_coins = previous_block->already_generated_coins;
-  uint64_t block_reward = get_block_reward(current_block_height, already_generated_coins);
+  uint64_t cumulative_emission = previous_block->cumulative_emission;
+  uint64_t block_reward = get_block_reward(current_block_height, cumulative_emission);
 
   block_t *block = make_block();
   memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
@@ -124,12 +124,12 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   block->nonce = nonce;
   block->difficulty = get_next_block_difficulty();
   block->cumulative_difficulty = previous_block->cumulative_difficulty + block->difficulty;
-  block->already_generated_coins = already_generated_coins + block_reward;
+  block->cumulative_emission = cumulative_emission + block_reward;
 
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
-  transaction_t *tx = make_generation_tx(wallet, current_block_height, already_generated_coins, block_reward);
+  transaction_t *tx = make_generation_tx(wallet, current_block_height, cumulative_emission, block_reward);
   block->transactions[0] = tx;
 
   compute_self_merkle_root(block);

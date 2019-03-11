@@ -51,7 +51,7 @@ typedef struct Block
   uint32_t nonce;
   uint64_t difficulty;
   uint64_t cumulative_difficulty;
-  uint64_t already_generated_coins;
+  uint64_t cumulative_emission;
 
   uint8_t merkle_root[HASH_SIZE];
   uint32_t transaction_count;
@@ -84,7 +84,7 @@ static block_t genesis_block = {
   .nonce = GENESIS_NONCE,
   .difficulty = 1,
   .cumulative_difficulty = 1,
-  .already_generated_coins = 0,
+  .cumulative_emission = 0,
   .merkle_root = {
     0xf8, 0x99, 0x8c, 0xfc,
     0x83, 0x33, 0x7a, 0x49,

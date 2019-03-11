@@ -28,13 +28,13 @@
 import math
 
 
-def get_block_reward(already_generated_coins):
+def get_block_reward(cumulative_emission):
     """
     Calculates the block reward based on the number of already emitted coins,
     until the supply reaches zero...
     """
 
-    block_reward = (MAX_SUPPLY - already_generated_coins) >> EMISSION_FACTOR
+    block_reward = (MAX_SUPPLY - cumulative_emission) >> EMISSION_FACTOR
     return block_reward
 
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     EMISSION_FACTOR = 18
 
     # get the block reward
-    already_generated_coins = 0
-    block_reward = get_block_reward(already_generated_coins)
-    print ("Generated Coins", already_generated_coins, "Reward:", (block_reward / UNITS))
-    already_generated_coins += block_reward
+    cumulative_emission = 0
+    block_reward = get_block_reward(cumulative_emission)
+    print ("Generated Coins", cumulative_emission, "Reward:", (block_reward / UNITS))
+    cumulative_emission += block_reward
