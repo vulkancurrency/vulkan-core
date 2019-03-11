@@ -274,6 +274,7 @@ int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
   assert(tx_header_size > 0);
 
   buffer_t *buffer = buffer_init_size(0, tx_header_size);
+  serialize_transaction_header(buffer, tx);
 
   uint8_t header[tx_header_size];
   memcpy(header, buffer->data, tx_header_size);
