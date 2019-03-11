@@ -594,6 +594,8 @@ output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
 
 transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, transaction_entries_t transaction_entries)
 {
+  assert(wallet != NULL);
+  assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
   transaction_t *tx = malloc(sizeof(transaction_t));
 
   tx->txout_count = transaction_entries.num_entries;
