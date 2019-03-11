@@ -646,7 +646,7 @@ int insert_block(block_t *block)
     }
 
     // mark unspent txouts as spent for current txins
-    for (int txin_index = 0; txin_index < tx->txin_count; txin_index++)
+    for (uint32_t txin_index = 0; txin_index < tx->txin_count; txin_index++)
     {
       input_transaction_t *txin = tx->txins[txin_index];
       unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
@@ -1233,7 +1233,7 @@ uint64_t get_balance_for_address(uint8_t *address)
       unspent_transaction_t *tx = unspent_transaction_from_serialized(value, value_length);
       assert(tx != NULL);
 
-      for (int i = 0; i < tx->unspent_txout_count; i++)
+      for (uint32_t i = 0; i < tx->unspent_txout_count; i++)
       {
         unspent_output_transaction_t *unspent_txout = tx->unspent_txouts[i];
         assert(unspent_txout != NULL);
