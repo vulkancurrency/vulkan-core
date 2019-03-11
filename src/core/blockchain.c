@@ -750,11 +750,6 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
 block_t *get_block_from_height(uint32_t height)
 {
-  if (height == 0)
-  {
-    return get_block_from_hash(genesis_block.hash);
-  }
-
   uint32_t current_block_height = get_block_height();
   if (height > current_block_height)
   {
@@ -763,6 +758,11 @@ block_t *get_block_from_height(uint32_t height)
 
   block_t *block = get_current_block();
   assert(block != NULL);
+
+  if (height == 0)
+  {
+    return get_block_from_hash(genesis_block.hash);
+  }
 
   for (uint32_t i = current_block_height; i > 0; i--)
   {
