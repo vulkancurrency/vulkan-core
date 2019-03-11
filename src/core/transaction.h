@@ -83,8 +83,8 @@ typedef struct OutputTransaction
 typedef struct Transaction
 {
   uint8_t id[HASH_SIZE];
-  uint8_t txin_count;
-  uint8_t txout_count;
+  uint32_t txin_count;
+  uint32_t txout_count;
   input_transaction_t **txins;
   output_transaction_t **txouts;
 } transaction_t;

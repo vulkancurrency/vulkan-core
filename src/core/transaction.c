@@ -303,8 +303,8 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
   assert(tx != NULL);
 
   buffer_write_bytes(buffer, tx->id, HASH_SIZE);
-  buffer_write_uint8(buffer, tx->txin_count);
-  buffer_write_uint8(buffer, tx->txout_count);
+  buffer_write_uint32(buffer, tx->txin_count);
+  buffer_write_uint32(buffer, tx->txout_count);
 
   // write txins
   for (int i = 0; i < tx->txin_count; i++)
@@ -342,8 +342,8 @@ transaction_t* deserialize_transaction(buffer_t *buffer)
   uint8_t *id = buffer_read_bytes(buffer);
   memcpy(tx->id, id, HASH_SIZE);
 
-  tx->txin_count = buffer_read_uint8(buffer);
-  tx->txout_count = buffer_read_uint8(buffer);
+  tx->txin_count = buffer_read_uint32(buffer);
+  tx->txout_count = buffer_read_uint32(buffer);
 
   tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
