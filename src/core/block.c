@@ -116,7 +116,7 @@ int valid_block(block_t *block)
   // For each TX, compare to the other TXs that:
   // - No other TX shares the same hash id
   // - No other TX shares the same TXIN referencing the same txout + id
-  for (int first_tx_index = 0; first_tx_index < block->transaction_count; first_tx_index++)
+  for (uint32_t first_tx_index = 0; first_tx_index < block->transaction_count; first_tx_index++)
   {
     transaction_t *first_tx = block->transactions[first_tx_index];
     assert(first_tx != NULL);
@@ -133,7 +133,7 @@ int valid_block(block_t *block)
       return 0;
     }
 
-    for (int second_tx_index = 0; second_tx_index < block->transaction_count; second_tx_index++)
+    for (uint32_t second_tx_index = 0; second_tx_index < block->transaction_count; second_tx_index++)
     {
       transaction_t *second_tx = block->transactions[second_tx_index];
       assert(second_tx != NULL);
@@ -150,12 +150,12 @@ int valid_block(block_t *block)
       }
 
       // check to see if any transactions reference same txout id + index
-      for (int first_txin_index = 0; first_txin_index < block->transactions[first_tx_index]->txin_count; first_txin_index++)
+      for (uint32_t first_txin_index = 0; first_txin_index < block->transactions[first_tx_index]->txin_count; first_txin_index++)
       {
         input_transaction_t *txin_first = first_tx->txins[first_tx_index];
         assert(txin_first != NULL);
 
-        for (int second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
+        for (uint32_t second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
           assert(txin_second != NULL);
@@ -213,7 +213,7 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
   assert(block != NULL);
   uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
   }
@@ -256,7 +256,7 @@ void print_block_transactions(block_t *block)
 {
   assert(block != NULL);
 
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
@@ -304,7 +304,7 @@ uint32_t get_block_header_size(block_t *block)
 {
   assert(block != NULL);
   uint32_t block_header_size = BLOCK_HEADER_SIZE;
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
@@ -466,7 +466,7 @@ int serialize_transactions_from_block(buffer_t *buffer, block_t *block)
   assert(buffer != NULL);
   assert(block != NULL);
 
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
@@ -486,7 +486,7 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
   assert(block != NULL);
 
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-  for (int i = 0; i < block->transaction_count; i++)
+  for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = deserialize_transaction(buffer);
     assert(tx != NULL);
@@ -514,7 +514,7 @@ int copy_block_transactions(block_t *block, block_t *other_block)
     other_block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
     // copy the transactions to the block we are copying to
-    for (int i = 0; i < block->transaction_count; i++)
+    for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
@@ -564,7 +564,7 @@ int free_block_transactions(block_t *block)
   assert(block != NULL);
   if (block->transaction_count > 0 && block->transactions != NULL)
   {
-    for (int i = 0; i < block->transaction_count; i++)
+    for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);

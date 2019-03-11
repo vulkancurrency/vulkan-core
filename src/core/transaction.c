@@ -110,7 +110,7 @@ uint32_t get_tx_sign_header_size(transaction_t *tx)
 
 int get_tx_sign_header(uint8_t *header, transaction_t *tx)
 {
-  for (int i = 0; i < tx->txout_count; i++)
+  for (uint32_t i = 0; i < tx->txout_count; i++)
   {
     get_txout_header(header + (TXOUT_HEADER_SIZE * i), tx->txouts[i]);
   }
@@ -159,7 +159,7 @@ void print_transaction(transaction_t *tx)
   printf("\n");
 
   // print txins
-  for (int i = 0; i < tx->txin_count; i++)
+  for (uint32_t i = 0; i < tx->txin_count; i++)
   {
     input_transaction_t *txin = tx->txins[i];
     assert(txin != NULL);
@@ -169,7 +169,7 @@ void print_transaction(transaction_t *tx)
   }
 
   // print txouts
-  for (int i = 0; i < tx->txout_count; i++)
+  for (uint32_t i = 0; i < tx->txout_count; i++)
   {
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
@@ -213,11 +213,11 @@ int valid_transaction(transaction_t *tx)
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)
 {
-  int valid_txins = 0;
-  int input_money = 0;
-  int required_money = 0;
+  uint32_t valid_txins = 0;
+  uint64_t input_money = 0;
+  uint64_t required_money = 0;
 
-  for (int i = 0; i < tx->txin_count; i++)
+  for (uint32_t i = 0; i < tx->txin_count; i++)
   {
     input_transaction_t *txin = tx->txins[i];
     assert(txin != NULL);
@@ -246,7 +246,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
     }
   }
 
-  for (int i = 0; i < tx->txout_count; i++)
+  for (uint32_t i = 0; i < tx->txout_count; i++)
   {
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
@@ -358,7 +358,7 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
   buffer_write_uint32(buffer, tx->txout_count);
 
   // write txins
-  for (int i = 0; i < tx->txin_count; i++)
+  for (uint32_t i = 0; i < tx->txin_count; i++)
   {
     input_transaction_t *txin = tx->txins[i];
     assert(txin != NULL);
@@ -370,7 +370,7 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
   }
 
   // write txouts
-  for (int i = 0; i < tx->txout_count; i++)
+  for (uint32_t i = 0; i < tx->txout_count; i++)
   {
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
@@ -400,7 +400,7 @@ transaction_t* deserialize_transaction(buffer_t *buffer)
   tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
 
   // read txins
-  for (int i = 0; i < tx->txin_count; i++)
+  for (uint32_t i = 0; i < tx->txin_count; i++)
   {
     input_transaction_t *txin = deserialize_txin(buffer);
     assert(txin != NULL);
@@ -408,7 +408,7 @@ transaction_t* deserialize_transaction(buffer_t *buffer)
   }
 
   // read txouts
-  for (int i = 0; i < tx->txout_count; i++)
+  for (uint32_t i = 0; i < tx->txout_count; i++)
   {
     output_transaction_t *txout = deserialize_txout(buffer);
     assert(txout != NULL);
@@ -482,10 +482,10 @@ int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspe
 
   buffer_write_bytes(buffer, unspent_tx->id, HASH_SIZE);
   buffer_write_uint8(buffer, unspent_tx->coinbase);
-  buffer_write_uint8(buffer, unspent_tx->unspent_txout_count);
+  buffer_write_uint32(buffer, unspent_tx->unspent_txout_count);
 
   // write unspent txouts
-  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
     unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
     assert(unspent_txout != NULL);
@@ -509,11 +509,11 @@ unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer)
   memcpy(unspent_tx->id, id, HASH_SIZE);
 
   unspent_tx->coinbase = buffer_read_uint8(buffer);
-  unspent_tx->unspent_txout_count = buffer_read_uint8(buffer);
+  unspent_tx->unspent_txout_count = buffer_read_uint32(buffer);
   unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * unspent_tx->unspent_txout_count);
 
   // read unspent txouts
-  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
     unspent_output_transaction_t *unspent_txout = deserialize_unspent_txout(buffer);
     assert(unspent_txout != NULL);
@@ -535,7 +535,7 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
   unspent_tx->unspent_txout_count = tx->txout_count;
   unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * tx->txout_count);
 
-  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+  for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
@@ -688,7 +688,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
     other_tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
 
     // copy the txins to the transaction we are copying to
-    for (int i = 0; i < tx->txin_count; i++)
+    for (uint32_t i = 0; i < tx->txin_count; i++)
     {
       input_transaction_t *txin = tx->txins[i];
       assert(txin != NULL);
@@ -704,7 +704,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
     }
 
     // copy the txouts to the transaction we are copying to
-    for (int i = 0; i < tx->txout_count; i++)
+    for (uint32_t i = 0; i < tx->txout_count; i++)
     {
       output_transaction_t *txout = tx->txouts[i];
       assert(txout != NULL);
@@ -728,7 +728,7 @@ int free_txins(transaction_t *tx)
   assert(tx != NULL);
   if (tx->txin_count > 0 && tx->txins != NULL)
   {
-    for (int i = 0; i < tx->txin_count; i++)
+    for (uint32_t i = 0; i < tx->txin_count; i++)
     {
       input_transaction_t *txin = tx->txins[i];
       assert(txin != NULL);
@@ -746,7 +746,7 @@ int free_txouts(transaction_t *tx)
   assert(tx != NULL);
   if (tx->txout_count > 0 && tx->txouts != NULL)
   {
-    for (int i = 0; i < tx->txout_count; i++)
+    for (uint32_t i = 0; i < tx->txout_count; i++)
     {
       output_transaction_t *txout = tx->txouts[i];
       assert(txout != NULL);
@@ -773,7 +773,7 @@ int free_unspent_txouts(unspent_transaction_t *unspent_tx)
   assert(unspent_tx != NULL);
   if (unspent_tx->unspent_txout_count > 0 && unspent_tx->unspent_txouts != NULL)
   {
-    for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+    for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
     {
       unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
       assert(unspent_txout != NULL);

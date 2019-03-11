@@ -100,7 +100,7 @@ typedef struct UnspentTransaction
 {
   uint8_t id[HASH_SIZE];
   uint8_t coinbase;
-  uint8_t unspent_txout_count;
+  uint32_t unspent_txout_count;
   unspent_output_transaction_t **unspent_txouts;
 } unspent_transaction_t;
 
