@@ -48,10 +48,7 @@ merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_o
   merkle_tree_t *tree = malloc(sizeof(merkle_tree_t));
   uint32_t num_of_nodes = 0;
 
-  merkle_node_t **nodes = malloc(
-    sizeof(merkle_node_t *) * num_of_hashes
-  );
-
+  merkle_node_t **nodes = malloc(sizeof(merkle_node_t) * num_of_hashes);
   construct_merkle_leaves_from_hashes(nodes, &num_of_nodes, hashes, num_of_hashes);
 
   while (num_of_nodes > 1)
@@ -88,7 +85,7 @@ int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_
 int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
 {
   int current_node_idx = 0;
-  merkle_node_t **temp_nodes = malloc(sizeof(merkle_node_t *) * (*num_of_nodes));
+  merkle_node_t **temp_nodes = malloc(sizeof(merkle_node_t) * (*num_of_nodes));
 
   for (int i = 0; i < (*num_of_nodes - 1); i += 2)
   {
