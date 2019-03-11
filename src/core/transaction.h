@@ -126,6 +126,10 @@ int get_tx_sign_header(uint8_t *header, transaction_t *tx);
 int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
 int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);
 
+void print_txin(uint8_t txin_index, input_transaction_t *txin);
+void print_txout(uint8_t txout_index, output_transaction_t *txout);
+void print_transaction(transaction_t *tx);
+
 int valid_transaction(transaction_t *tx);
 int is_generation_tx(transaction_t *tx);
 int do_txins_reference_unspent_txouts(transaction_t *tx);
@@ -157,7 +161,15 @@ output_transaction_t* make_txout(uint8_t *address, uint64_t amount);
 transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, transaction_entries_t transaction_entries);
 transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, uint64_t block_reward);
 
+int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
+int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);
+int copy_transaction(transaction_t *tx, transaction_t *other_tx);
+
+int free_txins(transaction_t *tx);
+int free_txouts(transaction_t *tx);
 int free_transaction(transaction_t *tx);
+
+int free_unspent_txouts(unspent_transaction_t *unspent_tx);
 int free_unspent_transaction(unspent_transaction_t *unspent_tx);
 
 #ifdef __cplusplus

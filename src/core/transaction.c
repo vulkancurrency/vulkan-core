@@ -128,6 +128,57 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
   return compare_transaction_hash(transaction->id, other_transaction->id);
 }
 
+void print_txin(uint8_t txin_index, input_transaction_t *txin)
+{
+  assert(txin != NULL);
+
+  printf("Txin %d:\n", txin_index);
+  printf("Previous Tx: %s\n", hash_to_str(txin->transaction));
+  printf("Index: %d\n", txin->txout_index);
+  printf("Signature: %s\n", bytes_to_str(txin->signature, crypto_sign_BYTES));
+  printf("Public Key: %s\n", bytes_to_str(txin->public_key, crypto_sign_PUBLICKEYBYTES));
+}
+
+void print_txout(uint8_t txout_index, output_transaction_t *txout)
+{
+  assert(txout != NULL);
+
+  printf("Txout %d:\n", txout_index);
+  printf("Amount: %llu\n", txout->amount);
+  printf("Address: %s\n", address_to_str(txout->address));
+}
+
+void print_transaction(transaction_t *tx)
+{
+  assert(tx != NULL);
+
+  printf("Transaction:\n");
+  printf("Id: %s\n", hash_to_str(tx->id));
+  printf("Txin Count: %d\n", tx->txin_count);
+  printf("Txout Count: %d\n", tx->txout_count);
+  printf("\n");
+
+  // print txins
+  for (int i = 0; i < tx->txin_count; i++)
+  {
+    input_transaction_t *txin = tx->txins[i];
+    assert(txin != NULL);
+
+    print_txin(i, txin);
+    printf("\n");
+  }
+
+  // print txouts
+  for (int i = 0; i < tx->txout_count; i++)
+  {
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
+
+    print_txout(i, txout);
+    printf("\n");
+  }
+}
+
 /*
  * A transaction is valid if:
  * - It's header size is less than that of defined as MAX_TX_SIZE
@@ -584,45 +635,161 @@ transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint6
   return make_tx(wallet, block_height, cumulative_emission, transaction_entries);
 }
 
-int free_transaction(transaction_t *tx)
+int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)
 {
-  for (int i = 0; i < tx->txin_count; i++)
+  assert(txin != NULL);
+  assert(other_txin != NULL);
+
+  memcpy(&other_txin->transaction, &txin->transaction, HASH_SIZE);
+  other_txin->txout_index = txin->txout_index;
+
+  memcpy(&other_txin->signature, &txin->signature, HASH_SIZE);
+  memcpy(&other_txin->public_key, &txin->public_key, HASH_SIZE);
+  return 0;
+}
+
+int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout)
+{
+  assert(txout != NULL);
+  assert(other_txout != NULL);
+
+  other_txout->amount = txout->amount;
+  memcpy(&other_txout->address, txout->address, HASH_SIZE);
+  return 0;
+}
+
+int copy_transaction(transaction_t *tx, transaction_t *other_tx)
+{
+  assert(tx != NULL);
+  assert(other_tx != NULL);
+
+  // free old txins for the transaction we are copying to
+  if (free_txins(other_tx))
   {
-    input_transaction_t *txin = tx->txins[i];
-    assert(txin != NULL);
-    free(txin);
+    return 1;
   }
 
-  for (int i = 0; i < tx->txout_count; i++)
+  // free old txouts for the transaction we are copying to
+  if (free_txouts(other_tx))
   {
-    output_transaction_t *txout = tx->txouts[i];
-    assert(txout != NULL);
-    free(txout);
+    return 1;
   }
 
-  if (tx->txins != NULL)
+  // copy the transaction id to the transaction we are copying to
+  memcpy(&other_tx->id, &tx->id, HASH_SIZE);
+
+  if ((tx->txin_count > 0 && tx->txins != NULL) && (tx->txout_count > 0 && tx->txouts != NULL))
   {
+    // allocate the txin, txout arrays for the transaction we are copying to
+    other_tx->txin_count = tx->txin_count;
+    other_tx->txout_count = tx->txout_count;
+
+    other_tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
+    other_tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
+
+    // copy the txins to the transaction we are copying to
+    for (int i = 0; i < tx->txin_count; i++)
+    {
+      input_transaction_t *txin = tx->txins[i];
+      assert(txin != NULL);
+
+      input_transaction_t *other_txin = malloc(sizeof(input_transaction_t));
+      if (copy_txin(txin, other_txin))
+      {
+        return 1;
+      }
+
+      assert(other_txin != NULL);
+      other_tx->txins[i] = other_txin;
+    }
+
+    // copy the txouts to the transaction we are copying to
+    for (int i = 0; i < tx->txout_count; i++)
+    {
+      output_transaction_t *txout = tx->txouts[i];
+      assert(txout != NULL);
+
+      output_transaction_t *other_txout = malloc(sizeof(output_transaction_t));
+      if (copy_txout(txout, other_txout))
+      {
+        return 1;
+      }
+
+      assert(other_txout != NULL);
+      other_tx->txouts[i] = other_txout;
+    }
+  }
+
+  return 0;
+}
+
+int free_txins(transaction_t *tx)
+{
+  assert(tx != NULL);
+  if (tx->txin_count > 0 && tx->txins != NULL)
+  {
+    for (int i = 0; i < tx->txin_count; i++)
+    {
+      input_transaction_t *txin = tx->txins[i];
+      assert(txin != NULL);
+      free(txin);
+    }
+
     free(tx->txins);
   }
 
-  if (tx->txouts != NULL)
+  return 0;
+}
+
+int free_txouts(transaction_t *tx)
+{
+  assert(tx != NULL);
+  if (tx->txout_count > 0 && tx->txouts != NULL)
   {
+    for (int i = 0; i < tx->txout_count; i++)
+    {
+      output_transaction_t *txout = tx->txouts[i];
+      assert(txout != NULL);
+      free(txout);
+    }
+
     free(tx->txouts);
   }
 
+  return 0;
+}
+
+int free_transaction(transaction_t *tx)
+{
+  assert(tx != NULL);
+  free_txins(tx);
+  free_txouts(tx);
   free(tx);
+  return 0;
+}
+
+int free_unspent_txouts(unspent_transaction_t *unspent_tx)
+{
+  assert(unspent_tx != NULL);
+  if (unspent_tx->unspent_txout_count > 0 && unspent_tx->unspent_txouts != NULL)
+  {
+    for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
+    {
+      unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
+      assert(unspent_txout != NULL);
+      free(unspent_txout);
+    }
+
+    free(unspent_tx->unspent_txouts);
+  }
+
   return 0;
 }
 
 int free_unspent_transaction(unspent_transaction_t *unspent_tx)
 {
-  for (int i = 0; i < unspent_tx->unspent_txout_count; i++)
-  {
-    unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
-    assert(unspent_txout != NULL);
-    free(unspent_txout);
-  }
-
+  assert(unspent_tx != NULL);
+  free_unspent_txouts(unspent_tx);
   free(unspent_tx);
   return 0;
 }

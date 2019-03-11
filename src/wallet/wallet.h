@@ -48,16 +48,18 @@ typedef struct Wallet
   uint64_t balance;
 } wallet_t;
 
-wallet_t *make_wallet(void);
-int free_wallet(wallet_t *wallet);
+wallet_t* make_wallet(void);
+int free_wallet(wallet_t* wallet);
 
-int serialize_wallet(buffer_t *buffer, wallet_t *wallet);
-wallet_t *deserialize_wallet(buffer_t *buffer);
+int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
+wallet_t* deserialize_wallet(buffer_t *buffer);
 
-rocksdb_t *open_wallet(const char *wallet_filename, char *err);
-wallet_t *new_wallet(const char *wallet_filename);
-wallet_t *get_wallet(const char *wallet_filename);
-void print_wallet(wallet_t *wallet);
+rocksdb_t* open_wallet(const char *wallet_filename, char *err);
+wallet_t* new_wallet(const char *wallet_filename);
+wallet_t* get_wallet(const char *wallet_filename);
+wallet_t* init_wallet(const char *wallet_filename);
+
+void print_wallet(wallet_t* wallet);
 
 int compare_addresses(uint8_t *address, uint8_t *other_address);
 

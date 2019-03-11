@@ -54,26 +54,6 @@ static const char *g_logger_log_filename = "daemon.log";
 static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
 
-static block_t* create_genesis_block(void)
-{
-  block_t *block = make_block();
-  block->timestamp = genesis_block.timestamp;
-  block->nonce = genesis_block.nonce;
-  block->difficulty = genesis_block.difficulty;
-  block->cumulative_difficulty = genesis_block.cumulative_difficulty;
-  compute_self_block_hash(block);
-
-  int nonce = 0;
-  while (!valid_block_hash(block))
-  {
-    block->nonce = nonce;
-    compute_self_block_hash(block);
-    nonce++;
-  }
-
-  return block;
-}
-
 static void perform_shutdown(int sig)
 {
   if (logger_close())
@@ -160,10 +140,19 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
         {
-          block_t *block = create_genesis_block();
+          wallet_t *wallet = init_wallet(g_wallet_filename);
+          assert(wallet != NULL);
+
+          block_t *block = compute_genesis_block(wallet);
+          assert(block != NULL);
+
           printf("Generated new genesis block.\n");
           print_block(block);
+          printf("\n");
+          print_block_transactions(block);
+
           free_block(block);
+          free_wallet(wallet);
         }
         return 1;
       case CMD_ARG_MINE:
@@ -223,13 +212,9 @@ int main(int argc, char **argv)
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
-    wallet = new_wallet(g_wallet_filename);
-    if (wallet == NULL)
-    {
-      wallet = get_wallet(g_wallet_filename);
-    }
-
+    wallet = init_wallet(g_wallet_filename);
     assert(wallet != NULL);
+
     set_current_wallet(wallet);
     start_mining();
   }
