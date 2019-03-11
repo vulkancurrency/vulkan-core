@@ -152,6 +152,7 @@ unspent_output_transaction_t* deserialize_unspent_txout(buffer_t *buffer);
 int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx);
 unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer);
 
+unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout);
 unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);
 int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx);
 unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);

@@ -524,6 +524,19 @@ unspent_transaction_t* deserialize_unspent_transaction(buffer_t *buffer)
   return unspent_tx;
 }
 
+unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout)
+{
+  assert(txout != NULL);
+
+  unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+  unspent_txout->amount = txout->amount;
+
+  memcpy(unspent_txout->address, txout->address, ADDRESS_SIZE);
+  unspent_txout->spent = 0;
+
+  return unspent_txout;
+}
+
 unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
@@ -540,10 +553,9 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
 
-    unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
-    unspent_txout->amount = txout->amount;
-    memcpy(unspent_txout->address, txout->address, ADDRESS_SIZE);
-    unspent_txout->spent = 0;
+    unspent_output_transaction_t *unspent_txout = txout_to_unspent_txout(txout);
+    assert(unspent_txout != NULL);
+
     unspent_tx->unspent_txouts[i] = unspent_txout;
   }
 
