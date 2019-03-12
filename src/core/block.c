@@ -191,17 +191,9 @@ int valid_block(block_t *block)
 int valid_merkle_root(block_t *block)
 {
   assert(block != NULL);
-  uint8_t *merkle_root = malloc(sizeof(uint8_t) * HASH_SIZE);
-  compute_merkle_root(merkle_root, block);
-
-  if (compare_merkle_hash(merkle_root, block->merkle_root))
-  {
-    return 1;
-  }
-  else
-  {
-    return 0;
-  }
+  uint8_t merkle_root[HASH_SIZE];
+  compute_merkle_root(&merkle_root, block);
+  return compare_merkle_hash(&merkle_root, &block->merkle_root);
 }
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
