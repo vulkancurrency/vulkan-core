@@ -423,8 +423,8 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
     if (height > offset)
     {
-      vec_reserve(&difficulty_info.timestamps, height - offset);
-      vec_reserve(&difficulty_info.cumulative_difficulties, height - offset);
+      assert(vec_reserve(&difficulty_info.timestamps, height - offset) == 0);
+      assert(vec_reserve(&difficulty_info.cumulative_difficulties, height - offset) == 0);
     }
 
     g_num_timestamps = 0;
