@@ -192,8 +192,8 @@ int valid_merkle_root(block_t *block)
 {
   assert(block != NULL);
   uint8_t merkle_root[HASH_SIZE];
-  compute_merkle_root(&merkle_root, block);
-  return compare_merkle_hash(&merkle_root, &block->merkle_root);
+  compute_merkle_root(merkle_root, block);
+  return compare_merkle_hash(merkle_root, block->merkle_root);
 }
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
