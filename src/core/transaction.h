@@ -57,7 +57,7 @@ extern "C"
 #endif
 
 #define TXIN_HEADER_SIZE (HASH_SIZE + 4)
-#define TXOUT_HEADER_SIZE (HASH_SIZE + 4)
+#define TXOUT_HEADER_SIZE (HASH_SIZE + 4 + crypto_sign_BYTES + crypto_sign_PUBLICKEYBYTES)
 
 #define MAX_NUM_TX_ENTRIES 1024
 
@@ -137,8 +137,10 @@ int do_txins_reference_unspent_txouts(transaction_t *tx);
 int compute_tx_id(uint8_t *tx_id, transaction_t *tx);
 int compute_self_tx_id(transaction_t *tx);
 
+int serialize_txin_header(buffer_t *buffer, input_transaction_t *txin);
 int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
 input_transaction_t* deserialize_txin(buffer_t *buffer);
+int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout);
 int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
 output_transaction_t* deserialize_txout(buffer_t *buffer);
 int serialize_transaction_header(buffer_t *buffer, transaction_t *tx);
