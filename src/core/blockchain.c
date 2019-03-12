@@ -462,8 +462,8 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
   uint64_t difficulty = get_next_difficulty(difficulty_info);
 
-  vec_clear(&difficulty_info.timestamps);
-  vec_clear(&difficulty_info.cumulative_difficulties);
+  vec_deinit(&difficulty_info.timestamps);
+  vec_deinit(&difficulty_info.cumulative_difficulties);
 
   mtx_unlock(&g_blockchain_lock);
   return difficulty;
