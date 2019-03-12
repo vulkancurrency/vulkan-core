@@ -339,7 +339,7 @@ block_t* compute_genesis_block(wallet_t *wallet)
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
-  transaction_t *tx = make_generation_tx(wallet, 0, block->cumulative_emission, block_reward);
+  transaction_t *tx = make_generation_tx(wallet, 0, block_reward);
   block->transactions[0] = tx;
 
   compute_self_merkle_root(block);

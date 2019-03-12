@@ -662,7 +662,7 @@ output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
   return txout;
 }
 
-transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, transaction_entries_t transaction_entries)
+transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, transaction_entries_t transaction_entries)
 {
   assert(wallet != NULL);
   assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
@@ -694,7 +694,7 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulat
   return tx;
 }
 
-transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, uint64_t block_reward)
+transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t block_reward)
 {
   transaction_entry_t transaction_entry;
   transaction_entry.address = wallet->address;
@@ -704,7 +704,7 @@ transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint6
   transaction_entries.num_entries = 1;
   transaction_entries.entries[0] = transaction_entry;
 
-  return make_tx(wallet, block_height, cumulative_emission, transaction_entries);
+  return make_tx(wallet, block_height, transaction_entries);
 }
 
 int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)

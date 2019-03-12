@@ -160,8 +160,8 @@ unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32
 
 input_transaction_t* make_txin(uint32_t block_height);
 output_transaction_t* make_txout(uint8_t *address, uint64_t amount);
-transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, transaction_entries_t transaction_entries);
-transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t cumulative_emission, uint64_t block_reward);
+transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, transaction_entries_t transaction_entries);
+transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t block_reward);
 
 int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
 int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);
