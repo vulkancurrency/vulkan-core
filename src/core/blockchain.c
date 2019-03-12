@@ -378,6 +378,9 @@ uint64_t get_block_difficulty(uint32_t block_height)
   uint32_t height = block_height;
   height++;
 
+  vec_init(&difficulty_info.timestamps);
+  vec_init(&difficulty_info.cumulative_difficulties);
+
   mtx_lock(&g_blockchain_lock);
   if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
@@ -418,11 +421,11 @@ uint64_t get_block_difficulty(uint32_t block_height)
       offset++;
     }
 
-    vec_int_t timestamps;
-    vec_int_t cumulative_difficulties;
-
-    vec_init(&difficulty_info.timestamps);
-    vec_init(&difficulty_info.cumulative_difficulties);
+    if (height > offset)
+    {
+      vec_reserve(&difficulty_info.timestamps, height - offset);
+      vec_reserve(&difficulty_info.cumulative_difficulties, height - offset);
+    }
 
     g_num_timestamps = 0;
     g_num_cumulative_difficulties = 0;
