@@ -61,8 +61,6 @@ extern "C"
 
 #define MAX_NUM_TX_ENTRIES 1024
 
-extern uint8_t zero_tx_hash[HASH_SIZE];
-
 typedef struct InputTransaction
 {
   // --- Header
