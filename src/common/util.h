@@ -57,6 +57,8 @@ const char* address_to_str(uint8_t in_address[ADDRESS_SIZE]);
 
 uint32_t get_current_time(void);
 int rmrf(const char *path);
+
+int sort_compare(const void* a, const void* b);
 void sort(void *base, size_t nitems, size_t size);
 
 #ifdef __cplusplus

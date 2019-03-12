@@ -171,7 +171,7 @@ int rmrf(const char *path)
   return nftw(path, unlink_callback, 64, FTW_DEPTH | FTW_PHYS);
 }
 
-static int sort_compare(const void* a, const void* b)
+int sort_compare(const void* a, const void* b)
 {
   int c = *((int*)a);
   int d = *((int*)b);

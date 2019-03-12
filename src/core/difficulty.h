@@ -27,6 +27,8 @@
 
 #include <stdint.h>
 
+#include "common/vec.h"
+
 #include "blockchainparams.h"
 
 extern inline uint32_t ident32(uint32_t x);
@@ -37,9 +39,9 @@ extern inline uint64_t ident64(uint64_t x);
 
 typedef struct DifficultyInfo
 {
-  uint32_t timestamps[DIFFICULTY_WINDOW];
+  vec_int_t timestamps;
   size_t num_timestamps;
-  uint64_t cumulative_difficulties[DIFFICULTY_WINDOW];
+  vec_int_t cumulative_difficulties;
   size_t num_cumulative_difficulties;
   uint32_t target_seconds;
 } difficulty_info_t;

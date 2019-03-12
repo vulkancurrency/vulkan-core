@@ -30,6 +30,7 @@
 #include <assert.h>
 
 #include "common/util.h"
+#include "common/vec.h"
 
 #include "blockchainparams.h"
 #include "difficulty.h"
@@ -160,7 +161,7 @@ uint64_t get_next_difficulty(difficulty_info_t difficulty_info)
 
   assert(DIFFICULTY_WINDOW >= 2);
   assert(length <= DIFFICULTY_WINDOW);
-  sort(&difficulty_info.timestamps, length, sizeof(uint32_t));
+  vec_sort(&difficulty_info.timestamps, sort_compare);
   size_t cut_begin = 0, cut_end = 0;
   assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2);
   if (length <= DIFFICULTY_WINDOW - 2 * DIFFICULTY_CUT)
@@ -175,13 +176,13 @@ uint64_t get_next_difficulty(difficulty_info_t difficulty_info)
   }
 
   assert(cut_begin + 2 <= cut_end && cut_end <= length);
-  uint32_t timespan = difficulty_info.timestamps[cut_end - 1] - difficulty_info.timestamps[cut_begin];
+  uint32_t timespan = (uint32_t)vec_get(&difficulty_info.timestamps, cut_end - 1) - (uint32_t)vec_get(&difficulty_info.timestamps, cut_begin);
   if (timespan == 0)
   {
     timespan = 1;
   }
 
-  uint64_t total_work = difficulty_info.cumulative_difficulties[cut_end - 1] - difficulty_info.cumulative_difficulties[cut_begin];
+  uint64_t total_work = (uint64_t)vec_get(&difficulty_info.cumulative_difficulties, cut_end - 1) - (uint32_t)vec_get(&difficulty_info.cumulative_difficulties, cut_begin);
   assert(total_work > 0);
   uint64_t low = 0, high = 0;
   mul(total_work, difficulty_info.target_seconds, &low, &high);

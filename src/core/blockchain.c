@@ -34,7 +34,7 @@
 #include "common/logger.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
-#include "common/vector.h"
+#include "common/vec.h"
 
 #include "block.h"
 #include "blockchain.h"
@@ -64,8 +64,8 @@ static int g_blockchain_backup_is_open = 0;
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
 
-static uint32_t *g_timestamps = NULL;
-static uint64_t *g_cumulative_difficulties = NULL;
+static vec_int_t g_timestamps;
+static vec_int_t g_cumulative_difficulties;
 
 static size_t g_num_timestamps = 0;
 static size_t g_num_cumulative_difficulties = 0;
@@ -104,6 +104,9 @@ int open_blockchain(const char *blockchain_dir)
 
   mtx_init(&g_blockchain_lock, mtx_plain);
   g_blockchain_dir = blockchain_dir;
+
+  vec_init(&g_timestamps);
+  vec_init(&g_cumulative_difficulties);
 
   char *err = NULL;
   rocksdb_options_t *options = rocksdb_options_create();
@@ -182,17 +185,8 @@ int close_blockchain(void)
   mtx_destroy(&g_blockchain_lock);
   g_blockchain_is_open = 0;
 
-  if (g_timestamps != NULL)
-  {
-    vector_free(g_timestamps);
-    g_timestamps = NULL;
-  }
-
-  if (g_cumulative_difficulties != NULL)
-  {
-    vector_free(g_cumulative_difficulties);
-    g_cumulative_difficulties = NULL;
-  }
+  vec_deinit(&g_timestamps);
+  vec_deinit(&g_cumulative_difficulties);
 
   g_num_timestamps = 0;
   g_num_cumulative_difficulties = 0;
@@ -391,8 +385,8 @@ uint64_t get_block_difficulty(uint32_t block_height)
     block_t *block = get_block_from_height(index);
     assert(block != NULL);
 
-    vector_push_back(g_timestamps, block->timestamp);
-    vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
+    assert(vec_push(&g_timestamps, block->timestamp) == 0);
+    assert(vec_push(&g_cumulative_difficulties, block->cumulative_difficulty) == 0);
 
     free_block(block);
 
@@ -401,15 +395,18 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
     while (g_num_timestamps > DIFFICULTY_BLOCKS_COUNT)
     {
-      vector_erase(g_timestamps, 0);
+      vec_splice(&g_timestamps, 0, 1);
       g_num_timestamps--;
     }
 
     while (g_num_cumulative_difficulties > DIFFICULTY_BLOCKS_COUNT)
     {
-      vector_erase(g_cumulative_difficulties, 0);
+      vec_splice(&g_cumulative_difficulties, 0, 1);
       g_num_cumulative_difficulties--;
     }
+
+    vec_extend(&difficulty_info.timestamps, &g_timestamps);
+    vec_extend(&difficulty_info.cumulative_difficulties, &g_cumulative_difficulties);
 
     g_timestamps_and_difficulties_height = height;
   }
@@ -421,22 +418,22 @@ uint64_t get_block_difficulty(uint32_t block_height)
       offset++;
     }
 
-    vector_free(g_timestamps);
-    vector_free(g_cumulative_difficulties);
+    vec_int_t timestamps;
+    vec_int_t cumulative_difficulties;
+
+    vec_init(&difficulty_info.timestamps);
+    vec_init(&difficulty_info.cumulative_difficulties);
 
     g_num_timestamps = 0;
     g_num_cumulative_difficulties = 0;
-
-    g_timestamps = NULL;
-    g_cumulative_difficulties = NULL;
 
     for (; offset < height; offset++)
     {
       block_t *block = get_block_from_height(offset);
       assert(block != NULL);
 
-      vector_push_back(g_timestamps, block->timestamp);
-      vector_push_back(g_cumulative_difficulties, block->cumulative_difficulty);
+      assert(vec_push(&difficulty_info.timestamps, block->timestamp) == 0);
+      assert(vec_push(&difficulty_info.cumulative_difficulties, block->cumulative_difficulty) == 0);
 
       free_block(block);
 
@@ -444,17 +441,27 @@ uint64_t get_block_difficulty(uint32_t block_height)
       g_num_cumulative_difficulties++;
     }
 
+    vec_clear(&g_timestamps);
+    vec_clear(&g_cumulative_difficulties);
+
+    vec_extend(&g_timestamps, &difficulty_info.timestamps);
+    vec_extend(&g_cumulative_difficulties, &difficulty_info.cumulative_difficulties);
+
     g_timestamps_and_difficulties_height = height;
   }
+
+  vec_truncate(&difficulty_info.timestamps, DIFFICULTY_WINDOW);
+  vec_truncate(&difficulty_info.cumulative_difficulties, DIFFICULTY_WINDOW);
 
   difficulty_info.num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
   difficulty_info.num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
   difficulty_info.target_seconds = DIFFICULTY_TARGET;
 
-  memcpy(&difficulty_info.timestamps, g_timestamps, sizeof(uint32_t) * difficulty_info.num_timestamps);
-  memcpy(&difficulty_info.cumulative_difficulties, g_cumulative_difficulties, sizeof(uint64_t) * difficulty_info.num_cumulative_difficulties);
-
   uint64_t difficulty = get_next_difficulty(difficulty_info);
+
+  vec_clear(&difficulty_info.timestamps);
+  vec_clear(&difficulty_info.cumulative_difficulties);
+
   mtx_unlock(&g_blockchain_lock);
   return difficulty;
 }
