@@ -37,6 +37,7 @@
 #include "core/block.h"
 #include "core/blockchain.h"
 #include "core/difficulty.h"
+#include "core/mempool.h"
 #include "core/protocol.h"
 
 #include "miner.h"
@@ -129,8 +130,9 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
-  transaction_t *tx = make_generation_tx(wallet, current_block_height, cumulative_emission, block_reward);
+  transaction_t *tx = make_generation_tx(wallet, current_block_height, block_reward);
   block->transactions[0] = tx;
+  assert(fill_block_with_txs_from_mempool(block) == 0);
 
   compute_self_merkle_root(block);
   compute_self_block_hash(block);
