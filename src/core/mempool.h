@@ -30,8 +30,9 @@
 
 #include "common/task.h"
 
-#include "core/blockchainparams.h"
-#include "core/transaction.h"
+#include "block.h"
+#include "blockchainparams.h"
+#include "transaction.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -42,27 +43,25 @@ extern "C"
 
 typedef struct MempoolEntry
 {
-  transaction_t *transaction;
+  transaction_t *tx;
   uint32_t received_ts;
 } mempool_entry_t;
 
 int start_mempool(void);
 int stop_mempool(void);
 
-mempool_entry_t *get_mempool_entry_from_tx(transaction_t *transaction);
+mempool_entry_t* init_mempool_entry(void);
+int free_mempool_entry(mempool_entry_t *mempool_entry);
 
-int is_tx_in_mempool(transaction_t *transaction);
+mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash);
+transaction_t* get_tx_from_mempool(uint8_t *tx_hash);
 
-int push_tx_to_mempool(transaction_t *transaction);
-int remove_tx_from_mempool(transaction_t *transaction);
+int is_tx_in_mempool(transaction_t *tx);
+int add_tx_to_mempool(transaction_t *tx);
+int remove_tx_from_mempool(transaction_t *tx);
+uint64_t get_num_txs_in_mempool(void);
 
-transaction_t *get_tx_by_index_from_mempool(int index);
-transaction_t *get_tx_by_id_from_mempool(uint8_t *id);
-
-transaction_t *pop_tx_from_mempool(void);
-
-int get_number_of_tx_from_mempool(void);
-int get_top_tx_index_from_mempool(void);
+int fill_block_with_txs_from_mempool(block_t *block);
 
 task_result_t flush_mempool(task_t *task, va_list args);
 

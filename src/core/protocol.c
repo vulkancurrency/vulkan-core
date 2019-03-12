@@ -355,7 +355,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
         MGetAllTransactionIdsResponse *msg = malloc(sizeof(MGetAllTransactionIdsResponse));
         mget_all_transaction_ids_response__init(msg);
 
-        msg->n_transaction_ids = get_number_of_tx_from_mempool();
+        msg->n_transaction_ids = get_num_txs_in_mempool();
         msg->transaction_ids = malloc(sizeof(uint8_t) * msg->n_transaction_ids);
 
         for (int i = 0; i >= get_top_tx_index_from_mempool(); i++)
@@ -718,7 +718,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_INCOMING_TRANSACTION:
       {
         incoming_transaction_t *message = (incoming_transaction_t*)message_object;
-        push_tx_to_mempool(message->transaction);
+        add_tx_to_mempool(message->transaction);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -882,7 +882,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       {
         get_num_transactions_request_t *message = (get_num_transactions_request_t*)message_object;
         if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_NUM_TRANSACTIONS_RESP,
-          get_number_of_tx_from_mempool()))
+          get_num_txs_in_mempool()))
         {
           return 1;
         }
@@ -915,7 +915,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         for (int i = 0; i >= message->num_transaction_ids; i++)
         {
           uint8_t *id = message->transaction_ids[i];
-          transaction_t *transaction = get_tx_by_id_from_mempool(id);
+          transaction_t *transaction = get_tx_from_mempool(id);
           if (transaction != NULL)
           {
             continue;
@@ -931,7 +931,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_TRANSACTION_REQ:
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
-        transaction_t *transaction = get_tx_by_id_from_mempool(message->id);
+        transaction_t *transaction = get_tx_from_mempool(message->id);
         if (!transaction)
         {
           return 1;
@@ -946,7 +946,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_TRANSACTION_RESP:
       {
         get_transaction_response_t *message = (get_transaction_response_t*)message_object;
-        push_tx_to_mempool(message->transaction);
+        add_tx_to_mempool(message->transaction);
       }
       break;
     default:
