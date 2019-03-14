@@ -505,7 +505,7 @@ int valid_block_median_timestamp(block_t *block)
   return block->timestamp > median_timestamp;
 }
 
-int valid_block_generation_transaction(block_t *block, uint32_t block_height)
+int valid_block_emission(block_t *block, uint32_t block_height)
 {
   assert(block != NULL);
 
@@ -567,7 +567,7 @@ int validate_and_insert_block(block_t *block)
   }
 
   // validate the block's generation transaction
-  if (!valid_block_generation_transaction(block, current_block_height))
+  if (!valid_block_emission(block, current_block_height))
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
     return 0;
