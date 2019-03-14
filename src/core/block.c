@@ -336,9 +336,6 @@ block_t* compute_genesis_block(wallet_t *wallet)
   uint64_t block_reward = get_block_reward(0, 0);
   block->cumulative_emission = block_reward;
 
-  block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-
   transaction_t *tx = make_generation_tx(wallet, block_reward);
   assert(tx != NULL);
   assert(add_transaction_to_block(block, tx, 0) == 0);
@@ -530,6 +527,7 @@ int add_transactions_to_block(block_t *block, transaction_t **transactions, uint
     transaction_t *tx = transactions[i];
     assert(tx != NULL);
 
+    // skip over the generation tx
     if (add_transaction_to_block(block, tx, i + 1))
     {
       return 1;

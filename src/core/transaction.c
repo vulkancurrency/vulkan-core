@@ -675,7 +675,8 @@ transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entri
   {
     transaction_entry_t transaction_entry = transaction_entries.entries[i];
 
-    input_transaction_t *txin = make_txin(i + 1);
+    // txout index should be the same as the txin index...
+    input_transaction_t *txin = make_txin(i);
     output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
 
     assert(txin != NULL);
