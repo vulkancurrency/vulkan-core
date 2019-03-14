@@ -56,13 +56,25 @@ int free_mempool_entry(mempool_entry_t *mempool_entry);
 mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash);
 transaction_t* get_tx_from_mempool(uint8_t *tx_hash);
 
+int is_tx_in_mempool_nolock(transaction_t *tx);
 int is_tx_in_mempool(transaction_t *tx);
+
+int add_tx_to_mempool_nolock(transaction_t *tx);
 int add_tx_to_mempool(transaction_t *tx);
+
+int remove_tx_from_mempool_nolock(transaction_t *tx);
 int remove_tx_from_mempool(transaction_t *tx);
+
+transaction_t* pop_tx_from_mempool_nolock(void);
 transaction_t* pop_tx_from_mempool(void);
+
 uint64_t get_num_txs_in_mempool(void);
 
+int fill_block_with_txs_from_mempool_nolock(block_t *block);
 int fill_block_with_txs_from_mempool(block_t *block);
+
+int clear_expired_txs_in_mempool_nolock(void);
+int clear_expired_txs_in_mempool(void);
 
 task_result_t flush_mempool(task_t *task, va_list args);
 

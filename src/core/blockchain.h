@@ -74,8 +74,11 @@ uint64_t get_next_block_difficulty(void);
 int valid_block_median_timestamp(block_t *block);
 int valid_block_emission(block_t *block, uint32_t block_height);
 
-int validate_and_insert_block(block_t *block);
+int insert_block_nolock(block_t *block);
 int insert_block(block_t *block);
+
+int validate_and_insert_block_nolock(block_t *block);
+int validate_and_insert_block(block_t *block);
 
 block_t *get_block_from_hash(uint8_t *block_hash);
 block_t *get_block_from_height(uint32_t height);
@@ -117,6 +120,7 @@ int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
 int get_block_key(uint8_t *buffer, uint8_t *block_hash);
 int get_top_block_key(uint8_t *buffer);
 
+uint64_t get_balance_for_address_nolock(uint8_t *address);
 uint64_t get_balance_for_address(uint8_t *address);
 
 #ifdef __cplusplus

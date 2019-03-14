@@ -643,11 +643,11 @@ unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32
   return unspent_tx;
 }
 
-input_transaction_t* make_txin(uint32_t block_height)
+input_transaction_t* make_txin(uint32_t txout_index)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   memset(txin->transaction, 0, HASH_SIZE);
-  txin->txout_index = block_height;
+  txin->txout_index = txout_index;
   return txin;
 }
 
@@ -659,7 +659,7 @@ output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
   return txout;
 }
 
-transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, transaction_entries_t transaction_entries)
+transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entries)
 {
   assert(wallet != NULL);
   assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
@@ -675,7 +675,7 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, transaction_entr
   {
     transaction_entry_t transaction_entry = transaction_entries.entries[i];
 
-    input_transaction_t *txin = make_txin(block_height);
+    input_transaction_t *txin = make_txin(i + 1);
     output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
 
     assert(txin != NULL);
@@ -691,7 +691,7 @@ transaction_t* make_tx(wallet_t *wallet, uint32_t block_height, transaction_entr
   return tx;
 }
 
-transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint64_t block_reward)
+transaction_t* make_generation_tx(wallet_t *wallet, uint64_t block_reward)
 {
   transaction_entry_t transaction_entry;
   transaction_entry.address = wallet->address;
@@ -701,7 +701,7 @@ transaction_t* make_generation_tx(wallet_t *wallet, uint32_t block_height, uint6
   transaction_entries.num_entries = 1;
   transaction_entries.entries[0] = transaction_entry;
 
-  return make_tx(wallet, block_height, transaction_entries);
+  return make_tx(wallet, transaction_entries);
 }
 
 int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)

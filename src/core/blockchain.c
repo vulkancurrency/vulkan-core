@@ -547,80 +547,11 @@ int valid_block_emission(block_t *block, uint32_t block_height)
   return (txout->amount == expected_block_reward && block->cumulative_emission == expected_cumulative_emission);
 }
 
-int validate_and_insert_block(block_t *block)
-{
-  uint32_t current_block_height = get_block_height();
-
-  // verify the block, ensure the block is not an orphan or stale,
-  // if the block is the genesis, then we do not need to validate it...
-  if (!valid_block(block) && current_block_height > 0)
-  {
-    return 0;
-  }
-
-  // check to see if this block's timestamp is greater than the
-  // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
-  if (!valid_block_median_timestamp(block))
-  {
-    LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %d!", block->timestamp);
-    return 0;
-  }
-
-  // validate the block's generation transaction
-  if (!valid_block_emission(block, current_block_height))
-  {
-    LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
-    return 0;
-  }
-
-  // check the block's difficulty value, also check the block's
-  // hash to see if it's difficulty is valid.
-  if (current_block_height > 0)
-  {
-    uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
-    if (block->cumulative_difficulty != expected_cumulative_difficulty)
-    {
-      LOG_DEBUG("Could not insert block into blockchain, block has invalid cumulative difficulty: %llu expected: %llu!", block->cumulative_difficulty, expected_cumulative_difficulty);
-      return 0;
-    }
-
-    uint64_t expected_difficulty = get_next_block_difficulty();
-    if (block->difficulty != expected_difficulty)
-    {
-      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %llu expected: %llu!", block->difficulty, expected_difficulty);
-      return 0;
-    }
-
-    if (!check_hash(block->hash, expected_difficulty))
-    {
-      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
-      return 0;
-    }
-  }
-
-  // ensure we are not adding a block that already exists in the blockchain...
-  if (has_block_by_hash(block->hash))
-  {
-    return 0;
-  }
-
-  // check this blocks previous has against our current top block hash
-  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
-  {
-    return 0;
-  }
-
-  mtx_lock(&g_blockchain_lock);
-  int result = insert_block(block);
-  mtx_unlock(&g_blockchain_lock);
-  return result;
-}
-
 /* After we insert block into blockchain
  * Mark unspent txouts as spent for current txins
  * Add current TX w/ unspent txouts to unspent index
  */
-int insert_block(block_t *block)
+int insert_block_nolock(block_t *block)
 {
   assert(block != NULL);
 
@@ -719,6 +650,88 @@ int insert_block(block_t *block)
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
   return 1;
+}
+
+int insert_block(block_t *block)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = insert_block_nolock(block);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int validate_and_insert_block_nolock(block_t *block)
+{
+  uint32_t current_block_height = get_block_height();
+
+  // verify the block, ensure the block is not an orphan or stale,
+  // if the block is the genesis, then we do not need to validate it...
+  if (!valid_block(block) && current_block_height > 0)
+  {
+    return 0;
+  }
+
+  // check to see if this block's timestamp is greater than the
+  // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
+  if (!valid_block_median_timestamp(block))
+  {
+    LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %d!", block->timestamp);
+    return 0;
+  }
+
+  // validate the block's generation transaction
+  if (!valid_block_emission(block, current_block_height))
+  {
+    LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
+    return 0;
+  }
+
+  // check the block's difficulty value, also check the block's
+  // hash to see if it's difficulty is valid.
+  if (current_block_height > 0)
+  {
+    uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
+    if (block->cumulative_difficulty != expected_cumulative_difficulty)
+    {
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid cumulative difficulty: %llu expected: %llu!", block->cumulative_difficulty, expected_cumulative_difficulty);
+      return 0;
+    }
+
+    uint64_t expected_difficulty = get_next_block_difficulty();
+    if (block->difficulty != expected_difficulty)
+    {
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %llu expected: %llu!", block->difficulty, expected_difficulty);
+      return 0;
+    }
+
+    if (!check_hash(block->hash, expected_difficulty))
+    {
+      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
+      return 0;
+    }
+  }
+
+  // ensure we are not adding a block that already exists in the blockchain...
+  if (has_block_by_hash(block->hash))
+  {
+    return 0;
+  }
+
+  // check this blocks previous has against our current top block hash
+  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
+  {
+    return 0;
+  }
+
+  return insert_block_nolock(block);
+}
+
+int validate_and_insert_block(block_t *block)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = validate_and_insert_block_nolock(block);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
 }
 
 block_t *get_block_from_hash(uint8_t *block_hash)
@@ -1249,14 +1262,13 @@ int get_top_block_key(uint8_t *buffer)
   return 0;
 }
 
-uint64_t get_balance_for_address(uint8_t *address)
+uint64_t get_balance_for_address_nolock(uint8_t *address)
 {
   uint64_t balance = 0;
 
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
-  mtx_lock(&g_blockchain_lock);
   for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
     rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
   {
@@ -1287,10 +1299,15 @@ uint64_t get_balance_for_address(uint8_t *address)
     }
   }
 
-  mtx_unlock(&g_blockchain_lock);
-
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+  return balance;
+}
 
+uint64_t get_balance_for_address(uint8_t *address)
+{
+  mtx_lock(&g_blockchain_lock);
+  uint64_t balance = get_balance_for_address_nolock(address);
+  mtx_unlock(&g_blockchain_lock);
   return balance;
 }

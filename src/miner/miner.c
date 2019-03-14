@@ -127,11 +127,9 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   block->cumulative_difficulty = previous_block->cumulative_difficulty + block->difficulty;
   block->cumulative_emission = cumulative_emission + block_reward;
 
-  block->transaction_count = 1;
-  block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-
-  transaction_t *tx = make_generation_tx(wallet, current_block_height, block_reward);
-  block->transactions[0] = tx;
+  transaction_t *tx = make_generation_tx(wallet, block_reward);
+  assert(tx != NULL);
+  assert(add_transaction_to_block(block, tx, 0) == 0);
   assert(fill_block_with_txs_from_mempool(block) == 0);
 
   compute_self_merkle_root(block);
@@ -159,7 +157,7 @@ static void worker_submit_block(miner_worker_t *worker, block_t *block)
   {
     LOG_INFO("Worker: %hu found block at height: %d!", worker->id, get_block_height());
     print_block(block);
-    handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
+    //handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
   }
 }
 
@@ -248,7 +246,6 @@ int stop_mining(void)
   g_miner_is_mining = 0;
   g_current_wallet = NULL;
   g_miner_worker_status_task = NULL;
-
   g_num_worker_threads = 0;
   return 0;
 }

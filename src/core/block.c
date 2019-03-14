@@ -339,8 +339,9 @@ block_t* compute_genesis_block(wallet_t *wallet)
   block->transaction_count = 1;
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
 
-  transaction_t *tx = make_generation_tx(wallet, 0, block_reward);
-  block->transactions[0] = tx;
+  transaction_t *tx = make_generation_tx(wallet, block_reward);
+  assert(tx != NULL);
+  assert(add_transaction_to_block(block, tx, 0) == 0);
 
   compute_self_merkle_root(block);
   compute_self_block_hash(block);
@@ -482,6 +483,56 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
       transaction_t *tx = deserialize_transaction(buffer);
       assert(tx != NULL);
       block->transactions[i] = tx;
+    }
+  }
+
+  return 0;
+}
+
+int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_index)
+{
+  assert(block != NULL);
+  assert(tx != NULL);
+
+  input_transaction_t *txin = tx->txins[0];
+  assert(txin != NULL);
+
+  if (tx_index > 0)
+  {
+    transaction_t *previous_tx = block->transactions[tx_index - 1];
+    assert(previous_tx != NULL);
+    memcpy(&txin->transaction, &previous_tx->id, HASH_SIZE);
+  }
+
+  if (block->transaction_count == 0 && block->transactions == NULL)
+  {
+    block->transaction_count = 1;
+    block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+  }
+  else
+  {
+    block->transaction_count++;
+    block->transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
+    assert(block->transactions != NULL);
+  }
+
+  block->transactions[tx_index] = tx;
+  return 0;
+}
+
+int add_transactions_to_block(block_t *block, transactions **transactions, uint32_t num_transactions)
+{
+  assert(block != NULL);
+  assert(transactions != NULL);
+
+  for (uint32_t i = 0; i < num_transactions; i++)
+  {
+    transaction_t *tx = transactions[i];
+    assert(tx != NULL);
+
+    if (add_transaction_to_block(block, tx, i + 1))
+    {
+      return 1;
     }
   }
 
