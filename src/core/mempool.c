@@ -190,6 +190,7 @@ transaction_t* pop_tx_from_mempool(void)
   transaction_t *tx = mempool_entry->tx;
   assert(tx != NULL);
 
+  g_mempool_num_transactions--;
   free_mempool_entry(mempool_entry);
   return tx;
 }
