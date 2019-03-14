@@ -520,7 +520,7 @@ int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_inde
   return 0;
 }
 
-int add_transactions_to_block(block_t *block, transactions **transactions, uint32_t num_transactions)
+int add_transactions_to_block(block_t *block, transaction_t **transactions, uint32_t num_transactions)
 {
   assert(block != NULL);
   assert(transactions != NULL);
