@@ -161,6 +161,7 @@ int add_tx_to_mempool(transaction_t *tx)
 
   mtx_lock(&g_mempool_lock);
   assert(vec_push(&g_mempool_transactions, mempool_entry) == 0);
+  g_mempool_num_transactions++;
   mtx_unlock(&g_mempool_lock);
   return 0;
 }
@@ -176,8 +177,21 @@ int remove_tx_from_mempool(transaction_t *tx)
 
   mtx_lock(&g_mempool_lock);
   vec_remove(&g_mempool_transactions, mempool_entry);
+  g_mempool_num_transactions--;
   mtx_unlock(&g_mempool_lock);
   return 0;
+}
+
+transaction_t* pop_tx_from_mempool(void)
+{
+  mempool_entry_t *mempool_entry = vec_pop(&g_mempool_transactions);
+  assert(mempool_entry != NULL);
+
+  transaction_t *tx = mempool_entry->tx;
+  assert(tx != NULL);
+
+  free_mempool_entry(mempool_entry);
+  return tx;
 }
 
 uint64_t get_num_txs_in_mempool(void)

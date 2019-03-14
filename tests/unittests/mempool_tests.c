@@ -80,12 +80,12 @@ TEST can_add_to_mempool(void)
   taskmgr_init();
   start_mempool();
 
-  ASSERT_EQ(get_number_of_tx_from_mempool(), 0);
-  push_tx_to_mempool(tx);
-  ASSERT_EQ(get_number_of_tx_from_mempool(), 1);
+  ASSERT_EQ(get_num_txs_in_mempool(), 0);
+  add_tx_to_mempool(tx);
+  ASSERT_EQ(get_num_txs_in_mempool(), 1);
   transaction_t *mempool_tx = pop_tx_from_mempool();
   ASSERT(mempool_tx != NULL);
-  ASSERT_EQ(get_number_of_tx_from_mempool(), 0);
+  ASSERT_EQ(get_num_txs_in_mempool(), 0);
 
   ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, HASH_SIZE);
 
