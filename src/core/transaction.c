@@ -297,9 +297,6 @@ int serialize_txin_header(buffer_t *buffer, input_transaction_t *txin)
 
   buffer_write(buffer, txin->transaction, HASH_SIZE);
   buffer_write_uint32(buffer, txin->txout_index);
-
-  buffer_write(buffer, txin->signature, crypto_sign_BYTES);
-  buffer_write(buffer, txin->public_key, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 

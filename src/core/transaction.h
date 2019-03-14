@@ -57,7 +57,7 @@ extern "C"
 #endif
 
 #define TXIN_HEADER_SIZE (HASH_SIZE + 4)
-#define TXOUT_HEADER_SIZE (HASH_SIZE + 4 + crypto_sign_BYTES + crypto_sign_PUBLICKEYBYTES)
+#define TXOUT_HEADER_SIZE (HASH_SIZE + 4)
 
 #define MAX_NUM_TX_ENTRIES 1024
 
