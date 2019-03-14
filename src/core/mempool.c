@@ -262,7 +262,6 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
     transaction_t *tx = (transaction_t*)value;
     assert(tx != NULL);
 
-    print_transaction(tx);
     assert(add_transaction_to_block(block, tx, tx_index) == 0);
     assert(remove_tx_from_mempool_nolock(tx) == 0);
   }
