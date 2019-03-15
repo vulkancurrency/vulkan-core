@@ -1266,10 +1266,8 @@ int get_top_block_key(uint8_t *buffer)
   return 0;
 }
 
-uint64_t get_balance_for_address_nolock(uint8_t *address)
+int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
 {
-  uint64_t balance = 0;
-
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
@@ -1280,14 +1278,14 @@ uint64_t get_balance_for_address_nolock(uint8_t *address)
     char *key = (char*)rocksdb_iter_key(iterator, &key_length);
     if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_UNSPENT_TX)
     {
-      size_t value_length;
-      uint8_t *value = (uint8_t*)rocksdb_iter_value(iterator, &value_length);
-      unspent_transaction_t *tx = unspent_transaction_from_serialized(value, value_length);
-      assert(tx != NULL);
+      size_t data_len;
+      uint8_t *data = (uint8_t*)rocksdb_iter_value(iterator, &data_len);
+      unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(data, data_len);
+      assert(unspent_tx != NULL);
 
-      for (uint32_t i = 0; i < tx->unspent_txout_count; i++)
+      for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
       {
-        unspent_output_transaction_t *unspent_txout = tx->unspent_txouts[i];
+        unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
         assert(unspent_txout != NULL);
 
         if (!compare_addresses(unspent_txout->address, address))
@@ -1297,14 +1295,52 @@ uint64_t get_balance_for_address_nolock(uint8_t *address)
 
         if (unspent_txout->spent == 0)
         {
-          balance += unspent_txout->amount;
+          continue;
         }
+
+        assert(vec_push(unspent_txs, unspent_txout) == 0);
+        *num_unspent_txs += 1;
       }
+
+      free(unspent_tx);
     }
   }
 
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+  return 0;
+}
+
+int get_unspent_transactions_for_address(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = get_unspent_transactions_for_address_nolock(address, unspent_txs, num_unspent_txs);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+uint64_t get_balance_for_address_nolock(uint8_t *address)
+{
+  uint64_t balance = 0;
+
+  vec_void_t unspent_txs;
+  vec_init(&unspent_txs);
+
+  uint32_t num_unspent_txs = 0;
+  assert(get_unspent_transactions_for_address_nolock(address, &unspent_txs, &num_unspent_txs) == 0);
+
+  void *value = NULL;
+  int index = 0;
+  vec_foreach(&unspent_txs, value, index)
+  {
+    unspent_output_transaction_t *unspent_txout = (unspent_output_transaction_t*)value;
+    assert(unspent_txout != NULL);
+
+    balance += unspent_txout->amount;
+    free(unspent_txout);
+  }
+
+  vec_deinit(&unspent_txs);
   return balance;
 }
 
