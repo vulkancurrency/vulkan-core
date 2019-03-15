@@ -39,6 +39,7 @@
 #include "core/difficulty.h"
 #include "core/mempool.h"
 #include "core/protocol.h"
+#include "core/transaction_builder.h"
 
 #include "miner.h"
 

@@ -31,6 +31,7 @@
 #include "common/util.h"
 
 #include "parameters.h"
+#include "transaction_builder.h"
 #include "transaction.h"
 
 #ifdef __cplusplus
