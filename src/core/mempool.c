@@ -188,6 +188,7 @@ int remove_tx_from_mempool_nolock(transaction_t *tx)
   assert(mempool_entry != NULL);
   vec_remove(&g_mempool_transactions, mempool_entry);
   g_mempool_num_transactions--;
+  free_mempool_entry(mempool_entry);
   return 0;
 }
 
