@@ -44,7 +44,7 @@
 #include "common/task.h"
 #include "common/tinycthread.h"
 
-#include "core/blockchainparams.h"
+#include "core/parameters.h"
 #include "core/net.h"
 #include "core/protocol.h"
 #include "core/version.h"

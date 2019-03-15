@@ -38,7 +38,7 @@
 #include "common/util.h"
 
 #include "core/blockchain.h"
-#include "core/blockchainparams.h"
+#include "core/parameters.h"
 
 #include "crypto/sha256d.h"
 

@@ -30,7 +30,7 @@
 #include "common/buffer.h"
 #include "common/util.h"
 
-#include "blockchainparams.h"
+#include "parameters.h"
 #include "transaction.h"
 
 #ifdef __cplusplus

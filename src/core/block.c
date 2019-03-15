@@ -37,7 +37,7 @@
 
 #include "block.h"
 #include "blockchain.h"
-#include "blockchainparams.h"
+#include "parameters.h"
 #include "difficulty.h"
 #include "merkle.h"
 

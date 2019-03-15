@@ -29,7 +29,7 @@
 
 #include "common/vec.h"
 
-#include "blockchainparams.h"
+#include "parameters.h"
 #include "pow.h"
 
 typedef struct DifficultyInfo

@@ -33,7 +33,7 @@
 
 #include "common/util.h"
 
-#include "core/blockchainparams.h"
+#include "core/parameters.h"
 
 #ifdef __cplusplus
 extern "C"

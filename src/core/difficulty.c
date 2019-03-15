@@ -32,7 +32,7 @@
 #include "common/util.h"
 #include "common/vec.h"
 
-#include "blockchainparams.h"
+#include "parameters.h"
 #include "difficulty.h"
 #include "pow.h"
 
