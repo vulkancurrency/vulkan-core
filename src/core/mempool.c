@@ -265,6 +265,7 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
 
     assert(add_transaction_to_block(block, tx, tx_index) == 0);
     assert(remove_tx_from_mempool_nolock(tx) == 0);
+    tx_index++;
   }
 
   vec_deinit(&transactions);
