@@ -30,7 +30,7 @@
 #include "common/util.h"
 
 #include "core/block.h"
-#include "core/blockchainparams.h"
+#include "core/parameters.h"
 #include "core/transaction.h"
 
 SUITE(block_suite);
