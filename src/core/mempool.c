@@ -243,7 +243,7 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
     transaction_t *tx = mempool_entry->tx;
     assert(tx != NULL);
 
-    // check to see if the new block header size
+    // check the new block header size
     uint32_t block_header_size = get_block_header_size(block) + get_tx_header_size(tx);
     if (block_header_size > MAX_BLOCK_SIZE)
     {
