@@ -68,7 +68,10 @@ uint64_t get_cumulative_emission(void);
 uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission);
 
 uint64_t get_block_cumulative_difficulty(uint32_t block_height);
+
+uint64_t get_block_difficulty_nolock(uint32_t block_height);
 uint64_t get_block_difficulty(uint32_t block_height);
+
 uint64_t get_next_block_difficulty(void);
 
 int valid_block_median_timestamp(block_t *block);

@@ -372,7 +372,7 @@ uint64_t get_block_cumulative_difficulty(uint32_t block_height)
   return cumulative_difficulty;
 }
 
-uint64_t get_block_difficulty(uint32_t block_height)
+uint64_t get_block_difficulty_nolock(uint32_t block_height)
 {
   difficulty_info_t difficulty_info;
   uint32_t height = block_height;
@@ -381,7 +381,6 @@ uint64_t get_block_difficulty(uint32_t block_height)
   vec_init(&difficulty_info.timestamps);
   vec_init(&difficulty_info.cumulative_difficulties);
 
-  mtx_lock(&g_blockchain_lock);
   if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
     uint32_t index = height - 1;
@@ -465,6 +464,13 @@ uint64_t get_block_difficulty(uint32_t block_height)
   vec_deinit(&difficulty_info.timestamps);
   vec_deinit(&difficulty_info.cumulative_difficulties);
 
+  return difficulty;
+}
+
+uint64_t get_block_difficulty(uint32_t block_height)
+{
+  mtx_lock(&g_blockchain_lock);
+  uint64_t difficulty = get_block_difficulty_nolock(block_height);
   mtx_unlock(&g_blockchain_lock);
   return difficulty;
 }
