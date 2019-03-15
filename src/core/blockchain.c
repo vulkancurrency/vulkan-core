@@ -710,7 +710,7 @@ int validate_and_insert_block_nolock(block_t *block)
       return 0;
     }
 
-    if (!check_hash(block->hash, expected_difficulty))
+    if (!check_pow(block->hash, expected_difficulty))
     {
       LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
       return 0;

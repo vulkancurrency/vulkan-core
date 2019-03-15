@@ -27,18 +27,19 @@
 
 #include <stdint.h>
 
-#include "common/vec.h"
+extern inline uint64_t hi_dword(uint64_t val);
+extern inline uint64_t lo_dword(uint64_t val);
 
-#include "blockchainparams.h"
-#include "pow.h"
+extern inline uint64_t mul128(uint64_t multiplier, uint64_t multiplicand, uint64_t* product_hi);
+extern inline void mul(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high);
 
-typedef struct DifficultyInfo
-{
-  vec_int_t timestamps;
-  size_t num_timestamps;
-  vec_int_t cumulative_difficulties;
-  size_t num_cumulative_difficulties;
-  uint32_t target_seconds;
-} difficulty_info_t;
+extern inline int cadd(uint64_t a, uint64_t b);
+extern inline int cadc(uint64_t a, uint64_t b, int c);
 
-uint64_t get_next_difficulty(difficulty_info_t difficulty_info);
+extern inline uint32_t ident32(uint32_t x);
+extern inline uint64_t ident64(uint64_t x);
+
+#define swap32le ident32
+#define swap64le ident64
+
+int check_pow(const uint8_t *hash, uint64_t difficulty);

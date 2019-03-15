@@ -264,7 +264,7 @@ int valid_block_hash(block_t *block)
   // to see if the block has the correct corresponding hash;
   // also check to see if the block's hash target matches
   // it's corresponding proof-of-work difficulty...
-  return (compare_block_hash(expected_block_hash, block->hash) && check_hash(block->hash, block->difficulty));
+  return (compare_block_hash(expected_block_hash, block->hash) && check_pow(block->hash, block->difficulty));
 }
 
 int compute_block_hash(uint8_t *hash, block_t *block)
