@@ -37,10 +37,10 @@
 
 #include "wallet/wallet.h"
 
-input_transaction_t* make_txin(uint32_t txout_index)
+input_transaction_t* make_txin(uint8_t *tx_id, uint32_t txout_index)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  memset(txin->transaction, 0, HASH_SIZE);
+  memcpy(&txin->transaction, tx_id, HASH_SIZE);
   txin->txout_index = txout_index;
   return txin;
 }
@@ -58,6 +58,13 @@ transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entri
   assert(wallet != NULL);
   assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
 
+  vec_void_t unspent_txs;
+  vec_init(&unspent_txs);
+
+  uint32_t num_unspent_txs = 0;
+  assert(get_unspent_transactions_for_address(wallet->address, &unspent_txs, &num_unspent_txs) == 0);
+  vec_deinit(&unspent_txs);
+
   transaction_t *tx = malloc(sizeof(transaction_t));
 
   tx->txin_count = transaction_entries.num_entries;
@@ -70,7 +77,6 @@ transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entri
   {
     transaction_entry_t transaction_entry = transaction_entries.entries[i];
 
-    // txout index should be the same as the txin index...
     input_transaction_t *txin = make_txin(i);
     output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
 
@@ -98,4 +104,16 @@ transaction_t* make_generation_tx(wallet_t *wallet, uint64_t block_reward)
   transaction_entries.entries[0] = transaction_entry;
 
   return make_tx(wallet, transaction_entries);
+}
+
+uint64_t get_total_entries_amount(transaction_entries_t transaction_entries)
+{
+  uint64_t total_amount = 0;
+  for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
+  {
+    transaction_entry_t transaction_entry = transaction_entries.entries[i];
+    total_amount += transaction_entry.amount;
+  }
+
+  return total_amount;
 }

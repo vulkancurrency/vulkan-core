@@ -102,18 +102,6 @@ typedef struct UnspentTransaction
   unspent_output_transaction_t **unspent_txouts;
 } unspent_transaction_t;
 
-typedef struct TransactionEntry
-{
-  uint8_t *address;
-  uint64_t amount;
-} transaction_entry_t;
-
-typedef struct TransactionEntries
-{
-  uint16_t num_entries;
-  transaction_entry_t entries[MAX_NUM_TX_ENTRIES];
-} transaction_entries_t;
-
 int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
 int get_txin_header(uint8_t *header, input_transaction_t *txin);
 int get_txout_header(uint8_t *header, output_transaction_t *txout);
