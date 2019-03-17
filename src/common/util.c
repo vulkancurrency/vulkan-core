@@ -28,8 +28,10 @@
 #include <stdint.h>
 
 #define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE_EXTENDED 1
 #include <ftw.h>
 
+#include <limits.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
