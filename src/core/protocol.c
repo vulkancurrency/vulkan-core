@@ -618,7 +618,7 @@ int check_sync_status(void)
   {
     if (clear_sync_request(1) == 0)
     {
-      LOG_INFO("Successfully synced blockchain at block height: %d.", current_block_height);
+      LOG_INFO("Successfully synced blockchain at block height: %d", current_block_height);
       return 0;
     }
     else
