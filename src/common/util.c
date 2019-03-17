@@ -26,7 +26,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+
+#define _XOPEN_SOURCE 500
 #include <ftw.h>
+
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
