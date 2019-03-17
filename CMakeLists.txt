@@ -25,7 +25,7 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.5)
 project(vulkan)
 
 if(NOT CMAKE_BUILD_TYPE)
