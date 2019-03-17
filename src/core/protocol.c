@@ -125,12 +125,12 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_INCOMING_TRANSACTION:
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         transaction_t *transaction = deserialize_transaction(buffer);
         assert(transaction != NULL);
 
-        incoming_transaction_t *packed_message = malloc(sizeof(incoming_transaction_t));
+        incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
         packed_message->transaction = transaction;
         *message = packed_message;
       }
@@ -153,31 +153,21 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_BLOCK_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
-        uint8_t has_hash = buffer_read_uint8(buffer);
-        int32_t height = buffer_read_int32(buffer);
-
-        // unpack the hash only if it was specified
-        uint8_t *hash = NULL;
-        if (has_hash)
-        {
-          hash = buffer_read_bytes(buffer);
-        }
-
-        get_block_request_t *packed_message = malloc(sizeof(get_block_request_t));
-        packed_message->height = height;
+        uint8_t *hash = buffer_read_bytes(buffer);
+        get_block_by_hash_request_t *packed_message = malloc(sizeof(get_block_by_hash_request_t));
         packed_message->hash = hash;
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_BLOCK_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         uint32_t height = buffer_read_uint32(buffer);
         block_t *block = deserialize_block(buffer);
         assert(block != NULL);
 
-        get_block_response_t *packed_message = malloc(sizeof(get_block_response_t));
+        get_block_by_hash_response_t *packed_message = malloc(sizeof(get_block_by_hash_response_t));
         packed_message->height = height;
         packed_message->block = block;
 
@@ -185,81 +175,56 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
-        MGetNumTransactionsRequest *proto_message = mget_num_transactions_request__unpack(NULL,
-          packet->message_size, packet->message);
-
-        get_num_transactions_request_t *message = malloc(sizeof(get_num_transactions_request_t));
-        mget_num_transactions_request__free_unpacked(proto_message, NULL);
-        return message;
-      }
-    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
-      {
-        MGetNumTransactionsResponse *proto_message = mget_num_transactions_response__unpack(NULL,
-          packet->message_size, packet->message);
-
-        get_num_transactions_response_t *message = malloc(sizeof(get_num_transactions_response_t));
-        message->num_transactions = proto_message->num_transactions;
-
-        mget_num_transactions_response__free_unpacked(proto_message, NULL);
-        return message;
-      }
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
-      {
-        MGetAllTransactionIdsRequest *proto_message = mget_all_transaction_ids_request__unpack(NULL,
-          packet->message_size, packet->message);
-
-        get_all_transaction_ids_request_t *message = malloc(sizeof(get_all_transaction_ids_request_t));
-        mget_all_transaction_ids_request__free_unpacked(proto_message, NULL);
-        return message;
+        uint32_t height = buffer_read_uint32(buffer);
+        get_block_by_height_request_t *packed_message = malloc(sizeof(get_block_by_height_request_t));
+        packed_message->height = height;
+        *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
-        MGetAllTransactionIdsResponse *proto_message = mget_all_transaction_ids_response__unpack(NULL,
-          packet->message_size, packet->message);
+        uint8_t *hash = buffer_read_bytes(buffer);
+        block_t *block = deserialize_block(buffer);
+        assert(block != NULL);
 
-        get_all_transaction_ids_response_t *message = malloc(sizeof(get_all_transaction_ids_response_t));
-        message->num_transaction_ids = proto_message->n_transaction_ids;
-        if (message->num_transaction_ids > 0)
-        {
-          message->transaction_ids = malloc(sizeof(uint8_t) * message->num_transaction_ids);
-          for (int i = 0; i <= message->num_transaction_ids; i++)
-          {
-            message->transaction_ids[i] = malloc(sizeof(uint8_t) * HASH_SIZE);
-            memcpy(message->transaction_ids[i], proto_message->transaction_ids[i].data, HASH_SIZE);
-          }
-        }
+        get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
+        packed_message->hash = hash;
+        packed_message->block = block;
 
-        mget_all_transaction_ids_response__free_unpacked(proto_message, NULL);
-        return message;
+        deserialize_transactions_to_block(buffer, block);
+        *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
-        MGetTransactionRequest *proto_message = mget_transaction_request__unpack(NULL,
-          packet->message_size, packet->message);
-
-        get_transaction_request_t *message = malloc(sizeof(get_transaction_request_t));
-
-        message->id = malloc(sizeof(uint8_t) * HASH_SIZE);
-        memcpy(message->id, proto_message->id.data, HASH_SIZE);
-
-        mget_transaction_request__free_unpacked(proto_message, NULL);
-        return message;
+        uint8_t *hash = buffer_read_bytes(buffer);
+        get_block_num_transactions_request_t *packed_message = malloc(sizeof(get_block_num_transactions_request_t));
+        packed_message->hash = hash;
+        *message = packed_message;
       }
-    case PKT_TYPE_GET_TRANSACTION_RESP:
+      break;
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-        MGetTransactionResponse *proto_message = mget_transaction_response__unpack(NULL,
-          packet->message_size, packet->message);
+        uint8_t *hash = buffer_read_bytes(buffer);
+        uint64_t num_transactions = buffer_read_uint64(buffer);
+        get_block_num_transactions_response_t *packed_message = malloc(sizeof(get_block_num_transactions_response_t));
+        packed_message->hash = hash;
+        packed_message->num_transactions = num_transactions;
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+      {
 
-        get_transaction_response_t *message = malloc(sizeof(get_transaction_response_t));
-        message->transaction = transaction_from_proto(proto_message->transaction);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+      {
 
-        mget_transaction_response__free_unpacked(proto_message, NULL);
-        return message;
-      }*/
+      }
+      break;
     default:
       LOG_DEBUG("Could not deserialize packet with unknown packet id: %d!", packet->id);
       buffer_free(buffer);
@@ -284,7 +249,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         serialize_transactions_from_block(buffer, block);
       }
       break;
-    case PKT_TYPE_INCOMING_TRANSACTION:
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         transaction_t *transaction = va_arg(args, transaction_t*);
         assert(transaction != NULL);
@@ -307,21 +272,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         buffer_write_bytes(buffer, hash, HASH_SIZE);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
-        int32_t height = va_arg(args, int32_t);
         uint8_t *hash = va_arg(args, uint8_t*);
-        uint8_t has_hash = hash != NULL;
+        assert(hash != NULL);
 
-        buffer_write_uint8(buffer, has_hash);
-        buffer_write_int32(buffer, height);
-        if (has_hash)
-        {
-          buffer_write_bytes(buffer, hash, HASH_SIZE);
-        }
+        buffer_write_bytes(buffer, hash, HASH_SIZE);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         uint32_t height = va_arg(args, uint32_t);
         block_t *block = va_arg(args, block_t*);
@@ -332,112 +291,53 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         serialize_transactions_from_block(buffer, block);
       }
       break;
-    /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
-        MGetNumTransactionsRequest *msg = malloc(sizeof(MGetNumTransactionsRequest));
-        mget_num_transactions_request__init(msg);
-
-        buffer_len = mget_num_transactions_request__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_num_transactions_request__pack(msg, buffer);
-
-        free(msg);
+        uint32_t height = va_arg(args, uint32_t);
+        buffer_write_uint32(buffer, height);
       }
       break;
-    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
-        uint32_t num_transactions = va_arg(args, uint32_t);
+        uint8_t *hash = va_arg(args, uint8_t*);
+        block_t *block = va_arg(args, block_t*);
 
-        MGetNumTransactionsResponse *msg = malloc(sizeof(MGetNumTransactionsResponse));
-        mget_num_transactions_response__init(msg);
+        assert(hash != NULL);
+        assert(block != NULL);
 
-        msg->num_transactions = num_transactions;
-
-        buffer_len = mget_num_transactions_response__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_num_transactions_response__pack(msg, buffer);
-
-        free(msg);
+        buffer_write_bytes(buffer, hash, HASH_SIZE);
+        serialize_block(buffer, block);
+        serialize_transactions_from_block(buffer, block);
       }
       break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
-        MGetAllTransactionIdsRequest *msg = malloc(sizeof(MGetAllTransactionIdsRequest));
-        mget_all_transaction_ids_request__init(msg);
+        uint8_t *hash = va_arg(args, uint8_t*);
+        assert(hash != NULL);
 
-        buffer_len = mget_all_transaction_ids_request__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_all_transaction_ids_request__pack(msg, buffer);
-
-        free(msg);
+        buffer_write_bytes(buffer, hash, HASH_SIZE);
       }
       break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-        MGetAllTransactionIdsResponse *msg = malloc(sizeof(MGetAllTransactionIdsResponse));
-        mget_all_transaction_ids_response__init(msg);
+        uint8_t *hash = va_arg(args, uint8_t*);
+        uint64_t num_transactions = va_arg(args, uint64_t);
+        assert(hash != NULL);
 
-        msg->n_transaction_ids = get_num_txs_in_mempool();
-        msg->transaction_ids = malloc(sizeof(uint8_t) * msg->n_transaction_ids);
-
-        for (int i = 0; i >= get_top_tx_index_from_mempool(); i++)
-        {
-          transaction_t *transaction = get_tx_by_index_from_mempool(i);
-          assert(transaction != NULL);
-
-          msg->transaction_ids[i].len = HASH_SIZE;
-          msg->transaction_ids[i].data = malloc(sizeof(uint8_t) * HASH_SIZE);
-
-          memcpy(msg->transaction_ids[i].data, transaction->id, HASH_SIZE);
-        }
-
-        buffer_len = mget_all_transaction_ids_response__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_all_transaction_ids_response__pack(msg, buffer);
-
-        free(msg);
+        buffer_write_bytes(buffer, hash, HASH_SIZE);
+        buffer_write_uint64(buffer, num_transactions);
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
       {
-        uint8_t *id = va_arg(args, uint8_t*);
 
-        MGetTransactionRequest *msg = malloc(sizeof(MGetTransactionRequest));
-        mget_transaction_request__init(msg);
-
-        msg->id.len = HASH_SIZE;
-        msg->id.data = malloc(sizeof(uint8_t) * HASH_SIZE);
-        memcpy(msg->id.data, id, HASH_SIZE);
-
-        buffer_len = mget_transaction_request__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_transaction_request__pack(msg, buffer);
-
-        free(msg);
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
       {
-        transaction_t *transaction = va_arg(args, transaction_t*);
 
-        MGetTransactionResponse *msg = malloc(sizeof(MGetTransactionResponse));
-        mget_transaction_response__init(msg);
-
-        msg->transaction = transaction_to_proto(transaction);
-
-        buffer_len = mget_transaction_response__get_packed_size(msg);
-        buffer = malloc(buffer_len);
-
-        mget_transaction_response__pack(msg, buffer);
-
-        free(msg);
       }
-      break;*/
+      break;
     default:
       LOG_DEBUG("Could not serialize packet with unknown packet id: %d!", packet_id);
       return 1;
@@ -471,9 +371,9 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
-    case PKT_TYPE_INCOMING_TRANSACTION:
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
-        incoming_transaction_t *message = (incoming_transaction_t*)message_object;
+        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
         free_transaction(message->transaction);
         free(message);
       }
@@ -491,64 +391,58 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
-        get_block_request_t *message = (get_block_request_t*)message_object;
+        get_block_by_hash_request_t *message = (get_block_by_hash_request_t*)message_object;
         free(message->hash);
         free(message);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
-        get_block_response_t *message = (get_block_response_t*)message_object;
+        get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
         free_block(message->block);
         free(message);
       }
       break;
-    /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
-        get_num_transactions_request_t *message = (get_num_transactions_request_t*)message_object;
+        get_block_by_height_request_t *message = (get_block_by_height_request_t*)message_object;
         free(message);
       }
       break;
-    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
-        get_num_transactions_response_t *message = (get_num_transactions_response_t*)message_object;
+        get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
+        free(message->hash);
+        free_block(message->block);
         free(message);
       }
       break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
-        get_all_transaction_ids_request_t *message = (get_all_transaction_ids_request_t*)message_object;
+        get_block_num_transactions_request_t *message = (get_block_num_transactions_request_t*)message_object;
+        free(message->hash);
         free(message);
       }
       break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-        get_all_transaction_ids_response_t *message = (get_all_transaction_ids_response_t*)message_object;
-        for (int i = 0; i >= message->num_transaction_ids; i++)
-        {
-          free(message->transaction_ids[i]);
-        }
+        get_block_num_transactions_response_t *message = (get_block_num_transactions_response_t*)message_object;
+        free(message->hash);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+      {
 
-        free(message->transaction_ids);
-        free(message);
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
       {
-        get_transaction_request_t *message = (get_transaction_request_t*)message_object;
-        free(message->id);
-        free(message);
+
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_RESP:
-      {
-        get_transaction_response_t *message = (get_transaction_response_t*)message_object;
-        free_transaction(message->transaction);
-        free(message);
-      }
-      break;*/
     default:
       LOG_DEBUG("Could not free packet with unknown packet id: %d!", packet_id);
       break;
@@ -644,9 +538,19 @@ int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipi
     return 1;
   }
 
-  if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_REQ, height, hash))
+  if (hash != NULL)
   {
-    return 1;
+    if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HASH_REQ, hash))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ, height))
+    {
+      return 1;
+    }
   }
 
   if (sync_height == g_protocol_sync_entry.last_sync_height)
@@ -702,6 +606,79 @@ int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen
   return 0;
 }
 
+int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
+{
+  assert(block != NULL);
+  if (g_protocol_sync_entry.sync_initiated)
+  {
+    if (g_protocol_sync_entry.sync_start_height == -1)
+    {
+      int found_starting_block = 0;
+      int can_rollback_and_resync = 0;
+
+      // try to find a starting height which starts at a block we already know of,
+      // if we cannot find a starting block, then restart from genesis...
+      block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
+      if (known_block != NULL)
+      {
+        if (compare_block(block, known_block))
+        {
+          found_starting_block = 1;
+        }
+
+        free_block(known_block);
+      }
+
+      if (found_starting_block)
+      {
+        LOG_INFO("Found sync starting block at height: %d!", g_protocol_sync_entry.last_sync_height);
+        g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
+        can_rollback_and_resync = 1;
+      }
+      else if (g_protocol_sync_entry.last_sync_height <= 0)
+      {
+        LOG_WARNING("Unable to find sync starting height, continuing anyway...");
+        g_protocol_sync_entry.sync_start_height = 0;
+        can_rollback_and_resync = 1;
+      }
+      else
+      {
+        if (request_sync_previous_block(recipient, recipient_len))
+        {
+          return 1;
+        }
+      }
+
+      if (can_rollback_and_resync)
+      {
+        if (rollback_blockchain_and_resync())
+        {
+          // if by some way we fail to rollback and resync and we
+          // fail to clear our sync request, then throw an assertion,
+          // this should never happen...
+          assert(clear_sync_request(0) == 0);
+        }
+      }
+    }
+    else
+    {
+      if (validate_and_insert_block_nolock(block))
+      {
+        LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
+        if (check_sync_status())
+        {
+          if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
+          {
+            return 1;
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 int rollback_blockchain_and_resync(void)
 {
   uint32_t current_block_height = get_block_height();
@@ -745,9 +722,9 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         }
       }
       break;
-    case PKT_TYPE_INCOMING_TRANSACTION:
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
-        incoming_transaction_t *message = (incoming_transaction_t*)message_object;
+        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
         add_tx_to_mempool(message->transaction);
       }
       break;
@@ -812,23 +789,14 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         }
       }
       break;
-    case PKT_TYPE_GET_BLOCK_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
-        get_block_request_t *message = (get_block_request_t*)message_object;
-        block_t *block = NULL;
-        if (message->height < 0)
-        {
-          block = get_block_from_hash(message->hash);
-        }
-        else
-        {
-          block = get_block_from_height(message->height);
-        }
-
+        get_block_by_hash_request_t *message = (get_block_by_hash_request_t*)message_object;
+        block_t *block = get_block_from_hash(message->hash);
         if (block != NULL)
         {
           uint32_t block_height = get_block_height_from_block(block);
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_RESP, block_height, block))
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
           {
             return 1;
           }
@@ -837,146 +805,57 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         }
       }
       break;
-    case PKT_TYPE_GET_BLOCK_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
-        get_block_response_t *message = (get_block_response_t*)message_object;
-        if (g_protocol_sync_entry.sync_initiated)
-        {
-          if (g_protocol_sync_entry.sync_start_height == -1)
-          {
-            int found_starting_block = 0;
-            int can_rollback_and_resync = 0;
-
-            // try to find a starting height which starts at a block we already know of,
-            // if we cannot find a starting block, then restart from genesis...
-            block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
-            if (known_block != NULL)
-            {
-              if (compare_block(message->block, known_block))
-              {
-                found_starting_block = 1;
-              }
-
-              free_block(known_block);
-            }
-
-            if (found_starting_block)
-            {
-              LOG_INFO("Found sync starting block at height: %d!", g_protocol_sync_entry.last_sync_height);
-              g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
-              can_rollback_and_resync = 1;
-            }
-            else if (g_protocol_sync_entry.last_sync_height <= 0)
-            {
-              LOG_WARNING("Unable to find sync starting height, continuing anyway...");
-              g_protocol_sync_entry.sync_start_height = 0;
-              can_rollback_and_resync = 1;
-            }
-            else
-            {
-              if (request_sync_previous_block(recipient, recipient_len))
-              {
-                return 1;
-              }
-            }
-
-            if (can_rollback_and_resync)
-            {
-              if (rollback_blockchain_and_resync())
-              {
-                // if by some way we fail to rollback and resync and we
-                // fail to clear our sync request, then throw an assertion,
-                // this should never happen...
-                assert(clear_sync_request(0) == 0);
-              }
-            }
-          }
-          else
-          {
-            if (validate_and_insert_block_nolock(message->block))
-            {
-              LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
-              if (check_sync_status())
-              {
-                if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
-                {
-                  return 1;
-                }
-              }
-            }
-          }
-        }
-      }
-      break;
-    case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
-      {
-        get_num_transactions_request_t *message = (get_num_transactions_request_t*)message_object;
-        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_NUM_TRANSACTIONS_RESP,
-          get_num_txs_in_mempool()))
+        get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
+        if (recieved_block_and_sync(recipient, recipient_len, message->block))
         {
           return 1;
         }
       }
       break;
-    case PKT_TYPE_GET_NUM_TRANSACTIONS_RESP:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
-        get_num_transactions_response_t *message = (get_num_transactions_response_t*)message_object;
-        if (message->num_transactions > 0)
+        get_block_by_height_request_t *message = (get_block_by_height_request_t*)message_object;
+        block_t *block = get_block_from_height(message->height);
+        if (block != NULL)
         {
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ))
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
           {
             return 1;
           }
-        }
-      }
-      break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ:
-      {
-        get_all_transaction_ids_request_t *message = (get_all_transaction_ids_request_t*)message_object;
-        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP))
-        {
-          return 1;
-        }
-      }
-      break;
-    case PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP:
-      {
-        get_all_transaction_ids_response_t *message = (get_all_transaction_ids_response_t*)message_object;
-        for (int i = 0; i >= message->num_transaction_ids; i++)
-        {
-          uint8_t *id = message->transaction_ids[i];
-          transaction_t *transaction = get_tx_from_mempool(id);
-          if (transaction != NULL)
-          {
-            continue;
-          }
 
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_REQ, id))
-          {
-            return 1;
-          }
+          free_block(block);
         }
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
-        get_transaction_request_t *message = (get_transaction_request_t*)message_object;
-        transaction_t *transaction = get_tx_from_mempool(message->id);
-        if (transaction == NULL)
+        get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
+        if (recieved_block_and_sync(recipient, recipient_len, message->block))
         {
           return 1;
         }
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
+      {
 
-        if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_TRANSACTION_RESP, transaction))
-        {
-          return 1;
-        }
       }
       break;
-    case PKT_TYPE_GET_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-        get_transaction_response_t *message = (get_transaction_response_t*)message_object;
-        add_tx_to_mempool(message->transaction);
+
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+      {
+
       }
       break;
     default:

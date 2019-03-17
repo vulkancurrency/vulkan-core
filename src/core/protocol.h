@@ -49,22 +49,22 @@ enum
   PKT_TYPE_UNKNOWN = 0,
 
   PKT_TYPE_INCOMING_BLOCK,
-  PKT_TYPE_INCOMING_TRANSACTION,
+  PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION,
+
+  PKT_TYPE_GET_BLOCK_BY_HASH_REQ,
+  PKT_TYPE_GET_BLOCK_BY_HASH_RESP,
 
   PKT_TYPE_GET_BLOCK_HEIGHT_REQ,
   PKT_TYPE_GET_BLOCK_HEIGHT_RESP,
 
-  PKT_TYPE_GET_BLOCK_REQ,
-  PKT_TYPE_GET_BLOCK_RESP,
+  PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ,
+  PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP,
 
-  PKT_TYPE_GET_NUM_TRANSACTIONS_REQ,
-  PKT_TYPE_GET_NUM_TRANSACTIONS_RESP,
+  PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ,
+  PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
 
-  PKT_TYPE_GET_ALL_TRANSACTION_IDS_REQ,
-  PKT_TYPE_GET_ALL_TRANSACTION_IDS_RESP,
-
-  PKT_TYPE_GET_TRANSACTION_REQ,
-  PKT_TYPE_GET_TRANSACTION_RESP
+  PKT_TYPE_GET_BLOCK_TRANSACTION_REQ,
+  PKT_TYPE_GET_BLOCK_TRANSACTION_RESP
 };
 
 typedef struct
@@ -82,7 +82,7 @@ typedef struct
 typedef struct
 {
   transaction_t *transaction;
-} incoming_transaction_t;
+} incoming_mempool_transaction_t;
 
 typedef struct
 {
@@ -97,46 +97,36 @@ typedef struct
 
 typedef struct
 {
-  int32_t height;
   uint8_t *hash;
-} get_block_request_t;
+} get_block_by_hash_request_t;
 
 typedef struct
 {
   uint32_t height;
   block_t *block;
-} get_block_response_t;
+} get_block_by_hash_response_t;
 
 typedef struct
 {
-
-} get_num_transactions_request_t;
-
-typedef struct
-{
-  uint32_t num_transactions;
-} get_num_transactions_response_t;
+  uint32_t height;
+} get_block_by_height_request_t;
 
 typedef struct
 {
-
-} get_all_transaction_ids_request_t;
-
-typedef struct
-{
-  int num_transaction_ids;
-  uint8_t **transaction_ids;
-} get_all_transaction_ids_response_t;
+  uint8_t *hash;
+  block_t *block;
+} get_block_by_height_response_t;
 
 typedef struct
 {
-  uint8_t *id;
-} get_transaction_request_t;
+  uint8_t *hash;
+} get_block_num_transactions_request_t;
 
 typedef struct
 {
-  transaction_t *transaction;
-} get_transaction_response_t;
+  uint8_t *hash;
+  uint64_t num_transactions;
+} get_block_num_transactions_response_t;
 
 typedef struct SyncEntry
 {
@@ -167,6 +157,7 @@ int clear_sync_request(int sync_success);
 int check_sync_status(void);
 int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash);
 int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block);
 int rollback_blockchain_and_resync(void);
 
 int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);
