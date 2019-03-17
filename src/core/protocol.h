@@ -63,8 +63,11 @@ enum
   PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ,
   PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
 
-  PKT_TYPE_GET_BLOCK_TRANSACTION_REQ,
-  PKT_TYPE_GET_BLOCK_TRANSACTION_RESP
+  PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ,
+  PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP,
+
+  PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ,
+  PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP
 };
 
 typedef struct
@@ -128,6 +131,19 @@ typedef struct
   uint64_t num_transactions;
 } get_block_num_transactions_response_t;
 
+typedef struct
+{
+  uint8_t *block_hash;
+  uint32_t tx_index;
+} get_block_transaction_by_index_request_t;
+
+typedef struct
+{
+  uint8_t *block_hash;
+  uint32_t tx_index;
+  transaction_t *transaction;
+} get_block_transaction_by_index_response_t;
+
 typedef struct SyncEntry
 {
   const pt_sockaddr_storage *recipient;
@@ -135,12 +151,19 @@ typedef struct SyncEntry
 
   int sync_initiated;
   int sync_did_backup_blockchain;
+  block_t *sync_pending_block;
   uint32_t sync_height;
-  int sync_start_height;
+  int32_t sync_start_height;
 
   uint32_t last_sync_height;
   uint32_t last_sync_ts;
   uint8_t last_sync_tries;
+
+  int tx_sync_initiated;
+  uint32_t tx_sync_num_txs;
+  int32_t last_tx_sync_index;
+  uint32_t last_tx_sync_ts;
+  uint8_t last_tx_sync_tries;
 } sync_entry_t;
 
 packet_t* make_packet(void);
@@ -155,8 +178,14 @@ void free_message(uint32_t packet_id, void *message_object);
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);
+
 int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash);
 int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+
+int request_sync_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
+int request_sync_next_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+
 int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block);
 int rollback_blockchain_and_resync(void);
 

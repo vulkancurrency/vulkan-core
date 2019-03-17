@@ -122,8 +122,6 @@ int deserialize_message(packet_t *packet, void **message)
 
         incoming_block_t *packed_message = malloc(sizeof(incoming_block_t));
         packed_message->block = block;
-
-        deserialize_transactions_to_block(buffer, block);
         *message = packed_message;
       }
       break;
@@ -172,8 +170,6 @@ int deserialize_message(packet_t *packet, void **message)
         get_block_by_hash_response_t *packed_message = malloc(sizeof(get_block_by_hash_response_t));
         packed_message->height = height;
         packed_message->block = block;
-
-        deserialize_transactions_to_block(buffer, block);
         *message = packed_message;
       }
       break;
@@ -194,8 +190,6 @@ int deserialize_message(packet_t *packet, void **message)
         get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
         packed_message->hash = hash;
         packed_message->block = block;
-
-        deserialize_transactions_to_block(buffer, block);
         *message = packed_message;
       }
       break;
@@ -217,14 +211,38 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
 
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
 
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
+      {
+        uint8_t *block_hash = buffer_read_bytes(buffer);
+        uint32_t tx_index = buffer_read_uint32(buffer);
+        get_block_transaction_by_index_request_t *packed_message = malloc(sizeof(get_block_transaction_by_index_request_t));
+        packed_message->block_hash = block_hash;
+        packed_message->tx_index = tx_index;
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
+      {
+        uint8_t *block_hash = buffer_read_bytes(buffer);
+        uint32_t tx_index = buffer_read_uint32(buffer);
+        transaction_t *transaction = deserialize_transaction(buffer);
+        assert(transaction != NULL);
+
+        get_block_transaction_by_index_response_t *packed_message = malloc(sizeof(get_block_transaction_by_index_response_t));
+        packed_message->block_hash = block_hash;
+        packed_message->tx_index = tx_index;
+        packed_message->transaction = transaction;
+        *message = packed_message;
       }
       break;
     default:
@@ -248,7 +266,6 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block != NULL);
 
         serialize_block(buffer, block);
-        serialize_transactions_from_block(buffer, block);
       }
       break;
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
@@ -290,7 +307,6 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 
         buffer_write_uint32(buffer, height);
         serialize_block(buffer, block);
-        serialize_transactions_from_block(buffer, block);
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
@@ -309,7 +325,6 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 
         buffer_write_bytes(buffer, hash, HASH_SIZE);
         serialize_block(buffer, block);
-        serialize_transactions_from_block(buffer, block);
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
@@ -330,14 +345,38 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         buffer_write_uint64(buffer, num_transactions);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
 
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
 
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
+      {
+        uint8_t *block_hash = va_arg(args, uint8_t*);
+        uint32_t tx_index = va_arg(args, uint32_t);
+        assert(block_hash != NULL);
+
+        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
+        buffer_write_uint32(buffer, tx_index);
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
+      {
+        uint8_t *block_hash = va_arg(args, uint8_t*);
+        uint32_t tx_index = va_arg(args, uint32_t);
+        transaction_t *transaction = va_arg(args, transaction_t*);
+
+        assert(block_hash != NULL);
+        assert(transaction != NULL);
+
+        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
+        buffer_write_uint32(buffer, tx_index);
+        serialize_transaction(buffer, transaction);
       }
       break;
     default:
@@ -403,7 +442,6 @@ void free_message(uint32_t packet_id, void *message_object)
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
-        free_block(message->block);
         free(message);
       }
       break;
@@ -417,7 +455,6 @@ void free_message(uint32_t packet_id, void *message_object)
       {
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
         free(message->hash);
-        free_block(message->block);
         free(message);
       }
       break;
@@ -435,12 +472,22 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
 
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
 
       }
@@ -463,6 +510,7 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
 
   g_protocol_sync_entry.sync_initiated = 1;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
+  g_protocol_sync_entry.sync_pending_block = NULL;
   g_protocol_sync_entry.sync_height = height;
   g_protocol_sync_entry.sync_start_height = -1;
 
@@ -470,6 +518,11 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
   g_protocol_sync_entry.last_sync_ts = 0;
   g_protocol_sync_entry.last_sync_tries = 0;
 
+  g_protocol_sync_entry.tx_sync_initiated = 0;
+  g_protocol_sync_entry.tx_sync_num_txs = 0;
+  g_protocol_sync_entry.last_tx_sync_index = -1;
+  g_protocol_sync_entry.last_tx_sync_ts = 0;
+  g_protocol_sync_entry.last_tx_sync_tries = 0;
   return 0;
 }
 
@@ -497,6 +550,7 @@ int clear_sync_request(int sync_success)
 
   g_protocol_sync_entry.sync_initiated = 0;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
+  g_protocol_sync_entry.sync_pending_block = NULL;
   g_protocol_sync_entry.sync_height = 0;
   g_protocol_sync_entry.sync_start_height = -1;
 
@@ -504,6 +558,28 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.last_sync_ts = 0;
   g_protocol_sync_entry.last_sync_tries = 0;
 
+  g_protocol_sync_entry.tx_sync_initiated = 0;
+  g_protocol_sync_entry.tx_sync_num_txs = 0;
+  g_protocol_sync_entry.last_tx_sync_index = -1;
+  g_protocol_sync_entry.last_tx_sync_ts = 0;
+  g_protocol_sync_entry.last_tx_sync_tries = 0;
+  return 0;
+}
+
+int clear_tx_sync_request(void)
+{
+  if (!g_protocol_sync_entry.sync_initiated || !g_protocol_sync_entry.tx_sync_initiated)
+  {
+    return 1;
+  }
+
+  g_protocol_sync_entry.sync_pending_block = NULL;
+
+  g_protocol_sync_entry.tx_sync_initiated = 0;
+  g_protocol_sync_entry.tx_sync_num_txs = 0;
+  g_protocol_sync_entry.last_tx_sync_index = -1;
+  g_protocol_sync_entry.last_tx_sync_ts = 0;
+  g_protocol_sync_entry.last_tx_sync_tries = 0;
   return 0;
 }
 
@@ -606,6 +682,51 @@ int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen
   }
 
   return 0;
+}
+
+int request_sync_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
+{
+  if (tx_hash != NULL)
+  {
+    if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ, block_hash, tx_hash))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ, block_hash, tx_index))
+    {
+      return 1;
+    }
+  }
+
+  if (tx_index == g_protocol_sync_entry.last_tx_sync_index)
+  {
+    g_protocol_sync_entry.last_tx_sync_tries++;
+  }
+  else
+  {
+    g_protocol_sync_entry.last_tx_sync_tries = 0;
+    g_protocol_sync_entry.last_tx_sync_index = tx_index;
+  }
+
+  g_protocol_sync_entry.last_tx_sync_ts = get_current_time();
+  return 0;
+}
+
+int request_sync_next_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len)
+{
+  block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
+  assert(pending_block != NULL);
+
+  uint32_t tx_sync_index = g_protocol_sync_entry.last_tx_sync_index + 1;
+  if (tx_sync_index > pending_block->transaction_count)
+  {
+    return 1;
+  }
+
+  return request_sync_transaction(recipient, recipient_len, pending_block->hash, tx_sync_index, NULL);
 }
 
 int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
@@ -717,11 +838,11 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
   {
     case PKT_TYPE_INCOMING_BLOCK:
       {
-        incoming_block_t *message = (incoming_block_t*)message_object;
+        /*incoming_block_t *message = (incoming_block_t*)message_object;
         if (validate_and_insert_block_nolock(message->block))
         {
           LOG_INFO("Added incoming block at height: %d.", get_block_height());
-        }
+        }*/
       }
       break;
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
@@ -810,9 +931,18 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
-        if (recieved_block_and_sync(recipient, recipient_len, message->block))
+        block_t *block = message->block;
+        if (g_protocol_sync_entry.sync_initiated && !g_protocol_sync_entry.tx_sync_initiated)
         {
-          return 1;
+          block->transaction_count = 0;
+          block->transactions = NULL;
+          g_protocol_sync_entry.sync_pending_block = block;
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
+          {
+            free_block(block);
+            g_protocol_sync_entry.sync_pending_block = NULL;
+            return 1;
+          }
         }
       }
       break;
@@ -834,30 +964,130 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
-        if (recieved_block_and_sync(recipient, recipient_len, message->block))
+        block_t *block = message->block;
+        if (g_protocol_sync_entry.sync_initiated && !g_protocol_sync_entry.tx_sync_initiated)
         {
-          return 1;
+          block->transaction_count = 0;
+          block->transactions = NULL;
+          g_protocol_sync_entry.sync_pending_block = block;
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
+          {
+            free_block(block);
+            g_protocol_sync_entry.sync_pending_block = NULL;
+            return 1;
+          }
         }
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
+        get_block_num_transactions_request_t *message = (get_block_num_transactions_request_t*)message_object;
+        block_t *block = get_block_from_hash(message->hash);
+        if (block != NULL)
+        {
+          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
+            block->hash, block->transaction_count))
+          {
+            return 1;
+          }
 
+          free_block(block);
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-
+        get_block_num_transactions_response_t *message = (get_block_num_transactions_response_t*)message_object;
+        if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.sync_pending_block != NULL
+          && !g_protocol_sync_entry.tx_sync_initiated)
+        {
+          block_t *block = g_protocol_sync_entry.sync_pending_block;
+          if (compare_block_hash(message->hash, block->hash))
+          {
+            block_t *block = g_protocol_sync_entry.sync_pending_block;
+            if (g_protocol_sync_entry.sync_initiated && block != NULL)
+            {
+              g_protocol_sync_entry.tx_sync_initiated = 1;
+              g_protocol_sync_entry.tx_sync_num_txs = message->num_transactions;
+              if (request_sync_next_transaction(recipient, recipient_len))
+              {
+                return 1;
+              }
+            }
+          }
+        }
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_REQ:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
 
       }
       break;
-    case PKT_TYPE_GET_BLOCK_TRANSACTION_RESP:
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
 
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
+      {
+        get_block_transaction_by_index_request_t *message = (get_block_transaction_by_index_request_t*)message_object;
+        block_t *block = get_block_from_hash(message->block_hash);
+        if (block != NULL)
+        {
+          if (message->tx_index <= block->transaction_count)
+          {
+            transaction_t *transaction = block->transactions[message->tx_index];
+            assert(transaction != NULL);
+
+            if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP,
+              block->hash, message->tx_index, transaction))
+            {
+              return 1;
+            }
+          }
+        }
+      }
+      break;
+    case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
+      {
+        get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
+        if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.tx_sync_initiated)
+        {
+          block_t *block = g_protocol_sync_entry.sync_pending_block;
+          assert(block != NULL);
+
+          transaction_t *transaction = message->transaction;
+          assert(transaction != NULL);
+
+          assert(add_transaction_to_block(block, transaction, message->tx_index) == 0);
+          if (message->tx_index + 1 < g_protocol_sync_entry.tx_sync_num_txs)
+          {
+            if (request_sync_next_transaction(recipient, recipient_len))
+            {
+              return 1;
+            }
+          }
+          else
+          {
+            // compute the block's merkle root again and compare it against
+            // the block's currently defined merkle root to see if
+            // this block does infact have the correct transactions it requires...
+            if (valid_merkle_root(block))
+            {
+              // must clear the tx sync entry cache before calling recieved_block_and_sync,
+              // otherwise the entire sync entry cache will be cleared and this assertion will fail...
+              assert(clear_tx_sync_request() == 0);
+              if (recieved_block_and_sync(recipient, recipient_len, block))
+              {
+                return 1;
+              }
+            }
+            else
+            {
+              assert(clear_sync_request(0) == 0);
+            }
+          }
+        }
       }
       break;
     default:
@@ -958,16 +1188,15 @@ int handle_packet_broadcast(uint32_t packet_id, ...)
 
 task_result_t resync_chain(task_t *task, va_list args)
 {
-  if (g_protocol_sync_entry.sync_initiated)
+  /*if (g_protocol_sync_entry.sync_initiated)
   {
     if (get_current_time() - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
     {
       uint32_t block_height = g_protocol_sync_entry.last_sync_height;
       request_sync_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len, block_height, NULL);
     }
-  }
+  }*/
 
   handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
-  //handle_packet_broadcast(PKT_TYPE_GET_NUM_TRANSACTIONS_REQ);
   return TASK_RESULT_WAIT;
 }
