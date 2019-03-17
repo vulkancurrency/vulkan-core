@@ -40,7 +40,8 @@
 input_transaction_t* make_txin(uint8_t *tx_id, uint32_t txout_index)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  memcpy(&txin->transaction, tx_id, HASH_SIZE);
+  //memcpy(&txin->transaction, tx_id, HASH_SIZE);
+  memset(&txin->transaction, 0, HASH_SIZE);
   txin->txout_index = txout_index;
   return txin;
 }
@@ -77,7 +78,7 @@ transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entri
   {
     transaction_entry_t transaction_entry = transaction_entries.entries[i];
 
-    input_transaction_t *txin = make_txin(i);
+    input_transaction_t *txin = make_txin(NULL, 0);
     output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
 
     assert(txin != NULL);

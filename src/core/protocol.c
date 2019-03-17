@@ -25,9 +25,9 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 
 #include <gossip.h>
 
@@ -42,10 +42,10 @@
 
 static sync_entry_t g_protocol_sync_entry;
 
-packet_t *make_packet(void)
+packet_t* make_packet(void)
 {
   packet_t *packet = malloc(sizeof(packet_t));
-  packet->id = 0;
+  packet->id = PKT_TYPE_UNKNOWN;
   packet->size = 0;
   packet->data = NULL;
   return packet;
@@ -58,7 +58,10 @@ int serialize_packet(buffer_t *buffer, packet_t *packet)
 
   buffer_write_uint32(buffer, packet->id);
   buffer_write_uint32(buffer, packet->size);
-  buffer_write_bytes(buffer, packet->data, packet->size);
+  if (packet->size > 0)
+  {
+    buffer_write_bytes(buffer, packet->data, packet->size);
+  }
 
   return 0;
 }
@@ -70,11 +73,13 @@ int deserialize_packet(packet_t *packet, buffer_t *buffer)
 
   packet->id = buffer_read_uint32(buffer);
   packet->size = buffer_read_uint32(buffer);
-
-  uint8_t *data = buffer_read_bytes(buffer);
-  packet->data = malloc(packet->size);
-  memcpy(packet->data, data, packet->size);
-  free(data);
+  if (packet->size > 0)
+  {
+    uint8_t *data = buffer_read_bytes(buffer);
+    packet->data = malloc(packet->size);
+    memcpy(packet->data, data, packet->size);
+    free(data);
+  }
 
   return 0;
 }
@@ -94,10 +99,18 @@ int free_packet(packet_t *packet)
   return 0;
 }
 
-void* deserialize_message(packet_t *packet)
+int deserialize_message(packet_t *packet, void **message)
 {
-  void *message = NULL;
-  buffer_t *buffer = buffer_init_data(0, (const uint8_t*)packet->data, packet->size);
+  buffer_t *buffer = NULL;
+  if (packet->size > 0)
+  {
+    buffer = buffer_init_data(0, (const uint8_t*)packet->data, packet->size);
+  }
+  else
+  {
+    buffer = buffer_init();
+  }
+
   switch (packet->id)
   {
     case PKT_TYPE_INCOMING_BLOCK:
@@ -105,8 +118,11 @@ void* deserialize_message(packet_t *packet)
         block_t *block = deserialize_block(buffer);
         assert(block != NULL);
 
-        incoming_block_t *message = malloc(sizeof(incoming_block_t));
-        message->block = block;
+        incoming_block_t *packed_message = malloc(sizeof(incoming_block_t));
+        packed_message->block = block;
+
+        deserialize_transactions_to_block(buffer, block);
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
@@ -114,13 +130,15 @@ void* deserialize_message(packet_t *packet)
         transaction_t *transaction = deserialize_transaction(buffer);
         assert(transaction != NULL);
 
-        incoming_transaction_t *message = malloc(sizeof(incoming_transaction_t));
-        message->transaction = transaction;
+        incoming_transaction_t *packed_message = malloc(sizeof(incoming_transaction_t));
+        packed_message->transaction = transaction;
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
-        get_block_height_request_t *message = malloc(sizeof(get_block_height_request_t));
+        get_block_height_request_t *packed_message = malloc(sizeof(get_block_height_request_t));
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
@@ -129,9 +147,10 @@ void* deserialize_message(packet_t *packet)
         uint8_t *hash = buffer_read_bytes(buffer);
         assert(hash != NULL);
 
-        get_block_height_response_t *message = malloc(sizeof(get_block_height_response_t));
-        message->height = height;
-        message->hash = hash;
+        get_block_height_response_t *packed_message = malloc(sizeof(get_block_height_response_t));
+        packed_message->height = height;
+        packed_message->hash = hash;
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_REQ:
@@ -146,9 +165,10 @@ void* deserialize_message(packet_t *packet)
           hash = buffer_read_bytes(buffer);
         }
 
-        get_block_request_t *message = malloc(sizeof(get_block_request_t));
-        message->height = height;
-        message->hash = hash;
+        get_block_request_t *packed_message = malloc(sizeof(get_block_request_t));
+        packed_message->height = height;
+        packed_message->hash = hash;
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_RESP:
@@ -157,9 +177,12 @@ void* deserialize_message(packet_t *packet)
         block_t *block = deserialize_block(buffer);
         assert(block != NULL);
 
-        get_block_response_t *message = malloc(sizeof(get_block_response_t));
-        message->height = height;
-        message->block = block;
+        get_block_response_t *packed_message = malloc(sizeof(get_block_response_t));
+        packed_message->height = height;
+        packed_message->block = block;
+
+        deserialize_transactions_to_block(buffer, block);
+        *message = packed_message;
       }
       break;
     /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
@@ -240,14 +263,14 @@ void* deserialize_message(packet_t *packet)
     default:
       LOG_DEBUG("Could not deserialize packet with unknown packet id: %d!", packet->id);
       buffer_free(buffer);
-      return NULL;
+      return 1;
   }
 
   buffer_free(buffer);
-  return message;
+  return 0;
 }
 
-packet_t* serialize_message(uint32_t packet_id, va_list args)
+int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 {
   buffer_t *buffer = buffer_init();
   switch (packet_id)
@@ -258,6 +281,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
         assert(block != NULL);
 
         serialize_block(buffer, block);
+        serialize_transactions_from_block(buffer, block);
       }
       break;
     case PKT_TYPE_INCOMING_TRANSACTION:
@@ -305,6 +329,7 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
 
         buffer_write_uint32(buffer, height);
         serialize_block(buffer, block);
+        serialize_transactions_from_block(buffer, block);
       }
       break;
     /*case PKT_TYPE_GET_NUM_TRANSACTIONS_REQ:
@@ -415,19 +440,24 @@ packet_t* serialize_message(uint32_t packet_id, va_list args)
       break;*/
     default:
       LOG_DEBUG("Could not serialize packet with unknown packet id: %d!", packet_id);
-      return NULL;
+      return 1;
   }
 
   const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
-  packet_t *packet = make_packet();
-  packet->size = data_len;
-  packet->data = malloc(data_len);
-  memcpy(packet->data, data, data_len);
+  packet_t *serialized_packet = make_packet();
+  serialized_packet->id = packet_id;
+  serialized_packet->size = data_len;
+  if (data_len > 0)
+  {
+    serialized_packet->data = malloc(data_len);
+    memcpy(serialized_packet->data, data, data_len);
+  }
 
+  *packet = serialized_packet;
   buffer_free(buffer);
-  return packet;
+  return 0;
 }
 
 void free_message(uint32_t packet_id, void *message_object)
@@ -586,7 +616,7 @@ int check_sync_status(void)
   uint32_t current_block_height = get_block_height();
   if (current_block_height >= g_protocol_sync_entry.sync_height)
   {
-    if (!clear_sync_request(1))
+    if (clear_sync_request(1) == 0)
     {
       LOG_INFO("Successfully synced blockchain at block height: %d.", current_block_height);
       return 0;
@@ -709,7 +739,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
-        if (validate_and_insert_block(message->block))
+        if (validate_and_insert_block_nolock(message->block))
         {
           LOG_INFO("Added incoming block at height: %d.", get_block_height());
         }
@@ -857,15 +887,15 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
                 // if by some way we fail to rollback and resync and we
                 // fail to clear our sync request, then throw an assertion,
                 // this should never happen...
-                assert(!clear_sync_request(0));
+                assert(clear_sync_request(0) == 0);
               }
             }
           }
           else
           {
-            if (validate_and_insert_block(message->block))
+            if (validate_and_insert_block_nolock(message->block))
             {
-              LOG_INFO("Received block at height: %d.", g_protocol_sync_entry.last_sync_height);
+              LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
               if (check_sync_status())
               {
                 if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
@@ -932,7 +962,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       {
         get_transaction_request_t *message = (get_transaction_request_t*)message_object;
         transaction_t *transaction = get_tx_from_mempool(message->id);
-        if (!transaction)
+        if (transaction == NULL)
         {
           return 1;
         }
@@ -968,8 +998,8 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
   }
 
   buffer_free(buffer);
-  void *message = deserialize_message(packet);
-  if (!message)
+  void *message = NULL;
+  if (deserialize_message(packet, &message) || message == NULL)
   {
     free_packet(packet);
     return 1;
@@ -989,8 +1019,8 @@ int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *
 
 int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args)
 {
-  packet_t *packet = serialize_message(packet_id, args);
-  if (!packet)
+  packet_t *packet = NULL;
+  if (serialize_message(&packet, packet_id, args) || packet == NULL)
   {
     return 1;
   }
@@ -1056,7 +1086,7 @@ task_result_t resync_chain(task_t *task, va_list args)
     }
   }
 
-  //handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
   //handle_packet_broadcast(PKT_TYPE_GET_NUM_TRANSACTIONS_REQ);
   return TASK_RESULT_WAIT;
 }

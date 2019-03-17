@@ -46,7 +46,9 @@ extern "C"
 
 enum
 {
-  PKT_TYPE_INCOMING_BLOCK = 0,
+  PKT_TYPE_UNKNOWN = 0,
+
+  PKT_TYPE_INCOMING_BLOCK,
   PKT_TYPE_INCOMING_TRANSACTION,
 
   PKT_TYPE_GET_BLOCK_HEIGHT_REQ,
@@ -151,13 +153,13 @@ typedef struct SyncEntry
   uint8_t last_sync_tries;
 } sync_entry_t;
 
-packet_t *make_packet(void);
+packet_t* make_packet(void);
 int serialize_packet(buffer_t *buffer, packet_t *packet);
 int deserialize_packet(packet_t *packet, buffer_t *buffer);
 int free_packet(packet_t *packet);
 
-packet_t* serialize_message(uint32_t packet_id, va_list args);
-void* deserialize_message(packet_t *packet);
+int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
+int deserialize_message(packet_t *packet, void **message);
 void free_message(uint32_t packet_id, void *message_object);
 
 int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
