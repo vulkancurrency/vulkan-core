@@ -31,6 +31,8 @@
 
 #include "core/transaction.h"
 
+#include "crypto/cryptoutil.h"
+
 SUITE(transaction_suite);
 
 TEST can_sign_txin(void)

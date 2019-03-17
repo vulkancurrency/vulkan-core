@@ -32,6 +32,8 @@
 #include "common/buffer.h"
 #include "common/util.h"
 
+#include "crypto/cryptoutil.h"
+
 #include "wallet/wallet.h"
 
 /*

@@ -40,6 +40,8 @@
 #include "net.h"
 #include "protocol.h"
 
+#include "crypto/cryptoutil.h"
+
 static sync_entry_t g_protocol_sync_entry;
 
 packet_t* make_packet(void)

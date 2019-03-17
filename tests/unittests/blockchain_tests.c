@@ -31,6 +31,8 @@
 #include "core/block.h"
 #include "core/blockchain.h"
 
+#include "crypto/cryptoutil.h"
+
 SUITE(blockchain_suite);
 
 static uint8_t block_hash[HASH_SIZE] = {

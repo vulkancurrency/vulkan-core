@@ -32,6 +32,8 @@
 #include "core/mempool.h"
 #include "core/transaction.h"
 
+#include "crypto/cryptoutil.h"
+
 SUITE(mempool_suite);
 
 TEST can_add_to_mempool(void)

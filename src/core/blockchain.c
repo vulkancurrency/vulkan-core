@@ -40,6 +40,8 @@
 #include "blockchain.h"
 #include "difficulty.h"
 
+#include "crypto/cryptoutil.h"
+
 #include "wallet/wallet.h"
 
 static mtx_t g_blockchain_lock;

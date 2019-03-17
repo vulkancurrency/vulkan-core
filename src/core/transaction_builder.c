@@ -35,6 +35,8 @@
 #include "transaction_builder.h"
 #include "transaction.h"
 
+#include "crypto/cryptoutil.h"
+
 #include "wallet/wallet.h"
 
 input_transaction_t* make_txin(uint8_t *tx_id, uint32_t txout_index)

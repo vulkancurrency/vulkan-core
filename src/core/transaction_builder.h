@@ -33,6 +33,8 @@
 
 #include "transaction.h"
 
+#include "crypto/cryptoutil.h"
+
 #include "wallet/wallet.h"
 
 #ifdef __cplusplus

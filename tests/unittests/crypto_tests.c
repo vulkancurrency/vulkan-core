@@ -29,6 +29,7 @@
 
 #include "common/greatest.h"
 
+#include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
 
 SUITE(crypto_suite);

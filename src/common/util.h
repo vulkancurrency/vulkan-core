@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-#include <sodium.h>
+#include "crypto/cryptoutil.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -36,9 +36,6 @@ extern "C"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
-#define HASH_SIZE 32
-#define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
 
 #define RANDOM_RANGE(min, max) MAX(rand() % max, min)
 

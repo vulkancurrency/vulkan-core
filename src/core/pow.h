@@ -27,19 +27,6 @@
 
 #include <stdint.h>
 
-extern inline uint64_t hi_dword(uint64_t val);
-extern inline uint64_t lo_dword(uint64_t val);
-
-extern inline uint64_t mul128(uint64_t multiplier, uint64_t multiplicand, uint64_t* product_hi);
-extern inline void mul(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high);
-
-extern inline int cadd(uint64_t a, uint64_t b);
-extern inline int cadc(uint64_t a, uint64_t b, int c);
-
-extern inline uint32_t ident32(uint32_t x);
-extern inline uint64_t ident64(uint64_t x);
-
-#define swap32le ident32
-#define swap64le ident64
+#include "crypto/cryptoutil.h"
 
 int check_pow(const uint8_t *hash, uint64_t difficulty);

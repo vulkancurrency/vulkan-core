@@ -33,6 +33,8 @@
 #include "core/parameters.h"
 #include "core/transaction.h"
 
+#include "crypto/cryptoutil.h"
+
 SUITE(block_suite);
 
 TEST can_serialize_block(void)

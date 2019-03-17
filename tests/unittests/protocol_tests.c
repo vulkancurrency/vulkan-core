@@ -34,6 +34,8 @@
 #include "core/transaction.h"
 #include "core/protocol.h"
 
+#include "crypto/cryptoutil.h"
+
 SUITE(protocol_suite);
 
 TEST can_serialize_deserialize_packet(void)

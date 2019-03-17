@@ -44,6 +44,7 @@
 
 #include "util.h"
 
+#include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
 
 uint16_t get_num_logical_cores(void)

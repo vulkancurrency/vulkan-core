@@ -41,6 +41,7 @@
 #include "difficulty.h"
 #include "merkle.h"
 
+#include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
 
 /* Allocates a block for usage.
