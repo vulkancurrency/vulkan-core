@@ -677,6 +677,18 @@ int validate_and_insert_block_nolock(block_t *block)
     return 0;
   }
 
+  // ensure we are not adding a block that already exists in the blockchain...
+  if (has_block_by_hash(block->hash))
+  {
+    return 0;
+  }
+
+  // check this blocks previous has against our current top block hash
+  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
+  {
+    return 0;
+  }
+
   // check to see if this block's timestamp is greater than the
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
   if (!valid_block_median_timestamp(block))
@@ -713,18 +725,6 @@ int validate_and_insert_block_nolock(block_t *block)
       LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
       return 0;
     }
-  }
-
-  // ensure we are not adding a block that already exists in the blockchain...
-  if (has_block_by_hash(block->hash))
-  {
-    return 0;
-  }
-
-  // check this blocks previous has against our current top block hash
-  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
-  {
-    return 0;
   }
 
   return insert_block_nolock(block);
