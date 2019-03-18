@@ -880,6 +880,11 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
 
               can_initiate_sync = 0;
             }
+
+            if (g_protocol_sync_entry.sync_did_backup_blockchain)
+            {
+              can_initiate_sync = 0;
+            }
           }
 
           if (can_initiate_sync)
