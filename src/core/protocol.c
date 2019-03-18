@@ -1188,14 +1188,16 @@ int handle_packet_broadcast(uint32_t packet_id, ...)
 
 task_result_t resync_chain(task_t *task, va_list args)
 {
-  /*if (g_protocol_sync_entry.sync_initiated)
+  if (g_protocol_sync_entry.sync_initiated)
   {
-    if (get_current_time() - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
+    // check to see if the block request has timed out if it has, then let's just clear the sync request
+    // the daemon will pick up where it last left off until it can successfully sync to the top block...
+    uint32_t current_time = get_current_time();
+    if (current_time - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
     {
-      uint32_t block_height = g_protocol_sync_entry.last_sync_height;
-      request_sync_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len, block_height, NULL);
+      assert(clear_sync_request(0) == 0);
     }
-  }*/
+  }
 
   handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
   return TASK_RESULT_WAIT;
