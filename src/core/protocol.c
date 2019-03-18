@@ -510,6 +510,7 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
 
   g_protocol_sync_entry.sync_initiated = 1;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
+  g_protocol_sync_entry.sync_finding_top_block = 0;
   g_protocol_sync_entry.sync_pending_block = NULL;
   g_protocol_sync_entry.sync_height = height;
   g_protocol_sync_entry.sync_start_height = -1;
@@ -550,6 +551,7 @@ int clear_sync_request(int sync_success)
 
   g_protocol_sync_entry.sync_initiated = 0;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
+  g_protocol_sync_entry.sync_finding_top_block = 0;
   g_protocol_sync_entry.sync_pending_block = NULL;
   g_protocol_sync_entry.sync_height = 0;
   g_protocol_sync_entry.sync_start_height = -1;
@@ -729,29 +731,21 @@ int request_sync_next_transaction(const pt_sockaddr_storage *recipient, pt_sockl
   return request_sync_transaction(recipient, recipient_len, pending_block->hash, tx_sync_index, NULL);
 }
 
-int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
+int block_header_received(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
 {
   assert(block != NULL);
   if (g_protocol_sync_entry.sync_initiated)
   {
     if (g_protocol_sync_entry.sync_start_height == -1)
     {
-      int found_starting_block = 0;
-      int can_rollback_and_resync = 0;
-
-      // try to find a starting height which starts at a block we already know of,
-      // if we cannot find a starting block, then restart from genesis...
-      block_t *known_block = get_block_from_height(g_protocol_sync_entry.last_sync_height);
-      if (known_block != NULL)
+      if (g_protocol_sync_entry.sync_finding_top_block == 0)
       {
-        if (compare_block(block, known_block))
-        {
-          found_starting_block = 1;
-        }
-
-        free_block(known_block);
+        g_protocol_sync_entry.last_sync_height = get_block_height();
+        g_protocol_sync_entry.sync_finding_top_block = 1;
       }
 
+      int found_starting_block = has_block_by_hash(block->hash);
+      int can_rollback_and_resync = 0;
       if (found_starting_block)
       {
         LOG_INFO("Found sync starting block at height: %d!", g_protocol_sync_entry.last_sync_height);
@@ -774,6 +768,7 @@ int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t r
 
       if (can_rollback_and_resync)
       {
+        g_protocol_sync_entry.sync_finding_top_block = 0;
         if (rollback_blockchain_and_resync())
         {
           // if by some way we fail to rollback and resync and we
@@ -783,18 +778,38 @@ int recieved_block_and_sync(const pt_sockaddr_storage *recipient, pt_socklen_t r
         }
       }
     }
-    else
+    else if (g_protocol_sync_entry.tx_sync_initiated == 0)
     {
-      if (validate_and_insert_block_nolock(block))
+      block->transaction_count = 0;
+      block->transactions = NULL;
+      g_protocol_sync_entry.sync_pending_block = block;
+      if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
       {
-        LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
-        if (check_sync_status())
-        {
-          if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
-          {
-            return 1;
-          }
-        }
+        free_block(block);
+        g_protocol_sync_entry.sync_pending_block = NULL;
+
+        // we failed to request transactions for this block header,
+        // clear the sync request in attempt to resync this block later...
+        assert(clear_sync_request(0) == 0);
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+int block_header_sync_complete(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
+{
+  assert(block != NULL);
+  if (validate_and_insert_block_nolock(block))
+  {
+    LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
+    if (check_sync_status())
+    {
+      if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
+      {
+        return 1;
       }
     }
   }
@@ -936,18 +951,9 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
-        block_t *block = message->block;
-        if (g_protocol_sync_entry.sync_initiated && !g_protocol_sync_entry.tx_sync_initiated)
+        if (block_header_received(recipient, recipient_len, message->block))
         {
-          block->transaction_count = 0;
-          block->transactions = NULL;
-          g_protocol_sync_entry.sync_pending_block = block;
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
-          {
-            free_block(block);
-            g_protocol_sync_entry.sync_pending_block = NULL;
-            return 1;
-          }
+          return 1;
         }
       }
       break;
@@ -969,18 +975,9 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
-        block_t *block = message->block;
-        if (g_protocol_sync_entry.sync_initiated && !g_protocol_sync_entry.tx_sync_initiated)
+        if (block_header_received(recipient, recipient_len, message->block))
         {
-          block->transaction_count = 0;
-          block->transactions = NULL;
-          g_protocol_sync_entry.sync_pending_block = block;
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
-          {
-            free_block(block);
-            g_protocol_sync_entry.sync_pending_block = NULL;
-            return 1;
-          }
+          return 1;
         }
       }
       break;
@@ -1079,10 +1076,10 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
             // this block does infact have the correct transactions it requires...
             if (valid_merkle_root(block))
             {
-              // must clear the tx sync entry cache before calling recieved_block_and_sync,
+              // must clear the tx sync entry cache before calling block_header_sync_complete,
               // otherwise the entire sync entry cache will be cleared and this assertion will fail...
               assert(clear_tx_sync_request() == 0);
-              if (recieved_block_and_sync(recipient, recipient_len, block))
+              if (block_header_sync_complete(recipient, recipient_len, block))
               {
                 return 1;
               }
