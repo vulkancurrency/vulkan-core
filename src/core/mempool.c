@@ -318,6 +318,18 @@ int clear_expired_txs_in_mempool_nolock(void)
   return 0;
 }
 
+int clear_expired_txs_in_mempool_noblock(void)
+{
+  if (mtx_tryLock(&g_mempool_lock) == thrd_error)
+  {
+    return 0;
+  }
+  
+  int result = clear_expired_txs_in_mempool_nolock();
+  mtx_unlock(&g_mempool_lock);
+  return result;
+}
+
 int clear_expired_txs_in_mempool(void)
 {
   mtx_lock(&g_mempool_lock);
@@ -328,6 +340,6 @@ int clear_expired_txs_in_mempool(void)
 
 task_result_t flush_mempool(task_t *task, va_list args)
 {
-  assert(clear_expired_txs_in_mempool() == 0);
+  assert(clear_expired_txs_in_mempool_noblock() == 0);
   return TASK_RESULT_WAIT;
 }
