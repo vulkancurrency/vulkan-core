@@ -529,7 +529,7 @@ int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_sockl
 
 int clear_sync_request(int sync_success)
 {
-  if (!g_protocol_sync_entry.sync_initiated)
+  if (g_protocol_sync_entry.sync_initiated == 0)
   {
     return 1;
   }
@@ -570,7 +570,7 @@ int clear_sync_request(int sync_success)
 
 int clear_tx_sync_request(void)
 {
-  if (!g_protocol_sync_entry.sync_initiated || !g_protocol_sync_entry.tx_sync_initiated)
+  if (g_protocol_sync_entry.sync_initiated == 0 || g_protocol_sync_entry.tx_sync_initiated == 0)
   {
     return 1;
   }
@@ -1001,13 +1001,14 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       {
         get_block_num_transactions_response_t *message = (get_block_num_transactions_response_t*)message_object;
         if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.sync_pending_block != NULL
-          && !g_protocol_sync_entry.tx_sync_initiated)
+          && g_protocol_sync_entry.tx_sync_initiated == 0)
         {
           block_t *block = g_protocol_sync_entry.sync_pending_block;
+          assert(block != NULL);
+
           if (compare_block_hash(message->hash, block->hash))
           {
-            block_t *block = g_protocol_sync_entry.sync_pending_block;
-            if (g_protocol_sync_entry.sync_initiated && block != NULL)
+            if (g_protocol_sync_entry.sync_initiated)
             {
               g_protocol_sync_entry.tx_sync_initiated = 1;
               g_protocol_sync_entry.tx_sync_num_txs = message->num_transactions;
