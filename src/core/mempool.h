@@ -74,6 +74,7 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block);
 int fill_block_with_txs_from_mempool(block_t *block);
 
 int clear_expired_txs_in_mempool_nolock(void);
+int clear_expired_txs_in_mempool_noblock(void);
 int clear_expired_txs_in_mempool(void);
 
 task_result_t flush_mempool(task_t *task, va_list args);
