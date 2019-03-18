@@ -538,7 +538,7 @@ int clear_sync_request(int sync_success)
   {
     if (!restore_blockchain())
     {
-      LOG_INFO("Successfully restored blockchain after sync to alternative blockchain failed.");
+      LOG_INFO("Successfully restored blockchain.");
     }
     else
     {
