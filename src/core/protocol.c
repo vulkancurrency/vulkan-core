@@ -734,6 +734,15 @@ int request_sync_next_transaction(const pt_sockaddr_storage *recipient, pt_sockl
 int block_header_received(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block)
 {
   assert(block != NULL);
+
+  // validate the block's hash before attempting to establish a sync request
+  // at that block's height in the blockchain...
+  if (!valid_block_hash(block))
+  {
+    assert(clear_sync_request(0) == 0);
+    return 1;
+  }
+
   if (g_protocol_sync_entry.sync_initiated)
   {
     if (g_protocol_sync_entry.sync_start_height == -1)
