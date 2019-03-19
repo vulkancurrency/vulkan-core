@@ -61,6 +61,12 @@ static void perform_shutdown(int sig)
     exit(1);
     return;
   }
+  
+  if (stop_mempool())
+  {
+    exit(1);
+    return;
+  }
 
   if (close_blockchain())
   {
