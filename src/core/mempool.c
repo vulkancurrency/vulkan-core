@@ -320,11 +320,11 @@ int clear_expired_txs_in_mempool_nolock(void)
 
 int clear_expired_txs_in_mempool_noblock(void)
 {
-  if (mtx_tryLock(&g_mempool_lock) == thrd_error)
+  if (mtx_trylock(&g_mempool_lock) == thrd_error)
   {
     return 0;
   }
-  
+
   int result = clear_expired_txs_in_mempool_nolock();
   mtx_unlock(&g_mempool_lock);
   return result;
