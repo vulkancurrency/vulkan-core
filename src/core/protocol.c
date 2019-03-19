@@ -939,9 +939,12 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         if (block != NULL)
         {
           uint32_t block_height = get_block_height_from_block(block);
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
+          if (block_height > 0)
           {
-            return 1;
+            if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
+            {
+              return 1;
+            }
           }
 
           free_block(block);
@@ -960,15 +963,18 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
         get_block_by_height_request_t *message = (get_block_by_height_request_t*)message_object;
-        block_t *block = get_block_from_height(message->height);
-        if (block != NULL)
+        if (message->height > 0)
         {
-          if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
+          block_t *block = get_block_from_height(message->height);
+          if (block != NULL)
           {
-            return 1;
-          }
+            if (handle_packet_sendto(recipient, recipient_len, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
+            {
+              return 1;
+            }
 
-          free_block(block);
+            free_block(block);
+          }
         }
       }
       break;
