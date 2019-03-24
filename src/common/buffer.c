@@ -289,7 +289,7 @@ int64_t buffer_read_int64(buffer_t *buffer)
 
 int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
 {
-  uint32_t actual_size = sizeof(const char*) + size;
+  uint32_t actual_size = sizeof(char) + size;
   buffer_write_uint32(buffer, actual_size);
   buffer_write(buffer, (const uint8_t*)string, actual_size);
   return 0;
@@ -302,7 +302,7 @@ char* buffer_read_string(buffer_t *buffer)
 
 int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size)
 {
-  uint32_t actual_size = sizeof(uint8_t*) + size;
+  uint32_t actual_size = sizeof(uint8_t) + size;
   buffer_write_uint32(buffer, actual_size);
   buffer_write(buffer, bytes, actual_size);
   return 0;
