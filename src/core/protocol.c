@@ -871,8 +871,8 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       break;
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
-        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
-        add_tx_to_mempool(message->transaction);
+        /*incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
+        add_tx_to_mempool(message->transaction);*/
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:

@@ -29,6 +29,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include <sodium.h>
+
 #include "common/logger.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
@@ -112,7 +114,7 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   assert(wallet != NULL);
   assert(previous_block != NULL);
 
-  uint32_t nonce = (uint32_t)RANDOM_RANGE(0, UINT32_MAX);
+  uint32_t nonce = randombytes_random();
   uint32_t current_time = get_current_time();
   uint32_t current_block_height = get_block_height();
 
