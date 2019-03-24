@@ -158,7 +158,7 @@ static void worker_submit_block(miner_worker_t *worker, block_t *block)
   // into the blockchain before the other workers...
   if (validate_and_insert_block(block))
   {
-    LOG_INFO("Worker: %hu found block at height: %d!", worker->id, get_block_height());
+    LOG_INFO("Worker: %hu found block at height: %u!", worker->id, get_block_height());
     print_block(block);
     handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
   }
@@ -194,7 +194,7 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   {
     miner_worker_t *worker = g_miner_workers[i];
     assert(worker != NULL);
-    LOG_INFO("Worker: %d running %u h/s.", worker->id, worker->last_hashrate);
+    LOG_INFO("Worker: %u running %u h/s.", worker->id, worker->last_hashrate);
   }
 
   return TASK_RESULT_WAIT;
