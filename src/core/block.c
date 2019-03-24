@@ -93,7 +93,7 @@ int valid_block(block_t *block)
   // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
   if (!valid_block_timestamp(block))
   {
-    LOG_DEBUG("Block has timestamp that is too far in the future: %d!", block->timestamp);
+    LOG_DEBUG("Block has timestamp that is too far in the future: %u!", block->timestamp);
     return 0;
   }
 
@@ -170,7 +170,7 @@ int valid_block(block_t *block)
   uint32_t block_header_size = get_block_header_size(block);
   if (block_header_size > MAX_BLOCK_SIZE)
   {
-    LOG_DEBUG("Block has too big header blob size: %d!", block_header_size);
+    LOG_DEBUG("Block has too big header blob size: %u!", block_header_size);
     return 0;
   }
 
@@ -230,7 +230,7 @@ void print_block(block_t *block)
   printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
   printf("Hash: %s\n", hash_to_str(block->hash));
 
-  printf("Timestamp (epoch): %d\n", block->timestamp);
+  printf("Timestamp (epoch): %u\n", block->timestamp);
   printf("Nonce: %u\n", block->nonce);
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);

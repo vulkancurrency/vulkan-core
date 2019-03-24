@@ -133,9 +133,9 @@ void print_txin(uint8_t txin_index, input_transaction_t *txin)
 {
   assert(txin != NULL);
 
-  printf("Txin %d:\n", txin_index);
+  printf("Txin %u:\n", txin_index);
   printf("Previous Tx: %s\n", hash_to_str(txin->transaction));
-  printf("Index: %d\n", txin->txout_index);
+  printf("Index: %u\n", txin->txout_index);
   printf("Signature: %s\n", bytes_to_str(txin->signature, crypto_sign_BYTES));
   printf("Public Key: %s\n", bytes_to_str(txin->public_key, crypto_sign_PUBLICKEYBYTES));
 }
@@ -144,7 +144,7 @@ void print_txout(uint8_t txout_index, output_transaction_t *txout)
 {
   assert(txout != NULL);
 
-  printf("Txout %d:\n", txout_index);
+  printf("Txout %u:\n", txout_index);
   printf("Amount: %llu\n", txout->amount);
   printf("Address: %s\n", address_to_str(txout->address));
 }
@@ -155,8 +155,8 @@ void print_transaction(transaction_t *tx)
 
   printf("Transaction:\n");
   printf("Id: %s\n", hash_to_str(tx->id));
-  printf("Txin Count: %d\n", tx->txin_count);
-  printf("Txout Count: %d\n", tx->txout_count);
+  printf("Txin Count: %u\n", tx->txin_count);
+  printf("Txout Count: %u\n", tx->txout_count);
   printf("\n");
 
   // print txins
@@ -194,7 +194,7 @@ int valid_transaction(transaction_t *tx)
     uint32_t tx_header_size = get_tx_header_size(tx);
     if (tx_header_size > MAX_TX_SIZE)
     {
-      LOG_DEBUG("Transaction has too big header blob size: %d!", tx_header_size);
+      LOG_DEBUG("Transaction has too big header blob size: %u!", tx_header_size);
       return 0;
     }
 

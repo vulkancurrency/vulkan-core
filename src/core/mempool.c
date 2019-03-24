@@ -298,7 +298,7 @@ int clear_expired_txs_in_mempool_nolock(void)
     uint32_t tx_age = get_current_time() - mempool_entry->received_ts;
     if (tx_age > MEMPOOL_TX_EXPIRE_TIME)
     {
-      LOG_DEBUG("Removing transaction: %s from mempool due to expired age: %d!", hash_to_str(tx->id), tx_age);
+      LOG_DEBUG("Removing transaction: %s from mempool due to expired age: %u!", hash_to_str(tx->id), tx_age);
       assert(vec_push(&transactions_to_remove, tx) == 0);
     }
   }

@@ -303,7 +303,7 @@ int rollback_blockchain(uint32_t rollback_height)
   uint32_t current_block_height = get_block_height();
   if (rollback_height > current_block_height)
   {
-    LOG_WARNING("Could not rollback blockchain to height: %d, current blockchain top block height is: %d!", rollback_height, current_block_height);
+    LOG_WARNING("Could not rollback blockchain to height: %u, current blockchain top block height is: %u!", rollback_height, current_block_height);
     return 1;
   }
 
@@ -317,7 +317,7 @@ int rollback_blockchain(uint32_t rollback_height)
     block_t *block = get_block_from_height(i);
     if (block == NULL)
     {
-      LOG_WARNING("Could not reset blockchain, unknown block at height: %d!", i);
+      LOG_WARNING("Could not reset blockchain, unknown block at height: %u!", i);
       return 1;
     }
 
@@ -341,7 +341,7 @@ int rollback_blockchain(uint32_t rollback_height)
     free_block(block);
   }
 
-  LOG_INFO("Successfully rolled back blockchain to height: %d!", rollback_height);
+  LOG_INFO("Successfully rolled back blockchain to height: %u!", rollback_height);
   return 0;
 }
 
@@ -695,7 +695,7 @@ int validate_and_insert_block_nolock(block_t *block)
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
   if (!valid_block_median_timestamp(block))
   {
-    LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %d!", block->timestamp);
+    LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %u!", block->timestamp);
     return 0;
   }
 

@@ -246,7 +246,7 @@ int deserialize_message(packet_t *packet, void **message)
       }
       break;
     default:
-      LOG_DEBUG("Could not deserialize packet with unknown packet id: %d!", packet->id);
+      LOG_DEBUG("Could not deserialize packet with unknown packet id: %u!", packet->id);
       buffer_free(buffer);
       return 1;
   }
@@ -380,7 +380,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       }
       break;
     default:
-      LOG_DEBUG("Could not serialize packet with unknown packet id: %d!", packet_id);
+      LOG_DEBUG("Could not serialize packet with unknown packet id: %u!", packet_id);
       return 1;
   }
 
@@ -493,7 +493,7 @@ void free_message(uint32_t packet_id, void *message_object)
       }
       break;
     default:
-      LOG_DEBUG("Could not free packet with unknown packet id: %d!", packet_id);
+      LOG_DEBUG("Could not free packet with unknown packet id: %u!", packet_id);
       break;
   }
 }
@@ -592,7 +592,7 @@ int check_sync_status(void)
   {
     if (clear_sync_request(1) == 0)
     {
-      LOG_INFO("Successfully synced blockchain at block height: %d", current_block_height);
+      LOG_INFO("Successfully synced blockchain at block height: %u", current_block_height);
       return 0;
     }
     else
@@ -654,7 +654,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
   {
     if (clear_sync_request(0))
     {
-      LOG_WARNING("Timed out when requesting block at height: %d!", block_height);
+      LOG_WARNING("Timed out when requesting block at height: %u!", block_height);
     }
 
     return 1;
@@ -662,7 +662,7 @@ int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t r
 
   if (!has_block_by_height(block_height))
   {
-    LOG_ERROR("Cannot request next block when previous block at height: %d, was not found in the blockchain!", block_height);
+    LOG_ERROR("Cannot request next block when previous block at height: %u, was not found in the blockchain!", block_height);
     return 1;
   }
 
@@ -757,7 +757,7 @@ int block_header_received(const pt_sockaddr_storage *recipient, pt_socklen_t rec
       int can_rollback_and_resync = 0;
       if (found_starting_block)
       {
-        LOG_INFO("Found sync starting block at height: %d!", g_protocol_sync_entry.last_sync_height);
+        LOG_INFO("Found sync starting block at height: %u!", g_protocol_sync_entry.last_sync_height);
         g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
         can_rollback_and_resync = 1;
       }
@@ -813,7 +813,7 @@ int block_header_sync_complete(const pt_sockaddr_storage *recipient, pt_socklen_
   assert(block != NULL);
   if (validate_and_insert_block_nolock(block))
   {
-    LOG_INFO("Received block at height: %d", g_protocol_sync_entry.last_sync_height);
+    LOG_INFO("Received block at height: %u", g_protocol_sync_entry.last_sync_height);
     if (check_sync_status())
     {
       if (request_sync_next_block(g_protocol_sync_entry.recipient, g_protocol_sync_entry.recipient_len))
@@ -840,7 +840,7 @@ int rollback_blockchain_and_resync(void)
     g_protocol_sync_entry.sync_did_backup_blockchain = 1;
     if (current_block_height > g_protocol_sync_entry.sync_start_height)
     {
-      LOG_INFO("Rolling blockchain back to height: %d...", g_protocol_sync_entry.sync_start_height);
+      LOG_INFO("Rolling blockchain back to height: %u...", g_protocol_sync_entry.sync_start_height);
       if (rollback_blockchain(g_protocol_sync_entry.sync_start_height))
       {
         return 1;
@@ -865,7 +865,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
         /*incoming_block_t *message = (incoming_block_t*)message_object;
         if (validate_and_insert_block_nolock(message->block))
         {
-          LOG_INFO("Added incoming block at height: %d.", get_block_height());
+          LOG_INFO("Added incoming block at height: %u.", get_block_height());
         }*/
       }
       break;
@@ -1109,7 +1109,7 @@ int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipien
       }
       break;
     default:
-      LOG_DEBUG("Could not handle packet with unknown packet id: %d!", packet_id);
+      LOG_DEBUG("Could not handle packet with unknown packet id: %u!", packet_id);
       return 1;
   }
 
