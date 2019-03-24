@@ -225,19 +225,19 @@ void print_block(block_t *block)
   assert(block != NULL);
 
   printf("Block:\n");
-  printf("Version: %d\n", block->version);
+  printf("Version: %u\n", block->version);
 
   printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
   printf("Hash: %s\n", hash_to_str(block->hash));
 
   printf("Timestamp (epoch): %d\n", block->timestamp);
-  printf("Nonce: %d\n", block->nonce);
+  printf("Nonce: %u\n", block->nonce);
   printf("Difficulty: %llu\n", block->difficulty);
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
   printf("Cumulative Emission: %llu\n", block->cumulative_emission);
 
   printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
-  printf("Transaction Count: %d\n", block->transaction_count);
+  printf("Transaction Count: %u\n", block->transaction_count);
 }
 
 void print_block_transactions(block_t *block)
