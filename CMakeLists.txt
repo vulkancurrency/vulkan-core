@@ -40,7 +40,6 @@ set(CMAKE_C_FLAGS "-Wall -Wno-unused-variable")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-set(PITTACUS_STATIC ON)
 set(UPNP_STATIC ON)
 
 find_package(Threads QUIET)
@@ -63,9 +62,6 @@ include_directories(${ROCKSDB_INCLUDE_DIR})
 
 add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
-
-add_subdirectory(external/pittacus)
-include_directories(external/pittacus/src)
 
 include_directories(src)
 add_subdirectory(src)

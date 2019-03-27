@@ -48,12 +48,6 @@ target_link_libraries(core common crypto miner wallet)
 target_link_libraries(wallet common core crypto)
 target_link_libraries(daemon common core crypto miner wallet)
 
-if(PITTACUS_STATIC)
-  target_link_libraries(core pittacus_static)
-else()
-  target_link_libraries(core pittacus)
-endif()
-
 if(UPNP_STATIC)
   target_link_libraries(core libminiupnpc-static)
 else()

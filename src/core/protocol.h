@@ -28,8 +28,6 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include <gossip.h>
-
 #include "common/mongoose.h"
 #include "common/task.h"
 
