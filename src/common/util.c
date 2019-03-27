@@ -188,3 +188,32 @@ void sort(void *base, size_t nitems, size_t size)
 {
   qsort(base, nitems, size, sort_compare);
 }
+
+int is_private_address(uint32_t ip)
+{
+  uint8_t b1, b2, b3, b4;
+  b1 = (uint8_t)(ip >> 24);
+  b2 = (uint8_t)((ip >> 16) & 0x0ff);
+  b3 = (uint8_t)((ip >> 8) & 0x0ff);
+  b4 = (uint8_t)(ip & 0x0ff);
+
+  // 10.x.y.z
+  if (b1 == 10)
+  {
+    return 1;
+  }
+
+  // 172.16.0.0 - 172.31.255.255
+  if ((b1 == 172) && (b2 >= 16) && (b2 <= 31))
+  {
+    return 1;
+  }
+
+  // 192.168.0.0 - 192.168.255.255
+  if ((b1 == 192) && (b2 == 168))
+  {
+    return 1;
+  }
+
+  return 0;
+}
