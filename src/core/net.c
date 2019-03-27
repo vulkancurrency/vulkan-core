@@ -54,6 +54,17 @@ static net_connnection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connnections;
 static int g_num_connections;
+static int g_net_disable_port_mapping = 0;
+
+void set_net_disable_port_mapping(int disable_port_mapping)
+{
+  g_net_disable_port_mapping = disable_port_mapping;
+}
+
+int get_net_disable_port_mapping(void)
+{
+  return g_net_disable_port_mapping;
+}
 
 net_connnection_t* init_net_connection(struct mg_connection *connection)
 {
@@ -207,6 +218,67 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
       break;
     default:
       break;
+  }
+}
+
+void setup_net_port_mapping(int port)
+{
+  LOG_INFO("Tring to add IGD port mapping...");
+  int result;
+
+#if MINIUPNPC_API_VERSION > 13
+  unsigned char ttl = 2;
+  struct UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, ttl, &result);
+#else
+  struct UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, &result);
+#endif
+
+  struct UPNPUrls urls;
+  struct IGDdatas igdData;
+  char lanAddress[64];
+  result = UPNP_GetValidIGD(deviceList, &urls, &igdData, lanAddress, sizeof lanAddress);
+  freeUPNPDevlist(deviceList);
+
+  if (result > 0)
+  {
+    if (result == 1)
+    {
+      char *port_string = malloc(sizeof(port));
+      sprintf(port_string, "%d", port);
+
+      UPNP_DeletePortMapping(urls.controlURL, igdData.first.servicetype, port_string, "TCP", 0);
+      int portMappingResult = UPNP_AddPortMapping(urls.controlURL, igdData.first.servicetype,
+        port_string, port_string, lanAddress, APPLICATION_NAME, "TCP", 0, "0");
+
+      if (portMappingResult != 0)
+      {
+        LOG_WARNING("Failed to add IGD port mapping!");
+      }
+      else
+      {
+        LOG_INFO("Added IGD port mapping.");
+      }
+
+      free(port_string);
+    }
+    else if (result == 2)
+    {
+      LOG_WARNING("Failed to add IGD port mapping, could not connect IGD port mapping!");
+    }
+    else if (result == 3)
+    {
+      LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
+    }
+    else
+    {
+      LOG_WARNING("Failed to add IGD port mapping, invalid code returned: %d!", result);
+    }
+
+    FreeUPNPUrls(&urls);
+  }
+  else
+  {
+    LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
   }
 }
 

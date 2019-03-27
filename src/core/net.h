@@ -44,6 +44,9 @@ typedef struct NetConnection
   int anonymous;
 } net_connnection_t;
 
+void set_net_disable_port_mapping(int disable_port_mapping);
+int get_net_disable_port_mapping(void);
+
 net_connnection_t* init_net_connection(struct mg_connection *connection);
 int free_net_connection(net_connnection_t *net_connnection);
 
@@ -62,6 +65,8 @@ int remove_net_connnection(net_connnection_t *net_connnection);
 int broadcast_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
 int send_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
 void data_received(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
+
+void setup_net_port_mapping(int port);
 
 int net_run(void);
 int init_net(const char *address);
