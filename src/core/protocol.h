@@ -159,7 +159,7 @@ typedef struct
 
 typedef struct SyncEntry
 {
-  net_connnection_t *net_connnection;
+  net_connection_t *net_connection;
 
   int sync_initiated;
   int sync_did_backup_blockchain;
@@ -188,27 +188,27 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
 int deserialize_message(packet_t *packet, void **message);
 void free_message(uint32_t packet_id, void *message_object);
 
-int init_sync_request(int height, net_connnection_t *net_connnection);
+int init_sync_request(int height, net_connection_t *net_connection);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);
 
-int request_sync_block(net_connnection_t *net_connnection, uint32_t height, uint8_t *hash);
-int request_sync_next_block(net_connnection_t *net_connnection);
-int request_sync_previous_block(net_connnection_t *net_connnection);
+int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_t *hash);
+int request_sync_next_block(net_connection_t *net_connection);
+int request_sync_previous_block(net_connection_t *net_connection);
 
-int request_sync_transaction(net_connnection_t *net_connnection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
-int request_sync_next_transaction(net_connnection_t *net_connnection);
+int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
+int request_sync_next_transaction(net_connection_t *net_connection);
 
-int block_header_received(net_connnection_t *net_connnection, block_t *block);
-int block_header_sync_complete(net_connnection_t *net_connnection, block_t *block);
+int block_header_received(net_connection_t *net_connection, block_t *block);
+int block_header_sync_complete(net_connection_t *net_connection, block_t *block);
 int rollback_blockchain_and_resync(void);
 
-int handle_packet_anonymous(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object);
-int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object);
-int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *data, size_t data_size);
+int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
+int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
+int handle_receive_packet(net_connection_t *net_connection, const uint8_t *data, size_t data_size);
 
-int handle_send_packet(net_connnection_t *net_connnection, int broadcast, uint32_t packet_id, va_list args);
-int handle_packet_sendto(net_connnection_t *net_connnection, uint32_t packet_id, ...);
+int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args);
+int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...);
 int handle_packet_broadcast(uint32_t packet_id, ...);
 
 task_result_t resync_chain(task_t *task, va_list args);

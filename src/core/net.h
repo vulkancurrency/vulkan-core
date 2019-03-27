@@ -42,26 +42,26 @@ typedef struct NetConnection
 {
   struct mg_connection *connection;
   int anonymous;
-} net_connnection_t;
+} net_connection_t;
 
-net_connnection_t* init_net_connection(struct mg_connection *connection);
-int free_net_connection(net_connnection_t *net_connnection);
+net_connection_t* init_net_connection(struct mg_connection *connection);
+int free_net_connection(net_connection_t *net_connection);
 
-net_connnection_t* get_net_connnection_nolock(struct mg_connection *connection);
-net_connnection_t* get_net_connnection(struct mg_connection *connection);
+net_connection_t* get_net_connection_nolock(struct mg_connection *connection);
+net_connection_t* get_net_connection(struct mg_connection *connection);
 
-int has_net_connnection_nolock(struct mg_connection *connection);
-int has_net_connnection(struct mg_connection *connection);
+int has_net_connection_nolock(struct mg_connection *connection);
+int has_net_connection(struct mg_connection *connection);
 
-int add_net_connnection_nolock(net_connnection_t *net_connnection);
-int add_net_connnection(net_connnection_t *net_connnection);
+int add_net_connection_nolock(net_connection_t *net_connection);
+int add_net_connection(net_connection_t *net_connection);
 
-int remove_net_connnection_nolock(net_connnection_t *net_connnection);
-int remove_net_connnection(net_connnection_t *net_connnection);
+int remove_net_connection_nolock(net_connection_t *net_connection);
+int remove_net_connection(net_connection_t *net_connection);
 
-int broadcast_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-int send_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-void data_received(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
+int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
 void setup_net_port_mapping(int port);
 

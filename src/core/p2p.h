@@ -33,14 +33,17 @@
 typedef struct Peer
 {
   uint64_t id;
-  net_connnection_t *net_connnection;
+  net_connection_t *net_connection;
 } peer_t;
 
-peer_t* init_peer(net_connnection_t *net_connnection);
+peer_t* init_peer(net_connection_t *net_connection);
 int free_peer(peer_t *peer);
 
 peer_t* get_peer_nolock(uint64_t peer_id);
 peer_t* get_peer(uint64_t peer_id);
+
+peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection);
+peer_t* get_peer_from_net_connection(net_connection_t *net_connection);
 
 int has_peer_nolock(uint64_t peer_id);
 int has_peer(uint64_t peer_id);
@@ -51,8 +54,8 @@ int add_peer(peer_t *peer);
 int remove_peer_nolock(peer_t *peer);
 int remove_peer(peer_t *peer);
 
-int broadcast_data_to_peers_nolock(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-int broadcast_data_to_peers(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
+int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
 int init_p2p(void);
 int deinit_p2p(void);

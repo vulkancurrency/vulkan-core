@@ -532,14 +532,14 @@ void free_message(uint32_t packet_id, void *message_object)
   }
 }
 
-int init_sync_request(int height, net_connnection_t *net_connnection)
+int init_sync_request(int height, net_connection_t *net_connection)
 {
   if (g_protocol_sync_entry.sync_initiated)
   {
     return 1;
   }
 
-  g_protocol_sync_entry.net_connnection = net_connnection;
+  g_protocol_sync_entry.net_connection = net_connection;
 
   g_protocol_sync_entry.sync_initiated = 1;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
@@ -579,7 +579,7 @@ int clear_sync_request(int sync_success)
     }
   }
 
-  g_protocol_sync_entry.net_connnection = NULL;
+  g_protocol_sync_entry.net_connection = NULL;
 
   g_protocol_sync_entry.sync_initiated = 0;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
@@ -636,7 +636,7 @@ int check_sync_status(void)
   return 1;
 }
 
-int request_sync_block(net_connnection_t *net_connnection, uint32_t height, uint8_t *hash)
+int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_t *hash)
 {
   int32_t sync_height = height;
   if (hash != NULL)
@@ -652,14 +652,14 @@ int request_sync_block(net_connnection_t *net_connnection, uint32_t height, uint
 
   if (hash != NULL)
   {
-    if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_BY_HASH_REQ, hash))
+    if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HASH_REQ, hash))
     {
       return 1;
     }
   }
   else
   {
-    if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ, height))
+    if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ, height))
     {
       return 1;
     }
@@ -679,7 +679,7 @@ int request_sync_block(net_connnection_t *net_connnection, uint32_t height, uint
   return 0;
 }
 
-int request_sync_next_block(net_connnection_t *net_connnection)
+int request_sync_next_block(net_connection_t *net_connection)
 {
   uint32_t block_height = g_protocol_sync_entry.last_sync_height;
   if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
@@ -699,7 +699,7 @@ int request_sync_next_block(net_connnection_t *net_connnection)
   }
 
   uint32_t sync_height = g_protocol_sync_entry.last_sync_height + 1;
-  if (request_sync_block(net_connnection, sync_height, NULL))
+  if (request_sync_block(net_connection, sync_height, NULL))
   {
     return 1;
   }
@@ -707,10 +707,10 @@ int request_sync_next_block(net_connnection_t *net_connnection)
   return 0;
 }
 
-int request_sync_previous_block(net_connnection_t *net_connnection)
+int request_sync_previous_block(net_connection_t *net_connection)
 {
   uint32_t sync_height = g_protocol_sync_entry.last_sync_height - 1;
-  if (request_sync_block(net_connnection, sync_height, NULL))
+  if (request_sync_block(net_connection, sync_height, NULL))
   {
     return 1;
   }
@@ -718,18 +718,18 @@ int request_sync_previous_block(net_connnection_t *net_connnection)
   return 0;
 }
 
-int request_sync_transaction(net_connnection_t *net_connnection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
+int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
 {
   if (tx_hash != NULL)
   {
-    if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ, block_hash, tx_hash))
+    if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ, block_hash, tx_hash))
     {
       return 1;
     }
   }
   else
   {
-    if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ, block_hash, tx_index))
+    if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ, block_hash, tx_index))
     {
       return 1;
     }
@@ -749,7 +749,7 @@ int request_sync_transaction(net_connnection_t *net_connnection, uint8_t *block_
   return 0;
 }
 
-int request_sync_next_transaction(net_connnection_t *net_connnection)
+int request_sync_next_transaction(net_connection_t *net_connection)
 {
   block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
   assert(pending_block != NULL);
@@ -760,10 +760,10 @@ int request_sync_next_transaction(net_connnection_t *net_connnection)
     return 1;
   }
 
-  return request_sync_transaction(net_connnection, pending_block->hash, tx_sync_index, NULL);
+  return request_sync_transaction(net_connection, pending_block->hash, tx_sync_index, NULL);
 }
 
-int block_header_received(net_connnection_t *net_connnection, block_t *block)
+int block_header_received(net_connection_t *net_connection, block_t *block)
 {
   assert(block != NULL);
 
@@ -801,7 +801,7 @@ int block_header_received(net_connnection_t *net_connnection, block_t *block)
       }
       else
       {
-        if (request_sync_previous_block(net_connnection))
+        if (request_sync_previous_block(net_connection))
         {
           return 1;
         }
@@ -824,7 +824,7 @@ int block_header_received(net_connnection_t *net_connnection, block_t *block)
       block->transaction_count = 0;
       block->transactions = NULL;
       g_protocol_sync_entry.sync_pending_block = block;
-      if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
+      if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
       {
         free_block(block);
         g_protocol_sync_entry.sync_pending_block = NULL;
@@ -840,7 +840,7 @@ int block_header_received(net_connnection_t *net_connnection, block_t *block)
   return 0;
 }
 
-int block_header_sync_complete(net_connnection_t *net_connnection, block_t *block)
+int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
 {
   assert(block != NULL);
   if (validate_and_insert_block(block))
@@ -848,7 +848,7 @@ int block_header_sync_complete(net_connnection_t *net_connnection, block_t *bloc
     LOG_INFO("Received block at height: %u", g_protocol_sync_entry.last_sync_height);
     if (check_sync_status())
     {
-      if (request_sync_next_block(g_protocol_sync_entry.net_connnection))
+      if (request_sync_next_block(g_protocol_sync_entry.net_connection))
       {
         return 1;
       }
@@ -880,7 +880,7 @@ int rollback_blockchain_and_resync(void)
     }
   }
 
-  if (request_sync_next_block(g_protocol_sync_entry.net_connnection))
+  if (request_sync_next_block(g_protocol_sync_entry.net_connection))
   {
     return 1;
   }
@@ -888,16 +888,16 @@ int rollback_blockchain_and_resync(void)
   return 0;
 }
 
-int handle_packet_anonymous(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object)
+int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object)
 {
   switch (packet_id)
   {
     case PKT_TYPE_CONNECT_REQ:
       {
-        peer_t *peer = init_peer(net_connnection);
+        peer_t *peer = init_peer(net_connection);
         assert(add_peer(peer) == 0);
-        net_connnection->anonymous = 0;
-        if (handle_packet_sendto(net_connnection, PKT_TYPE_CONNECT_RESP))
+        net_connection->anonymous = 0;
+        if (handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_RESP))
         {
           free_peer(peer);
           return 1;
@@ -906,9 +906,9 @@ int handle_packet_anonymous(net_connnection_t *net_connnection, uint32_t packet_
       break;
     case PKT_TYPE_CONNECT_RESP:
       {
-        peer_t *peer = init_peer(net_connnection);
+        peer_t *peer = init_peer(net_connection);
         assert(add_peer(peer) == 0);
-        net_connnection->anonymous = 0;
+        net_connection->anonymous = 0;
       }
       break;
     default:
@@ -918,7 +918,7 @@ int handle_packet_anonymous(net_connnection_t *net_connnection, uint32_t packet_
   return 0;
 }
 
-int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object)
+int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object)
 {
   switch (packet_id)
   {
@@ -940,7 +940,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = (get_block_height_request_t*)message_object;
-        if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_HEIGHT_RESP,
+        if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_HEIGHT_RESP,
           get_block_height(), get_current_block_hash()))
         {
           return 1;
@@ -956,7 +956,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
         {
           if (g_protocol_sync_entry.sync_initiated)
           {
-            if (g_protocol_sync_entry.net_connnection == net_connnection)
+            if (g_protocol_sync_entry.net_connection == net_connection)
             {
               if (message->height > g_protocol_sync_entry.sync_height)
               {
@@ -978,13 +978,13 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
             LOG_INFO("Found potential alternative blockchain at height: %u.", message->height);
             clear_sync_request(0);
 
-            if (!init_sync_request(message->height, net_connnection))
+            if (!init_sync_request(message->height, net_connection))
             {
               if (current_block_height > 0)
               {
                 LOG_INFO("Determining best sync starting height...");
                 g_protocol_sync_entry.last_sync_height = current_block_height + 1;
-                if (request_sync_previous_block(net_connnection))
+                if (request_sync_previous_block(net_connection))
                 {
                   return 1;
                 }
@@ -993,7 +993,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
               {
                 g_protocol_sync_entry.sync_start_height = 0;
                 LOG_INFO("Beginning sync with presumed top block: %u...", message->height);
-                if (request_sync_next_block(net_connnection))
+                if (request_sync_next_block(net_connection))
                 {
                   return 1;
                 }
@@ -1012,7 +1012,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
           uint32_t block_height = get_block_height_from_block(block);
           if (block_height > 0)
           {
-            if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
+            if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
             {
               return 1;
             }
@@ -1025,7 +1025,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
-        if (block_header_received(net_connnection, message->block))
+        if (block_header_received(net_connection, message->block))
         {
           return 1;
         }
@@ -1039,7 +1039,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
           block_t *block = get_block_from_height(message->height);
           if (block != NULL)
           {
-            if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
+            if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
             {
               return 1;
             }
@@ -1052,7 +1052,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
-        if (block_header_received(net_connnection, message->block))
+        if (block_header_received(net_connection, message->block))
         {
           return 1;
         }
@@ -1064,7 +1064,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
         block_t *block = get_block_from_hash(message->hash);
         if (block != NULL)
         {
-          if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
+          if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
             block->hash, block->transaction_count))
           {
             return 1;
@@ -1089,7 +1089,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
             {
               g_protocol_sync_entry.tx_sync_initiated = 1;
               g_protocol_sync_entry.tx_sync_num_txs = message->num_transactions;
-              if (request_sync_next_transaction(net_connnection))
+              if (request_sync_next_transaction(net_connection))
               {
                 return 1;
               }
@@ -1119,7 +1119,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
             transaction_t *transaction = block->transactions[message->tx_index];
             assert(transaction != NULL);
 
-            if (handle_packet_sendto(net_connnection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP,
+            if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP,
               block->hash, message->tx_index, transaction))
             {
               return 1;
@@ -1142,7 +1142,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
           assert(add_transaction_to_block(block, transaction, message->tx_index) == 0);
           if (message->tx_index + 1 < g_protocol_sync_entry.tx_sync_num_txs)
           {
-            if (request_sync_next_transaction(net_connnection))
+            if (request_sync_next_transaction(net_connection))
             {
               return 1;
             }
@@ -1157,7 +1157,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
               // must clear the tx sync entry cache before calling block_header_sync_complete,
               // otherwise the entire sync entry cache will be cleared and this assertion will fail...
               assert(clear_tx_sync_request() == 0);
-              if (block_header_sync_complete(net_connnection, block))
+              if (block_header_sync_complete(net_connection, block))
               {
                 return 1;
               }
@@ -1178,7 +1178,7 @@ int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *
   return 0;
 }
 
-int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *data, size_t data_size)
+int handle_receive_packet(net_connection_t *net_connection, const uint8_t *data, size_t data_size)
 {
   buffer_t *buffer = buffer_init_data(0, data, data_size);
   packet_t *packet = make_packet();
@@ -1196,9 +1196,9 @@ int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *dat
     return 1;
   }
 
-  if (net_connnection->anonymous)
+  if (net_connection->anonymous)
   {
-    if (handle_packet_anonymous(net_connnection, packet->id, message))
+    if (handle_packet_anonymous(net_connection, packet->id, message))
     {
       free_message(packet->id, message);
       free_packet(packet);
@@ -1207,7 +1207,7 @@ int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *dat
   }
   else
   {
-    if (handle_packet(net_connnection, packet->id, message))
+    if (handle_packet(net_connection, packet->id, message))
     {
       free_message(packet->id, message);
       free_packet(packet);
@@ -1220,7 +1220,7 @@ int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *dat
   return 0;
 }
 
-int handle_send_packet(net_connnection_t *net_connnection, int broadcast, uint32_t packet_id, va_list args)
+int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args)
 {
   packet_t *packet = NULL;
   if (serialize_message(&packet, packet_id, args) || packet == NULL)
@@ -1242,21 +1242,21 @@ int handle_send_packet(net_connnection_t *net_connnection, int broadcast, uint32
   int result = 0;
   if (broadcast)
   {
-    result = broadcast_data(net_connnection, (uint8_t*)&raw_data, data_len);
+    result = broadcast_data(net_connection, (uint8_t*)&raw_data, data_len);
   }
   else
   {
-    result = send_data(net_connnection, (uint8_t*)&raw_data, data_len);
+    result = send_data(net_connection, (uint8_t*)&raw_data, data_len);
   }
 
   return result;
 }
 
-int handle_packet_sendto(net_connnection_t *net_connnection, uint32_t packet_id, ...)
+int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...)
 {
   va_list args;
   va_start(args, packet_id);
-  if (handle_send_packet(net_connnection, 0, packet_id, args))
+  if (handle_send_packet(net_connection, 0, packet_id, args))
   {
     return 1;
   }

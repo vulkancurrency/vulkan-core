@@ -36,13 +36,13 @@ static vec_void_t g_p2p_peerlist;
 static int g_next_peer_id = -1;
 static int g_num_peers = 0;
 
-peer_t* init_peer(net_connnection_t *net_connnection)
+peer_t* init_peer(net_connection_t *net_connection)
 {
-  assert(net_connnection != NULL);
+  assert(net_connection != NULL);
   g_next_peer_id++;
   peer_t *peer = malloc(sizeof(peer_t));
   peer->id = g_next_peer_id;
-  peer->net_connnection = net_connnection;
+  peer->net_connection = net_connection;
   return peer;
 }
 
@@ -75,6 +75,33 @@ peer_t* get_peer(uint64_t peer_id)
 {
   mtx_lock(&g_p2p_lock);
   peer_t *peer = get_peer_nolock(peer_id);
+  mtx_unlock(&g_p2p_lock);
+  return peer;
+}
+
+peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection)
+{
+  assert(net_connection != NULL);
+  void *value = NULL;
+  int index = 0;
+  vec_foreach(&g_p2p_peerlist, value, index)
+  {
+    peer_t *peer = (peer_t*)value;
+    assert(peer != NULL);
+
+    if (peer->net_connection == net_connection)
+    {
+      return peer;
+    }
+  }
+
+  return NULL;
+}
+
+peer_t* get_peer_from_net_connection(net_connection_t *net_connection)
+{
+  mtx_lock(&g_p2p_lock);
+  peer_t *peer = get_peer_from_net_connection_nolock(net_connection);
   mtx_unlock(&g_p2p_lock);
   return peer;
 }
@@ -134,9 +161,9 @@ int remove_peer(peer_t *peer)
   return result;
 }
 
-int broadcast_data_to_peers_nolock(net_connnection_t *net_connnection, uint8_t *data, size_t data_len)
+int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
-  assert(net_connnection != NULL);
+  assert(net_connection != NULL);
   void *value = NULL;
   int index = 0;
   vec_foreach(&g_p2p_peerlist, value, index)
@@ -146,12 +173,12 @@ int broadcast_data_to_peers_nolock(net_connnection_t *net_connnection, uint8_t *
 
     // do not relay this message back to the sender, as we are intended to relay
     // this message to all other peers in our peerlist...
-    if (peer->net_connnection == net_connnection)
+    if (peer->net_connection == net_connection)
     {
       continue;
     }
 
-    if (send_data(peer->net_connnection, data, data_len))
+    if (send_data(peer->net_connection, data, data_len))
     {
       return 1;
     }
@@ -160,10 +187,10 @@ int broadcast_data_to_peers_nolock(net_connnection_t *net_connnection, uint8_t *
   return 0;
 }
 
-int broadcast_data_to_peers(net_connnection_t *net_connnection, uint8_t *data, size_t data_len)
+int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   mtx_lock(&g_p2p_lock);
-  int result = broadcast_data_to_peers_nolock(net_connnection, data, data_len);
+  int result = broadcast_data_to_peers_nolock(net_connection, data, data_len);
   mtx_unlock(&g_p2p_lock);
   return result;
 }
