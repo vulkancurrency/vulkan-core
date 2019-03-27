@@ -104,7 +104,7 @@ int open_blockchain(const char *blockchain_dir)
     return 0;
   }
 
-  mtx_init(&g_blockchain_lock, mtx_plain);
+  mtx_init(&g_blockchain_lock, mtx_recursive);
   g_blockchain_dir = blockchain_dir;
 
   vec_init(&g_timestamps);

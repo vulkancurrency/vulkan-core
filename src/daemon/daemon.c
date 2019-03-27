@@ -41,6 +41,7 @@
 #include "core/parameters.h"
 #include "core/mempool.h"
 #include "core/net.h"
+#include "core/p2p.h"
 #include "core/version.h"
 
 #include "miner/miner.h"
@@ -50,8 +51,8 @@
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";
 static const char *g_logger_log_filename = "daemon.log";
+static const char *g_net_bind_address = "127.0.0.1:9899";
 
-static int g_enable_seed_mode = 0;
 static int g_enable_miner = 0;
 
 static void perform_shutdown(int sig)
@@ -61,7 +62,13 @@ static void perform_shutdown(int sig)
     exit(1);
     return;
   }
-  
+
+  if (deinit_p2p())
+  {
+    exit(1);
+    return;
+  }
+
   if (stop_mempool())
   {
     exit(1);
@@ -69,6 +76,12 @@ static void perform_shutdown(int sig)
   }
 
   if (close_blockchain())
+  {
+    exit(1);
+    return;
+  }
+
+  if (deinit_net())
   {
     exit(1);
     return;
@@ -119,16 +132,19 @@ static int parse_commandline_args(int argc, char **argv)
         return 1;
       case CMD_ARG_BIND_ADDRESS:
         i++;
-        const char *bind_address = (const char*)argv[i];
-        net_set_bind_address(bind_address);
+        //const char *bind_address = (const char*)argv[i];
+        //net_set_bind_address(bind_address);
         break;
       case CMD_ARG_BIND_PORT:
         i++;
-        int bind_port = atoi(argv[i]);
-        net_set_bind_port(bind_port);
+        const char *bind_port = (const char*)argv[i];
+        char *address = "0.0.0.0";
+        address = (char*)string_copy(address, ":");
+        address = (char*)string_copy(address, bind_port);
+        g_net_bind_address = address;
         break;
       case CMD_ARG_DISABLE_PORT_MAPPING:
-        net_set_disable_port_mapping(1);
+        //net_set_disable_port_mapping(1);
         break;
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
@@ -173,9 +189,6 @@ static int parse_commandline_args(int argc, char **argv)
         g_enable_miner = 1;
         set_num_worker_threads(num_worker_threads);
         break;
-      case CMD_ARG_SEED_MODE:
-        g_enable_seed_mode = 1;
-        break;
       default:
         fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
         return 1;
@@ -215,6 +228,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (init_p2p())
+  {
+    return 1;
+  }
+
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
@@ -225,10 +243,15 @@ int main(int argc, char **argv)
     start_mining();
   }
 
-  net_start_server(g_enable_seed_mode);
+  init_net(g_net_bind_address);
   if (wallet != NULL)
   {
     free_wallet(wallet);
+  }
+
+  if (deinit_p2p())
+  {
+    return 1;
   }
 
   if (stop_mempool())
@@ -242,5 +265,10 @@ int main(int argc, char **argv)
   }
 
   taskmgr_shutdown();
+  if (deinit_net())
+  {
+    return 1;
+  }
+
   return 0;
 }

@@ -46,7 +46,7 @@
 
 #define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
 
-#define DIFFICULTY_TARGET (60 * 2)
+#define DIFFICULTY_TARGET 1//(60 * 2)
 #define DIFFICULTY_WINDOW 360
 #define DIFFICULTY_LAG 15
 #define DIFFICULTY_CUT 60
@@ -60,11 +60,10 @@
 typedef struct SeedNodeEntry
 {
   const char *address;
-  int port;
 } seed_node_entry_t;
 
 static seed_node_entry_t SEED_NODES[] = {
-  {"127.0.0.1", P2P_PORT}
+  {"127.0.0.1:9899"}
 };
 
 #define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))

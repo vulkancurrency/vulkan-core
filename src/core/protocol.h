@@ -30,10 +30,12 @@
 
 #include <gossip.h>
 
+#include "common/mongoose.h"
 #include "common/task.h"
 
-#include "core/block.h"
-#include "core/transaction.h"
+#include "block.h"
+#include "transaction.h"
+#include "net.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -47,6 +49,9 @@ extern "C"
 enum
 {
   PKT_TYPE_UNKNOWN = 0,
+
+  PKT_TYPE_CONNECT_REQ,
+  PKT_TYPE_CONNECT_RESP,
 
   PKT_TYPE_INCOMING_BLOCK,
   PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION,
@@ -76,6 +81,16 @@ typedef struct
   uint32_t size;
   uint8_t *data;
 } packet_t;
+
+typedef struct
+{
+
+} connection_req_t;
+
+typedef struct
+{
+
+} connection_resp_t;
 
 typedef struct
 {
@@ -146,8 +161,7 @@ typedef struct
 
 typedef struct SyncEntry
 {
-  const pt_sockaddr_storage *recipient;
-  pt_socklen_t recipient_len;
+  net_connnection_t *net_connnection;
 
   int sync_initiated;
   int sync_did_backup_blockchain;
@@ -176,26 +190,27 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
 int deserialize_message(packet_t *packet, void **message);
 void free_message(uint32_t packet_id, void *message_object);
 
-int init_sync_request(int height, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int init_sync_request(int height, net_connnection_t *net_connnection);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);
 
-int request_sync_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t height, uint8_t *hash);
-int request_sync_next_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
-int request_sync_previous_block(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int request_sync_block(net_connnection_t *net_connnection, uint32_t height, uint8_t *hash);
+int request_sync_next_block(net_connnection_t *net_connnection);
+int request_sync_previous_block(net_connnection_t *net_connnection);
 
-int request_sync_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
-int request_sync_next_transaction(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len);
+int request_sync_transaction(net_connnection_t *net_connnection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
+int request_sync_next_transaction(net_connnection_t *net_connnection);
 
-int block_header_received(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block);
-int block_header_sync_complete(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, block_t *block);
+int block_header_received(net_connnection_t *net_connnection, block_t *block);
+int block_header_sync_complete(net_connnection_t *net_connnection, block_t *block);
 int rollback_blockchain_and_resync(void);
 
-int handle_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, void *message_object);
-int handle_receive_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, const uint8_t *data, size_t data_size);
+int handle_packet_anonymous(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object);
+int handle_packet(net_connnection_t *net_connnection, uint32_t packet_id, void *message_object);
+int handle_receive_packet(net_connnection_t *net_connnection, const uint8_t *data, size_t data_size);
 
-int handle_send_packet(pittacus_gossip_t *gossip, const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, int broadcast, uint32_t packet_id, va_list args);
-int handle_packet_sendto(const pt_sockaddr_storage *recipient, pt_socklen_t recipient_len, uint32_t packet_id, ...);
+int handle_send_packet(net_connnection_t *net_connnection, int broadcast, uint32_t packet_id, va_list args);
+int handle_packet_sendto(net_connnection_t *net_connnection, uint32_t packet_id, ...);
 int handle_packet_broadcast(uint32_t packet_id, ...);
 
 task_result_t resync_chain(task_t *task, va_list args);

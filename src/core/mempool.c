@@ -53,7 +53,7 @@ int start_mempool(void)
     return 1;
   }
 
-  mtx_init(&g_mempool_lock, mtx_plain);
+  mtx_init(&g_mempool_lock, mtx_recursive);
   vec_init(&g_mempool_transactions);
 
   g_mempool_num_transactions = 0;

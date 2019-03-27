@@ -25,48 +25,34 @@
 
 #pragma once
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 
-#include "common/mongoose.h"
-#include "common/task.h"
+#include "net.h"
 
-#define NET_MGR_POLL_DELAY 1000
-
-#ifdef __cplusplus
-extern "C"
+typedef struct Peer
 {
-#endif
+  uint64_t id;
+  net_connnection_t *net_connnection;
+} peer_t;
 
-typedef struct NetConnection
-{
-  struct mg_connection *connection;
-  int anonymous;
-} net_connnection_t;
+peer_t* init_peer(net_connnection_t *net_connnection);
+int free_peer(peer_t *peer);
 
-net_connnection_t* init_net_connection(struct mg_connection *connection);
-int free_net_connection(net_connnection_t *net_connnection);
+peer_t* get_peer_nolock(uint64_t peer_id);
+peer_t* get_peer(uint64_t peer_id);
 
-net_connnection_t* get_net_connnection_nolock(struct mg_connection *connection);
-net_connnection_t* get_net_connnection(struct mg_connection *connection);
+int has_peer_nolock(uint64_t peer_id);
+int has_peer(uint64_t peer_id);
 
-int has_net_connnection_nolock(struct mg_connection *connection);
-int has_net_connnection(struct mg_connection *connection);
+int add_peer_nolock(peer_t *peer);
+int add_peer(peer_t *peer);
 
-int add_net_connnection_nolock(net_connnection_t *net_connnection);
-int add_net_connnection(net_connnection_t *net_connnection);
+int remove_peer_nolock(peer_t *peer);
+int remove_peer(peer_t *peer);
 
-int remove_net_connnection_nolock(net_connnection_t *net_connnection);
-int remove_net_connnection(net_connnection_t *net_connnection);
+int broadcast_data_to_peers_nolock(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
+int broadcast_data_to_peers(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
 
-int broadcast_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-int send_data(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-void data_received(net_connnection_t *net_connnection, uint8_t *data, size_t data_len);
-
-int net_run(void);
-int init_net(const char *address);
-int deinit_net(void);
-
-#ifdef __cplusplus
-}
-#endif
+int init_p2p(void);
+int deinit_p2p(void);

@@ -160,7 +160,6 @@ static void worker_submit_block(miner_worker_t *worker, block_t *block)
   {
     LOG_INFO("Worker: %hu found block at height: %u!", worker->id, get_block_height());
     print_block(block);
-    handle_packet_broadcast(PKT_TYPE_INCOMING_BLOCK, block);
   }
 }
 
