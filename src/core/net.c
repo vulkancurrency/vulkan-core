@@ -54,17 +54,6 @@ static net_connnection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connnections;
 static int g_num_connections;
-static int g_net_disable_port_mapping = 0;
-
-void set_net_disable_port_mapping(int disable_port_mapping)
-{
-  g_net_disable_port_mapping = disable_port_mapping;
-}
-
-int get_net_disable_port_mapping(void)
-{
-  return g_net_disable_port_mapping;
-}
 
 net_connnection_t* init_net_connection(struct mg_connection *connection)
 {

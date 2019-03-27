@@ -44,9 +44,6 @@ typedef struct NetConnection
   int anonymous;
 } net_connnection_t;
 
-void set_net_disable_port_mapping(int disable_port_mapping);
-int get_net_disable_port_mapping(void);
-
 net_connnection_t* init_net_connection(struct mg_connection *connection);
 int free_net_connection(net_connnection_t *net_connnection);
 
