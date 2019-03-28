@@ -23,6 +23,7 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <assert.h>
 #include <string.h>
 
 #include <sodium.h>
@@ -67,6 +68,7 @@ merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_o
  */
 int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes)
 {
+  assert(nodes != NULL);
   for (int i = 0; i < num_of_hashes; i++)
   {
     merkle_node_t *node = malloc(sizeof(merkle_node_t));
@@ -85,6 +87,7 @@ int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_
  */
 int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
 {
+  assert(nodes != NULL);
   int current_node_idx = 0;
   merkle_node_t **temp_nodes = malloc(sizeof(merkle_node_t) * (*num_of_nodes));
 
@@ -115,6 +118,8 @@ int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
  */
 merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
 {
+  assert(left != NULL);
+  assert(right != NULL);
   uint8_t *combined_hash = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
   uint8_t *node_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
 
@@ -130,17 +135,20 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
 
   free(combined_hash);
   free(node_hash);
-
   return node;
 }
 
 int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash)
 {
+  assert(merkle_hash != NULL);
+  assert(other_merkle_hash != NULL);
   return memcmp(merkle_hash, other_merkle_hash, HASH_SIZE) == 0;
 }
 
 int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node)
 {
+  assert(merkle_node != NULL);
+  assert(other_merkle_node != NULL);
   return compare_merkle_hash(merkle_node->hash, other_merkle_node->hash);
 }
 
@@ -149,6 +157,7 @@ int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_
  */
 int free_merkle_tree(merkle_tree_t *tree)
 {
+  assert(tree != NULL);
   free_merkle_node(tree->root);
   free(tree);
   return 0;
