@@ -1353,3 +1353,31 @@ uint64_t get_balance_for_address(uint8_t *address)
   mtx_unlock(&g_blockchain_lock);
   return balance;
 }
+
+int get_unspent_transactions_for_wallet_nolock(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
+{
+  assert(wallet != NULL);
+  return get_unspent_transactions_for_address_nolock(wallet->address, unspent_txs, num_unspent_txs);
+}
+
+int get_unspent_transactions_for_wallet(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = get_unspent_transactions_for_wallet_nolock(wallet, unspent_txs, num_unspent_txs);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+uint64_t get_balance_for_wallet_nolock(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+  return get_balance_for_address_nolock(wallet->address);
+}
+
+uint64_t get_balance_for_wallet(wallet_t *wallet)
+{
+  mtx_lock(&g_blockchain_lock);
+  uint64_t balance = get_balance_for_wallet_nolock(wallet);
+  mtx_unlock(&g_blockchain_lock);
+  return balance;
+}
