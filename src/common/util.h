@@ -57,6 +57,8 @@ int rmrf(const char *path);
 
 int sort_compare(const void* a, const void* b);
 void sort(void *base, size_t nitems, size_t size);
+  
+int is_private_address(uint32_t ip);
 
 #ifdef __cplusplus
 }
