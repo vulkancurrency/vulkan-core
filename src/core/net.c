@@ -109,6 +109,12 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
 int free_net_connection(net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
+  if (net_connection->receiving_buffer != NULL)
+  {
+    buffer_free(net_connection->receiving_buffer);
+    net_connection->receiving_buffer = NULL;
+  }
+
   free(net_connection);
   return 0;
 }
