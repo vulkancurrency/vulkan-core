@@ -154,6 +154,11 @@ int add_tx_to_mempool_nolock(transaction_t *tx)
     return 1;
   }
 
+  if (is_generation_tx(tx))
+  {
+    return 1;
+  }
+
   if (is_tx_in_mempool_nolock(tx))
   {
     return 1;
