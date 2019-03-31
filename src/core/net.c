@@ -94,6 +94,11 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
   assert(connection != NULL);
   net_connection_t *net_connection = malloc(sizeof(net_connection_t));
   net_connection->connection = connection;
+
+  net_connection->is_receiving_data = 0;
+  net_connection->expected_receiving_len = 0;
+  net_connection->receiving_buffer = NULL;
+
   net_connection->host_port = 0;
   net_connection->anonymous = 1;
   return net_connection;
@@ -219,10 +224,8 @@ static int process_packet(net_connection_t *net_connection, buffer_t *buffer)
   return 0;
 }
 
-void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+static void process_incoming_packet(net_connection_t *net_connection, buffer_t *buffer)
 {
-  assert(net_connection != NULL);
-  buffer_t *buffer = buffer_init_data(0, data, data_len);
   if (process_packet(net_connection, buffer))
   {
 
@@ -236,6 +239,65 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
   {
     const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer);
     data_received(net_connection, (uint8_t*)remaining_data, remaining_data_len);
+  }
+}
+
+void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+{
+  assert(net_connection != NULL);
+  buffer_t *buffer = buffer_init_data(0, data, data_len);
+  if (net_connection->is_receiving_data)
+  {
+    buffer_t *receiving_buffer = net_connection->receiving_buffer;
+    assert(receiving_buffer != NULL);
+
+    if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
+    {
+      process_incoming_packet(net_connection, receiving_buffer);
+      net_connection->is_receiving_data = 0;
+      net_connection->expected_receiving_len = 0;
+      buffer_free(net_connection->receiving_buffer);
+      net_connection->receiving_buffer = NULL;
+    }
+    else
+    {
+      buffer_write(receiving_buffer, data, data_len);
+      if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
+      {
+        process_incoming_packet(net_connection, receiving_buffer);
+        net_connection->is_receiving_data = 0;
+        net_connection->expected_receiving_len = 0;
+        buffer_free(net_connection->receiving_buffer);
+        net_connection->receiving_buffer = NULL;
+      }
+    }
+  }
+  else
+  {
+    packet_t *packet = make_packet();
+    if (deserialize_packet(packet, buffer))
+    {
+
+    }
+    else
+    {
+      if (data_len < packet->size)
+      {
+        net_connection->is_receiving_data = 1;
+        net_connection->expected_receiving_len = packet->size;
+
+        buffer_t *receiving_buffer = buffer_init_data(0, data, data_len);
+        net_connection->receiving_buffer = receiving_buffer;
+      }
+      else
+      {
+        buffer_t *receiving_buffer = buffer_init_data(0, data, data_len);
+        process_incoming_packet(net_connection, receiving_buffer);
+        buffer_free(receiving_buffer);
+      }
+    }
+
+    free_packet(packet);
   }
 
   buffer_free(buffer);

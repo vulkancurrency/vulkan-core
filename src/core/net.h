@@ -42,6 +42,11 @@ extern "C"
 typedef struct NetConnection
 {
   struct mg_connection *connection;
+
+  int is_receiving_data;
+  size_t expected_receiving_len;
+  buffer_t *receiving_buffer;
+
   uint32_t host_port;
   int anonymous;
 } net_connection_t;
