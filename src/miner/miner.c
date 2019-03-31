@@ -252,7 +252,7 @@ int start_mining(void)
 
 int stop_mining(void)
 {
-  if (!g_miner_is_mining)
+  if (g_miner_is_mining == 0)
   {
     return 1;
   }

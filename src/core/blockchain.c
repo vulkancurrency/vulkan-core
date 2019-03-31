@@ -125,9 +125,9 @@ int open_blockchain(const char *blockchain_dir)
     return 1;
   }
 
-  if (!has_block_by_hash(genesis_block.hash))
+  if (has_block_by_hash(genesis_block.hash) == 0)
   {
-    if (!validate_and_insert_block(&genesis_block))
+    if (validate_and_insert_block(&genesis_block) == 0)
     {
       LOG_ERROR("Could not insert genesis block into blockchain!");
 
@@ -178,7 +178,7 @@ int remove_blockchain(const char *blockchain_dir)
 
 int close_blockchain(void)
 {
-  if (!g_blockchain_is_open)
+  if (g_blockchain_is_open == 0)
   {
     return 1;
   }
@@ -232,7 +232,7 @@ int open_backup_blockchain(void)
 
 int close_backup_blockchain(void)
 {
-  if (!g_blockchain_backup_is_open)
+  if (g_blockchain_backup_is_open == 0)
   {
     return 1;
   }
@@ -251,7 +251,7 @@ int init_blockchain(const char *blockchain_dir)
 
 int backup_blockchain(void)
 {
-  if (!g_blockchain_backup_is_open)
+  if (g_blockchain_backup_is_open == 0)
   {
     return 1;
   }
@@ -273,7 +273,7 @@ int backup_blockchain(void)
 
 int restore_blockchain(void)
 {
-  if (!g_blockchain_backup_is_open)
+  if (g_blockchain_backup_is_open == 0)
   {
     return 1;
   }
@@ -321,7 +321,7 @@ int rollback_blockchain(uint32_t rollback_height)
       return 1;
     }
 
-    if (!delete_block_from_blockchain(block->hash))
+    if (delete_block_from_blockchain(block->hash) == 0)
     {
       free_block(block);
       return 1;
@@ -674,7 +674,7 @@ int validate_and_insert_block_nolock(block_t *block)
 
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
-  if (!valid_block(block) && current_block_height > 0)
+  if (valid_block(block) == 0 && current_block_height > 0)
   {
     return 0;
   }
@@ -686,21 +686,21 @@ int validate_and_insert_block_nolock(block_t *block)
   }
 
   // check this blocks previous has against our current top block hash
-  if (!compare_block_hash(block->previous_hash, get_current_block_hash()))
+  if (compare_block_hash(block->previous_hash, get_current_block_hash()) == 0)
   {
     return 0;
   }
 
   // check to see if this block's timestamp is greater than the
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
-  if (!valid_block_median_timestamp(block))
+  if (valid_block_median_timestamp(block) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %u!", block->timestamp);
     return 0;
   }
 
   // validate the block's generation transaction
-  if (!valid_block_emission(block, current_block_height))
+  if (valid_block_emission(block, current_block_height) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
     return 0;
@@ -722,7 +722,7 @@ int validate_and_insert_block_nolock(block_t *block)
       return 0;
     }
 
-    if (!check_pow(block->hash, expected_difficulty))
+    if (check_pow(block->hash, expected_difficulty) == 0)
     {
       LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
       return 0;
@@ -1290,7 +1290,7 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
         unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
         assert(unspent_txout != NULL);
 
-        if (!compare_addresses(unspent_txout->address, address))
+        if (compare_addresses(unspent_txout->address, address) == 0)
         {
           continue;
         }

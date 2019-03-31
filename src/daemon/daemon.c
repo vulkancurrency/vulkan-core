@@ -95,7 +95,7 @@ static int parse_commandline_args(int argc, char **argv)
   {
     argument_t arg_type = argparse_get_argument_from_str(argv[i]);
     argument_map_t *argument_map = argparse_get_argument_map_from_type(arg_type);
-    if (!argument_map)
+    if (argument_map == NULL)
     {
       fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
       return 1;

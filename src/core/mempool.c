@@ -64,7 +64,7 @@ int start_mempool(void)
 
 int stop_mempool(void)
 {
-  if (!g_mempool_initialized)
+  if (g_mempool_initialized == 0)
   {
     return 1;
   }
@@ -149,7 +149,7 @@ int is_tx_in_mempool(transaction_t *tx)
 int add_tx_to_mempool_nolock(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (!valid_transaction(tx))
+  if (valid_transaction(tx) == 0)
   {
     return 1;
   }
@@ -179,7 +179,7 @@ int add_tx_to_mempool(transaction_t *tx)
 int remove_tx_from_mempool_nolock(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (!is_tx_in_mempool_nolock(tx))
+  if (is_tx_in_mempool_nolock(tx) == 0)
   {
     return 1;
   }

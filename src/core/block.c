@@ -91,7 +91,7 @@ int valid_block(block_t *block)
   assert(block != NULL);
 
   // block timestamp must be less than or equal to current_target + MAX_FUTURE_BLOCK_TIME
-  if (!valid_block_timestamp(block))
+  if (valid_block_timestamp(block) == 0)
   {
     LOG_DEBUG("Block has timestamp that is too far in the future: %u!", block->timestamp);
     return 0;
@@ -104,7 +104,7 @@ int valid_block(block_t *block)
   }
 
   // first TX must always be a generational TX.
-  if (!is_generation_tx(block->transactions[0]))
+  if (is_generation_tx(block->transactions[0]) == 0)
   {
     return 0;
   }
@@ -124,7 +124,7 @@ int valid_block(block_t *block)
     }
 
     // check to see if this is a valid transaction
-    if (!valid_transaction(first_tx))
+    if (valid_transaction(first_tx) == 0)
     {
       return 0;
     }
@@ -175,13 +175,13 @@ int valid_block(block_t *block)
   }
 
   // check the block hash
-  if (!valid_block_hash(block))
+  if (valid_block_hash(block) == 0)
   {
     return 0;
   }
 
   // check the merkle root
-  if (!valid_merkle_root(block))
+  if (valid_merkle_root(block) == 0)
   {
     return 0;
   }
