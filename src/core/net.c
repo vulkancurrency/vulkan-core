@@ -49,17 +49,52 @@ static int g_net_initialized = 0;
 static mtx_t g_net_lock;
 static struct mg_mgr g_net_mgr;
 
+static const char *g_net_host_address = "0.0.0.0";
+static uint16_t g_net_host_port = P2P_PORT;
+static int g_net_disable_port_mapping = 0;
+
 static task_t *g_net_resync_chain_task = NULL;
 static net_connection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connections;
 static int g_num_connections;
 
+void set_net_host_address(const char *host_address)
+{
+  g_net_host_address = host_address;
+}
+
+const char* get_net_host_address(void)
+{
+  return g_net_host_address;
+}
+
+void set_net_host_port(uint32_t host_port)
+{
+  g_net_host_port = host_port;
+}
+
+uint32_t get_net_host_port(void)
+{
+  return g_net_host_port;
+}
+
+void set_net_disable_port_mapping(int disable_port_mapping)
+{
+  g_net_disable_port_mapping = disable_port_mapping;
+}
+
+int get_net_disable_port_mapping(void)
+{
+  return g_net_disable_port_mapping;
+}
+
 net_connection_t* init_net_connection(struct mg_connection *connection)
 {
   assert(connection != NULL);
   net_connection_t *net_connection = malloc(sizeof(net_connection_t));
   net_connection->connection = connection;
+  net_connection->host_port = 0;
   net_connection->anonymous = 1;
   return net_connection;
 }
@@ -165,13 +200,35 @@ int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
   return 0;
 }
 
+static int process_packet(net_connection_t *net_connection, buffer_t *buffer)
+{
+  packet_t *packet = make_packet();
+  if (deserialize_packet(packet, buffer))
+  {
+    buffer_free(buffer);
+    return 1;
+  }
+
+  if (handle_receive_packet(net_connection, packet))
+  {
+    LOG_DEBUG("Failed to handle incoming packet!");
+    return 1;
+  }
+
+  free_packet(packet);
+  return 0;
+}
+
 void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
-  if (handle_receive_packet(net_connection, data, data_len))
+  buffer_t *buffer = buffer_init_data(0, data, data_len);
+  if (process_packet(net_connection, buffer))
   {
-    LOG_DEBUG("Failed to handle incoming packet!");
+
   }
+
+  buffer_free(buffer);
 }
 
 static void ev_handler(struct mg_connection *connection, int ev, void *p)
@@ -180,14 +237,16 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
   switch (ev)
   {
     case MG_EV_ACCEPT:
-    case MG_EV_CONNECT:
       {
         net_connection_t *net_connection = init_net_connection(connection);
         assert(add_net_connection(net_connection) == 0);
-        if (ev == MG_EV_CONNECT)
-        {
-          assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_REQ) == 0);
-        }
+      }
+      break;
+    case MG_EV_CONNECT:
+      {
+        net_connection_t *net_connection = get_net_connection(connection);
+        assert(net_connection != NULL);
+        assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_REQ, g_net_host_port) == 0);
       }
       break;
     case MG_EV_RECV:
@@ -219,9 +278,9 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
   }
 }
 
-void setup_net_port_mapping(int port)
+void setup_net_port_mapping(uint16_t port)
 {
-  LOG_INFO("Tring to add IGD port mapping...");
+  LOG_INFO("Trying to add IGD port mapping...");
   int result;
 
 #if MINIUPNPC_API_VERSION > 13
@@ -291,7 +350,34 @@ int net_run(void)
   return 0;
 }
 
-int init_net(const char *address)
+int connect_net_to_peer(const char *address, uint16_t port)
+{
+  const char *bind_address = convert_to_addr_str(address, port);
+  struct mg_connection *connection = mg_connect(&g_net_mgr, bind_address, ev_handler);
+  if (connection == NULL)
+  {
+    LOG_WARNING("Failed to connect to peer with address: %s!", bind_address);
+    return 1;
+  }
+
+  net_connection_t *net_connection = init_net_connection(connection);
+  net_connection->host_port = port;
+  assert(add_net_connection(net_connection) == 0);
+
+  uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
+  uint64_t peer_id = concatenate(remote_ip, port);
+  if (has_peer(peer_id))
+  {
+    LOG_DEBUG("Cannot add an already existant peer with id: %u!", peer_id);
+    return 1;
+  }
+
+  peer_t *peer = init_peer(peer_id, net_connection);
+  assert(add_peer(peer) == 0);
+  return 0;
+}
+
+int init_net(void)
 {
   if (g_net_initialized)
   {
@@ -302,22 +388,46 @@ int init_net(const char *address)
   mtx_init(&g_net_lock, mtx_recursive);
   mg_mgr_init(&g_net_mgr, NULL);
 
+  // setup port mapping
+  if (g_net_disable_port_mapping == 0)
+  {
+    setup_net_port_mapping(g_net_host_port);
+  }
+
   // setup the new connection
-  struct mg_connection *connection = mg_bind(&g_net_mgr, address, ev_handler);
-  assert(connection != NULL);
+  const char *bind_address = convert_to_addr_str(g_net_host_address, g_net_host_port);
+  struct mg_connection *connection = mg_bind(&g_net_mgr, bind_address, ev_handler);
+  if (connection == NULL)
+  {
+    LOG_ERROR("Failed to bind connection on address: %s!", bind_address);
+    return 1;
+  }
+
   g_net_connection = init_net_connection(connection);
+  g_net_connection->host_port = g_net_host_port;
   assert(add_net_connection(g_net_connection) == 0);
 
   // connect to the peers in the peer list
   for (int i = 0; i < NUM_SEED_NODES; i++)
   {
     seed_node_entry_t seed_node_entry = SEED_NODES[i];
-    if (strncmp(seed_node_entry.address, address, strlen(address)) == 0)
+    uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
+    if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
     {
       continue;
     }
+    else
+    {
+      if (is_local_address(peer_ip) && seed_node_entry.port == g_net_host_port)
+      {
+        continue;
+      }
+    }
 
-    assert(mg_connect(&g_net_mgr, seed_node_entry.address, ev_handler) != NULL);
+    if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
+    {
+      return 1;
+    }
   }
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);

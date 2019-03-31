@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include <sodium.h>
 
@@ -46,6 +47,17 @@
 
 #include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
+
+unsigned concatenate(unsigned x, unsigned y)
+{
+  unsigned pow = 10;
+  while (y >= pow)
+  {
+    pow *= 10;
+  }
+
+  return x * pow + y;
+}
 
 uint16_t get_num_logical_cores(void)
 {
@@ -191,29 +203,117 @@ void sort(void *base, size_t nitems, size_t size)
 
 int is_private_address(uint32_t ip)
 {
-  uint8_t b1, b2, b3, b4;
-  b1 = (uint8_t)(ip >> 24);
-  b2 = (uint8_t)((ip >> 16) & 0x0ff);
-  b3 = (uint8_t)((ip >> 8) & 0x0ff);
-  b4 = (uint8_t)(ip & 0x0ff);
+  unsigned char bytes[4];
+
+  bytes[0] = ip & 0xFF;
+  bytes[1] = (ip >> 8) & 0xFF;
+  bytes[2] = (ip >> 16) & 0xFF;
+  bytes[3] = (ip >> 24) & 0xFF;
 
   // 10.x.y.z
-  if (b1 == 10)
+  if (bytes[0] == 10)
   {
     return 1;
   }
 
   // 172.16.0.0 - 172.31.255.255
-  if ((b1 == 172) && (b2 >= 16) && (b2 <= 31))
+  if ((bytes[0] == 172) && (bytes[1] >= 16) && (bytes[1] <= 31))
   {
     return 1;
   }
 
   // 192.168.0.0 - 192.168.255.255
-  if ((b1 == 192) && (b2 == 168))
+  if ((bytes[0] == 192) && (bytes[1] == 168))
   {
     return 1;
   }
 
   return 0;
+}
+
+int is_local_address(uint32_t ip)
+{
+  unsigned char bytes[4];
+
+  bytes[0] = ip & 0xFF;
+  bytes[1] = (ip >> 8) & 0xFF;
+  bytes[2] = (ip >> 16) & 0xFF;
+  bytes[3] = (ip >> 24) & 0xFF;
+
+  // 0.0.0.0
+  if (ip == 0)
+  {
+    return 1;
+  }
+
+  // 127.0.0.1
+  if ((bytes[0] == 1) && (bytes[1] == 0) && (bytes[2] == 0) && (bytes[3] == 127))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+const char* convert_ip_to_str(uint32_t ip)
+{
+  char *out = malloc(sizeof(char) * 15);
+  unsigned char bytes[4];
+
+  bytes[0] = ip & 0xFF;
+  bytes[1] = (ip >> 8) & 0xFF;
+  bytes[2] = (ip >> 16) & 0xFF;
+  bytes[3] = (ip >> 24) & 0xFF;
+
+  sprintf(out, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
+  return (const char*)out;
+}
+
+uint32_t convert_str_to_ip(const char* address)
+{
+  uint32_t v = 0;
+  int i;
+  const char *start;
+
+  start = address;
+  for (i = 0; i < 4; i++)
+  {
+      char c;
+      int n = 0;
+      for (;;)
+      {
+        c = * start;
+        start++;
+        if (c >= '0' && c <= '9')
+        {
+          n *= 10;
+          n += c - '0';
+        }
+        else if ((i < 3 && c == '.') || i == 3)
+        {
+          break;
+        }
+        else
+        {
+          return 0;
+        }
+      }
+
+      if (n >= 256)
+      {
+        return 0;
+      }
+
+      v *= 256;
+      v += n;
+  }
+
+  return v;
+}
+
+const char* convert_to_addr_str(const char* address, uint32_t port)
+{
+  char *out = malloc(strlen(address) + sizeof(port) + 1);
+  sprintf(out, "%s:%u", address, port);
+  return (const char*)out;
 }

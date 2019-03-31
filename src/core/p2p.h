@@ -36,17 +36,22 @@ typedef struct Peer
   net_connection_t *net_connection;
 } peer_t;
 
-peer_t* init_peer(net_connection_t *net_connection);
+peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection);
 int free_peer(peer_t *peer);
 
 peer_t* get_peer_nolock(uint64_t peer_id);
 peer_t* get_peer(uint64_t peer_id);
+
+peer_t* get_peer_from_index_nolock(uint16_t index);
+peer_t* get_peer_from_index(uint16_t index);
 
 peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection);
 peer_t* get_peer_from_net_connection(net_connection_t *net_connection);
 
 int has_peer_nolock(uint64_t peer_id);
 int has_peer(uint64_t peer_id);
+
+uint16_t get_num_peers(void);
 
 int add_peer_nolock(peer_t *peer);
 int add_peer(peer_t *peer);

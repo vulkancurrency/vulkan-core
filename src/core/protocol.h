@@ -51,6 +51,9 @@ enum
   PKT_TYPE_CONNECT_REQ,
   PKT_TYPE_CONNECT_RESP,
 
+  PKT_TYPE_GET_PEERLIST_REQ,
+  PKT_TYPE_GET_PEERLIST_RESP,
+
   PKT_TYPE_INCOMING_BLOCK,
   PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION,
 
@@ -82,13 +85,24 @@ typedef struct
 
 typedef struct
 {
-
+  uint32_t host_port;
 } connection_req_t;
 
 typedef struct
 {
 
 } connection_resp_t;
+
+typedef struct
+{
+
+} get_peerlist_req_t;
+
+typedef struct
+{
+  uint32_t peerlist_data_size;
+  uint8_t *peerlist_data;
+} get_peerlist_resp_t;
 
 typedef struct
 {
@@ -205,7 +219,7 @@ int rollback_blockchain_and_resync(void);
 
 int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
 int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
-int handle_receive_packet(net_connection_t *net_connection, const uint8_t *data, size_t data_size);
+int handle_receive_packet(net_connection_t *net_connection, packet_t *packet);
 
 int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args);
 int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...);

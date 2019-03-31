@@ -29,19 +29,18 @@
 #include "common/vec.h"
 
 #include "p2p.h"
+#include "parameters.h"
 
 static int g_p2p_initialized = 0;
 static mtx_t g_p2p_lock;
 static vec_void_t g_p2p_peerlist;
-static int g_next_peer_id = -1;
 static int g_num_peers = 0;
 
-peer_t* init_peer(net_connection_t *net_connection)
+peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
-  g_next_peer_id++;
   peer_t *peer = malloc(sizeof(peer_t));
-  peer->id = g_next_peer_id;
+  peer->id = peer_id;
   peer->net_connection = net_connection;
   return peer;
 }
@@ -75,6 +74,19 @@ peer_t* get_peer(uint64_t peer_id)
 {
   mtx_lock(&g_p2p_lock);
   peer_t *peer = get_peer_nolock(peer_id);
+  mtx_unlock(&g_p2p_lock);
+  return peer;
+}
+
+peer_t* get_peer_from_index_nolock(uint16_t index)
+{
+  return vec_get(&g_p2p_peerlist, index);
+}
+
+peer_t* get_peer_from_index(uint16_t index)
+{
+  mtx_lock(&g_p2p_lock);
+  peer_t *peer = get_peer_from_index_nolock(index);
   mtx_unlock(&g_p2p_lock);
   return peer;
 }
@@ -119,10 +131,20 @@ int has_peer(uint64_t peer_id)
   return result;
 }
 
+uint16_t get_num_peers(void)
+{
+  return g_num_peers;
+}
+
 int add_peer_nolock(peer_t *peer)
 {
   assert(peer != NULL);
   if (has_peer(peer->id))
+  {
+    return 1;
+  }
+
+  if (g_num_peers >= MAX_P2P_PEERS_COUNT)
   {
     return 1;
   }
@@ -217,7 +239,6 @@ int deinit_p2p(void)
 
   vec_deinit(&g_p2p_peerlist);
   mtx_destroy(&g_p2p_lock);
-  g_next_peer_id = -1;
   g_num_peers = 0;
   g_p2p_initialized = 0;
   return 0;

@@ -117,13 +117,31 @@ int deserialize_message(packet_t *packet, void **message)
   {
     case PKT_TYPE_CONNECT_REQ:
       {
+        uint32_t host_port = buffer_read_uint32(buffer);
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
+        packed_message->host_port = host_port;
         *message = packed_message;
       }
       break;
     case PKT_TYPE_CONNECT_RESP:
       {
         connection_resp_t *packed_message = malloc(sizeof(connection_resp_t));
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_REQ:
+      {
+        get_peerlist_req_t *packed_message = malloc(sizeof(get_peerlist_req_t));
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_RESP:
+      {
+        uint32_t peerlist_data_size = buffer_read_uint32(buffer);
+        uint8_t *peerlist_data = buffer_read_bytes(buffer);
+        get_peerlist_resp_t *packed_message = malloc(sizeof(get_peerlist_resp_t));
+        packed_message->peerlist_data_size = peerlist_data_size;
+        packed_message->peerlist_data = peerlist_data;
         *message = packed_message;
       }
       break;
@@ -274,12 +292,28 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
   {
     case PKT_TYPE_CONNECT_REQ:
       {
-
+        uint32_t host_port = va_arg(args, uint32_t);
+        buffer_write_uint32(buffer, host_port);
       }
       break;
     case PKT_TYPE_CONNECT_RESP:
       {
 
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_RESP:
+      {
+        buffer_t *peerlist_buffer = va_arg(args, buffer_t*);
+        assert(peerlist_buffer != NULL);
+
+        uint32_t peerlist_data_size = buffer_get_size(peerlist_buffer);
+        buffer_write_uint32(buffer, peerlist_data_size);
+        buffer_write_bytes(buffer, (uint8_t*)buffer_get_data(peerlist_buffer), peerlist_data_size);
       }
       break;
     case PKT_TYPE_INCOMING_BLOCK:
@@ -436,6 +470,19 @@ void free_message(uint32_t packet_id, void *message_object)
     case PKT_TYPE_CONNECT_RESP:
       {
         connection_resp_t *message = (connection_resp_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_REQ:
+      {
+        get_peerlist_req_t *message = (get_peerlist_req_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_RESP:
+      {
+        get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
+        free(message->peerlist_data);
         free(message);
       }
       break;
@@ -650,6 +697,16 @@ int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_
     return 1;
   }
 
+  if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
+  {
+    if (clear_sync_request(0))
+    {
+      LOG_WARNING("Timed out when requesting block at height: %u!", sync_height);
+    }
+
+    return 1;
+  }
+
   if (hash != NULL)
   {
     if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HASH_REQ, hash))
@@ -682,40 +739,20 @@ int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_
 int request_sync_next_block(net_connection_t *net_connection)
 {
   uint32_t block_height = g_protocol_sync_entry.last_sync_height;
-  if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
-  {
-    if (clear_sync_request(0))
-    {
-      LOG_WARNING("Timed out when requesting block at height: %u!", block_height);
-    }
-
-    return 1;
-  }
-
-  if (!has_block_by_height(block_height))
+  if (has_block_by_height(block_height) == 0)
   {
     LOG_ERROR("Cannot request next block when previous block at height: %u, was not found in the blockchain!", block_height);
     return 1;
   }
 
   uint32_t sync_height = g_protocol_sync_entry.last_sync_height + 1;
-  if (request_sync_block(net_connection, sync_height, NULL))
-  {
-    return 1;
-  }
-
-  return 0;
+  return request_sync_block(net_connection, sync_height, NULL);
 }
 
 int request_sync_previous_block(net_connection_t *net_connection)
 {
   uint32_t sync_height = g_protocol_sync_entry.last_sync_height - 1;
-  if (request_sync_block(net_connection, sync_height, NULL))
-  {
-    return 1;
-  }
-
-  return 0;
+  return request_sync_block(net_connection, sync_height, NULL);
 }
 
 int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
@@ -894,9 +931,24 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
   {
     case PKT_TYPE_CONNECT_REQ:
       {
-        peer_t *peer = init_peer(net_connection);
-        assert(add_peer(peer) == 0);
+        connection_req_t *message = (connection_req_t*)message_object;
+        net_connection->host_port = message->host_port;
         net_connection->anonymous = 0;
+
+        struct mg_connection *connection = net_connection->connection;
+        assert(connection != NULL);
+
+        uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
+        uint64_t peer_id = concatenate(remote_ip, message->host_port);
+        if (has_peer(peer_id))
+        {
+          LOG_DEBUG("Cannot add an already existant peer with id: %u!", peer_id);
+          return 1;
+        }
+
+        peer_t *peer = init_peer(peer_id, net_connection);
+        assert(add_peer(peer) == 0);
+
         if (handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_RESP))
         {
           free_peer(peer);
@@ -906,8 +958,7 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
       break;
     case PKT_TYPE_CONNECT_RESP:
       {
-        peer_t *peer = init_peer(net_connection);
-        assert(add_peer(peer) == 0);
+        connection_resp_t *message = (connection_resp_t*)message_object;
         net_connection->anonymous = 0;
       }
       break;
@@ -922,6 +973,70 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 {
   switch (packet_id)
   {
+    case PKT_TYPE_GET_PEERLIST_REQ:
+      {
+        get_peerlist_req_t *message = (get_peerlist_req_t*)message_object;
+        uint16_t num_peers = get_num_peers();
+
+        buffer_t *buffer = buffer_init();
+        buffer_write_uint16(buffer, num_peers);
+
+        for (int i = 0; i <= num_peers; i++)
+        {
+          peer_t *peer = get_peer_from_index(i);
+          assert(peer != NULL);
+
+          net_connection_t *peer_net_connection = peer->net_connection;
+          assert(peer_net_connection != NULL);
+
+          struct mg_connection *peer_connection = peer_net_connection->connection;
+          assert(peer_connection != NULL);
+
+          uint32_t remote_ip = ntohl(*(uint32_t*)&peer_connection->sa.sin.sin_addr);
+          buffer_write_uint32(buffer, remote_ip);
+          buffer_write_uint16(buffer, peer_net_connection->host_port);
+        }
+
+        if (handle_packet_sendto(net_connection, PKT_TYPE_GET_PEERLIST_RESP, buffer))
+        {
+          buffer_free(buffer);
+          return 1;
+        }
+
+        buffer_free(buffer);
+      }
+      break;
+    case PKT_TYPE_GET_PEERLIST_RESP:
+      {
+        get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
+        buffer_t *buffer = buffer_init_data(0, message->peerlist_data, message->peerlist_data_size);
+        uint32_t num_peers = buffer_read_uint32(buffer);
+        for (int i = 0; i <= num_peers; i++)
+        {
+          uint32_t remote_ip = buffer_read_uint32(buffer);
+          uint16_t host_port = buffer_read_uint16(buffer);
+
+          // check to see if we already know about this peer
+          uint64_t peer_id = concatenate(remote_ip, host_port);
+          if (has_peer(peer_id))
+          {
+            continue;
+          }
+
+          // check to see if our peer list is full
+          if (get_num_peers() >= MAX_P2P_PEERS_COUNT)
+          {
+            break;
+          }
+
+          const char *bind_address = convert_ip_to_str(remote_ip);
+          if (connect_net_to_peer(bind_address, host_port))
+          {
+            return 1;
+          }
+        }
+      }
+      break;
     case PKT_TYPE_INCOMING_BLOCK:
       {
         /*incoming_block_t *message = (incoming_block_t*)message_object;
@@ -982,7 +1097,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             {
               if (current_block_height > 0)
               {
-                LOG_INFO("Determining best sync starting height...");
+                LOG_INFO("Determining best synchronization starting height...");
                 g_protocol_sync_entry.last_sync_height = current_block_height + 1;
                 if (request_sync_previous_block(net_connection))
                 {
@@ -995,6 +1110,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
                 LOG_INFO("Beginning sync with presumed top block: %u...", message->height);
                 if (request_sync_next_block(net_connection))
                 {
+                  LOG_ERROR("Failed to request next block!");
                   return 1;
                 }
               }
@@ -1178,46 +1294,26 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
   return 0;
 }
 
-int handle_receive_packet(net_connection_t *net_connection, const uint8_t *data, size_t data_size)
+int handle_receive_packet(net_connection_t *net_connection, packet_t *packet)
 {
-  buffer_t *buffer = buffer_init_data(0, data, data_size);
-  packet_t *packet = make_packet();
-  if (deserialize_packet(packet, buffer))
-  {
-    buffer_free(buffer);
-    return 1;
-  }
-
-  buffer_free(buffer);
   void *message = NULL;
   if (deserialize_message(packet, &message) || message == NULL)
   {
-    free_packet(packet);
     return 1;
   }
 
+  int result = 0;
   if (net_connection->anonymous)
   {
-    if (handle_packet_anonymous(net_connection, packet->id, message))
-    {
-      free_message(packet->id, message);
-      free_packet(packet);
-      return 1;
-    }
+    result = handle_packet_anonymous(net_connection, packet->id, message);
   }
   else
   {
-    if (handle_packet(net_connection, packet->id, message))
-    {
-      free_message(packet->id, message);
-      free_packet(packet);
-      return 1;
-    }
+    result = handle_packet(net_connection, packet->id, message);
   }
 
   free_message(packet->id, message);
-  free_packet(packet);
-  return 0;
+  return result;
 }
 
 int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args)
@@ -1282,15 +1378,15 @@ task_result_t resync_chain(task_t *task, va_list args)
 {
   if (g_protocol_sync_entry.sync_initiated)
   {
-    // check to see if the block request has timed out if it has, then let's just clear the sync request
-    // the daemon will pick up where it last left off until it can successfully sync to the top block...
     uint32_t current_time = get_current_time();
     if (current_time - g_protocol_sync_entry.last_sync_ts > RESYNC_BLOCK_REQUEST_DELAY)
     {
-      assert(clear_sync_request(0) == 0);
+      uint32_t last_sync_height = g_protocol_sync_entry.last_sync_height;
+      request_sync_block(g_protocol_sync_entry.net_connection, last_sync_height, NULL);
     }
   }
 
-  handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ);
+  assert(handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ) == 0);
+  assert(handle_packet_broadcast(PKT_TYPE_GET_PEERLIST_REQ) == 0);
   return TASK_RESULT_WAIT;
 }

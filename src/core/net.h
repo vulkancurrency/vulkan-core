@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "common/buffer.h"
 #include "common/mongoose.h"
 #include "common/task.h"
 
@@ -41,8 +42,20 @@ extern "C"
 typedef struct NetConnection
 {
   struct mg_connection *connection;
+  uint32_t host_port;
   int anonymous;
 } net_connection_t;
+
+void set_net_host_address(const char *host_address);
+const char* get_net_host_address(void);
+
+void set_net_host_port(uint32_t host_port);
+uint32_t get_net_host_port(void);
+
+void set_net_disable_port_mapping(int disable_port_mapping);
+int get_net_disable_port_mapping(void);
+
+const char* get_net_bind_address(void);
 
 net_connection_t* init_net_connection(struct mg_connection *connection);
 int free_net_connection(net_connection_t *net_connection);
@@ -63,10 +76,11 @@ int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_
 int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
-void setup_net_port_mapping(int port);
+void setup_net_port_mapping(uint16_t port);
+int connect_net_to_peer(const char *address, uint16_t port);
 
 int net_run(void);
-int init_net(const char *address);
+int init_net(void);
 int deinit_net(void);
 
 #ifdef __cplusplus

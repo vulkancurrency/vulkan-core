@@ -39,6 +39,8 @@ extern "C"
 
 #define RANDOM_RANGE(min, max) MAX(rand() % max, min)
 
+unsigned concatenate(unsigned x, unsigned y);
+
 uint16_t get_num_logical_cores(void);
 
 int string_equals(const char *string, const char *equals);
@@ -57,8 +59,12 @@ int rmrf(const char *path);
 
 int sort_compare(const void* a, const void* b);
 void sort(void *base, size_t nitems, size_t size);
-  
+
 int is_private_address(uint32_t ip);
+int is_local_address(uint32_t ip);
+uint32_t convert_str_to_ip(const char* address);
+const char* convert_ip_to_str(uint32_t ip);
+const char* convert_to_addr_str(const char* address, uint32_t port);
 
 #ifdef __cplusplus
 }

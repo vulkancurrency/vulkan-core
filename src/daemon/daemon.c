@@ -48,14 +48,11 @@
 
 #include "wallet/wallet.h"
 
+static int g_enable_miner = 0;
+
 static const char *g_blockchain_data_dir = "blockchain";
 static const char *g_wallet_filename = "wallet";
 static const char *g_logger_log_filename = "daemon.log";
-static int g_net_bind_port = P2P_PORT;
-static const char *g_net_bind_address = "127.0.0.1:9899";
-
-static int g_disable_port_mapping = 0;
-static int g_enable_miner = 0;
 
 static void perform_shutdown(int sig)
 {
@@ -133,21 +130,17 @@ static int parse_commandline_args(int argc, char **argv)
         printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
         return 1;
       case CMD_ARG_DISABLE_PORT_MAPPING:
-        g_disable_port_mapping = 1;
+        set_net_disable_port_mapping(1);
         break;
       case CMD_ARG_BIND_ADDRESS:
         i++;
-        //const char *bind_address = (const char*)argv[i];
-        //net_set_bind_address(bind_address);
+        const char *host_address = (const char*)argv[i];
+        set_net_host_address(host_address);
         break;
       case CMD_ARG_BIND_PORT:
         i++;
-        const char *bind_port = (const char*)argv[i];
-        char *address = "0.0.0.0";
-        address = (char*)string_copy(address, ":");
-        address = (char*)string_copy(address, bind_port);
-        g_net_bind_port = atoi(bind_port);
-        g_net_bind_address = address;
+        uint32_t host_port = atoi(argv[i]);
+        set_net_host_port(host_port);
         break;
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
@@ -246,12 +239,11 @@ int main(int argc, char **argv)
     start_mining();
   }
 
-  if (g_disable_port_mapping == 0)
+  if (init_net())
   {
-    setup_net_port_mapping(g_net_bind_port);
+    return 1;
   }
 
-  init_net(g_net_bind_address);
   if (wallet != NULL)
   {
     free_wallet(wallet);
