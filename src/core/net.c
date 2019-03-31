@@ -228,6 +228,16 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
   }
 
+  // check to see if we have any remaining data in the buffer,
+  // sometimes data for several packets can be combined in attempt to
+  // reduce overhead when trying to send multiple packets...
+  size_t remaining_data_len = buffer_get_size(buffer);
+  if (remaining_data_len > 0)
+  {
+    const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer);
+    data_received(net_connection, (uint8_t*)remaining_data, remaining_data_len);
+  }
+
   buffer_free(buffer);
 }
 
