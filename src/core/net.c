@@ -47,6 +47,7 @@
 
 static int g_net_initialized = 0;
 static mtx_t g_net_lock;
+static mtx_t g_net_recv_lock;
 static struct mg_mgr g_net_mgr;
 
 static const char *g_net_host_address = "0.0.0.0";
@@ -249,11 +250,11 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_t *
   if (remaining_data_len > 0)
   {
     const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer);
-    data_received(net_connection, (uint8_t*)remaining_data, remaining_data_len);
+    data_received_nolock(net_connection, (uint8_t*)remaining_data, remaining_data_len);
   }
 }
 
-void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
   buffer_t *buffer = buffer_init_data(0, data, data_len);
@@ -312,6 +313,13 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
   }
 
   buffer_free(buffer);
+}
+
+void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+{
+  mtx_lock(&g_net_recv_lock);
+  data_received_nolock(net_connection, data, data_len);
+  mtx_unlock(&g_net_recv_lock);
 }
 
 static void ev_handler(struct mg_connection *connection, int ev, void *p)
@@ -469,6 +477,7 @@ int init_net(void)
 
   vec_init(&g_net_connections);
   mtx_init(&g_net_lock, mtx_recursive);
+  mtx_init(&g_net_recv_lock, mtx_plain);
   mg_mgr_init(&g_net_mgr, NULL);
 
   // setup port mapping
@@ -529,6 +538,7 @@ int deinit_net(void)
   vec_deinit(&g_net_connections);
   remove_task(g_net_resync_chain_task);
   mtx_destroy(&g_net_lock);
+  mtx_destroy(&g_net_recv_lock);
 
   g_net_resync_chain_task = NULL;
   g_num_connections = 0;
