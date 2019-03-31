@@ -281,6 +281,15 @@ int deserialize_message(packet_t *packet, void **message)
       return 1;
   }
 
+  // check to see if there is any extraneous data in the buffer
+  uint32_t remaining_size = buffer_get_size(buffer);
+  if (remaining_size > 0)
+  {
+    LOG_ERROR("Could not deserialize packet, packet has extraneous data of size: %u!", remaining_size);
+    buffer_free(buffer);
+    return 1;
+  }
+
   buffer_free(buffer);
   return 0;
 }
