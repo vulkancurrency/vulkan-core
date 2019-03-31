@@ -25,24 +25,30 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include "argparse.h"
 #include "util.h"
 
-argument_t argparse_get_argument_from_str(const char *arg)
+uint16_t argparse_get_argument_from_str(argument_map_t *arg_map, int16_t num_args, const char *arg)
 {
+  assert(arg_map != NULL);
+
   // verify command argument prefix
-  if (!string_startswith(arg, "-") || string_count(arg, "-", 1) > 2)
+  if (string_startswith(arg, "-") == 0 || string_count(arg, "-", 1) > 2)
   {
     return CMD_ARG_UNKNOWN;
   }
 
   // determine the argument type
-  for (int i = 0; i < NUM_COMMANDS; i++)
+  for (int i = 0; i < num_args; i++)
   {
-    argument_map_t *argument_map = &g_arguments_map[i];
+    argument_map_t *argument_map = &arg_map[i];
+    assert(argument_map != NULL);
+
     if (string_endswith(arg, argument_map->name))
     {
       return argument_map->type;
@@ -52,11 +58,14 @@ argument_t argparse_get_argument_from_str(const char *arg)
   return CMD_ARG_UNKNOWN;
 }
 
-argument_map_t* argparse_get_argument_map_from_type(argument_t arg_type)
+argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, int16_t num_args, uint16_t arg_type)
 {
-  for (int i = 0; i < NUM_COMMANDS; i++)
+  assert(arg_map != NULL);
+  for (int i = 0; i < num_args; i++)
   {
-    argument_map_t *argument_map = &g_arguments_map[i];
+    argument_map_t *argument_map = &arg_map[i];
+    assert(argument_map != NULL);
+
     if (argument_map->type == arg_type)
     {
       return argument_map;
