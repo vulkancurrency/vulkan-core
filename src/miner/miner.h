@@ -56,6 +56,9 @@ wallet_t *get_current_wallet(void);
 miner_worker_t* init_worker(void);
 int free_worker(miner_worker_t *worker);
 
+block_t* construct_computable_block_noblock(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
+block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
+
 block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
 task_result_t report_worker_mining_status(task_t *task, va_list args);
 

@@ -108,7 +108,7 @@ static void update_worker_hashrate(miner_worker_t *worker)
   worker->last_hashrate++;
 }
 
-block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+block_t* construct_computable_block_noblock(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
 {
   assert(worker != NULL);
   assert(wallet != NULL);
@@ -137,11 +137,29 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
 
   compute_self_merkle_root(block);
   compute_self_block_hash(block);
+  return block;
+}
 
-  while (!valid_block_hash(block))
+block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+{
+  mtx_lock(&g_worker_lock);
+  block_t *block = construct_computable_block_noblock(worker, wallet, previous_block);
+  mtx_unlock(&g_worker_lock);
+  return block;
+}
+
+block_t* compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+{
+  assert(worker != NULL);
+  assert(wallet != NULL);
+  assert(previous_block != NULL);
+
+  block_t *block = construct_computable_block(worker, wallet, previous_block);
+  assert(block != NULL);
+
+  while (valid_block_hash(block) == 0)
   {
-    nonce++;
-    block->nonce = nonce;
+    block->nonce++;
     compute_self_block_hash(block);
     update_worker_hashrate(worker);
   }
@@ -149,7 +167,7 @@ block_t *compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
   return block;
 }
 
-static void worker_submit_block(miner_worker_t *worker, block_t *block)
+static void worker_submit_block_noblock(miner_worker_t *worker, block_t *block)
 {
   assert(worker != NULL);
   assert(block != NULL);
@@ -161,6 +179,13 @@ static void worker_submit_block(miner_worker_t *worker, block_t *block)
     LOG_INFO("Worker: %hu found block at height: %u!", worker->id, get_block_height());
     print_block(block);
   }
+}
+
+static void worker_submit_block(miner_worker_t *worker, block_t *block)
+{
+  mtx_lock(&g_worker_lock);
+  worker_submit_block_noblock(worker, block);
+  mtx_unlock(&g_worker_lock);
 }
 
 static int worker_mining_thread(void *arg)
@@ -175,10 +200,7 @@ static int worker_mining_thread(void *arg)
   {
     previous_block = get_current_block();
     block = compute_next_block(worker, g_current_wallet, previous_block);
-
-    mtx_lock(&g_worker_lock);
     worker_submit_block(worker, block);
-    mtx_unlock(&g_worker_lock);
 
     free_block(previous_block);
     free_block(block);
@@ -207,7 +229,7 @@ int start_mining(void)
     return 1;
   }
 
-  mtx_init(&g_worker_lock, mtx_plain);
+  mtx_init(&g_worker_lock, mtx_recursive);
   g_miner_is_mining = 1;
   g_miner_worker_status_task = add_task(report_worker_mining_status, WORKER_STATUS_TASK_DELAY);
 
