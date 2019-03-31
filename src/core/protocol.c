@@ -963,6 +963,7 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
       }
       break;
     default:
+      assert(close_net_connection(net_connection) == 0);
       return 1;
   }
 

@@ -192,6 +192,17 @@ int remove_net_connection(net_connection_t *net_connection)
   return result;
 }
 
+int close_net_connection(net_connection_t *net_connection)
+{
+  assert(net_connection != NULL);
+
+  struct mg_connection *connection = net_connection->connection;
+  assert(connection != NULL);
+
+  connection->flags |= MG_F_CLOSE_IMMEDIATELY;
+  return 0;
+}
+
 int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(g_net_connection != NULL);
