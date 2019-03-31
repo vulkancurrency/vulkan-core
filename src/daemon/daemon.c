@@ -126,7 +126,7 @@ static int parse_commandline_args(int argc, char **argv)
 {
   for (int i = 1; i < argc; i++)
   {
-    uint16_t arg_type = argparse_get_argument_from_str((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, argv[i]);
+    int16_t arg_type = argparse_get_argument_from_str((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, argv[i]);
     argument_map_t *argument_map = argparse_get_argument_map_from_type((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, arg_type);
     if (argument_map == NULL)
     {

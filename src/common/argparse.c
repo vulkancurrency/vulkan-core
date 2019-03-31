@@ -33,7 +33,7 @@
 #include "argparse.h"
 #include "util.h"
 
-uint16_t argparse_get_argument_from_str(argument_map_t *arg_map, int16_t num_args, const char *arg)
+int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg)
 {
   assert(arg_map != NULL);
 
@@ -58,7 +58,7 @@ uint16_t argparse_get_argument_from_str(argument_map_t *arg_map, int16_t num_arg
   return CMD_ARG_UNKNOWN;
 }
 
-argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, int16_t num_args, uint16_t arg_type)
+argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uint16_t num_args, int16_t arg_type)
 {
   assert(arg_map != NULL);
   for (int i = 0; i < num_args; i++)

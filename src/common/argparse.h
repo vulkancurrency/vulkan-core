@@ -30,7 +30,7 @@
 typedef struct ArgumentMap
 {
   const char *name;
-  uint16_t type;
+  int16_t type;
   const char *help;
   const char *usage;
   int num_args;
@@ -41,5 +41,5 @@ enum
   CMD_ARG_UNKNOWN = -1
 };
 
-uint16_t argparse_get_argument_from_str(argument_map_t *arg_map, int16_t num_args, const char *arg);
-argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, int16_t num_args, uint16_t arg_type);
+int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg);
+argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uint16_t num_args, int16_t arg_type);
