@@ -614,9 +614,9 @@ int clear_sync_request(int sync_success)
     return 1;
   }
 
-  if (!sync_success && g_protocol_sync_entry.sync_did_backup_blockchain)
+  if (sync_success == 0 && g_protocol_sync_entry.sync_did_backup_blockchain)
   {
-    if (!restore_blockchain())
+    if (restore_blockchain() == 0)
     {
       LOG_INFO("Successfully restored blockchain.");
     }
@@ -806,7 +806,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 
   // validate the block's hash before attempting to establish a sync request
   // at that block's height in the blockchain...
-  if (!valid_block_hash(block))
+  if (valid_block_hash(block) == 0)
   {
     assert(clear_sync_request(0) == 0);
     return 1;
@@ -1103,7 +1103,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             LOG_INFO("Found potential alternative blockchain at height: %u.", message->height);
             clear_sync_request(0);
 
-            if (!init_sync_request(message->height, net_connection))
+            if (init_sync_request(message->height, net_connection) == 0)
             {
               if (current_block_height > 0)
               {
@@ -1396,7 +1396,7 @@ task_result_t resync_chain(task_t *task, va_list args)
     }
   }
 
-  assert(handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ) == 0);
   assert(handle_packet_broadcast(PKT_TYPE_GET_PEERLIST_REQ) == 0);
+  assert(handle_packet_broadcast(PKT_TYPE_GET_BLOCK_HEIGHT_REQ) == 0);
   return TASK_RESULT_WAIT;
 }
