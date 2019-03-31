@@ -981,7 +981,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         buffer_t *buffer = buffer_init();
         buffer_write_uint16(buffer, num_peers);
 
-        for (int i = 0; i <= num_peers; i++)
+        for (int i = 0; i < num_peers; i++)
         {
           peer_t *peer = get_peer_from_index(i);
           assert(peer != NULL);
@@ -1010,20 +1010,29 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
       {
         get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
         buffer_t *buffer = buffer_init_data(0, message->peerlist_data, message->peerlist_data_size);
-        uint32_t num_peers = buffer_read_uint32(buffer);
-        for (int i = 0; i <= num_peers; i++)
+        uint32_t num_peers = buffer_read_uint16(buffer);
+        for (int i = 0; i < num_peers; i++)
         {
           uint32_t remote_ip = buffer_read_uint32(buffer);
           uint16_t host_port = buffer_read_uint16(buffer);
+          if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
+          {
+            continue;
+          }
+          else
+          {
+            if (is_local_address(remote_ip) && host_port == get_net_host_port())
+            {
+              continue;
+            }
+          }
 
-          // check to see if we already know about this peer
           uint64_t peer_id = concatenate(remote_ip, host_port);
           if (has_peer(peer_id))
           {
             continue;
           }
 
-          // check to see if our peer list is full
           if (get_num_peers() >= MAX_P2P_PEERS_COUNT)
           {
             break;
