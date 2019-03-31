@@ -55,6 +55,7 @@ static uint16_t g_net_host_port = P2P_PORT;
 static int g_net_disable_port_mapping = 0;
 
 static task_t *g_net_resync_chain_task = NULL;
+static task_t *g_net_reconnect_seeds_task = NULL;
 static net_connection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connections;
@@ -468,6 +469,45 @@ int connect_net_to_peer(const char *address, uint16_t port)
   return 0;
 }
 
+int connect_net_to_seeds(void)
+{
+  for (int i = 0; i < NUM_SEED_NODES; i++)
+  {
+    seed_node_entry_t seed_node_entry = SEED_NODES[i];
+    uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
+    if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
+    {
+      continue;
+    }
+    else
+    {
+      if (is_local_address(peer_ip) && seed_node_entry.port == g_net_host_port)
+      {
+        continue;
+      }
+    }
+
+    uint64_t peer_id = concatenate(peer_ip, seed_node_entry.port);
+    if (has_peer(peer_id))
+    {
+      continue;
+    }
+
+    if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
+    {
+      continue;
+    }
+  }
+
+  return 0;
+}
+
+task_result_t reconnect_seeds(task_t *task, va_list args)
+{
+  assert(connect_net_to_seeds() == 0);
+  return TASK_RESULT_WAIT;
+}
+
 int init_net(void)
 {
   if (g_net_initialized)
@@ -499,30 +539,11 @@ int init_net(void)
   g_net_connection->host_port = g_net_host_port;
   assert(add_net_connection(g_net_connection) == 0);
 
-  // connect to the peers in the peer list
-  for (int i = 0; i < NUM_SEED_NODES; i++)
-  {
-    seed_node_entry_t seed_node_entry = SEED_NODES[i];
-    uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
-    if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
-    {
-      continue;
-    }
-    else
-    {
-      if (is_local_address(peer_ip) && seed_node_entry.port == g_net_host_port)
-      {
-        continue;
-      }
-    }
-
-    if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
-    {
-      return 1;
-    }
-  }
+  // connect to the peers in the seeds list
+  assert(connect_net_to_seeds() == 0);
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
+  g_net_reconnect_seeds_task = add_task(reconnect_seeds, NET_RECONNECT_SEEDS_TASK_DELAY);
   g_net_initialized = 1;
   return net_run();
 }
@@ -537,6 +558,7 @@ int deinit_net(void)
   mg_mgr_free(&g_net_mgr);
   vec_deinit(&g_net_connections);
   remove_task(g_net_resync_chain_task);
+  remove_task(g_net_reconnect_seeds_task);
   mtx_destroy(&g_net_lock);
   mtx_destroy(&g_net_recv_lock);
 

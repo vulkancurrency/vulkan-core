@@ -33,6 +33,7 @@
 #include "common/task.h"
 
 #define NET_MGR_POLL_DELAY 1000
+#define NET_RECONNECT_SEEDS_TASK_DELAY 10
 
 #ifdef __cplusplus
 extern "C"
@@ -78,6 +79,7 @@ int remove_net_connection_nolock(net_connection_t *net_connection);
 int remove_net_connection(net_connection_t *net_connection);
 
 int close_net_connection(net_connection_t *net_connection);
+int connect_net_to_seeds(void);
 
 int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
@@ -87,6 +89,8 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
 void setup_net_port_mapping(uint16_t port);
 int connect_net_to_peer(const char *address, uint16_t port);
+
+task_result_t reconnect_seeds(task_t *task, va_list args);
 
 int net_run(void);
 int init_net(void);
