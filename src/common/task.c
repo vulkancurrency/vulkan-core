@@ -57,10 +57,10 @@ int taskmgr_init(void)
 
 int taskmgr_tick(void)
 {
-  if (!queue_get_empty(g_taskmgr_task_queue))
+  if (queue_get_empty(g_taskmgr_task_queue) == 0)
   {
     task_t *task = queue_pop_left(g_taskmgr_task_queue);
-    if (!task)
+    if (task == NULL)
     {
       return 1;
     }
@@ -148,7 +148,7 @@ int taskmgr_scheduler_run()
 
 int taskmgr_shutdown(void)
 {
-  if (!g_taskmgr_running)
+  if (g_taskmgr_running == 0)
   {
     return 1;
   }
@@ -196,7 +196,7 @@ task_t* get_task_by_id(int id)
   for (int i = 0; i <= g_taskmgr_task_queue->max_index; i++)
   {
     task_t *task = queue_get(g_taskmgr_task_queue, i);
-    if (!task)
+    if (task == NULL)
     {
       continue;
     }
@@ -224,7 +224,7 @@ int remove_task(task_t *task)
 int remove_task_by_id(int id)
 {
   task_t *task = get_task_by_id(id);
-  if (!task)
+  if (task == NULL)
   {
     return 1;
   }
@@ -249,7 +249,7 @@ int free_task(task_t *task)
 int free_task_by_id(int id)
 {
   task_t *task = get_task_by_id(id);
-  if (!task)
+  if (task == NULL)
   {
     return 1;
   }
@@ -316,7 +316,7 @@ int remove_scheduler(task_scheduler_t *task_scheduler)
 int remove_scheduler_by_id(int id)
 {
   task_scheduler_t *task_scheduler = get_scheduler_by_id(id);
-  if (!task_scheduler)
+  if (task_scheduler == NULL)
   {
     return 1;
   }
@@ -334,7 +334,7 @@ int free_scheduler(task_scheduler_t *task_scheduler)
 int free_scheduler_by_id(int id)
 {
   task_scheduler_t *task_scheduler = get_scheduler_by_id(id);
-  if (!task_scheduler)
+  if (task_scheduler == NULL)
   {
     return 1;
   }
