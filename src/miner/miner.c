@@ -51,6 +51,7 @@ static int g_miner_is_mining = 0;
 static wallet_t *g_current_wallet = NULL;
 static task_t *g_miner_worker_status_task = NULL;
 
+static mtx_t g_miner_lock;
 static miner_worker_t *g_miner_workers[MAX_NUM_WORKER_THREADS];
 static uint16_t g_num_worker_threads = 0;
 
@@ -107,7 +108,7 @@ static void update_worker_hashrate(miner_worker_t *worker)
   worker->last_hashrate++;
 }
 
-block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
 {
   assert(worker != NULL);
   assert(wallet != NULL);
@@ -136,6 +137,14 @@ block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, bl
 
   compute_self_merkle_root(block);
   compute_self_block_hash(block);
+  return block;
+}
+
+block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+{
+  mtx_lock(&g_miner_lock);
+  block_t *block = construct_computable_block_nolock(worker, wallet, previous_block);
+  mtx_unlock(&g_miner_lock);
   return block;
 }
 
@@ -203,6 +212,8 @@ int start_mining(void)
     return 1;
   }
 
+  mtx_init(&g_miner_lock, mtx_recursive);
+
   g_miner_is_mining = 1;
   g_miner_worker_status_task = add_task(report_worker_mining_status, WORKER_STATUS_TASK_DELAY);
 
@@ -231,6 +242,7 @@ int stop_mining(void)
   }
 
   remove_task(g_miner_worker_status_task);
+  mtx_destroy(&g_miner_lock);
 
   for (int i = 0; i < g_num_worker_threads; i++)
   {
