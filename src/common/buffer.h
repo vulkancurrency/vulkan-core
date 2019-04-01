@@ -54,6 +54,7 @@ void buffer_set_offset(buffer_t *buffer, int offset);
 int buffer_get_offset(buffer_t *buffer);
 
 int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
+int buffer_clear(buffer_t *buffer);
 int buffer_free(buffer_t *buffer);
 
 int buffer_realloc(buffer_t *buffer, int size);

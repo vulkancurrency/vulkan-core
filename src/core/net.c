@@ -253,7 +253,7 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_t *
   // check to see if we have any remaining data in the buffer,
   // sometimes data for several packets can be combined in attempt to
   // reduce overhead when trying to send multiple packets...
-  size_t remaining_data_len = buffer_get_size(buffer);
+  size_t remaining_data_len = buffer_get_remaining_size(buffer);
   if (remaining_data_len > 0)
   {
     const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer);

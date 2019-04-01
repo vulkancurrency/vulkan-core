@@ -190,12 +190,12 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(string_equals(buffer_read_string(buffer), data2), 1);
   ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data2), 1);
 
-  ASSERT_EQ(buffer_get_size(buffer), 0);
+  ASSERT_EQ(buffer_get_remaining_size(buffer), 0);
   ASSERT_EQ(buffer_free(buffer), 0);
 
   buffer_t *buffer1 = buffer_init();
   ASSERT(buffer1 != NULL);
-  ASSERT_EQ(buffer_get_size(buffer1), 0);
+  ASSERT_EQ(buffer_get_remaining_size(buffer1), 0);
 
   // write
 
@@ -244,7 +244,7 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(buffer_read_int32(buffer1), -0x7FFFFFFF);
   ASSERT_EQ(buffer_read_int64(buffer1), -0x7FFFFFFFFFFFFFFF);
 
-  ASSERT_EQ(buffer_get_size(buffer1), 0);
+  ASSERT_EQ(buffer_get_remaining_size(buffer1), 0);
   ASSERT_EQ(buffer_free(buffer1), 0);
 
   PASS();

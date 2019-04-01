@@ -98,6 +98,15 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
   return 0;
 }
 
+int buffer_clear(buffer_t *buffer)
+{
+  free(buffer->data);
+  buffer->data = NULL;
+  buffer->size = 0;
+  buffer->offset = 0;
+  return 0;
+}
+
 int buffer_free(buffer_t *buffer)
 {
   if (buffer->data != NULL)
@@ -140,7 +149,6 @@ uint8_t* buffer_read(buffer_t *buffer, int size)
   uint8_t *data = malloc(size);
   memcpy(data, buffer->data + buffer->offset, size);
   buffer->offset += size;
-  buffer->size -= size;
   return data;
 }
 
@@ -171,7 +179,6 @@ uint8_t buffer_read_uint8(buffer_t *buffer)
 {
   uint8_t value = *(uint8_t*)(buffer->data + buffer->offset);
   buffer->offset += 1;
-  buffer->size -= 1;
   return value;
 }
 
@@ -187,7 +194,6 @@ int8_t buffer_read_int8(buffer_t *buffer)
 {
   int8_t value = *(int8_t*)(buffer->data + buffer->offset);
   buffer->offset += 1;
-  buffer->size -= 1;
   return value;
 }
 
@@ -203,7 +209,6 @@ uint16_t buffer_read_uint16(buffer_t *buffer)
 {
   uint16_t value = *(uint16_t*)(buffer->data + buffer->offset);
   buffer->offset += 2;
-  buffer->size -= 2;
   return value;
 }
 
@@ -219,7 +224,6 @@ int16_t buffer_read_int16(buffer_t *buffer)
 {
   int16_t value = *(int16_t*)(buffer->data + buffer->offset);
   buffer->offset += 2;
-  buffer->size -= 2;
   return value;
 }
 
@@ -235,7 +239,6 @@ uint32_t buffer_read_uint32(buffer_t *buffer)
 {
   uint32_t value = *(uint32_t*)(buffer->data + buffer->offset);
   buffer->offset += 4;
-  buffer->size -= 4;
   return value;
 }
 
@@ -251,7 +254,6 @@ int32_t buffer_read_int32(buffer_t *buffer)
 {
   int32_t value = *(int32_t*)(buffer->data + buffer->offset);
   buffer->offset += 4;
-  buffer->size -= 4;
   return value;
 }
 
@@ -267,7 +269,6 @@ uint64_t buffer_read_uint64(buffer_t *buffer)
 {
   uint64_t value = *(uint64_t*)(buffer->data + buffer->offset);
   buffer->offset += 8;
-  buffer->size -= 8;
   return value;
 }
 
@@ -283,7 +284,6 @@ int64_t buffer_read_int64(buffer_t *buffer)
 {
   int64_t value = *(int64_t*)(buffer->data + buffer->offset);
   buffer->offset += 8;
-  buffer->size -= 8;
   return value;
 }
 

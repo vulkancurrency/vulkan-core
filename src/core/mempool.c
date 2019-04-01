@@ -42,7 +42,7 @@ static mtx_t g_mempool_lock;
 static int g_mempool_initialized = 0;
 
 static vec_void_t g_mempool_transactions;
-static int g_mempool_num_transactions;
+static int g_mempool_num_transactions = 0;
 
 static task_t *g_mempool_flush_task = NULL;
 
