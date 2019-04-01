@@ -119,6 +119,15 @@ static void perform_shutdown(int sig)
     return;
   }
 
+  if (g_enable_miner)
+  {
+    if (stop_mining())
+    {
+      exit(1);
+      return;
+    }
+  }
+
   exit(0);
 }
 
@@ -301,6 +310,14 @@ int main(int argc, char **argv)
   if (deinit_net())
   {
     return 1;
+  }
+
+  if (g_enable_miner)
+  {
+    if (stop_mining())
+    {
+      return 1;
+    }
   }
 
   return 0;
