@@ -574,12 +574,16 @@ void free_message(uint32_t packet_id, void *message_object)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
       {
-
+        get_block_transaction_by_index_request_t *message = (get_block_transaction_by_index_request_t*)message_object;
+        free(message->block_hash);
+        free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
-
+        get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
+        free(message->block_hash);
+        free(message);
       }
       break;
     default:
