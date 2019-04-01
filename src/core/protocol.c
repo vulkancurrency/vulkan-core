@@ -1180,7 +1180,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
-        if (add_tx_to_mempool(message->transaction) == 0)
+        if (validate_and_add_tx_to_mempool(message->transaction) == 0)
         {
           // relay this incoming mempool transaction to our peers only if we do not already
           // know about the transaction, assuming our peers (or most of them) do not either...

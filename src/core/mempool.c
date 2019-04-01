@@ -149,6 +149,26 @@ int is_tx_in_mempool(transaction_t *tx)
 int add_tx_to_mempool_nolock(transaction_t *tx)
 {
   assert(tx != NULL);
+  mempool_entry_t *mempool_entry = init_mempool_entry();
+  mempool_entry->tx = tx;
+  mempool_entry->received_ts = get_current_time();
+
+  assert(vec_push(&g_mempool_transactions, mempool_entry) == 0);
+  g_mempool_num_transactions++;
+  return 0;
+}
+
+int add_tx_to_mempool(transaction_t *tx)
+{
+  mtx_lock(&g_mempool_lock);
+  int result = add_tx_to_mempool_nolock(tx);
+  mtx_unlock(&g_mempool_lock);
+  return result;
+}
+
+int validate_and_add_tx_to_mempool_nolock(transaction_t *tx)
+{
+  assert(tx != NULL);
   if (valid_transaction(tx) == 0)
   {
     return 1;
@@ -164,19 +184,13 @@ int add_tx_to_mempool_nolock(transaction_t *tx)
     return 1;
   }
 
-  mempool_entry_t *mempool_entry = init_mempool_entry();
-  mempool_entry->tx = tx;
-  mempool_entry->received_ts = get_current_time();
-
-  assert(vec_push(&g_mempool_transactions, mempool_entry) == 0);
-  g_mempool_num_transactions++;
-  return 0;
+  return add_tx_to_mempool_nolock(tx);
 }
 
-int add_tx_to_mempool(transaction_t *tx)
+int validate_and_add_tx_to_mempool(transaction_t *tx)
 {
   mtx_lock(&g_mempool_lock);
-  int result = add_tx_to_mempool_nolock(tx);
+  int result = validate_and_add_tx_to_mempool_nolock(tx);
   mtx_unlock(&g_mempool_lock);
   return result;
 }

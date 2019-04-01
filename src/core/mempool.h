@@ -62,6 +62,9 @@ int is_tx_in_mempool(transaction_t *tx);
 int add_tx_to_mempool_nolock(transaction_t *tx);
 int add_tx_to_mempool(transaction_t *tx);
 
+int validate_and_add_tx_to_mempool_nolock(transaction_t *tx);
+int validate_and_add_tx_to_mempool(transaction_t *tx);
+
 int remove_tx_from_mempool_nolock(transaction_t *tx);
 int remove_tx_from_mempool(transaction_t *tx);
 
