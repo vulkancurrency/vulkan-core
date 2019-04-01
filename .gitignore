@@ -55,6 +55,7 @@ dkms.conf
 *.DS_Store
 
 # Build
+3rdparty/
 bin/
 build/
 deps/
