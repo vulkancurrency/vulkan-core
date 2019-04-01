@@ -891,6 +891,19 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
   assert(block != NULL);
   if (validate_and_insert_block(block))
   {
+    // if any of this block's transactions are still in our memory pool,
+    // remove them since they have been "set in stone" within the block...
+    for (int i = 0; i < block->transaction_count; i++)
+    {
+      transaction_t *tx = block->transactions[i];
+      assert(tx != NULL);
+
+      if (is_tx_in_mempool(tx))
+      {
+        assert(remove_tx_from_mempool(tx) == 0);
+      }
+    }
+
     LOG_INFO("Received block at height: %u", g_protocol_sync_entry.last_sync_height);
     if (check_sync_status())
     {
@@ -906,19 +919,6 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
     // alternative chain, restore our previous working chain instead.
     assert(clear_sync_request(0) == 0);
     return 0;
-  }
-
-  // if any of this block's transactions are still in our memory pool,
-  // remove them since they have been "set in stone" within the block...
-  for (int i = 0; i < block->transaction_count; i++)
-  {
-    transaction_t *tx = block->transactions[i];
-    assert(tx != NULL);
-
-    if (is_tx_in_mempool(tx))
-    {
-      assert(remove_tx_from_mempool(tx) == 0);
-    }
   }
 
   return 0;
