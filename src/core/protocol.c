@@ -893,7 +893,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
   {
     // if any of this block's transactions are still in our memory pool,
     // remove them since they have been "set in stone" within the block...
-    for (int i = 0; i < block->transaction_count; i++)
+    for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
