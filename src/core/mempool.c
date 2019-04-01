@@ -301,7 +301,15 @@ int clear_expired_txs_in_mempool_nolock(void)
     assert(tx != NULL);
 
     uint32_t tx_age = get_current_time() - mempool_entry->received_ts;
-    if (tx_age > MEMPOOL_TX_EXPIRE_TIME)
+
+    // it is possible that multiple transactions spending money that has already
+    // been spent have made it into the mempool, check for invalid transactions based
+    // on the unspent transactions in the blockchain and remove those that are invalid...
+    if (valid_transaction(tx) == 0)
+    {
+      assert(vec_push(&transactions_to_remove, tx) == 0);
+    }
+    else if (tx_age > MEMPOOL_TX_EXPIRE_TIME)
     {
       LOG_DEBUG("Removing transaction: %s from mempool due to expired age: %u!", hash_to_str(tx->id), tx_age);
       assert(vec_push(&transactions_to_remove, tx) == 0);
