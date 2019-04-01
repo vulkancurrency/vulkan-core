@@ -900,6 +900,13 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
       }
     }
   }
+  else
+  {
+    // we failed to add this block when trying to switch to it's
+    // alternative chain, restore our previous working chain instead.
+    assert(clear_sync_request(0) == 0);
+    return 0;
+  }
 
   // if any of this block's transactions are still in our memory pool,
   // remove them since they have been "set in stone" within the block...
