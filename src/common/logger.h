@@ -33,7 +33,9 @@
 
 #include "tinycthread.h"
 
+#ifndef LOG_USE_COLOR
 #define LOG_USE_COLOR
+#endif
 
 typedef enum LoggerLevel
 {
@@ -55,11 +57,11 @@ static const char *LOGGING_LEVEL_NAMES[] = {
 };
 
 static const char *LOGGING_LEVEL_COLORS[] = {
-  "\x1b[94m",
-  "\x1b[36m",
   "\x1b[32m",
   "\x1b[33m",
   "\x1b[31m",
+  "\x1b[94m",
+  "\x1b[36m",
   "\x1b[35m"
 };
 
