@@ -136,6 +136,8 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block);
 
 int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_index);
 int add_transactions_to_block(block_t *block, transaction_t **transactions, uint32_t num_transactions);
+transaction_t* get_tx_by_hash_from_block(block_t *block, uint8_t *tx_hash);
+int32_t get_tx_index_from_tx_in_block(block_t *block, transaction_t *tx);
 
 int copy_block_transactions(block_t *block, block_t *other_block);
 int copy_block(block_t *block, block_t *other_block);

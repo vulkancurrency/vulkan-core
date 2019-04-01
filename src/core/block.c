@@ -538,6 +538,44 @@ int add_transactions_to_block(block_t *block, transaction_t **transactions, uint
   return 0;
 }
 
+transaction_t* get_tx_by_hash_from_block(block_t *block, uint8_t *tx_hash)
+{
+  assert(block != NULL);
+  assert(tx_hash != NULL);
+
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    if (compare_transaction_hash(tx->id, tx_hash))
+    {
+      return tx;
+    }
+  }
+
+  return NULL;
+}
+
+int32_t get_tx_index_from_tx_in_block(block_t *block, transaction_t *tx)
+{
+  assert(block != NULL);
+  assert(tx != NULL);
+
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *other_tx = block->transactions[i];
+    assert(other_tx != NULL);
+
+    if (other_tx == tx)
+    {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 int copy_block_transactions(block_t *block, block_t *other_block)
 {
   assert(block != NULL);

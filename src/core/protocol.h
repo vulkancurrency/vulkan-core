@@ -161,6 +161,19 @@ typedef struct
 typedef struct
 {
   uint8_t *block_hash;
+  uint8_t *tx_hash;
+} get_block_transaction_by_hash_request_t;
+
+typedef struct
+{
+  uint8_t *block_hash;
+  uint32_t tx_index;
+  transaction_t *transaction;
+} get_block_transaction_by_hash_response_t;
+
+typedef struct
+{
+  uint8_t *block_hash;
   uint32_t tx_index;
 } get_block_transaction_by_index_request_t;
 
@@ -218,6 +231,7 @@ int request_sync_next_transaction(net_connection_t *net_connection);
 
 int block_header_received(net_connection_t *net_connection, block_t *block);
 int block_header_sync_complete(net_connection_t *net_connection, block_t *block);
+int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index);
 int rollback_blockchain_and_resync(void);
 
 int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);

@@ -243,12 +243,26 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
-
+        uint8_t *block_hash = buffer_read_bytes(buffer);
+        uint8_t *tx_hash = buffer_read_bytes(buffer);
+        get_block_transaction_by_hash_request_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_request_t));
+        packed_message->block_hash = block_hash;
+        packed_message->tx_hash = tx_hash;
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
+        uint8_t *block_hash = buffer_read_bytes(buffer);
+        uint32_t tx_index = buffer_read_uint32(buffer);
+        transaction_t *transaction = deserialize_transaction(buffer);
+        assert(transaction != NULL);
 
+        get_block_transaction_by_hash_response_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_response_t));
+        packed_message->block_hash = block_hash;
+        packed_message->tx_index = tx_index;
+        packed_message->transaction = transaction;
+        *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
@@ -412,12 +426,28 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
+        uint8_t *block_hash = va_arg(args, uint8_t*);
+        uint8_t *tx_hash = va_arg(args, uint8_t*);
 
+        assert(block_hash != NULL);
+        assert(tx_hash != NULL);
+
+        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
+        buffer_write_bytes(buffer, tx_hash, HASH_SIZE);
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
+        uint8_t *block_hash = va_arg(args, uint8_t*);
+        uint32_t tx_index = va_arg(args, uint32_t);
+        transaction_t *transaction = va_arg(args, transaction_t*);
 
+        assert(block_hash != NULL);
+        assert(transaction != NULL);
+
+        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
+        buffer_write_uint32(buffer, tx_index);
+        serialize_transaction(buffer, transaction);
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
@@ -564,12 +594,17 @@ void free_message(uint32_t packet_id, void *message_object)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
-
+        get_block_transaction_by_hash_request_t *message = (get_block_transaction_by_hash_request_t*)message_object;
+        free(message->block_hash);
+        free(message->tx_hash);
+        free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
-
+        get_block_transaction_by_hash_response_t *message = (get_block_transaction_by_hash_response_t*)message_object;
+        free(message->block_hash);
+        free(message);
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
@@ -938,6 +973,49 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
   return 0;
 }
 
+int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index)
+{
+  assert(net_connection != NULL);
+  assert(transaction != NULL);
+
+  if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.tx_sync_initiated)
+  {
+    block_t *block = g_protocol_sync_entry.sync_pending_block;
+    assert(block != NULL);
+
+    assert(add_transaction_to_block(block, transaction, tx_index) == 0);
+    if (tx_index + 1 < g_protocol_sync_entry.tx_sync_num_txs)
+    {
+      if (request_sync_next_transaction(net_connection))
+      {
+        return 1;
+      }
+    }
+    else
+    {
+      // compute the block's merkle root again and compare it against
+      // the block's currently defined merkle root to see if
+      // this block does infact have the correct transactions it requires...
+      if (valid_merkle_root(block))
+      {
+        // must clear the tx sync entry cache before calling block_header_sync_complete,
+        // otherwise the entire sync entry cache will be cleared and this assertion will fail...
+        assert(clear_tx_sync_request() == 0);
+        if (block_header_sync_complete(net_connection, block))
+        {
+          return 1;
+        }
+      }
+      else
+      {
+        assert(clear_sync_request(0) == 0);
+      }
+    }
+  }
+
+  return 0;
+}
+
 int rollback_blockchain_and_resync(void)
 {
   uint32_t current_block_height = get_block_height();
@@ -1277,12 +1355,47 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
+        get_block_transaction_by_hash_request_t *message = (get_block_transaction_by_hash_request_t*)message_object;
+        block_t *block = get_block_from_hash(message->block_hash);
+        if (block != NULL)
+        {
+          transaction_t *transaction = get_tx_by_hash_from_block(block, message->tx_hash);
+          if (transaction == NULL)
+          {
+            return 1;
+          }
 
+          int32_t tx_index = get_tx_index_from_tx_in_block(block, transaction);
+          assert(tx_index >= 0);
+
+          if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP,
+            message->block_hash, tx_index, transaction))
+          {
+            return 1;
+          }
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
+        get_block_transaction_by_hash_response_t *message = (get_block_transaction_by_hash_response_t*)message_object;
+        if (has_block_by_hash(message->block_hash))
+        {
+          return 1;
+        }
 
+        block_t *block = g_protocol_sync_entry.sync_pending_block;
+        assert(block != NULL);
+
+        if (compare_block_hash(block->hash, message->block_hash) == 0)
+        {
+          return 1;
+        }
+
+        if (transaction_received(net_connection, message->transaction, message->tx_index))
+        {
+          return 1;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
@@ -1297,7 +1410,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             assert(transaction != NULL);
 
             if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP,
-              block->hash, message->tx_index, transaction))
+              message->block_hash, message->tx_index, transaction))
             {
               return 1;
             }
@@ -1308,42 +1421,22 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
         get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
-        if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.tx_sync_initiated)
+        if (has_block_by_hash(message->block_hash))
         {
-          block_t *block = g_protocol_sync_entry.sync_pending_block;
-          assert(block != NULL);
+          return 1;
+        }
 
-          transaction_t *transaction = message->transaction;
-          assert(transaction != NULL);
+        block_t *block = g_protocol_sync_entry.sync_pending_block;
+        assert(block != NULL);
 
-          assert(add_transaction_to_block(block, transaction, message->tx_index) == 0);
-          if (message->tx_index + 1 < g_protocol_sync_entry.tx_sync_num_txs)
-          {
-            if (request_sync_next_transaction(net_connection))
-            {
-              return 1;
-            }
-          }
-          else
-          {
-            // compute the block's merkle root again and compare it against
-            // the block's currently defined merkle root to see if
-            // this block does infact have the correct transactions it requires...
-            if (valid_merkle_root(block))
-            {
-              // must clear the tx sync entry cache before calling block_header_sync_complete,
-              // otherwise the entire sync entry cache will be cleared and this assertion will fail...
-              assert(clear_tx_sync_request() == 0);
-              if (block_header_sync_complete(net_connection, block))
-              {
-                return 1;
-              }
-            }
-            else
-            {
-              assert(clear_sync_request(0) == 0);
-            }
-          }
+        if (compare_block_hash(block->hash, message->block_hash) == 0)
+        {
+          return 1;
+        }
+
+        if (transaction_received(net_connection, message->transaction, message->tx_index))
+        {
+          return 1;
         }
       }
       break;
