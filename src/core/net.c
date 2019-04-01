@@ -29,9 +29,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
-#include <miniupnpc/upnperrors.h>
+#include <miniupnpc.h>
+#include <upnpcommands.h>
+#include <upnperrors.h>
 
 #include "common/logger.h"
 #include "common/mongoose.h"
