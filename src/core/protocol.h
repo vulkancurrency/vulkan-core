@@ -202,6 +202,9 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
 int deserialize_message(packet_t *packet, void **message);
 void free_message(uint32_t packet_id, void *message_object);
 
+net_connection_t* get_sync_net_connection(void);
+int get_sync_initiated(void);
+
 int init_sync_request(int height, net_connection_t *net_connection);
 int clear_sync_request(int sync_success);
 int check_sync_status(void);

@@ -360,6 +360,16 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
         net_connection_t *net_connection = get_net_connection(connection);
         assert(net_connection != NULL);
 
+        // check to see if we are trying to sync to the connection
+        // that was just closed by the remote host...
+        if (get_sync_initiated() && get_sync_net_connection() == net_connection)
+        {
+          if (check_sync_status())
+          {
+            assert(clear_sync_request(0) == 0);
+          }
+        }
+
         peer_t *peer = get_peer_from_net_connection(net_connection);
         if (peer != NULL)
         {

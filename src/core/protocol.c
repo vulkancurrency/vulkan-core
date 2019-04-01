@@ -588,6 +588,16 @@ void free_message(uint32_t packet_id, void *message_object)
   }
 }
 
+net_connection_t* get_sync_net_connection(void)
+{
+  return g_protocol_sync_entry.net_connection;
+}
+
+int get_sync_initiated(void)
+{
+  return g_protocol_sync_entry.sync_initiated;
+}
+
 int init_sync_request(int height, net_connection_t *net_connection)
 {
   if (g_protocol_sync_entry.sync_initiated)
