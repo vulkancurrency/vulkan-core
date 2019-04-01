@@ -29,6 +29,7 @@
 
 #define _XOPEN_SOURCE 500
 #define _XOPEN_SOURCE_EXTENDED 1
+#define __USE_XOPEN_EXTENDED 1
 #include <ftw.h>
 
 #include <limits.h>
