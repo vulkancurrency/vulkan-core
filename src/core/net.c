@@ -442,7 +442,7 @@ int net_run(void)
   while (g_net_initialized)
   {
     mg_mgr_poll(&g_net_mgr, NET_MGR_POLL_DELAY);
-    taskmgr_tick();
+    assert(taskmgr_tick() == 0);
   }
 
   return 0;
