@@ -25,7 +25,7 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.2)
 project(vulkan)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -42,23 +42,28 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 set(UPNP_STATIC ON)
 
-find_package(Threads QUIET)
-if(NOT Threads_FOUND)
-  message(FATAL_ERROR "Failed to find pthreads dependency!")
+if(UNIX)
+  find_package(Threads QUIET)
+  if(NOT Threads_FOUND)
+    message(FATAL_ERROR "Failed to find pthreads dependency!")
+  endif()
 endif()
 
 find_package(Sodium QUIET)
 if(NOT SODIUM_FOUND)
-  message(FATAL_ERROR "Failed to find libsodium dependency!")
+  add_subdirectory(external/libsodium-CMake)
+  include_directories(external/libsodium-CMake/src/libsodium/include)
+else()
+  include_directories(${SODIUM_INCLUDE_DIR})
 endif()
 
 find_package(RocksDB QUIET)
 if(NOT ROCKSDB_FOUND)
-  message(FATAL_ERROR "Failed to find rocksdb dependency!")
+  add_subdirectory(external/rocksdb)
+  include_directories(external/rocksdb/include)
+else()
+  include_directories(${ROCKSDB_INCLUDE_DIR})
 endif()
-
-include_directories(${SODIUM_INCLUDE_DIR})
-include_directories(${ROCKSDB_INCLUDE_DIR})
 
 add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
