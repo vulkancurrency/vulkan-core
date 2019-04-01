@@ -34,8 +34,13 @@ extern "C"
 {
 #endif
 
+#ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+#ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
 
 #define RANDOM_RANGE(min, max) MAX(rand() % max, min)
 
