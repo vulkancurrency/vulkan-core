@@ -489,7 +489,9 @@ block_t* block_from_serialized(uint8_t *data, uint32_t data_len)
   block_t *block = NULL;
   if (deserialize_block(buffer_iterator, &block))
   {
-
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+    return NULL;
   }
 
   buffer_iterator_free(buffer_iterator);
