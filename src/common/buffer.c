@@ -98,7 +98,8 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
 {
   assert(buffer != NULL);
   assert(other_buffer != NULL);
-  buffer_realloc(buffer, other_buffer->size);
+  assert(buffer_clear(buffer) == 0);
+  assert(buffer_realloc(buffer, other_buffer->size) == 0);
   memcpy(buffer->data, other_buffer->data, other_buffer->size);
   buffer->size = other_buffer->size;
   buffer->offset = other_buffer->offset;
@@ -133,19 +134,24 @@ int buffer_free(buffer_t *buffer)
 int buffer_realloc(buffer_t *buffer, size_t size)
 {
   assert(buffer != NULL);
-  if (buffer->size - buffer->offset < size)
+  if (buffer->size - buffer->offset >= size)
   {
-    buffer->data = realloc(buffer->data, buffer->size + size);
-    buffer->size += size;
+    return 1;
   }
 
+  buffer->data = realloc(buffer->data, buffer->size + size);
+  buffer->size += size;
   return 0;
 }
 
 int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, size);
+  if (buffer_realloc(buffer, size))
+  {
+    buffer->size += size;
+  }
+
   memcpy(buffer->data + buffer->offset, data, size);
   buffer->offset += size;
   return 0;
@@ -160,7 +166,11 @@ const uint8_t* buffer_get_data(buffer_t *buffer)
 int buffer_write_uint8(buffer_t *buffer, uint8_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 1);
+  if (buffer_realloc(buffer, 1))
+  {
+    buffer->size += 1;
+  }
+
   *(uint8_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 1;
   return 0;
@@ -169,7 +179,11 @@ int buffer_write_uint8(buffer_t *buffer, uint8_t value)
 int buffer_write_int8(buffer_t *buffer, int8_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 1);
+  if (buffer_realloc(buffer, 1))
+  {
+    buffer->size += 1;
+  }
+
   *(int8_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 1;
   return 0;
@@ -178,7 +192,11 @@ int buffer_write_int8(buffer_t *buffer, int8_t value)
 int buffer_write_uint16(buffer_t *buffer, uint16_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 2);
+  if (buffer_realloc(buffer, 2))
+  {
+    buffer->size += 2;
+  }
+
   *(uint16_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 2;
   return 0;
@@ -187,7 +205,11 @@ int buffer_write_uint16(buffer_t *buffer, uint16_t value)
 int buffer_write_int16(buffer_t *buffer, int16_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 2);
+  if (buffer_realloc(buffer, 2))
+  {
+    buffer->size += 2;
+  }
+
   *(int16_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 2;
   return 0;
@@ -196,7 +218,11 @@ int buffer_write_int16(buffer_t *buffer, int16_t value)
 int buffer_write_uint32(buffer_t *buffer, uint32_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 4);
+  if (buffer_realloc(buffer, 4))
+  {
+    buffer->size += 4;
+  }
+
   *(uint32_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 4;
   return 0;
@@ -205,7 +231,11 @@ int buffer_write_uint32(buffer_t *buffer, uint32_t value)
 int buffer_write_int32(buffer_t *buffer, int32_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 4);
+  if (buffer_realloc(buffer, 4))
+  {
+    buffer->size += 4;
+  }
+
   *(int32_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 4;
   return 0;
@@ -214,7 +244,11 @@ int buffer_write_int32(buffer_t *buffer, int32_t value)
 int buffer_write_uint64(buffer_t *buffer, uint64_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 8);
+  if (buffer_realloc(buffer, 8))
+  {
+    buffer->size += 8;
+  }
+
   *(uint64_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 8;
   return 0;
@@ -223,7 +257,11 @@ int buffer_write_uint64(buffer_t *buffer, uint64_t value)
 int buffer_write_int64(buffer_t *buffer, int64_t value)
 {
   assert(buffer != NULL);
-  buffer_realloc(buffer, 8);
+  if (buffer_realloc(buffer, 8))
+  {
+    buffer->size += 8;
+  }
+
   *(int64_t*)(buffer->data + buffer->offset) = value;
   buffer->offset += 8;
   return 0;
