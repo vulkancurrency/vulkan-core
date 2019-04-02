@@ -127,7 +127,7 @@ int compute_self_block_hash(block_t *block);
 
 int serialize_block_header(buffer_t *buffer, block_t *block);
 int serialize_block(buffer_t *buffer, block_t *block);
-block_t* deserialize_block(buffer_iterator_t *buffer_iterator);
+int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out);
 
 int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
 block_t* block_from_serialized(uint8_t *data, uint32_t data_len);

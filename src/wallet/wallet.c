@@ -72,27 +72,46 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   return 0;
 }
 
-wallet_t* deserialize_wallet(buffer_iterator_t *buffer_iterator)
+int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out)
 {
   assert(buffer_iterator != NULL);
   wallet_t *wallet = make_wallet();
 
-  uint8_t *secret_key = buffer_read_bytes(buffer_iterator);
+  uint8_t *secret_key = NULL;
+  if (buffer_read_bytes(buffer_iterator, &secret_key))
+  {
+    return 1;
+  }
+
   memcpy(&wallet->secret_key, secret_key, crypto_sign_SECRETKEYBYTES);
-
-  uint8_t *public_key = buffer_read_bytes(buffer_iterator);
-  memcpy(&wallet->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
-
-  uint8_t *address = buffer_read_bytes(buffer_iterator);
-  memcpy(&wallet->address, address, ADDRESS_SIZE);
-
-  wallet->balance = buffer_read_uint64(buffer_iterator);
-
   free(secret_key);
+
+  uint8_t *public_key = NULL;
+  if (buffer_read_bytes(buffer_iterator, &public_key))
+  {
+    return 1;
+  }
+
+  memcpy(&wallet->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
   free(public_key);
+
+  uint8_t *address = NULL;
+  if (buffer_read_bytes(buffer_iterator, &address))
+  {
+    return 1;
+  }
+
+  memcpy(&wallet->address, address, ADDRESS_SIZE);
   free(address);
 
-  return wallet;
+  wallet->balance = 0;
+  if (buffer_read_uint64(buffer_iterator, &wallet->balance))
+  {
+    return 1;
+  }
+
+  *wallet_out = wallet;
+  return 0;
 }
 
 /*
@@ -210,8 +229,18 @@ wallet_t* get_wallet(const char *wallet_filename)
   buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
-  wallet_t *wallet = deserialize_wallet(buffer_iterator);
-  assert(wallet != NULL);
+  wallet_t *wallet = NULL;
+  if (deserialize_wallet(buffer_iterator, &wallet))
+  {
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+
+    rocksdb_free(wallet_data);
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    rocksdb_close(db);
+    return NULL;
+  }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);

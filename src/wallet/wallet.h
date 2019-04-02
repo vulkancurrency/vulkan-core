@@ -52,7 +52,7 @@ wallet_t* make_wallet(void);
 int free_wallet(wallet_t* wallet);
 
 int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
-wallet_t* deserialize_wallet(buffer_iterator_t *buffer_iterator);
+int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
 
 rocksdb_t* open_wallet(const char *wallet_filename, char *err);
 wallet_t* new_wallet(const char *wallet_filename);

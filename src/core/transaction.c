@@ -315,28 +315,45 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
   return 0;
 }
 
-input_transaction_t* deserialize_txin(buffer_iterator_t *buffer_iterator)
+int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out)
 {
   assert(buffer_iterator != NULL);
-
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
+  uint8_t *prev_tx_id = NULL;
+  if (buffer_read_bytes(buffer_iterator, &prev_tx_id))
+  {
+    return 1;
+  }
 
-  uint8_t *prev_tx_id = buffer_read_bytes(buffer_iterator);
   memcpy(txin->transaction, prev_tx_id, HASH_SIZE);
-
-  txin->txout_index = buffer_read_uint32(buffer_iterator);
-
-  uint8_t *signature = buffer_read_bytes(buffer_iterator);
-  memcpy(txin->signature, signature, crypto_sign_BYTES);
-
-  uint8_t *public_key = buffer_read_bytes(buffer_iterator);
-  memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
-
   free(prev_tx_id);
+
+  txin->txout_index = 0;
+  if (buffer_read_uint32(buffer_iterator, &txin->txout_index))
+  {
+    return 1;
+  }
+
+  uint8_t *signature = NULL;
+  if (buffer_read_bytes(buffer_iterator, &signature))
+  {
+    return 1;
+  }
+
+  memcpy(txin->signature, signature, crypto_sign_BYTES);
   free(signature);
+
+  uint8_t *public_key = NULL;
+  if (buffer_read_bytes(buffer_iterator, &public_key))
+  {
+    return 1;
+  }
+
+  memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
   free(public_key);
 
-  return txin;
+  *txin_out = txin;
+  return 0;
 }
 
 int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout)
@@ -359,17 +376,27 @@ int serialize_txout(buffer_t *buffer, output_transaction_t *txout)
   return 0;
 }
 
-output_transaction_t* deserialize_txout(buffer_iterator_t *buffer_iterator)
+int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out)
 {
   assert(buffer_iterator != NULL);
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
-  txout->amount = buffer_read_uint64(buffer_iterator);
+  txout->amount = 0;
+  if (buffer_read_uint64(buffer_iterator, &txout->amount))
+  {
+    return 1;
+  }
 
-  uint8_t *address = buffer_read_bytes(buffer_iterator);
+  uint8_t *address = NULL;
+  if (buffer_read_bytes(buffer_iterator, &address))
+  {
+    return 1;
+  }
+
   memcpy(txout->address, address, ADDRESS_SIZE);
-
   free(address);
-  return txout;
+
+  *txout_out = txout;
+  return 0;
 }
 
 int serialize_transaction_header(buffer_t *buffer, transaction_t *tx)
@@ -440,16 +467,30 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
   return 0;
 }
 
-transaction_t* deserialize_transaction(buffer_iterator_t *buffer_iterator)
+int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out)
 {
   assert(buffer_iterator != NULL);
   transaction_t *tx = malloc(sizeof(transaction_t));
+  uint8_t *id = NULL;
+  if (buffer_read_bytes(buffer_iterator, &id))
+  {
+    return 1;
+  }
 
-  uint8_t *id = buffer_read_bytes(buffer_iterator);
   memcpy(tx->id, id, HASH_SIZE);
+  free(id);
 
-  tx->txin_count = buffer_read_uint32(buffer_iterator);
-  tx->txout_count = buffer_read_uint32(buffer_iterator);
+  tx->txin_count = 0;
+  if (buffer_read_uint32(buffer_iterator, &tx->txin_count))
+  {
+    return 1;
+  }
+
+  tx->txout_count = 0;
+  if (buffer_read_uint32(buffer_iterator, &tx->txout_count))
+  {
+    return 1;
+  }
 
   tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
@@ -457,21 +498,29 @@ transaction_t* deserialize_transaction(buffer_iterator_t *buffer_iterator)
   // read txins
   for (uint32_t i = 0; i < tx->txin_count; i++)
   {
-    input_transaction_t *txin = deserialize_txin(buffer_iterator);
-    assert(txin != NULL);
+    input_transaction_t *txin = NULL;
+    if (deserialize_txin(buffer_iterator, &txin))
+    {
+      return 1;
+    }
+
     tx->txins[i] = txin;
   }
 
   // read txouts
   for (uint32_t i = 0; i < tx->txout_count; i++)
   {
-    output_transaction_t *txout = deserialize_txout(buffer_iterator);
-    assert(txout != NULL);
+    output_transaction_t *txout = NULL;
+    if (deserialize_txout(buffer_iterator, &txout))
+    {
+      return 1;
+    }
+
     tx->txouts[i] = txout;
   }
 
-  free(id);
-  return tx;
+  *tx_out = tx;
+  return 0;
 }
 
 int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx)
@@ -501,8 +550,13 @@ transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len)
   buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
-  transaction_t *tx = deserialize_transaction(buffer_iterator);
-  assert(tx != NULL);
+  transaction_t *tx = NULL;
+  if (deserialize_transaction(buffer_iterator, &tx))
+  {
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+    return NULL;
+  }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
@@ -520,19 +574,33 @@ int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unsp
   return 0;
 }
 
-unspent_output_transaction_t* deserialize_unspent_txout(buffer_iterator_t *buffer_iterator)
+int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output_transaction_t **unspent_txout_out)
 {
   assert(buffer_iterator != NULL);
   unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
-  unspent_txout->amount = buffer_read_uint64(buffer_iterator);
+  unspent_txout->amount = 0;
+  if (buffer_read_uint64(buffer_iterator, &unspent_txout->amount))
+  {
+    return 1;
+  }
 
-  uint8_t *address = buffer_read_bytes(buffer_iterator);
+  uint8_t *address = NULL;
+  if (buffer_read_bytes(buffer_iterator, &address))
+  {
+    return 1;
+  }
+
   memcpy(unspent_txout->address, address, ADDRESS_SIZE);
-
-  unspent_txout->spent = buffer_read_uint8(buffer_iterator);
-
   free(address);
-  return unspent_txout;
+
+  unspent_txout->spent = 0;
+  if (buffer_read_uint8(buffer_iterator, &unspent_txout->spent))
+  {
+    return 1;
+  }
+
+  *unspent_txout_out = unspent_txout;
+  return 0;
 }
 
 int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx)
@@ -559,28 +627,48 @@ int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspe
   return 0;
 }
 
-unspent_transaction_t* deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator)
+int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_transaction_t **unspent_tx_out)
 {
   assert(buffer_iterator != NULL);
   unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
 
-  uint8_t *id = buffer_read_bytes(buffer_iterator);
-  memcpy(unspent_tx->id, id, HASH_SIZE);
+  uint8_t *id = NULL;
+  if (buffer_read_bytes(buffer_iterator, &id))
+  {
+    return 1;
+  }
 
-  unspent_tx->coinbase = buffer_read_uint8(buffer_iterator);
-  unspent_tx->unspent_txout_count = buffer_read_uint32(buffer_iterator);
+  memcpy(unspent_tx->id, id, HASH_SIZE);
+  free(id);
+
+  unspent_tx->coinbase = 0;
+  if (buffer_read_uint8(buffer_iterator, &unspent_tx->coinbase))
+  {
+    return 1;
+  }
+
+  unspent_tx->unspent_txout_count = 0;
+  if (buffer_read_uint32(buffer_iterator, &unspent_tx->unspent_txout_count))
+  {
+    return 1;
+  }
+
   unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * unspent_tx->unspent_txout_count);
 
   // read unspent txouts
   for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
-    unspent_output_transaction_t *unspent_txout = deserialize_unspent_txout(buffer_iterator);
-    assert(unspent_txout != NULL);
+    unspent_output_transaction_t *unspent_txout = NULL;
+    if (deserialize_unspent_txout(buffer_iterator, &unspent_txout))
+    {
+      return 1;
+    }
+
     unspent_tx->unspent_txouts[i] = unspent_txout;
   }
 
-  free(id);
-  return unspent_tx;
+  *unspent_tx_out = unspent_tx;
+  return 0;
 }
 
 unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout)
@@ -645,8 +733,13 @@ unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32
   buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
-  unspent_transaction_t *unspent_tx = deserialize_unspent_transaction(buffer_iterator);
-  assert(unspent_tx != NULL);
+  unspent_transaction_t *unspent_tx = NULL;
+  if (deserialize_unspent_transaction(buffer_iterator, &unspent_tx))
+  {
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+    return NULL;
+  }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);

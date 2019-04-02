@@ -94,8 +94,8 @@ TEST can_serialize_block(void)
   // deserialize block
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
-  block_t *deserialized_block = deserialize_block(buffer_iterator);
-  ASSERT(deserialized_block != NULL);
+  block_t *deserialized_block = NULL;
+  ASSERT(deserialize_block(buffer_iterator, &deserialized_block) == 0);
   ASSERT(deserialize_transactions_to_block(buffer_iterator, deserialized_block) == 0);
 
   buffer_iterator_free(buffer_iterator);

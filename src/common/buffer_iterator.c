@@ -46,14 +46,48 @@ int buffer_iterator_free(buffer_iterator_t *buffer_iterator)
   return 0;
 }
 
-uint8_t* buffer_read(buffer_iterator_t *buffer_iterator, size_t size)
+int buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer != NULL);
+  buffer_iterator->buffer = buffer;
+  return 0;
+}
+
+buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator)
+{
+  assert(buffer_iterator != NULL);
+  return buffer_iterator->buffer;
+}
+
+int buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset)
+{
+  assert(buffer_iterator != NULL);
+  buffer_iterator->offset = offset;
+  return 0;
+}
+
+size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator)
+{
+  assert(buffer_iterator != NULL);
+  return buffer_iterator->offset;
+}
+
+int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
+  if (buffer_get_remaining_size(buffer_iterator) < size)
+  {
+    return 1;
+  }
+
   uint8_t *data = malloc(size);
   memcpy(data, buffer_iterator->buffer->data + buffer_iterator->offset, size);
+  *bytes = data;
+
   buffer_iterator->offset += size;
-  return data;
+  return 0;
 }
 
 int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator)
@@ -70,90 +104,140 @@ const uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator)
   return buffer_iterator->buffer->data + buffer_iterator->offset;
 }
 
-uint8_t buffer_read_uint8(buffer_iterator_t *buffer_iterator)
+int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint8_t value = *(uint8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 1)
+  {
+    return 1;
+  }
+
+  *value = *(uint8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 1;
-  return value;
+  return 0;
 }
 
-int8_t buffer_read_int8(buffer_iterator_t *buffer_iterator)
+int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  int8_t value = *(int8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 1)
+  {
+    return 1;
+  }
+
+  *value = *(int8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 1;
-  return value;
+  return 0;
 }
 
-uint16_t buffer_read_uint16(buffer_iterator_t *buffer_iterator)
+int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint16_t value = *(uint16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 2)
+  {
+    return 1;
+  }
+
+  *value = *(uint16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 2;
-  return value;
+  return 0;
 }
 
-int16_t buffer_read_int16(buffer_iterator_t *buffer_iterator)
+int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  int16_t value = *(int16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 2)
+  {
+    return 1;
+  }
+
+  *value = *(int16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 2;
-  return value;
+  return 0;
 }
 
-uint32_t buffer_read_uint32(buffer_iterator_t *buffer_iterator)
+int buffer_read_uint32(buffer_iterator_t *buffer_iterator, uint32_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint32_t value = *(uint32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 4)
+  {
+    return 1;
+  }
+
+  *value = *(uint32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 4;
-  return value;
+  return 0;
 }
 
-int32_t buffer_read_int32(buffer_iterator_t *buffer_iterator)
+int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  int32_t value = *(int32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 4)
+  {
+    return 1;
+  }
+
+  *value = *(int32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 4;
-  return value;
+  return 0;
 }
 
-uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator)
+uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint64_t value = *(uint64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 8)
+  {
+    return 1;
+  }
+
+  *value = *(uint64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 8;
-  return value;
+  return 0;
 }
 
-int64_t buffer_read_int64(buffer_iterator_t *buffer_iterator)
+int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  int64_t value = *(int64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  if (buffer_get_remaining_size(buffer_iterator) < 8)
+  {
+    return 1;
+  }
+
+  *value = *(int64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
   buffer_iterator->offset += 8;
-  return value;
+  return 0;
 }
 
-char* buffer_read_string(buffer_iterator_t *buffer_iterator)
+int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint32_t size = buffer_read_uint32(buffer_iterator);
-  return (char*)buffer_read(buffer_iterator, size);
+  uint32_t size = 0;
+  if (buffer_read_uint32(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, (uint8_t**)string);
 }
 
-uint8_t* buffer_read_bytes(buffer_iterator_t *buffer_iterator)
+int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint32_t size = buffer_read_uint32(buffer_iterator);
-  return buffer_read(buffer_iterator, size);
+  uint32_t size = 0;
+  if (buffer_read_uint32(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, bytes);
 }

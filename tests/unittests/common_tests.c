@@ -183,17 +183,36 @@ TEST pack_and_unpack_buffer(void)
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
   // read messages
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg1), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg2), 1);
+  char *str = NULL;
+  uint8_t *bytes = NULL;
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, msg, strlen(msg));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, msg1, strlen(msg1));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, msg2, strlen(msg2));
 
   // read bytes
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data1), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data1), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data2), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data2), 1);
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data, strlen(data));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data, strlen(data));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data1, strlen(data1));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data1, strlen(data1));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data2, strlen(data2));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data2, strlen(data2));
 
   ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);
   ASSERT(buffer_iterator_free(buffer_iterator) == 0);
@@ -234,21 +253,54 @@ TEST pack_and_unpack_buffer(void)
   buffer_iterator_t *buffer_iterator1 = buffer_iterator_init(buffer1);
 
   // unsigned
-  ASSERT_EQ(buffer_read_uint8(buffer_iterator1), 0xFF);
-  ASSERT_EQ(buffer_read_uint16(buffer_iterator1), 0xFFFF);
-  ASSERT_EQ(buffer_read_uint32(buffer_iterator1), 0xFFFFFFFF);
-  ASSERT_EQ(buffer_read_uint64(buffer_iterator1), 0xFFFFFFFFFFFFFFFF);
+  uint8_t v1 = 0;
+  ASSERT(buffer_read_uint8(buffer_iterator1, &v1) == 0);
+  ASSERT_EQ(v1, 0xFF);
+
+  uint16_t v2 = 0;
+  ASSERT(buffer_read_uint16(buffer_iterator1, &v2) == 0);
+  ASSERT_EQ(v2, 0xFFFF);
+
+  uint32_t v3 = 0;
+  ASSERT(buffer_read_uint32(buffer_iterator1, &v3) == 0);
+  ASSERT_EQ(v3, 0xFFFFFFFF);
+
+  uint64_t v4 = 0;
+  ASSERT(buffer_read_uint64(buffer_iterator1, &v4) == 0);
+  ASSERT_EQ(v4, 0xFFFFFFFFFFFFFFFF);
 
   // signed
-  ASSERT_EQ(buffer_read_int8(buffer_iterator1), 0x7F);
-  ASSERT_EQ(buffer_read_int16(buffer_iterator1), 0x7FFF);
-  ASSERT_EQ(buffer_read_int32(buffer_iterator1), 0x7FFFFFFF);
-  ASSERT_EQ(buffer_read_int64(buffer_iterator1), 0x7FFFFFFFFFFFFFFF);
+  int8_t v5 = 0;
+  ASSERT(buffer_read_int8(buffer_iterator1, &v5) == 0);
+  ASSERT_EQ(v5, 0x7F);
 
-  ASSERT_EQ(buffer_read_int8(buffer_iterator1), -0x7F);
-  ASSERT_EQ(buffer_read_int16(buffer_iterator1), -0x7FFF);
-  ASSERT_EQ(buffer_read_int32(buffer_iterator1), -0x7FFFFFFF);
-  ASSERT_EQ(buffer_read_int64(buffer_iterator1), -0x7FFFFFFFFFFFFFFF);
+  int16_t v6 = 0;
+  ASSERT(buffer_read_int16(buffer_iterator1, &v6) == 0);
+  ASSERT_EQ(v6, 0x7FFF);
+
+  int32_t v7 = 0;
+  ASSERT(buffer_read_int32(buffer_iterator1, &v7) == 0);
+  ASSERT_EQ(v7, 0x7FFFFFFF);
+
+  int64_t v8 = 0;
+  ASSERT(buffer_read_int64(buffer_iterator1, &v8) == 0);
+  ASSERT_EQ(v8, 0x7FFFFFFFFFFFFFFF);
+
+  int8_t v9 = 0;
+  ASSERT(buffer_read_int8(buffer_iterator1, &v9) == 0);
+  ASSERT_EQ(v9, -0x7F);
+
+  int16_t v10 = 0;
+  ASSERT(buffer_read_int16(buffer_iterator1, &v10) == 0);
+  ASSERT_EQ(v10, -0x7FFF);
+
+  int32_t v11 = 0;
+  ASSERT(buffer_read_int32(buffer_iterator1, &v11) == 0);
+  ASSERT_EQ(v11, -0x7FFFFFFF);
+
+  int64_t v12 = 0;
+  ASSERT(buffer_read_int64(buffer_iterator1, &v12) == 0);
+  ASSERT_EQ(v12, -0x7FFFFFFFFFFFFFFF);
 
   ASSERT(buffer_get_remaining_size(buffer_iterator1) == 0);
   ASSERT(buffer_iterator_free(buffer_iterator1) == 0);

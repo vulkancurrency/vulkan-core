@@ -762,8 +762,17 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
   // deserialize the block
-  block_t *block = deserialize_block(buffer_iterator);
-  assert(block != NULL);
+  block_t *block = NULL;
+  if (deserialize_block(buffer_iterator, &block))
+  {
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+
+    rocksdb_free(serialized_block);
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    return NULL;
+  }
 
   // deserialize the block's transactions
   assert(deserialize_transactions_to_block(buffer_iterator, block) == 0);

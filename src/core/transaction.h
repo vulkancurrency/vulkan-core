@@ -128,21 +128,24 @@ int compute_self_tx_id(transaction_t *tx);
 
 int serialize_txin_header(buffer_t *buffer, input_transaction_t *txin);
 int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
-input_transaction_t* deserialize_txin(buffer_iterator_t *buffer_iterator);
+int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out);
+
 int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout);
 int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
-output_transaction_t* deserialize_txout(buffer_iterator_t *buffer_iterator);
+int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out);
+
 int serialize_transaction_header(buffer_t *buffer, transaction_t *tx);
 int serialize_transaction(buffer_t *buffer, transaction_t *tx);
-transaction_t* deserialize_transaction(buffer_iterator_t *buffer_iterator);
+int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out);
 
 int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx);
 transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len);
 
 int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unspent_txout);
-unspent_output_transaction_t* deserialize_unspent_txout(buffer_iterator_t *buffer_iterator);
+int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output_transaction_t **unspent_txout_out);
+
 int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx);
-unspent_transaction_t* deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator);
+int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_transaction_t **unspent_tx_out);
 
 unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout);
 unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);

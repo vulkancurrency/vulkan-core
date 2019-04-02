@@ -119,8 +119,8 @@ TEST can_serialize_deserialize_packet(void)
   buffer_t *buffer3 = buffer_init_data(0, packet2->data, packet2->size);
   buffer_iterator_t *buffer_iterator2 = buffer_iterator_init(buffer3);
 
-  block_t *deserialized_block = deserialize_block(buffer_iterator2);
-  ASSERT(deserialized_block != NULL);
+  block_t *deserialized_block = NULL;
+  ASSERT(deserialize_block(buffer_iterator2, &deserialized_block) == 0);
 
   buffer_iterator_free(buffer_iterator2);
   buffer_free(buffer3);
