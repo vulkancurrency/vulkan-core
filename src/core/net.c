@@ -305,7 +305,7 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
     packet_t *packet = make_packet();
     if (deserialize_packet(packet, buffer_iterator))
     {
-
+      assert(close_net_connection(net_connection) == 0);
     }
     else
     {
