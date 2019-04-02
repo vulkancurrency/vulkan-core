@@ -78,7 +78,7 @@ uint8_t logger_get_quiet(void)
 
 int logger_log(logger_level_t level, const char *file, int line, const char *fmt, ...)
 {
-  if (!g_logger_is_open)
+  if (g_logger_is_open == 0)
   {
     return 1;
   }
@@ -94,7 +94,7 @@ int logger_log(logger_level_t level, const char *file, int line, const char *fmt
   time_t t = time(NULL);
   struct tm *lt = localtime(&t);
 
-  if (!quiet)
+  if (quiet == 0)
   {
     va_list args;
     char buf[16];
@@ -154,7 +154,7 @@ int logger_open(void)
 
 int logger_close(void)
 {
-  if (!g_logger_is_open)
+  if (g_logger_is_open == 0)
   {
     return 1;
   }

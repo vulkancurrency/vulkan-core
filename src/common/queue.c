@@ -163,7 +163,7 @@ int queue_remove(queue_t *queue, int index)
 
 int queue_remove_object(queue_t *queue, void *queue_object)
 {
-  if (!queue_object)
+  if (queue_object == NULL)
   {
     return 1;
   }
