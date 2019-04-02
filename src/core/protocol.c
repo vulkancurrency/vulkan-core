@@ -68,16 +68,16 @@ int serialize_packet(buffer_t *buffer, packet_t *packet)
   return 0;
 }
 
-int deserialize_packet(packet_t *packet, buffer_t *buffer)
+int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator)
 {
   assert(packet != NULL);
-  assert(buffer != NULL);
+  assert(buffer_iterator != NULL);
 
-  packet->id = buffer_read_uint32(buffer);
-  packet->size = buffer_read_uint32(buffer);
+  packet->id = buffer_read_uint32(buffer_iterator);
+  packet->size = buffer_read_uint32(buffer_iterator);
   if (packet->size > 0)
   {
-    uint8_t *data = buffer_read_bytes(buffer);
+    uint8_t *data = buffer_read_bytes(buffer_iterator);
     packet->data = malloc(packet->size);
     memcpy(packet->data, data, packet->size);
     free(data);
@@ -113,11 +113,12 @@ int deserialize_message(packet_t *packet, void **message)
     buffer = buffer_init();
   }
 
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
   switch (packet->id)
   {
     case PKT_TYPE_CONNECT_REQ:
       {
-        uint32_t host_port = buffer_read_uint32(buffer);
+        uint32_t host_port = buffer_read_uint32(buffer_iterator);
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
         packed_message->host_port = host_port;
         *message = packed_message;
@@ -137,8 +138,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_PEERLIST_RESP:
       {
-        uint32_t peerlist_data_size = buffer_read_uint32(buffer);
-        uint8_t *peerlist_data = buffer_read_bytes(buffer);
+        uint32_t peerlist_data_size = buffer_read_uint32(buffer_iterator);
+        uint8_t *peerlist_data = buffer_read_bytes(buffer_iterator);
         get_peerlist_resp_t *packed_message = malloc(sizeof(get_peerlist_resp_t));
         packed_message->peerlist_data_size = peerlist_data_size;
         packed_message->peerlist_data = peerlist_data;
@@ -147,7 +148,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_INCOMING_BLOCK:
       {
-        block_t *block = deserialize_block(buffer);
+        block_t *block = deserialize_block(buffer_iterator);
         assert(block != NULL);
 
         incoming_block_t *packed_message = malloc(sizeof(incoming_block_t));
@@ -157,7 +158,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
-        transaction_t *transaction = deserialize_transaction(buffer);
+        transaction_t *transaction = deserialize_transaction(buffer_iterator);
         assert(transaction != NULL);
 
         incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
@@ -173,8 +174,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
       {
-        uint32_t height = buffer_read_uint32(buffer);
-        uint8_t *hash = buffer_read_bytes(buffer);
+        uint32_t height = buffer_read_uint32(buffer_iterator);
+        uint8_t *hash = buffer_read_bytes(buffer_iterator);
         assert(hash != NULL);
 
         get_block_height_response_t *packed_message = malloc(sizeof(get_block_height_response_t));
@@ -185,7 +186,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
-        uint8_t *hash = buffer_read_bytes(buffer);
+        uint8_t *hash = buffer_read_bytes(buffer_iterator);
         get_block_by_hash_request_t *packed_message = malloc(sizeof(get_block_by_hash_request_t));
         packed_message->hash = hash;
         *message = packed_message;
@@ -193,8 +194,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
-        uint32_t height = buffer_read_uint32(buffer);
-        block_t *block = deserialize_block(buffer);
+        uint32_t height = buffer_read_uint32(buffer_iterator);
+        block_t *block = deserialize_block(buffer_iterator);
         assert(block != NULL);
 
         get_block_by_hash_response_t *packed_message = malloc(sizeof(get_block_by_hash_response_t));
@@ -205,7 +206,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
-        uint32_t height = buffer_read_uint32(buffer);
+        uint32_t height = buffer_read_uint32(buffer_iterator);
         get_block_by_height_request_t *packed_message = malloc(sizeof(get_block_by_height_request_t));
         packed_message->height = height;
         *message = packed_message;
@@ -213,8 +214,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
-        uint8_t *hash = buffer_read_bytes(buffer);
-        block_t *block = deserialize_block(buffer);
+        uint8_t *hash = buffer_read_bytes(buffer_iterator);
+        block_t *block = deserialize_block(buffer_iterator);
         assert(block != NULL);
 
         get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
@@ -225,7 +226,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
-        uint8_t *hash = buffer_read_bytes(buffer);
+        uint8_t *hash = buffer_read_bytes(buffer_iterator);
         get_block_num_transactions_request_t *packed_message = malloc(sizeof(get_block_num_transactions_request_t));
         packed_message->hash = hash;
         *message = packed_message;
@@ -233,8 +234,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
-        uint8_t *hash = buffer_read_bytes(buffer);
-        uint64_t num_transactions = buffer_read_uint64(buffer);
+        uint8_t *hash = buffer_read_bytes(buffer_iterator);
+        uint64_t num_transactions = buffer_read_uint64(buffer_iterator);
         get_block_num_transactions_response_t *packed_message = malloc(sizeof(get_block_num_transactions_response_t));
         packed_message->hash = hash;
         packed_message->num_transactions = num_transactions;
@@ -243,8 +244,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
-        uint8_t *block_hash = buffer_read_bytes(buffer);
-        uint8_t *tx_hash = buffer_read_bytes(buffer);
+        uint8_t *block_hash = buffer_read_bytes(buffer_iterator);
+        uint8_t *tx_hash = buffer_read_bytes(buffer_iterator);
         get_block_transaction_by_hash_request_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_request_t));
         packed_message->block_hash = block_hash;
         packed_message->tx_hash = tx_hash;
@@ -253,9 +254,9 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
-        uint8_t *block_hash = buffer_read_bytes(buffer);
-        uint32_t tx_index = buffer_read_uint32(buffer);
-        transaction_t *transaction = deserialize_transaction(buffer);
+        uint8_t *block_hash = buffer_read_bytes(buffer_iterator);
+        uint32_t tx_index = buffer_read_uint32(buffer_iterator);
+        transaction_t *transaction = deserialize_transaction(buffer_iterator);
         assert(transaction != NULL);
 
         get_block_transaction_by_hash_response_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_response_t));
@@ -267,8 +268,8 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
       {
-        uint8_t *block_hash = buffer_read_bytes(buffer);
-        uint32_t tx_index = buffer_read_uint32(buffer);
+        uint8_t *block_hash = buffer_read_bytes(buffer_iterator);
+        uint32_t tx_index = buffer_read_uint32(buffer_iterator);
         get_block_transaction_by_index_request_t *packed_message = malloc(sizeof(get_block_transaction_by_index_request_t));
         packed_message->block_hash = block_hash;
         packed_message->tx_index = tx_index;
@@ -277,9 +278,9 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
-        uint8_t *block_hash = buffer_read_bytes(buffer);
-        uint32_t tx_index = buffer_read_uint32(buffer);
-        transaction_t *transaction = deserialize_transaction(buffer);
+        uint8_t *block_hash = buffer_read_bytes(buffer_iterator);
+        uint32_t tx_index = buffer_read_uint32(buffer_iterator);
+        transaction_t *transaction = deserialize_transaction(buffer_iterator);
         assert(transaction != NULL);
 
         get_block_transaction_by_index_response_t *packed_message = malloc(sizeof(get_block_transaction_by_index_response_t));
@@ -291,19 +292,22 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     default:
       LOG_DEBUG("Could not deserialize packet with unknown packet id: %u!", packet->id);
+      buffer_iterator_free(buffer_iterator);
       buffer_free(buffer);
       return 1;
   }
 
   // check to see if there is any extraneous data in the buffer
-  uint32_t remaining_size = buffer_get_remaining_size(buffer);
+  uint32_t remaining_size = buffer_get_remaining_size(buffer_iterator);
   if (remaining_size > 0)
   {
-    LOG_ERROR("Could not deserialize packet, packet has extraneous data of size: %u!", remaining_size);
+    LOG_ERROR("Could not deserialize packet with id: %u, packet has extraneous data of size: %u!", packet->id, remaining_size);
+    buffer_iterator_free(buffer_iterator);
     buffer_free(buffer);
     return 1;
   }
 
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
   return 0;
 }
@@ -938,7 +942,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
 {
   assert(block != NULL);
-  if (validate_and_insert_block(block))
+  if (validate_and_insert_block(block) == 0)
   {
     // if any of this block's transactions are still in our memory pool,
     // remove them since they have been "set in stone" within the block...
@@ -1132,11 +1136,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
       {
         get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
         buffer_t *buffer = buffer_init_data(0, message->peerlist_data, message->peerlist_data_size);
-        uint32_t num_peers = buffer_read_uint16(buffer);
+        buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+        uint32_t num_peers = buffer_read_uint16(buffer_iterator);
         for (int i = 0; i < num_peers; i++)
         {
-          uint32_t remote_ip = buffer_read_uint32(buffer);
-          uint16_t host_port = buffer_read_uint16(buffer);
+          uint32_t remote_ip = buffer_read_uint32(buffer_iterator);
+          uint16_t host_port = buffer_read_uint16(buffer_iterator);
           if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
           {
             continue;
@@ -1163,15 +1168,20 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           const char *bind_address = convert_ip_to_str(remote_ip);
           if (connect_net_to_peer(bind_address, host_port))
           {
+            buffer_iterator_free(buffer_iterator);
+            buffer_free(buffer);
             return 1;
           }
         }
+
+        buffer_iterator_free(buffer_iterator);
+        buffer_free(buffer);
       }
       break;
     case PKT_TYPE_INCOMING_BLOCK:
       {
         /*incoming_block_t *message = (incoming_block_t*)message_object;
-        if (validate_and_insert_block_nolock(message->block))
+        if (validate_and_insert_block(message->block) == 0)
         {
           LOG_INFO("Added incoming block at height: %u.", get_block_height());
         }*/

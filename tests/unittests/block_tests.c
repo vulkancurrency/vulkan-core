@@ -92,9 +92,13 @@ TEST can_serialize_block(void)
   serialize_transactions_from_block(buffer, block);
 
   // deserialize block
-  buffer_set_offset(buffer, 0);
-  block_t *deserialized_block = deserialize_block(buffer);
-  deserialize_transactions_to_block(buffer, deserialized_block);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+
+  block_t *deserialized_block = deserialize_block(buffer_iterator);
+  ASSERT(deserialized_block != NULL);
+  ASSERT(deserialize_transactions_to_block(buffer_iterator, deserialized_block) == 0);
+
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 
   ASSERT_EQ(block->version, deserialized_block->version);

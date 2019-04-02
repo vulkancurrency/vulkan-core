@@ -27,45 +27,40 @@
 
 #include <stdint.h>
 
-#include <sodium.h>
-
-#include <rocksdb/c.h>
-
-#include "common/util.h"
-
-#include "core/parameters.h"
+#include "buffer.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-typedef struct Wallet
+typedef struct BufferIterator
 {
-  uint8_t secret_key[crypto_sign_SECRETKEYBYTES];
-  uint8_t public_key[crypto_sign_PUBLICKEYBYTES];
-  uint8_t address[ADDRESS_SIZE];
-  uint64_t balance;
-} wallet_t;
+  buffer_t *buffer;
+  size_t offset;
+} buffer_iterator_t;
 
-wallet_t* make_wallet(void);
-int free_wallet(wallet_t* wallet);
+buffer_iterator_t* buffer_iterator_init(buffer_t *buffer);
+int buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 
-int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
-wallet_t* deserialize_wallet(buffer_iterator_t *buffer_iterator);
+uint8_t* buffer_read(buffer_iterator_t *buffer_iterator, size_t size);
+int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
+const uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
 
-rocksdb_t* open_wallet(const char *wallet_filename, char *err);
-wallet_t* new_wallet(const char *wallet_filename);
-wallet_t* get_wallet(const char *wallet_filename);
-wallet_t* init_wallet(const char *wallet_filename);
+uint8_t buffer_read_uint8(buffer_iterator_t *buffer_iterator);
+int8_t buffer_read_int8(buffer_iterator_t *buffer_iterator);
 
-void print_wallet(wallet_t* wallet);
+uint16_t buffer_read_uint16(buffer_iterator_t *buffer_iterator);
+int16_t buffer_read_int16(buffer_iterator_t *buffer_iterator);
 
-int compare_addresses(uint8_t *address, uint8_t *other_address);
+uint32_t buffer_read_uint32(buffer_iterator_t *buffer_iterator);
+int32_t buffer_read_int32(buffer_iterator_t *buffer_iterator);
 
-int public_key_to_address(unsigned char *address, unsigned char *pk);
-uint8_t get_address_id(uint8_t *address);
-int valid_address(uint8_t *address);
+uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator);
+int64_t buffer_read_int64(buffer_iterator_t *buffer_iterator);
+
+char* buffer_read_string(buffer_iterator_t *buffer_iterator);
+uint8_t* buffer_read_bytes(buffer_iterator_t *buffer_iterator);
 
 #ifdef __cplusplus
 }

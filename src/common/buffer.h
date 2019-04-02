@@ -42,55 +42,41 @@ typedef struct Buffer
   int offset;
 } buffer_t;
 
-buffer_t* buffer_init_data(int offset, const uint8_t *data, int size);
-buffer_t* buffer_init_size(int offset, int size);
-buffer_t* buffer_init_offset(int offset);
+buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size);
+buffer_t* buffer_init_size(size_t offset, size_t size);
+buffer_t* buffer_init_offset(size_t offset);
 buffer_t* buffer_init(void);
 
-void buffer_set_size(buffer_t *buffer, int size);
+void buffer_set_size(buffer_t *buffer, size_t size);
 int buffer_get_size(buffer_t *buffer);
 
-void buffer_set_offset(buffer_t *buffer, int offset);
+void buffer_set_offset(buffer_t *buffer, size_t offset);
 int buffer_get_offset(buffer_t *buffer);
 
 int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
 int buffer_clear(buffer_t *buffer);
 int buffer_free(buffer_t *buffer);
 
-int buffer_realloc(buffer_t *buffer, int size);
-int buffer_write(buffer_t *buffer, const uint8_t *data, int size);
-uint8_t* buffer_read(buffer_t *buffer, int size);
+int buffer_realloc(buffer_t *buffer, size_t size);
+int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);
 
 int buffer_get_size(buffer_t *buffer);
-int buffer_get_remaining_size(buffer_t *buffer);
 const uint8_t* buffer_get_data(buffer_t *buffer);
-const uint8_t* buffer_get_remaining_data(buffer_t *buffer);
 
 int buffer_write_uint8(buffer_t *buffer, uint8_t value);
-uint8_t buffer_read_uint8(buffer_t *buffer);
 int buffer_write_int8(buffer_t *buffer, int8_t value);
-int8_t buffer_read_int8(buffer_t *buffer);
 
 int buffer_write_uint16(buffer_t *buffer, uint16_t value);
-uint16_t buffer_read_uint16(buffer_t *buffer);
 int buffer_write_int16(buffer_t *buffer, int16_t value);
-int16_t buffer_read_int16(buffer_t *buffer);
 
 int buffer_write_uint32(buffer_t *buffer, uint32_t value);
-uint32_t buffer_read_uint32(buffer_t *buffer);
 int buffer_write_int32(buffer_t *buffer, int32_t value);
-int32_t buffer_read_int32(buffer_t *buffer);
 
 int buffer_write_uint64(buffer_t *buffer, uint64_t value);
-uint64_t buffer_read_uint64(buffer_t *buffer);
 int buffer_write_int64(buffer_t *buffer, int64_t value);
-int64_t buffer_read_int64(buffer_t *buffer);
 
 int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
-char* buffer_read_string(buffer_t *buffer);
-
 int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size);
-uint8_t* buffer_read_bytes(buffer_t *buffer);
 
 #ifdef __cplusplus
 }

@@ -25,12 +25,12 @@
 
 #include <stdint.h>
 
-#include "common/greatest.h"
-#include "common/util.h"
-
+#include "common/buffer_iterator.h"
 #include "common/buffer.h"
+#include "common/greatest.h"
 #include "common/queue.h"
 #include "common/task.h"
+#include "common/util.h"
 
 SUITE(common_suite);
 
@@ -143,23 +143,28 @@ TEST add_remove_and_update_tasks(void)
   PASS();
 }
 
+typedef struct Test
+{
+
+} test_t;
+
 TEST pack_and_unpack_buffer(void)
 {
   buffer_t *buffer = buffer_init();
   ASSERT(buffer != NULL);
-  ASSERT_EQ(buffer_get_size(buffer), 0);
+  ASSERT(buffer_get_size(buffer) == 0);
 
   // pack
 
   // write messages
   const char *msg = "Hello World!";
-  ASSERT_EQ(buffer_write_string(buffer, msg, strlen(msg)), 0);
+  ASSERT(buffer_write_string(buffer, msg, strlen(msg)) == 0);
 
   const char *msg1 = "The quick brown fox jumps over the lazy dog.";
-  ASSERT_EQ(buffer_write_string(buffer, msg1, strlen(msg1)), 0);
+  ASSERT(buffer_write_string(buffer, msg1, strlen(msg1)) == 0);
 
   const char *msg2 = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890";
-  ASSERT_EQ(buffer_write_string(buffer, msg2, strlen(msg2)), 0);
+  ASSERT(buffer_write_string(buffer, msg2, strlen(msg2)) == 0);
 
   // write bytes
   const char *data = "\x00\x01\x12Hello World!";
@@ -175,27 +180,28 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data2, 128), 0);
 
   // unpack
-  buffer_set_offset(buffer, 0);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
   // read messages
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), msg), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), msg1), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), msg2), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg1), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), msg2), 1);
 
   // read bytes
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), data), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), data1), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data1), 1);
-  ASSERT_EQ(string_equals(buffer_read_string(buffer), data2), 1);
-  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer), data2), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data1), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data1), 1);
+  ASSERT_EQ(string_equals(buffer_read_string(buffer_iterator), data2), 1);
+  ASSERT_EQ(string_equals((char*)buffer_read_bytes(buffer_iterator), data2), 1);
 
-  ASSERT_EQ(buffer_get_remaining_size(buffer), 0);
-  ASSERT_EQ(buffer_free(buffer), 0);
+  ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);
+  ASSERT(buffer_iterator_free(buffer_iterator) == 0);
+  ASSERT(buffer_free(buffer) == 0);
 
   buffer_t *buffer1 = buffer_init();
   ASSERT(buffer1 != NULL);
-  ASSERT_EQ(buffer_get_remaining_size(buffer1), 0);
+  ASSERT(buffer_get_size(buffer1) == 0);
 
   // write
 
@@ -219,33 +225,34 @@ TEST pack_and_unpack_buffer(void)
   // copy the contents of buffer1 to buffer2
   buffer_t *buffer2 = buffer_init();
   ASSERT(buffer2 != NULL);
-  ASSERT_EQ(buffer_copy(buffer2, buffer1), 0);
+  ASSERT(buffer_copy(buffer2, buffer1) == 0);
   ASSERT_EQ(buffer_get_size(buffer2), buffer_get_size(buffer1));
   ASSERT_EQ(string_equals((char*)buffer_get_data(buffer1), (char*)buffer_get_data(buffer2)), 1);
-  ASSERT_EQ(buffer_free(buffer2), 0);
+  ASSERT(buffer_free(buffer2) == 0);
 
   // read
-  buffer_set_offset(buffer1, 0);
+  buffer_iterator_t *buffer_iterator1 = buffer_iterator_init(buffer1);
 
   // unsigned
-  ASSERT_EQ(buffer_read_uint8(buffer1), 0xFF);
-  ASSERT_EQ(buffer_read_uint16(buffer1), 0xFFFF);
-  ASSERT_EQ(buffer_read_uint32(buffer1), 0xFFFFFFFF);
-  ASSERT_EQ(buffer_read_uint64(buffer1), 0xFFFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_read_uint8(buffer_iterator1), 0xFF);
+  ASSERT_EQ(buffer_read_uint16(buffer_iterator1), 0xFFFF);
+  ASSERT_EQ(buffer_read_uint32(buffer_iterator1), 0xFFFFFFFF);
+  ASSERT_EQ(buffer_read_uint64(buffer_iterator1), 0xFFFFFFFFFFFFFFFF);
 
   // signed
-  ASSERT_EQ(buffer_read_int8(buffer1), 0x7F);
-  ASSERT_EQ(buffer_read_int16(buffer1), 0x7FFF);
-  ASSERT_EQ(buffer_read_int32(buffer1), 0x7FFFFFFF);
-  ASSERT_EQ(buffer_read_int64(buffer1), 0x7FFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_read_int8(buffer_iterator1), 0x7F);
+  ASSERT_EQ(buffer_read_int16(buffer_iterator1), 0x7FFF);
+  ASSERT_EQ(buffer_read_int32(buffer_iterator1), 0x7FFFFFFF);
+  ASSERT_EQ(buffer_read_int64(buffer_iterator1), 0x7FFFFFFFFFFFFFFF);
 
-  ASSERT_EQ(buffer_read_int8(buffer1), -0x7F);
-  ASSERT_EQ(buffer_read_int16(buffer1), -0x7FFF);
-  ASSERT_EQ(buffer_read_int32(buffer1), -0x7FFFFFFF);
-  ASSERT_EQ(buffer_read_int64(buffer1), -0x7FFFFFFFFFFFFFFF);
+  ASSERT_EQ(buffer_read_int8(buffer_iterator1), -0x7F);
+  ASSERT_EQ(buffer_read_int16(buffer_iterator1), -0x7FFF);
+  ASSERT_EQ(buffer_read_int32(buffer_iterator1), -0x7FFFFFFF);
+  ASSERT_EQ(buffer_read_int64(buffer_iterator1), -0x7FFFFFFFFFFFFFFF);
 
-  ASSERT_EQ(buffer_get_remaining_size(buffer1), 0);
-  ASSERT_EQ(buffer_free(buffer1), 0);
+  ASSERT(buffer_get_remaining_size(buffer_iterator1) == 0);
+  ASSERT(buffer_iterator_free(buffer_iterator1) == 0);
+  ASSERT(buffer_free(buffer1) == 0);
 
   PASS();
 }

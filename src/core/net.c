@@ -33,6 +33,8 @@
 #include <upnpcommands.h>
 #include <upnperrors.h>
 
+#include "common/buffer_iterator.h"
+#include "common/buffer.h"
 #include "common/logger.h"
 #include "common/mongoose.h"
 #include "common/task.h"
@@ -224,12 +226,11 @@ int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
   return 0;
 }
 
-static int process_packet(net_connection_t *net_connection, buffer_t *buffer)
+static int process_packet(net_connection_t *net_connection, buffer_iterator_t *buffer_iterator)
 {
   packet_t *packet = make_packet();
-  if (deserialize_packet(packet, buffer))
+  if (deserialize_packet(packet, buffer_iterator))
   {
-    buffer_free(buffer);
     return 1;
   }
 
@@ -243,9 +244,9 @@ static int process_packet(net_connection_t *net_connection, buffer_t *buffer)
   return 0;
 }
 
-static void process_incoming_packet(net_connection_t *net_connection, buffer_t *buffer)
+static void process_incoming_packet(net_connection_t *net_connection, buffer_iterator_t *buffer_iterator)
 {
-  if (process_packet(net_connection, buffer))
+  if (process_packet(net_connection, buffer_iterator))
   {
 
   }
@@ -253,10 +254,10 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_t *
   // check to see if we have any remaining data in the buffer,
   // sometimes data for several packets can be combined in attempt to
   // reduce overhead when trying to send multiple packets...
-  size_t remaining_data_len = buffer_get_remaining_size(buffer);
+  size_t remaining_data_len = buffer_get_remaining_size(buffer_iterator);
   if (remaining_data_len > 0)
   {
-    const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer);
+    const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer_iterator);
     data_received_nolock(net_connection, (uint8_t*)remaining_data, remaining_data_len);
   }
 }
@@ -265,6 +266,7 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
 {
   assert(net_connection != NULL);
   buffer_t *buffer = buffer_init_data(0, data, data_len);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
   if (net_connection->is_receiving_data)
   {
     buffer_t *receiving_buffer = net_connection->receiving_buffer;
@@ -272,7 +274,10 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
 
     if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
     {
-      process_incoming_packet(net_connection, receiving_buffer);
+      buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
+      process_incoming_packet(net_connection, buffer_iterator);
+      buffer_iterator_free(buffer_iterator);
+
       net_connection->is_receiving_data = 0;
       net_connection->expected_receiving_len = 0;
       buffer_free(net_connection->receiving_buffer);
@@ -283,7 +288,10 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
       buffer_write(receiving_buffer, data, data_len);
       if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
       {
-        process_incoming_packet(net_connection, receiving_buffer);
+        buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
+        process_incoming_packet(net_connection, buffer_iterator);
+        buffer_iterator_free(buffer_iterator);
+
         net_connection->is_receiving_data = 0;
         net_connection->expected_receiving_len = 0;
         buffer_free(net_connection->receiving_buffer);
@@ -294,7 +302,7 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
   else
   {
     packet_t *packet = make_packet();
-    if (deserialize_packet(packet, buffer))
+    if (deserialize_packet(packet, buffer_iterator))
     {
 
     }
@@ -311,7 +319,9 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
       else
       {
         buffer_t *receiving_buffer = buffer_init_data(0, data, data_len);
-        process_incoming_packet(net_connection, receiving_buffer);
+        buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
+        process_incoming_packet(net_connection, buffer_iterator);
+        buffer_iterator_free(buffer_iterator);
         buffer_free(receiving_buffer);
       }
     }
@@ -319,6 +329,7 @@ void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_
     free_packet(packet);
   }
 
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 }
 

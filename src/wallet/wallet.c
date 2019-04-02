@@ -72,22 +72,21 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   return 0;
 }
 
-wallet_t* deserialize_wallet(buffer_t *buffer)
+wallet_t* deserialize_wallet(buffer_iterator_t *buffer_iterator)
 {
-  assert(buffer != NULL);
-
+  assert(buffer_iterator != NULL);
   wallet_t *wallet = make_wallet();
 
-  uint8_t *secret_key = buffer_read_bytes(buffer);
+  uint8_t *secret_key = buffer_read_bytes(buffer_iterator);
   memcpy(&wallet->secret_key, secret_key, crypto_sign_SECRETKEYBYTES);
 
-  uint8_t *public_key = buffer_read_bytes(buffer);
+  uint8_t *public_key = buffer_read_bytes(buffer_iterator);
   memcpy(&wallet->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
 
-  uint8_t *address = buffer_read_bytes(buffer);
+  uint8_t *address = buffer_read_bytes(buffer_iterator);
   memcpy(&wallet->address, address, ADDRESS_SIZE);
 
-  wallet->balance = buffer_read_uint64(buffer);
+  wallet->balance = buffer_read_uint64(buffer_iterator);
 
   free(secret_key);
   free(public_key);
@@ -209,8 +208,14 @@ wallet_t* get_wallet(const char *wallet_filename)
   }
 
   buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
-  wallet_t *wallet = deserialize_wallet(buffer);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+
+  wallet_t *wallet = deserialize_wallet(buffer_iterator);
+  assert(wallet != NULL);
+
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
+
   LOG_INFO("Successfully opened wallet: %s", wallet_filename);
 
   rocksdb_free(wallet_data);

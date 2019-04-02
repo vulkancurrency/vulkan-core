@@ -32,6 +32,7 @@
 #include <sodium.h>
 
 #include "common/logger.h"
+#include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/util.h"
 
@@ -388,31 +389,31 @@ int serialize_block(buffer_t *buffer, block_t *block)
   return 0;
 }
 
-block_t* deserialize_block(buffer_t *buffer)
+block_t* deserialize_block(buffer_iterator_t *buffer_iterator)
 {
-  assert(buffer != NULL);
+  assert(buffer_iterator != NULL);
 
   block_t *block = make_block();
   assert(block != NULL);
 
-  block->version = buffer_read_uint32(buffer);
+  block->version = buffer_read_uint32(buffer_iterator);
 
-  uint8_t *previous_hash = buffer_read_bytes(buffer);
+  uint8_t *previous_hash = buffer_read_bytes(buffer_iterator);
   memcpy(block->previous_hash, previous_hash, HASH_SIZE);
 
-  uint8_t *hash = buffer_read_bytes(buffer);
+  uint8_t *hash = buffer_read_bytes(buffer_iterator);
   memcpy(block->hash, hash, HASH_SIZE);
 
-  block->timestamp = buffer_read_uint32(buffer);
-  block->nonce = buffer_read_uint32(buffer);
-  block->difficulty = buffer_read_uint64(buffer);
-  block->cumulative_difficulty = buffer_read_uint64(buffer);
-  block->cumulative_emission = buffer_read_uint64(buffer);
+  block->timestamp = buffer_read_uint32(buffer_iterator);
+  block->nonce = buffer_read_uint32(buffer_iterator);
+  block->difficulty = buffer_read_uint64(buffer_iterator);
+  block->cumulative_difficulty = buffer_read_uint64(buffer_iterator);
+  block->cumulative_emission = buffer_read_uint64(buffer_iterator);
 
-  uint8_t *merkle_root = buffer_read_bytes(buffer);
+  uint8_t *merkle_root = buffer_read_bytes(buffer_iterator);
   memcpy(block->merkle_root, merkle_root, HASH_SIZE);
 
-  block->transaction_count = buffer_read_uint32(buffer);
+  block->transaction_count = buffer_read_uint32(buffer_iterator);
 
   free(previous_hash);
   free(hash);
@@ -441,8 +442,14 @@ int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)
 
 block_t* block_from_serialized(uint8_t *data, uint32_t data_len)
 {
+  assert(data != NULL);
   buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
-  block_t *block = deserialize_block(buffer);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+
+  block_t *block = deserialize_block(buffer_iterator);
+  assert(block != NULL);
+
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
   return block;
 }
@@ -466,9 +473,9 @@ int serialize_transactions_from_block(buffer_t *buffer, block_t *block)
   return 0;
 }
 
-int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
+int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_t *block)
 {
-  assert(buffer != NULL);
+  assert(buffer_iterator != NULL);
   assert(block != NULL);
 
   if (block->transaction_count > 0)
@@ -478,7 +485,7 @@ int deserialize_transactions_to_block(buffer_t *buffer, block_t *block)
     // deserialize the transactions
     for (uint32_t i = 0; i < block->transaction_count; i++)
     {
-      transaction_t *tx = deserialize_transaction(buffer);
+      transaction_t *tx = deserialize_transaction(buffer_iterator);
       assert(tx != NULL);
       block->transactions[i] = tx;
     }

@@ -179,7 +179,7 @@ static int worker_mining_thread(void *arg)
   {
     previous_block = get_current_block();
     block = compute_next_block(worker, g_current_wallet, previous_block);
-    if (validate_and_insert_block(block))
+    if (validate_and_insert_block(block) == 0)
     {
       LOG_INFO("Worker: %hu found block at height: %u!", worker->id, get_block_height());
       print_block(block);

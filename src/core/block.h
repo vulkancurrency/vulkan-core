@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 
+#include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/util.h"
 
@@ -126,13 +127,13 @@ int compute_self_block_hash(block_t *block);
 
 int serialize_block_header(buffer_t *buffer, block_t *block);
 int serialize_block(buffer_t *buffer, block_t *block);
-block_t* deserialize_block(buffer_t *buffer);
+block_t* deserialize_block(buffer_iterator_t *buffer_iterator);
 
 int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
 block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
 
 int serialize_transactions_from_block(buffer_t *buffer, block_t *block);
-int deserialize_transactions_to_block(buffer_t *buffer, block_t *block);
+int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_t *block);
 
 int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_index);
 int add_transactions_to_block(block_t *block, transaction_t **transactions, uint32_t num_transactions);

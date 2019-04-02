@@ -26,8 +26,9 @@
 #include <stdint.h>
 #include <sodium.h>
 
-#include "common/greatest.h"
+#include "common/buffer_iterator.h"
 #include "common/buffer.h"
+#include "common/greatest.h"
 #include "common/util.h"
 
 #include "core/block.h"
@@ -89,7 +90,7 @@ TEST can_serialize_deserialize_packet(void)
 
   // serialize packet
   buffer_t *buffer = buffer_init();
-  serialize_block(buffer, block);
+  ASSERT(serialize_block(buffer, block) == 0);
 
   const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
@@ -99,25 +100,32 @@ TEST can_serialize_deserialize_packet(void)
   packet->data = malloc(data_len);
   memcpy(packet->data, data, data_len);
   ASSERT_MEM_EQ(data, packet->data, data_len);
+  buffer_free(buffer);
 
   buffer_t *buffer2 = buffer_init();
-  serialize_packet(buffer2, packet);
-  buffer_free(buffer);
+  ASSERT(serialize_packet(buffer2, packet) == 0);
   free_packet(packet);
 
   // deserialize packet
-  buffer_set_offset(buffer2, 0);
+  buffer_iterator_t *buffer_iterator1 = buffer_iterator_init(buffer2);
   packet_t *packet2 = make_packet();
-  deserialize_packet(packet2, buffer2);
+
+  ASSERT(deserialize_packet(packet2, buffer_iterator1) == 0);
+  ASSERT(buffer_get_remaining_size(buffer_iterator1) == 0);
+
+  buffer_iterator_free(buffer_iterator1);
   buffer_free(buffer2);
 
   buffer_t *buffer3 = buffer_init_data(0, packet2->data, packet2->size);
-  block_t *deserialized_block = deserialize_block(buffer3);
+  buffer_iterator_t *buffer_iterator2 = buffer_iterator_init(buffer3);
+
+  block_t *deserialized_block = deserialize_block(buffer_iterator2);
   ASSERT(deserialized_block != NULL);
+
+  buffer_iterator_free(buffer_iterator2);
   buffer_free(buffer3);
   free_packet(packet2);
 
-  // check the block to see if it was properly constructed
   ASSERT_EQ(deserialized_block->version, block->version);
 
   ASSERT_MEM_EQ(deserialized_block->previous_hash, block->previous_hash, HASH_SIZE);

@@ -31,6 +31,8 @@
 
 #include <rocksdb/c.h>
 
+#include "common/buffer_iterator.h"
+#include "common/buffer.h"
 #include "common/logger.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
@@ -127,7 +129,7 @@ int open_blockchain(const char *blockchain_dir)
 
   if (has_block_by_hash(genesis_block.hash) == 0)
   {
-    if (validate_and_insert_block(&genesis_block) == 0)
+    if (validate_and_insert_block(&genesis_block))
     {
       LOG_ERROR("Could not insert genesis block into blockchain!");
 
@@ -562,7 +564,6 @@ int valid_block_emission(block_t *block, uint32_t block_height)
 int insert_block_nolock(block_t *block)
 {
   assert(block != NULL);
-
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block->hash);
@@ -649,7 +650,7 @@ int insert_block_nolock(block_t *block)
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
-    return 0;
+    return 1;
   }
 
   // update our current top block hash in the blockchain
@@ -657,7 +658,7 @@ int insert_block_nolock(block_t *block)
 
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
-  return 1;
+  return 0;
 }
 
 int insert_block(block_t *block)
@@ -676,19 +677,19 @@ int validate_and_insert_block_nolock(block_t *block)
   // if the block is the genesis, then we do not need to validate it...
   if (valid_block(block) == 0 && current_block_height > 0)
   {
-    return 0;
+    return 1;
   }
 
   // ensure we are not adding a block that already exists in the blockchain...
   if (has_block_by_hash(block->hash))
   {
-    return 0;
+    return 1;
   }
 
   // check this blocks previous has against our current top block hash
   if (compare_block_hash(block->previous_hash, get_current_block_hash()) == 0)
   {
-    return 0;
+    return 1;
   }
 
   // check to see if this block's timestamp is greater than the
@@ -696,14 +697,14 @@ int validate_and_insert_block_nolock(block_t *block)
   if (valid_block_median_timestamp(block) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %u!", block->timestamp);
-    return 0;
+    return 1;
   }
 
   // validate the block's generation transaction
   if (valid_block_emission(block, current_block_height) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
-    return 0;
+    return 1;
   }
 
   // check the block's difficulty value, also check the block's
@@ -713,19 +714,19 @@ int validate_and_insert_block_nolock(block_t *block)
     uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
     if (block->cumulative_difficulty != expected_cumulative_difficulty)
     {
-      return 0;
+      return 1;
     }
 
     uint64_t expected_difficulty = get_next_block_difficulty();
     if (block->difficulty != expected_difficulty)
     {
-      return 0;
+      return 1;
     }
 
     if (check_pow(block->hash, expected_difficulty) == 0)
     {
       LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
-      return 0;
+      return 1;
     }
   }
 
@@ -758,14 +759,16 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   }
 
   buffer_t *buffer = buffer_init_data(0, serialized_block, read_len);
-  assert(buffer != NULL);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
   // deserialize the block
-  block_t *block = deserialize_block(buffer);
+  block_t *block = deserialize_block(buffer_iterator);
   assert(block != NULL);
 
   // deserialize the block's transactions
-  deserialize_transactions_to_block(buffer, block);
+  assert(deserialize_transactions_to_block(buffer_iterator, block) == 0);
+
+  buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 
   rocksdb_free(serialized_block);
