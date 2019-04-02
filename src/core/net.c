@@ -237,6 +237,7 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
   if (handle_receive_packet(net_connection, packet))
   {
     LOG_DEBUG("Failed to handle incoming packet!");
+    assert(close_net_connection(net_connection) == 0);
     return 1;
   }
 
