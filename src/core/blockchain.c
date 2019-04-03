@@ -260,12 +260,18 @@ int backup_blockchain(void)
   }
 
   char *err = NULL;
-  rocksdb_backup_engine_create_new_backup(g_blockchain_backup_db, g_blockchain_db, &err);
-
+  rocksdb_backup_engine_purge_old_backups(g_blockchain_backup_db, 0, &err);
   if (err != NULL)
   {
-    LOG_ERROR("Could not backup blockchain database: %s!", err);
+    LOG_ERROR("Could not backup blockchain database, failed to purge old backups: %s!", err);
+    rocksdb_free(err);
+    return 1;
+  }
 
+  rocksdb_backup_engine_create_new_backup(g_blockchain_backup_db, g_blockchain_db, &err);
+  if (err != NULL)
+  {
+    LOG_ERROR("Could not backup blockchain database, failed to create new backup: %s!", err);
     rocksdb_free(err);
     return 1;
   }
