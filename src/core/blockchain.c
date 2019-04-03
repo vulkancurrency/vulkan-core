@@ -723,6 +723,7 @@ int insert_block(block_t *block)
 
 int validate_and_insert_block_nolock(block_t *block)
 {
+  assert(block != NULL);
   uint32_t current_block_height = get_block_height();
 
   // verify the block, ensure the block is not an orphan or stale,
@@ -795,6 +796,7 @@ int validate_and_insert_block(block_t *block)
 
 block_t *get_block_from_hash(uint8_t *block_hash)
 {
+  assert(block_hash != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
@@ -846,13 +848,13 @@ block_t *get_block_from_height(uint32_t height)
     return NULL;
   }
 
-  block_t *block = get_current_block();
-  assert(block != NULL);
-
   if (height == 0)
   {
     return get_block_from_hash(genesis_block.hash);
   }
+
+  block_t *block = get_current_block();
+  assert(block != NULL);
 
   for (uint32_t i = current_block_height; i > 0; i--)
   {
@@ -941,6 +943,9 @@ int has_block_by_height(uint32_t height)
 
 int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 {
+  assert(block_key != NULL);
+  assert(tx != NULL);
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx->id);
@@ -964,6 +969,7 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
 
 int insert_tx_into_unspent_index(transaction_t *tx)
 {
+  assert(tx != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx->id);
@@ -996,6 +1002,7 @@ int insert_tx_into_unspent_index(transaction_t *tx)
 
 int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 {
+  assert(unspent_tx != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, unspent_tx->id);
@@ -1026,6 +1033,7 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
 
 unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 {
+  assert(tx_id != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx_id);
@@ -1052,6 +1060,7 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 
 uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 {
+  assert(tx_id != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx_id);
@@ -1062,6 +1071,7 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 
   if (err != NULL || block_key == NULL)
   {
+    rocksdb_free(block_key);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     return NULL;
@@ -1078,6 +1088,7 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
 
 block_t *get_block_from_tx_id(uint8_t *tx_id)
 {
+  assert(tx_id != NULL);
   uint8_t *block_hash = get_block_hash_from_tx_id(tx_id);
   if (block_hash == NULL)
   {
@@ -1128,6 +1139,7 @@ uint32_t get_block_height(void)
 
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
+  assert(block_hash != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
@@ -1151,6 +1163,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 
 int delete_tx_from_index(uint8_t *tx_id)
 {
+  assert(tx_id != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx_id);
@@ -1174,6 +1187,7 @@ int delete_tx_from_index(uint8_t *tx_id)
 
 int delete_unspent_tx_from_index(uint8_t *tx_id)
 {
+  assert(tx_id != NULL);
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx_id);
@@ -1197,6 +1211,7 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 
 int set_top_block_hash(uint8_t *block_hash)
 {
+  assert(block_hash != NULL);
   char *err = NULL;
   uint8_t key[DB_KEY_PREFIX_SIZE_TOP_BLOCK];
   get_top_block_key(key);
@@ -1253,6 +1268,7 @@ block_t *get_top_block(void)
 
 int set_current_block_hash(uint8_t *hash)
 {
+  assert(hash != NULL);
   memcpy(g_blockchain_current_block_hash, hash, HASH_SIZE);
   return 0;
 }
@@ -1281,6 +1297,7 @@ block_t *get_current_block(void)
 
 uint32_t get_blocks_since_hash(uint8_t *block_hash)
 {
+  assert(block_hash != NULL);
   block_t *block = get_block_from_hash(block_hash);
   assert(block != NULL);
 
@@ -1307,6 +1324,8 @@ uint32_t get_blocks_since_block(block_t *block)
 
 int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
+  assert(buffer != NULL);
+  assert(tx_id != NULL);
   memcpy(buffer, DB_KEY_PREFIX_TX, DB_KEY_PREFIX_SIZE_TX);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_TX, tx_id, HASH_SIZE);
   return 0;
@@ -1314,6 +1333,8 @@ int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 
 int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
+  assert(buffer != NULL);
+  assert(tx_id != NULL);
   memcpy(buffer, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_UNSPENT_TX, tx_id, HASH_SIZE);
   return 0;
@@ -1321,6 +1342,8 @@ int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
 
 int get_block_key(uint8_t *buffer, uint8_t *block_hash)
 {
+  assert(buffer != NULL);
+  assert(block_hash != NULL);
   memcpy(buffer, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_BLOCK, block_hash, HASH_SIZE);
   return 0;
@@ -1328,12 +1351,15 @@ int get_block_key(uint8_t *buffer, uint8_t *block_hash)
 
 int get_top_block_key(uint8_t *buffer)
 {
+  assert(buffer != NULL);
   memcpy(buffer, DB_KEY_PREFIX_TOP_BLOCK, DB_KEY_PREFIX_SIZE_TOP_BLOCK);
   return 0;
 }
 
 int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
 {
+  assert(address != NULL);
+  assert(unspent_txs != NULL);
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
@@ -1387,6 +1413,7 @@ int get_unspent_transactions_for_address(uint8_t *address, vec_void_t *unspent_t
 
 uint64_t get_balance_for_address_nolock(uint8_t *address)
 {
+  assert(address != NULL);
   uint64_t balance = 0;
 
   vec_void_t unspent_txs;
@@ -1421,6 +1448,7 @@ uint64_t get_balance_for_address(uint8_t *address)
 int get_unspent_transactions_for_wallet_nolock(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
 {
   assert(wallet != NULL);
+  assert(unspent_txs != NULL);
   return get_unspent_transactions_for_address_nolock(wallet->address, unspent_txs, num_unspent_txs);
 }
 
