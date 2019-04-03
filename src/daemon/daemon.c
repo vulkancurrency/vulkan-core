@@ -64,6 +64,7 @@ enum
   CMD_ARG_BIND_PORT,
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_CLEAR_BLOCKCHAIN,
+  CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION,
   CMD_ARG_WALLET_FILENAME,
   CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
@@ -79,6 +80,7 @@ static argument_map_t g_arguments_map[] = {
   {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 1},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
+  {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
@@ -190,6 +192,9 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_CLEAR_BLOCKCHAIN:
         remove_blockchain(g_blockchain_data_dir);
+        break;
+      case CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION:
+        set_want_blockchain_compression(0);
         break;
       case CMD_ARG_WALLET_FILENAME:
         i++;
