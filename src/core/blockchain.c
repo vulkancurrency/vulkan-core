@@ -653,8 +653,12 @@ int insert_block_nolock(block_t *block)
 
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
-        free_unspent_transaction(unspent_tx);
         LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was not found!");
+
+        free_unspent_transaction(unspent_tx);
+
+        rocksdb_free(err);
+        rocksdb_writeoptions_destroy(woptions);
         continue;
       }
       else
@@ -664,8 +668,12 @@ int insert_block_nolock(block_t *block)
 
         if (unspent_txout->spent == 1)
         {
-          free_unspent_transaction(unspent_tx);
           LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was already spent!");
+
+          free_unspent_transaction(unspent_tx);
+
+          rocksdb_free(err);
+          rocksdb_writeoptions_destroy(woptions);
           continue;
         }
 
