@@ -1105,6 +1105,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
     return 0;
   }
 
+  free_block(block);
   return 0;
 }
 
