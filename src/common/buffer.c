@@ -24,8 +24,8 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
 #include <string.h>
 
@@ -134,12 +134,24 @@ int buffer_free(buffer_t *buffer)
 int buffer_realloc(buffer_t *buffer, size_t size)
 {
   assert(buffer != NULL);
+  assert(size > 0);
   if (buffer->size - buffer->offset >= size)
   {
     return 1;
   }
 
-  buffer->data = realloc(buffer->data, buffer->size + size);
+  if (buffer->data == NULL)
+  {
+    buffer->data = malloc(buffer->size + size);
+    memset(buffer->data, 0, buffer->size + size);
+  }
+  else
+  {
+    uint8_t *data = realloc(buffer->data, buffer->size + size);
+    assert(data != NULL);
+    buffer->data = data;
+  }
+
   buffer->size += size;
   return 0;
 }
