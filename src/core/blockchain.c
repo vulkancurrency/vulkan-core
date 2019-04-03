@@ -636,8 +636,8 @@ int insert_block_nolock(block_t *block)
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
 
-    insert_tx_into_index(key, tx);
-    insert_tx_into_unspent_index(tx);
+    assert(insert_tx_into_index(key, tx) == 0);
+    assert(insert_tx_into_unspent_index(tx) == 0);
 
     if (is_generation_tx(tx))
     {
