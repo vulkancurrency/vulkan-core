@@ -59,8 +59,14 @@ int close_backup_blockchain(void);
 
 int init_blockchain(const char *blockchain_dir);
 int remove_blockchain(const char *blockchain_dir);
+
+int backup_blockchain_nolock(void);
 int backup_blockchain(void);
+
+int restore_blockchain_nolock(void);
 int restore_blockchain(void);
+
+int rollback_blockchain_nolock(uint32_t rollback_height);
 int rollback_blockchain(uint32_t rollback_height);
 
 uint32_t get_block_height(void);

@@ -252,7 +252,7 @@ int init_blockchain(const char *blockchain_dir)
   return 0;
 }
 
-int backup_blockchain(void)
+int backup_blockchain_nolock(void)
 {
   if (g_blockchain_backup_is_open == 0)
   {
@@ -280,7 +280,15 @@ int backup_blockchain(void)
   return 0;
 }
 
-int restore_blockchain(void)
+int backup_blockchain(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = backup_blockchain_nolock();
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int restore_blockchain_nolock(void)
 {
   if (g_blockchain_backup_is_open == 0)
   {
@@ -307,7 +315,15 @@ int restore_blockchain(void)
   return 0;
 }
 
-int rollback_blockchain(uint32_t rollback_height)
+int restore_blockchain(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = restore_blockchain_nolock();
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int rollback_blockchain_nolock(uint32_t rollback_height)
 {
   uint32_t current_block_height = get_block_height();
   if (rollback_height > current_block_height)
@@ -352,6 +368,14 @@ int rollback_blockchain(uint32_t rollback_height)
 
   LOG_INFO("Successfully rolled back blockchain to height: %u!", rollback_height);
   return 0;
+}
+
+int rollback_blockchain(uint32_t rollback_height)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = rollback_blockchain_nolock(rollback_height);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
 }
 
 uint64_t get_cumulative_emission(void)
