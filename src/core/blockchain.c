@@ -1263,7 +1263,15 @@ int set_top_block(block_t *block)
 
 block_t *get_top_block(void)
 {
-  return get_block_from_hash(get_top_block_hash());
+  uint8_t *block_hash = get_top_block_hash();
+  if (block_hash == NULL)
+  {
+    return NULL;
+  }
+
+  block_t *block = get_block_from_hash(block_hash);
+  free(block_hash);
+  return block;
 }
 
 int set_current_block_hash(uint8_t *hash)
