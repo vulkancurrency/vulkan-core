@@ -1639,23 +1639,20 @@ int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t
   serialize_packet(buffer, packet);
   free_packet(packet);
 
-  const uint8_t *data = buffer_get_data(buffer);
+  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
   size_t data_len = buffer_get_size(buffer);
-
-  uint8_t raw_data[data_len];
-  memcpy(&raw_data, data, data_len);
-  buffer_free(buffer);
 
   int result = 0;
   if (broadcast)
   {
-    result = broadcast_data(net_connection, (uint8_t*)&raw_data, data_len);
+    result = broadcast_data(net_connection, data, data_len);
   }
   else
   {
-    result = send_data(net_connection, (uint8_t*)&raw_data, data_len);
+    result = send_data(net_connection, data, data_len);
   }
 
+  buffer_free(buffer);
   return result;
 }
 
