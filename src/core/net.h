@@ -84,8 +84,6 @@ int connect_net_to_seeds(void);
 
 int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-
-void data_received_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
 void setup_net_port_mapping(uint16_t port);
