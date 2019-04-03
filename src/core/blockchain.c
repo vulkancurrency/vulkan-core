@@ -317,7 +317,6 @@ int restore_blockchain_nolock(void)
   }
 
   char *err = NULL;
-
   rocksdb_restore_options_t *restore_options = rocksdb_restore_options_create();
   rocksdb_backup_engine_restore_db_from_latest_backup(g_blockchain_backup_db, g_blockchain_dir,
     g_blockchain_dir, restore_options, &err);
@@ -325,14 +324,13 @@ int restore_blockchain_nolock(void)
   if (err != NULL)
   {
     LOG_ERROR("Could not restore blockchain database from backup: %s!", err);
-
-    rocksdb_restore_options_destroy(restore_options);
     rocksdb_free(err);
+    rocksdb_restore_options_destroy(restore_options);
     return 1;
   }
 
-  rocksdb_restore_options_destroy(restore_options);
   rocksdb_free(err);
+  rocksdb_restore_options_destroy(restore_options);
   return 0;
 }
 
@@ -807,6 +805,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
   if (err != NULL || serialized_block == NULL)
   {
+    rocksdb_free(serialized_block);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     return NULL;
@@ -1044,6 +1043,7 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL || serialized_tx == NULL)
   {
+    rocksdb_free(serialized_tx);
     rocksdb_free(err);
     rocksdb_free(roptions);
     return NULL;
@@ -1288,11 +1288,7 @@ uint8_t *get_current_block_hash(void)
 
 int set_current_block(block_t *block)
 {
-  if (block == NULL)
-  {
-    return 1;
-  }
-
+  assert(block != NULL);
   set_top_block(block);
   set_current_block_hash(block->hash);
   return 0;
