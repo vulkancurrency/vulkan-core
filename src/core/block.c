@@ -567,8 +567,10 @@ int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_inde
   else
   {
     block->transaction_count++;
-    block->transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
-    assert(block->transactions != NULL);
+    transaction_t **transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
+    assert(transactions != NULL);
+    free(block->transactions);
+    block->transactions = transactions;
   }
 
   block->transactions[tx_index] = tx;
