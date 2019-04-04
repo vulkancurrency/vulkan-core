@@ -622,7 +622,7 @@ int insert_block_nolock(block_t *block)
   serialize_block(buffer, block);
   serialize_transactions_from_block(buffer, block);
 
-  const uint8_t *data = buffer_get_data(buffer);
+  uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -986,7 +986,7 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   serialize_unspent_transaction(buffer, unspent_tx);
   free_unspent_transaction(unspent_tx);
 
-  const uint8_t *data = buffer_get_data(buffer);
+  uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1017,7 +1017,7 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   buffer_t *buffer = buffer_init();
   serialize_unspent_transaction(buffer, unspent_tx);
 
-  const uint8_t *data = buffer_get_data(buffer);
+  uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
@@ -1410,7 +1410,7 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
         *num_unspent_txs += 1;
       }
 
-      free(unspent_tx);
+      free_unspent_transaction(unspent_tx);
     }
   }
 

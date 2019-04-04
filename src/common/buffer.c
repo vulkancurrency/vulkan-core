@@ -169,7 +169,7 @@ int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
   return 0;
 }
 
-const uint8_t* buffer_get_data(buffer_t *buffer)
+uint8_t* buffer_get_data(buffer_t *buffer)
 {
   assert(buffer != NULL);
   return buffer->data;

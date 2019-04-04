@@ -61,7 +61,7 @@ int buffer_realloc(buffer_t *buffer, size_t size);
 int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);
 
 int buffer_get_size(buffer_t *buffer);
-const uint8_t* buffer_get_data(buffer_t *buffer);
+uint8_t* buffer_get_data(buffer_t *buffer);
 
 int buffer_write_uint8(buffer_t *buffer, uint8_t value);
 int buffer_write_int8(buffer_t *buffer, int8_t value);
