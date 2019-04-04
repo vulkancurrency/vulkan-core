@@ -274,7 +274,7 @@ void print_wallet(wallet_t *wallet)
   printf("Public Address: %s\n", public_address_str);
   free(public_address_str);
 
-  printf("Balance: %lu\n", balance);
+  printf("Balance: %llu\n", balance);
 }
 
 int compare_addresses(uint8_t *address, uint8_t *other_address)
