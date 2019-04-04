@@ -110,6 +110,7 @@ int free_packet(packet_t *packet)
   if (packet->data != NULL)
   {
     free(packet->data);
+    packet->data = NULL;
   }
 
   free(packet);
@@ -1053,16 +1054,16 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
     {
       block->transaction_count = 0;
       block->transactions = NULL;
-      g_protocol_sync_entry.sync_pending_block = block;
       if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ, block->hash))
       {
-        free_block(block);
-        g_protocol_sync_entry.sync_pending_block = NULL;
-
         // we failed to request transactions for this block header,
         // clear the sync request in attempt to resync this block later...
         assert(clear_sync_request(0) == 0);
         return 1;
+      }
+      else
+      {
+        g_protocol_sync_entry.sync_pending_block = block;
       }
     }
   }
@@ -1346,6 +1347,10 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
         }
+        else
+        {
+          free_transaction(message->transaction);
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -1439,6 +1444,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
         if (block_header_received(net_connection, message->block))
         {
+          free_block(message->block);
           return 1;
         }
       }
@@ -1466,6 +1472,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
         if (block_header_received(net_connection, message->block))
         {
+          free_block(message->block);
           return 1;
         }
       }
@@ -1479,6 +1486,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP,
             block->hash, block->transaction_count))
           {
+            free_block(block);
             return 1;
           }
 
@@ -1519,17 +1527,22 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           transaction_t *transaction = get_tx_by_hash_from_block(block, message->tx_hash);
           if (transaction == NULL)
           {
+            free_block(block);
             return 1;
           }
 
           int32_t tx_index = get_tx_index_from_tx_in_block(block, transaction);
           assert(tx_index >= 0);
+          free_transaction(transaction);
 
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP,
             message->block_hash, tx_index, transaction))
           {
+            free_block(block);
             return 1;
           }
+
+          free_block(block);
         }
       }
       break;
@@ -1538,6 +1551,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         get_block_transaction_by_hash_response_t *message = (get_block_transaction_by_hash_response_t*)message_object;
         if (has_block_by_hash(message->block_hash))
         {
+          free_transaction(message->transaction);
           return 1;
         }
 
@@ -1546,11 +1560,13 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 
         if (compare_block_hash(block->hash, message->block_hash) == 0)
         {
+          free_transaction(message->transaction);
           return 1;
         }
 
         if (transaction_received(net_connection, message->transaction, message->tx_index))
         {
+          free_transaction(message->transaction);
           return 1;
         }
       }
@@ -1569,9 +1585,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP,
               message->block_hash, message->tx_index, transaction))
             {
+              free_block(block);
               return 1;
             }
           }
+
+          free_block(block);
         }
       }
       break;
@@ -1580,6 +1599,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
         if (has_block_by_hash(message->block_hash))
         {
+          free_transaction(message->transaction);
           return 1;
         }
 
@@ -1588,11 +1608,13 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 
         if (compare_block_hash(block->hash, message->block_hash) == 0)
         {
+          free_transaction(message->transaction);
           return 1;
         }
 
         if (transaction_received(net_connection, message->transaction, message->tx_index))
         {
+          free_transaction(message->transaction);
           return 1;
         }
       }
