@@ -1157,7 +1157,9 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not delete block: %s from blockchain storage!", hash_to_str(block_hash));
+    char *block_hash_str = hash_to_str(block_hash);
+    LOG_ERROR("Could not delete block: %s from blockchain storage!", block_hash_str);
+    free(block_hash_str);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
@@ -1181,7 +1183,9 @@ int delete_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not delete tx: %s from index!", hash_to_str(tx_id));
+    char *tx_hash_str = hash_to_str(tx_id);
+    LOG_ERROR("Could not delete tx: %s from index!", tx_hash_str);
+    free(tx_hash_str);
 
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);

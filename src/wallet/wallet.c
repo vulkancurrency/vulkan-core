@@ -270,7 +270,10 @@ void print_wallet(wallet_t *wallet)
   assert(wallet != NULL);
   uint64_t balance = get_balance_for_address(wallet->address) / COIN;
 
-  printf("Public Address: %s\n", address_to_str(wallet->address));
+  char *public_address_str = address_to_str(wallet->address);
+  printf("Public Address: %s\n", public_address_str);
+  free(public_address_str);
+
   printf("Balance: %llu\n", balance);
 }
 

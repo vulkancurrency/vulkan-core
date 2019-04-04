@@ -229,8 +229,13 @@ void print_block(block_t *block)
   printf("Block:\n");
   printf("Version: %u\n", block->version);
 
-  printf("Previous Hash: %s\n", hash_to_str(block->previous_hash));
-  printf("Hash: %s\n", hash_to_str(block->hash));
+  char *previous_hash_str = hash_to_str(block->previous_hash);
+  printf("Previous Hash: %s\n", previous_hash_str);
+  free(previous_hash_str);
+
+  char *hash_str = hash_to_str(block->hash);
+  printf("Hash: %s\n", hash_str);
+  free(hash_str);
 
   printf("Timestamp (epoch): %u\n", block->timestamp);
   printf("Nonce: %u\n", block->nonce);
@@ -238,7 +243,10 @@ void print_block(block_t *block)
   printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
   printf("Cumulative Emission: %llu\n", block->cumulative_emission);
 
-  printf("Merkle Root: %s\n", hash_to_str(block->merkle_root));
+  char *merkle_root_str = hash_to_str(block->merkle_root);
+  printf("Merkle Root: %s\n", merkle_root_str);
+  free(merkle_root_str);
+
   printf("Transaction Count: %u\n", block->transaction_count);
 }
 

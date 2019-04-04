@@ -135,10 +135,20 @@ void print_txin(uint8_t txin_index, input_transaction_t *txin)
   assert(txin != NULL);
 
   printf("Txin %u:\n", txin_index);
-  printf("Previous Tx: %s\n", hash_to_str(txin->transaction));
+
+  char *previous_tx_str = hash_to_str(txin->transaction);
+  printf("Previous Tx: %s\n", previous_tx_str);
+  free(previous_tx_str);
+
   printf("Index: %u\n", txin->txout_index);
-  printf("Signature: %s\n", bytes_to_str(txin->signature, crypto_sign_BYTES));
-  printf("Public Key: %s\n", bytes_to_str(txin->public_key, crypto_sign_PUBLICKEYBYTES));
+
+  char *signature_str = bytes_to_str(txin->signature, crypto_sign_BYTES);
+  printf("Signature: %s\n", signature_str);
+  free(signature_str);
+
+  char *public_key_str = bytes_to_str(txin->public_key, crypto_sign_PUBLICKEYBYTES);
+  printf("Public Key: %s\n", public_key_str);
+  free(public_key_str);
 }
 
 void print_txout(uint8_t txout_index, output_transaction_t *txout)
@@ -147,7 +157,10 @@ void print_txout(uint8_t txout_index, output_transaction_t *txout)
 
   printf("Txout %u:\n", txout_index);
   printf("Amount: %llu\n", txout->amount);
-  printf("Address: %s\n", address_to_str(txout->address));
+
+  char *address_str = address_to_str(txout->address);
+  printf("Address: %s\n", address_str);
+  free(address_str);
 }
 
 void print_transaction(transaction_t *tx)
@@ -155,7 +168,11 @@ void print_transaction(transaction_t *tx)
   assert(tx != NULL);
 
   printf("Transaction:\n");
-  printf("Id: %s\n", hash_to_str(tx->id));
+
+  char *tx_id_str = hash_to_str(tx->id);
+  printf("Id: %s\n", tx_id_str);
+  free(tx_id_str);
+
   printf("Txin Count: %u\n", tx->txin_count);
   printf("Txout Count: %u\n", tx->txout_count);
   printf("\n");

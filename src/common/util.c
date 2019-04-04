@@ -133,7 +133,7 @@ int make_hash(char *digest, unsigned char *string)
   return 0;
 }
 
-const char* bytes_to_str(uint8_t in_hash[], size_t in_size)
+char* bytes_to_str(uint8_t *in_hash, size_t in_size)
 {
   int hash_len = (in_size * 2);
   char *out_hash = malloc(sizeof(char) * hash_len);
@@ -142,10 +142,10 @@ const char* bytes_to_str(uint8_t in_hash[], size_t in_size)
     sprintf(out_hash + (i * 2), "%02x", (unsigned int)in_hash[i]);
   }
 
-  return (const char*)out_hash;
+  return out_hash;
 }
 
-const char* hash_to_str(uint8_t in_hash[HASH_SIZE])
+char* hash_to_str(uint8_t *in_hash)
 {
   int hash_len = (crypto_hash_sha256_BYTES * 2) + 1;
   char *out_hash = malloc(sizeof(char) * hash_len);
@@ -154,10 +154,10 @@ const char* hash_to_str(uint8_t in_hash[HASH_SIZE])
     sprintf(out_hash + (i * 2), "%02x", (unsigned int)in_hash[i]);
   }
 
-  return (const char*)out_hash;
+  return out_hash;
 }
 
-const char* address_to_str(uint8_t in_address[ADDRESS_SIZE])
+char* address_to_str(uint8_t *in_address)
 {
   int address_len = (ADDRESS_SIZE * 2) + 1;
   char *out_address = malloc(sizeof(char) * address_len);
@@ -166,7 +166,7 @@ const char* address_to_str(uint8_t in_address[ADDRESS_SIZE])
     sprintf(out_address + (i * 2), "%02x", (unsigned int)in_address[i]);
   }
 
-  return (const char*)out_address;
+  return out_address;
 }
 
 uint32_t get_current_time(void)
