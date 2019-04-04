@@ -239,9 +239,9 @@ void print_block(block_t *block)
 
   printf("Timestamp (epoch): %u\n", block->timestamp);
   printf("Nonce: %u\n", block->nonce);
-  printf("Difficulty: %llu\n", block->difficulty);
-  printf("Cumulative Difficulty: %llu\n", block->cumulative_difficulty);
-  printf("Cumulative Emission: %llu\n", block->cumulative_emission);
+  printf("Difficulty: %lu\n", block->difficulty);
+  printf("Cumulative Difficulty: %lu\n", block->cumulative_difficulty);
+  printf("Cumulative Emission: %lu\n", block->cumulative_emission);
 
   char *merkle_root_str = hash_to_str(block->merkle_root);
   printf("Merkle Root: %s\n", merkle_root_str);
