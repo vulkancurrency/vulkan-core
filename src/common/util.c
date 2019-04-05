@@ -256,7 +256,7 @@ int is_local_address(uint32_t ip)
   return 0;
 }
 
-const char* convert_ip_to_str(uint32_t ip)
+char* convert_ip_to_str(uint32_t ip)
 {
   char *out = malloc(sizeof(char) * 15);
   unsigned char bytes[4];
@@ -267,7 +267,7 @@ const char* convert_ip_to_str(uint32_t ip)
   bytes[3] = (ip >> 24) & 0xFF;
 
   sprintf(out, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
-  return (const char*)out;
+  return out;
 }
 
 uint32_t convert_str_to_ip(const char* address)
@@ -312,9 +312,9 @@ uint32_t convert_str_to_ip(const char* address)
   return v;
 }
 
-const char* convert_to_addr_str(const char* address, uint32_t port)
+char* convert_to_addr_str(const char* address, uint32_t port)
 {
   char *out = malloc(strlen(address) + sizeof(port) + 1);
   sprintf(out, "%s:%u", address, port);
-  return (const char*)out;
+  return out;
 }

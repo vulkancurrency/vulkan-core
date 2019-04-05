@@ -68,8 +68,8 @@ void sort(void *base, size_t nitems, size_t size);
 int is_private_address(uint32_t ip);
 int is_local_address(uint32_t ip);
 uint32_t convert_str_to_ip(const char* address);
-const char* convert_ip_to_str(uint32_t ip);
-const char* convert_to_addr_str(const char* address, uint32_t port);
+char* convert_ip_to_str(uint32_t ip);
+char* convert_to_addr_str(const char* address, uint32_t port);
 
 #ifdef __cplusplus
 }

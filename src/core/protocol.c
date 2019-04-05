@@ -1400,13 +1400,15 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             break;
           }
 
-          const char *bind_address = convert_ip_to_str(remote_ip);
+          char *bind_address = convert_ip_to_str(remote_ip);
           if (connect_net_to_peer(bind_address, host_port))
           {
             buffer_iterator_free(buffer_iterator);
             buffer_free(buffer);
             return 1;
           }
+
+          free(bind_address);
         }
 
         buffer_iterator_free(buffer_iterator);

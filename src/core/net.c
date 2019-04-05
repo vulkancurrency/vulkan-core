@@ -467,7 +467,7 @@ int net_run(void)
 
 int connect_net_to_peer(const char *address, uint16_t port)
 {
-  const char *bind_address = convert_to_addr_str(address, port);
+  char *bind_address = convert_to_addr_str(address, port);
   struct mg_connection *connection = mg_connect(&g_net_mgr, bind_address, ev_handler);
   if (connection == NULL)
   {
@@ -475,6 +475,7 @@ int connect_net_to_peer(const char *address, uint16_t port)
     return 1;
   }
 
+  free(bind_address);
   net_connection_t *net_connection = init_net_connection(connection);
   net_connection->host_port = port;
   assert(add_net_connection(net_connection) == 0);
@@ -550,7 +551,7 @@ int init_net(void)
   }
 
   // setup the new connection
-  const char *bind_address = convert_to_addr_str(g_net_host_address, g_net_host_port);
+  char *bind_address = convert_to_addr_str(g_net_host_address, g_net_host_port);
   struct mg_connection *connection = mg_bind(&g_net_mgr, bind_address, ev_handler);
   if (connection == NULL)
   {
@@ -558,6 +559,7 @@ int init_net(void)
     return 1;
   }
 
+  free(bind_address);
   g_net_connection = init_net_connection(connection);
   g_net_connection->host_port = g_net_host_port;
   assert(add_net_connection(g_net_connection) == 0);
