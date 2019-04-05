@@ -247,7 +247,10 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
           (unspent_tx->unspent_txouts[txin->txout_index] == NULL))
       {
-
+        char *tx_hash_str = hash_to_str(unspent_tx->id);
+        LOG_ERROR("Failed to validate txin referencing invalid unspent tx: %s with txout at index: %u!", tx_hash_str, txin->txout_index);
+        free(tx_hash_str);
+        return 0;
       }
       else
       {
