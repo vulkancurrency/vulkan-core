@@ -142,18 +142,8 @@ int buffer_realloc(buffer_t *buffer, size_t size)
     return 1;
   }
 
-  if (buffer->data == NULL)
-  {
-    buffer->data = malloc(buffer->size + size);
-    memset(buffer->data, 0, buffer->size + size);
-  }
-  else
-  {
-    uint8_t *data = realloc(buffer->data, buffer->size + size);
-    assert(data != NULL);
-    buffer->data = data;
-  }
-
+  buffer->data = realloc(buffer->data, buffer->size + size);
+  assert(buffer->data != NULL);
   buffer->size += size;
   return 0;
 }

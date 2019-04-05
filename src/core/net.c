@@ -231,6 +231,7 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
   packet_t *packet = make_packet();
   if (deserialize_packet(packet, buffer_iterator))
   {
+    free_packet(packet);
     return 1;
   }
 
@@ -525,6 +526,7 @@ int connect_net_to_seeds(void)
 
 task_result_t reconnect_seeds(task_t *task, va_list args)
 {
+  assert(task != NULL);
   assert(connect_net_to_seeds() == 0);
   return TASK_RESULT_WAIT;
 }

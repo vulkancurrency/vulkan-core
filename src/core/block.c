@@ -68,7 +68,6 @@ block_t* make_block(void)
   memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
   block->transaction_count = 0;
   block->transactions = NULL;
-
   return block;
 }
 
@@ -205,10 +204,11 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
   uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
-    compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]);
+    assert(compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]) == 0);
   }
 
   merkle_tree_t *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
+  assert(tree != NULL);
   memcpy(merkle_root, tree->root->hash, HASH_SIZE);
 
   free_merkle_tree(tree);
@@ -401,18 +401,19 @@ int serialize_block(buffer_t *buffer, block_t *block)
 int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 {
   assert(buffer_iterator != NULL);
-
   block_t *block = make_block();
   assert(block != NULL);
 
   if (buffer_read_uint32(buffer_iterator, &block->version))
   {
+    free_block(block);
     return 1;
   }
 
   uint8_t *previous_hash = NULL;
   if (buffer_read_bytes(buffer_iterator, &previous_hash))
   {
+    free_block(block);
     return 1;
   }
 
@@ -422,6 +423,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
   uint8_t *hash = NULL;
   if (buffer_read_bytes(buffer_iterator, &hash))
   {
+    free_block(block);
     return 1;
   }
 
@@ -430,32 +432,38 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 
   if (buffer_read_uint32(buffer_iterator, &block->timestamp))
   {
+    free_block(block);
     return 1;
   }
 
   if (buffer_read_uint32(buffer_iterator, &block->nonce))
   {
+    free_block(block);
     return 1;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->difficulty))
   {
+    free_block(block);
     return 1;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->cumulative_difficulty))
   {
+    free_block(block);
     return 1;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->cumulative_emission))
   {
+    free_block(block);
     return 1;
   }
 
   uint8_t *merkle_root = NULL;
   if (buffer_read_bytes(buffer_iterator, &merkle_root))
   {
+    free_block(block);
     return 1;
   }
 
@@ -464,6 +472,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 
   if (buffer_read_uint32(buffer_iterator, &block->transaction_count))
   {
+    free_block(block);
     return 1;
   }
 
@@ -477,6 +486,7 @@ int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)
   buffer_t *buffer = buffer_init();
   if (serialize_block(buffer, block))
   {
+    buffer_free(buffer);
     return 1;
   }
 
@@ -485,7 +495,6 @@ int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)
 
   memcpy(*data, buffer->data, *data_len);
   buffer_free(buffer);
-
   return 0;
 }
 
@@ -540,11 +549,7 @@ int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_
     for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = NULL;
-      if (deserialize_transaction(buffer_iterator, &tx))
-      {
-        return 1;
-      }
-
+      assert(deserialize_transaction(buffer_iterator, &tx) == 0);
       block->transactions[i] = tx;
     }
   }
@@ -560,27 +565,9 @@ int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_inde
   input_transaction_t *txin = tx->txins[0];
   assert(txin != NULL);
 
-  if (tx_index > 0)
-  {
-    transaction_t *previous_tx = block->transactions[tx_index - 1];
-    assert(previous_tx != NULL);
-    memcpy(&txin->transaction, &previous_tx->id, HASH_SIZE);
-  }
-
-  if (block->transaction_count == 0 && block->transactions == NULL)
-  {
-    block->transaction_count = 1;
-    block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-  }
-  else
-  {
-    block->transaction_count++;
-    transaction_t **transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
-    assert(transactions != NULL);
-    free(block->transactions);
-    block->transactions = transactions;
-  }
-
+  block->transaction_count++;
+  block->transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
+  assert(block->transactions != NULL);
   block->transactions[tx_index] = tx;
   return 0;
 }
@@ -656,11 +643,7 @@ int copy_block_transactions(block_t *block, block_t *other_block)
 
   if (block->transaction_count > 0 && block->transactions != NULL)
   {
-    // allocate the transaction array for the block we are copying to
-    other_block->transaction_count = block->transaction_count;
-    other_block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
-
-    // copy the transactions to the block we are copying to
+    // copy the transactions
     for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = block->transactions[i];
@@ -673,6 +656,9 @@ int copy_block_transactions(block_t *block, block_t *other_block)
       }
 
       assert(other_tx != NULL);
+      other_block->transaction_count++;
+      other_block->transactions = realloc(other_block->transactions, sizeof(transaction_t) * block->transaction_count);
+      assert(other_block->transactions != NULL);
       other_block->transactions[i] = other_tx;
     }
   }
@@ -722,6 +708,7 @@ int free_block_transactions(block_t *block)
     }
 
     free(block->transactions);
+    block->transactions = NULL;
   }
 
   return 0;

@@ -98,7 +98,8 @@ static block_t genesis_block = {
     0xac, 0x9d, 0x24, 0x9e,
     0x60, 0x4b, 0xf9, 0x52
   },
-  .transaction_count = 0
+  .transaction_count = 0,
+  .transactions = NULL
 };
 
 block_t* make_block(void);

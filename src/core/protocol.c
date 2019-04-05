@@ -119,6 +119,9 @@ int free_packet(packet_t *packet)
 
 int deserialize_message(packet_t *packet, void **message)
 {
+  assert(packet != NULL);
+  assert(message != NULL);
+
   buffer_t *buffer = NULL;
   if (packet->size > 0)
   {
@@ -137,6 +140,8 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t host_port = 0;
         if (buffer_read_uint32(buffer_iterator, &host_port))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -162,12 +167,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t peerlist_data_size = 0;
         if (buffer_read_uint32(buffer_iterator, &peerlist_data_size))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint8_t *peerlist_data = NULL;
         if (buffer_read_bytes(buffer_iterator, &peerlist_data))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -182,6 +191,8 @@ int deserialize_message(packet_t *packet, void **message)
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -195,6 +206,8 @@ int deserialize_message(packet_t *packet, void **message)
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -214,12 +227,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -234,6 +251,8 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -247,12 +266,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -267,6 +290,8 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -280,12 +305,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -300,6 +329,8 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -313,12 +344,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint64_t num_transactions = 0;
         if (buffer_read_uint64(buffer_iterator, &num_transactions))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -333,12 +368,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint8_t *tx_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &tx_hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -353,18 +392,24 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -380,12 +425,16 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -400,18 +449,24 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -446,6 +501,7 @@ int deserialize_message(packet_t *packet, void **message)
 
 int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 {
+  assert(packet != NULL);
   buffer_t *buffer = buffer_init();
   switch (packet_id)
   {
@@ -472,7 +528,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 
         uint32_t peerlist_data_size = buffer_get_size(peerlist_buffer);
         buffer_write_uint32(buffer, peerlist_data_size);
-        buffer_write_bytes(buffer, (uint8_t*)buffer_get_data(peerlist_buffer), peerlist_data_size);
+        buffer_write_bytes(buffer, buffer_get_data(peerlist_buffer), peerlist_data_size);
       }
       break;
     case PKT_TYPE_INCOMING_BLOCK:
@@ -615,7 +671,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       return 1;
   }
 
-  const uint8_t *data = buffer_get_data(buffer);
+  uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   packet_t *serialized_packet = make_packet();
@@ -634,6 +690,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 
 void free_message(uint32_t packet_id, void *message_object)
 {
+  assert(message_object != NULL);
   switch (packet_id)
   {
     case PKT_TYPE_CONNECT_REQ:
@@ -825,7 +882,13 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.sync_initiated = 0;
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
   g_protocol_sync_entry.sync_finding_top_block = 0;
-  g_protocol_sync_entry.sync_pending_block = NULL;
+
+  if (g_protocol_sync_entry.sync_pending_block != NULL)
+  {
+    free_block(g_protocol_sync_entry.sync_pending_block);
+    g_protocol_sync_entry.sync_pending_block = NULL;
+  }
+
   g_protocol_sync_entry.sync_height = 0;
   g_protocol_sync_entry.sync_start_height = -1;
 
@@ -847,8 +910,6 @@ int clear_tx_sync_request(void)
   {
     return 1;
   }
-
-  g_protocol_sync_entry.sync_pending_block = NULL;
 
   g_protocol_sync_entry.tx_sync_initiated = 0;
   g_protocol_sync_entry.tx_sync_num_txs = 0;
@@ -932,6 +993,7 @@ int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_
 
 int request_sync_next_block(net_connection_t *net_connection)
 {
+  assert(net_connection != NULL);
   uint32_t block_height = g_protocol_sync_entry.last_sync_height;
   if (has_block_by_height(block_height) == 0)
   {
@@ -943,14 +1005,11 @@ int request_sync_next_block(net_connection_t *net_connection)
   return request_sync_block(net_connection, sync_height, NULL);
 }
 
-int request_sync_previous_block(net_connection_t *net_connection)
-{
-  uint32_t sync_height = g_protocol_sync_entry.last_sync_height - 1;
-  return request_sync_block(net_connection, sync_height, NULL);
-}
-
 int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
 {
+  assert(net_connection != NULL);
+  assert(block_hash != NULL);
+
   if (tx_hash != NULL)
   {
     if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ, block_hash, tx_hash))
@@ -982,6 +1041,7 @@ int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_ha
 
 int request_sync_next_transaction(net_connection_t *net_connection)
 {
+  assert(net_connection != NULL);
   block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
   assert(pending_block != NULL);
 
@@ -994,8 +1054,15 @@ int request_sync_next_transaction(net_connection_t *net_connection)
   return request_sync_transaction(net_connection, pending_block->hash, tx_sync_index, NULL);
 }
 
+int request_sync_previous_block(net_connection_t *net_connection)
+{
+  uint32_t sync_height = g_protocol_sync_entry.last_sync_height - 1;
+  return request_sync_block(net_connection, sync_height, NULL);
+}
+
 int block_header_received(net_connection_t *net_connection, block_t *block)
 {
+  assert(net_connection != NULL);
   assert(block != NULL);
 
   // validate the block's hash before attempting to establish a sync request
@@ -1034,6 +1101,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       {
         if (request_sync_previous_block(net_connection))
         {
+          assert(clear_sync_request(0) == 0);
           return 1;
         }
       }
@@ -1047,6 +1115,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
           // fail to clear our sync request, then throw an assertion,
           // this should never happen...
           assert(clear_sync_request(0) == 0);
+          return 1;
         }
       }
     }
@@ -1073,6 +1142,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 
 int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
 {
+  assert(net_connection != NULL);
   assert(block != NULL);
   if (validate_and_insert_block(block) == 0)
   {
@@ -1097,17 +1167,12 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
         return 1;
       }
     }
-  }
-  else
-  {
-    // we failed to add this block when trying to switch to it's
-    // alternative chain, restore our previous working chain instead.
-    assert(clear_sync_request(0) == 0);
+
     return 0;
   }
 
-  free_block(block);
-  return 0;
+  assert(clear_sync_request(0) == 0);
+  return 1;
 }
 
 int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index)
@@ -1125,6 +1190,7 @@ int transaction_received(net_connection_t *net_connection, transaction_t *transa
     {
       if (request_sync_next_transaction(net_connection))
       {
+        assert(clear_sync_request(0) == 0);
         return 1;
       }
     }
@@ -1140,12 +1206,16 @@ int transaction_received(net_connection_t *net_connection, transaction_t *transa
         assert(clear_tx_sync_request() == 0);
         if (block_header_sync_complete(net_connection, block))
         {
+          // we failed to add this block when trying to switch to it's
+          // alternative chain, restore our previous working chain instead.
+          assert(clear_sync_request(0) == 0);
           return 1;
         }
       }
       else
       {
         assert(clear_sync_request(0) == 0);
+        return 1;
       }
     }
   }
@@ -1185,6 +1255,8 @@ int rollback_blockchain_and_resync(void)
 
 int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object)
 {
+  assert(net_connection != NULL);
+  assert(message_object != NULL);
   switch (packet_id)
   {
     case PKT_TYPE_CONNECT_REQ:
@@ -1230,6 +1302,8 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
 
 int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object)
 {
+  assert(net_connection != NULL);
+  assert(message_object != NULL);
   switch (packet_id)
   {
     case PKT_TYPE_GET_PEERLIST_REQ:
@@ -1273,6 +1347,8 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         uint16_t num_peers = 0;
         if (buffer_read_uint16(buffer_iterator, &num_peers))
         {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
           return 1;
         }
 
@@ -1281,12 +1357,16 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           uint32_t remote_ip = 0;
           if (buffer_read_uint32(buffer_iterator, &remote_ip))
           {
+            buffer_iterator_free(buffer_iterator);
+            buffer_free(buffer);
             return 1;
           }
 
           uint16_t host_port = 0;
           if (buffer_read_uint16(buffer_iterator, &host_port))
           {
+            buffer_iterator_free(buffer_iterator);
+            buffer_free(buffer);
             return 1;
           }
 
@@ -1402,6 +1482,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
                 g_protocol_sync_entry.last_sync_height = current_block_height + 1;
                 if (request_sync_previous_block(net_connection))
                 {
+                  assert(clear_sync_request(0) == 0);
                   return 1;
                 }
               }
@@ -1431,6 +1512,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           {
             if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HASH_RESP, block_height, block))
             {
+              free_block(block);
               return 1;
             }
           }
@@ -1459,6 +1541,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           {
             if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP, block->hash, block))
             {
+              free_block(block);
               return 1;
             }
 
@@ -1511,6 +1594,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
               g_protocol_sync_entry.tx_sync_num_txs = message->num_transactions;
               if (request_sync_next_transaction(net_connection))
               {
+                assert(clear_sync_request(0) == 0);
                 return 1;
               }
             }
@@ -1533,16 +1617,17 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 
           int32_t tx_index = get_tx_index_from_tx_in_block(block, transaction);
           assert(tx_index >= 0);
-          free_transaction(transaction);
 
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP,
             message->block_hash, tx_index, transaction))
           {
             free_block(block);
+            free_transaction(transaction);
             return 1;
           }
 
           free_block(block);
+          free_transaction(transaction);
         }
       }
       break;
@@ -1630,11 +1715,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 int handle_receive_packet(net_connection_t *net_connection, packet_t *packet)
 {
   void *message = NULL;
-  if (deserialize_message(packet, &message) || message == NULL)
+  if (deserialize_message(packet, &message))
   {
     return 1;
   }
 
+  assert(message != NULL);
   int result = 0;
   if (net_connection->anonymous)
   {
@@ -1652,16 +1738,17 @@ int handle_receive_packet(net_connection_t *net_connection, packet_t *packet)
 int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args)
 {
   packet_t *packet = NULL;
-  if (serialize_message(&packet, packet_id, args) || packet == NULL)
+  if (serialize_message(&packet, packet_id, args))
   {
     return 1;
   }
 
+  assert(packet != NULL);
   buffer_t *buffer = buffer_init();
   serialize_packet(buffer, packet);
   free_packet(packet);
 
-  uint8_t *data = (uint8_t*)buffer_get_data(buffer);
+  uint8_t *data = buffer_get_data(buffer);
   size_t data_len = buffer_get_size(buffer);
 
   int result = 0;
@@ -1680,6 +1767,7 @@ int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t
 
 int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...)
 {
+  assert(net_connection != NULL);
   va_list args;
   va_start(args, packet_id);
   if (handle_send_packet(net_connection, 0, packet_id, args))
@@ -1706,6 +1794,7 @@ int handle_packet_broadcast(uint32_t packet_id, ...)
 
 task_result_t resync_chain(task_t *task, va_list args)
 {
+  assert(task != NULL);
   if (g_protocol_sync_entry.sync_initiated)
   {
     uint32_t current_time = get_current_time();
