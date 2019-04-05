@@ -1179,7 +1179,6 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
     return 0;
   }
 
-  assert(clear_sync_request(0) == 0);
   return 1;
 }
 
