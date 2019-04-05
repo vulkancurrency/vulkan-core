@@ -260,8 +260,8 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
   size_t remaining_data_len = buffer_get_remaining_size(buffer_iterator);
   if (remaining_data_len > 0)
   {
-    const uint8_t *remaining_data = (const uint8_t*)buffer_get_remaining_data(buffer_iterator);
-    data_received(net_connection, (uint8_t*)remaining_data, remaining_data_len);
+    uint8_t *remaining_data = buffer_get_remaining_data(buffer_iterator);
+    data_received(net_connection, remaining_data, remaining_data_len);
   }
 }
 
