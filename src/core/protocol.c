@@ -186,7 +186,7 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_INCOMING_BLOCK:
+    /*case PKT_TYPE_INCOMING_BLOCK:
       {
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
@@ -200,7 +200,7 @@ int deserialize_message(packet_t *packet, void **message)
         packed_message->block = block;
         *message = packed_message;
       }
-      break;
+      break;*/
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         transaction_t *transaction = NULL;
@@ -531,14 +531,14 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         buffer_write_bytes(buffer, buffer_get_data(peerlist_buffer), peerlist_data_size);
       }
       break;
-    case PKT_TYPE_INCOMING_BLOCK:
+    /*case PKT_TYPE_INCOMING_BLOCK:
       {
         block_t *block = va_arg(args, block_t*);
         assert(block != NULL);
 
         serialize_block(buffer, block);
       }
-      break;
+      break;*/
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         transaction_t *transaction = va_arg(args, transaction_t*);
@@ -718,13 +718,13 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
-    case PKT_TYPE_INCOMING_BLOCK:
+    /*case PKT_TYPE_INCOMING_BLOCK:
       {
         incoming_block_t *message = (incoming_block_t*)message_object;
         free_block(message->block);
         free(message);
       }
-      break;
+      break;*/
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
@@ -1406,15 +1406,15 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         buffer_free(buffer);
       }
       break;
-    case PKT_TYPE_INCOMING_BLOCK:
+    /*case PKT_TYPE_INCOMING_BLOCK:
       {
-        /*incoming_block_t *message = (incoming_block_t*)message_object;
+        incoming_block_t *message = (incoming_block_t*)message_object;
         if (validate_and_insert_block(message->block) == 0)
         {
           LOG_INFO("Added incoming block at height: %u.", get_block_height());
-        }*/
+        }
       }
-      break;
+      break;*/
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
       {
         incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
