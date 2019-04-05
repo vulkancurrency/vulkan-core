@@ -1482,6 +1482,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
                 g_protocol_sync_entry.last_sync_height = current_block_height + 1;
                 if (request_sync_previous_block(net_connection))
                 {
+                  LOG_ERROR("Failed to request previous block when looking for synchronization starting height!");
                   assert(clear_sync_request(0) == 0);
                   return 1;
                 }
@@ -1492,7 +1493,8 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
                 LOG_INFO("Beginning sync with presumed top block: %u...", message->height);
                 if (request_sync_next_block(net_connection))
                 {
-                  LOG_ERROR("Failed to request next block!");
+                  LOG_ERROR("Failed to request next block when looking for synchronization starting height!");
+                  assert(clear_sync_request(0) == 0);
                   return 1;
                 }
               }
@@ -1772,6 +1774,7 @@ int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, .
   va_start(args, packet_id);
   if (handle_send_packet(net_connection, 0, packet_id, args))
   {
+    va_end(args);
     return 1;
   }
 
@@ -1785,6 +1788,7 @@ int handle_packet_broadcast(uint32_t packet_id, ...)
   va_start(args, packet_id);
   if (handle_send_packet(NULL, 1, packet_id, args))
   {
+    va_end(args);
     return 1;
   }
 
