@@ -97,7 +97,7 @@ int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator)
   return buffer_iterator->buffer->size - buffer_iterator->offset;
 }
 
-const uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator)
+uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);

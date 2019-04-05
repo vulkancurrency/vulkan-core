@@ -51,7 +51,7 @@ size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
 int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
 int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
-const uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
+uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
 
 int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value);
 int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value);
