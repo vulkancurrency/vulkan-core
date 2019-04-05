@@ -313,6 +313,7 @@ int deserialize_message(packet_t *packet, void **message)
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
+          free(hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -352,6 +353,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint64_t num_transactions = 0;
         if (buffer_read_uint64(buffer_iterator, &num_transactions))
         {
+          free(hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -376,6 +378,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *tx_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &tx_hash))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -400,6 +403,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -408,6 +412,7 @@ int deserialize_message(packet_t *packet, void **message)
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -433,6 +438,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -457,6 +463,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
@@ -465,6 +472,7 @@ int deserialize_message(packet_t *packet, void **message)
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
+          free(block_hash);
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
