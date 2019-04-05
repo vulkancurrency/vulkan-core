@@ -78,6 +78,9 @@ int buffer_write_int64(buffer_t *buffer, int64_t value);
 int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
 int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size);
 
+int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size);
+int buffer_write_bytes_long(buffer_t *buffer, uint8_t *bytes, uint64_t size);
+
 #ifdef __cplusplus
 }
 #endif
