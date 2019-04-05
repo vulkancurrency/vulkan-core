@@ -237,8 +237,6 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
 
   if (handle_receive_packet(net_connection, packet))
   {
-    LOG_DEBUG("Failed to handle incoming packet!");
-    assert(close_net_connection(net_connection) == 0);
     free_packet(packet);
     return 1;
   }
@@ -251,7 +249,9 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
 {
   if (process_packet(net_connection, buffer_iterator))
   {
-
+    LOG_DEBUG("Failed to handle incoming packet!");
+    assert(close_net_connection(net_connection) == 0);
+    return;
   }
 
   // check to see if we have any remaining data in the buffer,
