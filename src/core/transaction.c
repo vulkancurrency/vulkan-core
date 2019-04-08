@@ -793,6 +793,30 @@ unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32
   return unspent_tx;
 }
 
+int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin)
+{
+  assert(tx != NULL);
+  assert(txin != NULL);
+
+  tx->txin_count++;
+  tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
+  assert(tx->txins != NULL);
+  tx->txins[tx->txin_count] = txin;
+  return 0;
+}
+
+int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout)
+{
+  assert(tx != NULL);
+  assert(txin != NULL);
+
+  tx->txout_count++;
+  tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
+  assert(tx->txouts != NULL);
+  tx->txouts[tx->txout_count] = txout;
+  return 0;
+}
+
 int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)
 {
   assert(txin != NULL);
