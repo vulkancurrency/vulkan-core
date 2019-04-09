@@ -160,8 +160,8 @@ int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspen
 unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);
 int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
 
-int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin);
-int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout);
+int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32_t txin_index);
+int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uint32_t txout_index);
 
 int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
 int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);

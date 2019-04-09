@@ -847,30 +847,32 @@ int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_vo
   return 0;
 }
 
-int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin)
+int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32_t txin_index)
 {
   assert(tx != NULL);
   assert(txin != NULL);
 
   tx->txin_count++;
+  assert(txin_index <= tx->txin_count);
+
   tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
   assert(tx->txins != NULL);
 
-  uint32_t txin_index = tx->txin_count - 1;
   tx->txins[txin_index] = txin;
   return 0;
 }
 
-int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout)
+int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uint32_t txout_index)
 {
   assert(tx != NULL);
   assert(txout != NULL);
 
   tx->txout_count++;
+  assert(txout_index <= tx->txout_count);
+
   tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
   assert(tx->txouts != NULL);
 
-  uint32_t txout_index = tx->txout_count - 1;
   tx->txouts[txout_index] = txout;
   return 0;
 }
