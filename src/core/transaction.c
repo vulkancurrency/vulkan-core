@@ -835,7 +835,7 @@ int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_vo
     unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
     assert(unspent_txout != NULL);
 
-    if (unspent_txout->spent == 0)
+    if (unspent_txout->spent == 1)
     {
       continue;
     }

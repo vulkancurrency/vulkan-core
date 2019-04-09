@@ -187,6 +187,7 @@ int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money,
       }
 
       vec_deinit(&unspent_txouts);
+      free_unspent_transaction(unspent_tx);
       if (tx_constructed)
       {
         break;
