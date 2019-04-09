@@ -39,76 +39,6 @@
 
 #include "wallet/wallet.h"
 
-input_transaction_t* make_txin(uint8_t *tx_id, uint32_t txout_index)
-{
-  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  //memcpy(&txin->transaction, tx_id, HASH_SIZE);
-  memset(&txin->transaction, 0, HASH_SIZE);
-  txin->txout_index = txout_index;
-  return txin;
-}
-
-output_transaction_t* make_txout(uint8_t *address, uint64_t amount)
-{
-  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
-  txout->amount = amount;
-  memcpy(txout->address, address, ADDRESS_SIZE);
-  return txout;
-}
-
-transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entries)
-{
-  assert(wallet != NULL);
-  assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
-
-  vec_void_t unspent_txs;
-  vec_init(&unspent_txs);
-
-  uint32_t num_unspent_txs = 0;
-  assert(get_unspent_transactions_for_address(wallet->address, &unspent_txs, &num_unspent_txs) == 0);
-  vec_deinit(&unspent_txs);
-
-  transaction_t *tx = malloc(sizeof(transaction_t));
-
-  tx->txin_count = transaction_entries.num_entries;
-  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
-
-  tx->txout_count = transaction_entries.num_entries;
-  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
-
-  for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
-  {
-    transaction_entry_t transaction_entry = transaction_entries.entries[i];
-
-    input_transaction_t *txin = make_txin(NULL, 0);
-    output_transaction_t *txout = make_txout(transaction_entry.address, transaction_entry.amount);
-
-    assert(txin != NULL);
-    assert(txout != NULL);
-
-    tx->txins[i] = txin;
-    tx->txouts[i] = txout;
-
-    assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
-  }
-
-  compute_self_tx_id(tx);
-  return tx;
-}
-
-transaction_t* make_generation_tx(wallet_t *wallet, uint64_t block_reward)
-{
-  transaction_entry_t transaction_entry;
-  transaction_entry.address = wallet->address;
-  transaction_entry.amount = block_reward;
-
-  transaction_entries_t transaction_entries;
-  transaction_entries.num_entries = 1;
-  transaction_entries.entries[0] = transaction_entry;
-
-  return make_tx(wallet, transaction_entries);
-}
-
 uint64_t get_total_entries_amount(transaction_entries_t transaction_entries)
 {
   uint64_t total_amount = 0;
@@ -119,4 +49,179 @@ uint64_t get_total_entries_amount(transaction_entries_t transaction_entries)
   }
 
   return total_amount;
+}
+
+int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries)
+{
+  assert(wallet != NULL);
+  assert(transaction_entries.num_entries <= (uint16_t)MAX_NUM_TX_ENTRIES);
+
+  // check to see if the wallet has enough money to spend
+  if (check_available_money)
+  {
+    uint64_t money_required = get_total_entries_amount(transaction_entries);
+    uint64_t available_money = get_balance_for_address(wallet->address);
+    if (available_money < money_required)
+    {
+      LOG_ERROR("Cannot make transaction, wallet has insufficient funds: %llu!", money_required - available_money);
+      return 1;
+    }
+  }
+
+  vec_void_t unspent_txs;
+  vec_init(&unspent_txs);
+
+  uint32_t num_unspent_txs = 0;
+  assert(get_unspent_transactions_for_address(wallet->address, &unspent_txs, &num_unspent_txs) == 0);
+  vec_deinit(&unspent_txs);
+
+  transaction_t *tx = make_transaction();
+  for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
+  {
+    transaction_entry_t transaction_entry = transaction_entries.entries[i];
+
+    void *value = NULL;
+    int index = 0;
+
+    uint64_t money_already_spent = 0;
+    int tx_constructed = 0;
+
+    vec_foreach(&unspent_txs, value, index)
+    {
+      unspent_transaction_t *unspent_tx = (unspent_transaction_t*)value;
+      assert(unspent_tx != NULL);
+
+      vec_void_t unspent_txouts;
+      vec_init(&unspent_txouts);
+
+      uint32_t num_unspent_txouts = 0;
+      assert(get_unspent_txouts_from_unspent_tx(unspent_tx, &unspent_txouts, &num_unspent_txouts) == 0);
+      vec_deinit(&unspent_txouts);
+
+      void *value2 = NULL;
+      int index2 = 0;
+      vec_foreach(&unspent_txouts, value2, index2)
+      {
+        unspent_output_transaction_t *unspent_txout = (unspent_output_transaction_t*)value;
+        assert(unspent_txout != NULL);
+
+        if (unspent_txout->amount >= transaction_entry.amount)
+        {
+          // construct the txin
+          input_transaction_t *txin = make_txin();
+          txin->txout_index = index;
+          memcpy(txin->transaction, unspent_tx->id, HASH_SIZE);
+
+          assert(add_txin_to_transaction(tx, txin) == 0);
+          assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
+
+          // construct the txout
+          output_transaction_t *txout = make_txout();
+          txout->amount = transaction_entry.amount;
+          memcpy(txout->address, transaction_entry.address, ADDRESS_SIZE);
+
+          assert(add_txout_to_transaction(tx, txout) == 0);
+
+          // construct the change return txout if there is any change...
+          uint64_t change_leftover = unspent_txout->amount - transaction_entry.amount;
+          if (change_leftover > 0)
+          {
+            output_transaction_t *change_txout = make_txout();
+            change_txout->amount = change_leftover;
+            memcpy(change_txout->address, wallet->address, ADDRESS_SIZE);
+
+            assert(add_txout_to_transaction(tx, change_txout) == 0);
+          }
+
+          tx_constructed = 1;
+          break;
+        }
+        else
+        {
+          if (money_already_spent >= transaction_entry.amount)
+          {
+            tx_constructed = 1;
+            break;
+          }
+
+          // construct the txin
+          input_transaction_t *txin = make_txin();
+          txin->txout_index = index;
+          memcpy(txin->transaction, unspent_tx->id, HASH_SIZE);
+
+          assert(add_txin_to_transaction(tx, txin) == 0);
+          assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
+
+          // construct the txout
+          output_transaction_t *txout = make_txout();
+          txout->amount = unspent_txout->amount;
+          memcpy(txout->address, transaction_entry.address, ADDRESS_SIZE);
+
+          assert(add_txout_to_transaction(tx, txout) == 0);
+
+          // update the amount of money we've spent in total from out
+          // unspent available txouts...
+          money_already_spent += unspent_txout->amount;
+
+          // construct the change return txout if there is any change...
+          if (money_already_spent > transaction_entry.amount)
+          {
+            uint64_t change_leftover = money_already_spent - transaction_entry.amount;
+            assert(change_leftover > 0);
+
+            output_transaction_t *change_txout = make_txout();
+            change_txout->amount = change_leftover;
+            memcpy(change_txout->address, wallet->address, ADDRESS_SIZE);
+
+            assert(add_txout_to_transaction(tx, change_txout) == 0);
+
+            // since we had money left over, this transaction is now filled,
+            // mark the transaction as constructed.
+            tx_constructed = 1;
+            break;
+          }
+        }
+      }
+
+      if (tx_constructed)
+      {
+        break;
+      }
+    }
+
+    if (tx_constructed == 0)
+    {
+      LOG_ERROR("Cannot make transaction, could not construct transaction!");
+      free_transaction(tx);
+      return 1;
+    }
+  }
+
+  // finalize tx
+  compute_self_tx_id(tx);
+  *tx_out = tx;
+  return 0;
+}
+
+int make_generation_tx(transaction_t **tx_out, wallet_t *wallet, uint64_t block_reward)
+{
+  assert(wallet != NULL);
+  transaction_t *tx = make_transaction();
+
+  // construct the txin
+  input_transaction_t *txin = make_txin();
+  assert(add_txin_to_transaction(tx, txin) == 0);
+  assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
+
+  // construct the txout
+  output_transaction_t *txout = make_txout();
+  txout->amount = block_reward;
+  memcpy(txout->address, wallet->address, ADDRESS_SIZE);
+
+  assert(add_txout_to_transaction(tx, txout) == 0);
+
+  // finalize tx
+  compute_self_tx_id(tx);
+  *tx_out = tx;
+  return 0;
 }

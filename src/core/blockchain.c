@@ -1376,6 +1376,7 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
 {
   assert(address != NULL);
   assert(unspent_txs != NULL);
+
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
 
@@ -1388,9 +1389,12 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
     {
       size_t data_len;
       uint8_t *data = (uint8_t*)rocksdb_iter_value(iterator, &data_len);
+      assert(data != NULL);
+
       unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(data, data_len);
       assert(unspent_tx != NULL);
 
+      int has_unspent_txout = 0;
       for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
       {
         unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
@@ -1406,7 +1410,13 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
           continue;
         }
 
-        assert(vec_push(unspent_txs, unspent_txout) == 0);
+        has_unspent_txout = 1;
+        break;
+      }
+
+      if (has_unspent_txout)
+      {
+        assert(vec_push(unspent_txs, unspent_tx) == 0);
         *num_unspent_txs += 1;
       }
 
@@ -1427,20 +1437,78 @@ int get_unspent_transactions_for_address(uint8_t *address, vec_void_t *unspent_t
   return result;
 }
 
+int get_unspent_txouts_for_address_nolock(uint8_t *address, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts)
+{
+  assert(address != NULL);
+  assert(unspent_txouts != NULL);
+
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+
+  for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
+    rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+  {
+    size_t key_length;
+    char *key = (char*)rocksdb_iter_key(iterator, &key_length);
+    if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_UNSPENT_TX)
+    {
+      size_t data_len;
+      uint8_t *data = (uint8_t*)rocksdb_iter_value(iterator, &data_len);
+      assert(data != NULL);
+
+      unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(data, data_len);
+      assert(unspent_tx != NULL);
+
+      for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
+      {
+        unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
+        assert(unspent_txout != NULL);
+
+        if (compare_addresses(unspent_txout->address, address) == 0)
+        {
+          continue;
+        }
+
+        if (unspent_txout->spent == 0)
+        {
+          continue;
+        }
+
+        assert(vec_push(unspent_txouts, unspent_txout) == 0);
+        *num_unspent_txouts += 1;
+      }
+
+      free_unspent_transaction(unspent_tx);
+    }
+  }
+
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  return 0;
+}
+
+int get_unspent_txouts_for_address(uint8_t *address, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = get_unspent_txouts_for_address_nolock(address, unspent_txouts, num_unspent_txouts);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
 uint64_t get_balance_for_address_nolock(uint8_t *address)
 {
   assert(address != NULL);
   uint64_t balance = 0;
 
-  vec_void_t unspent_txs;
-  vec_init(&unspent_txs);
+  vec_void_t unspent_txouts;
+  vec_init(&unspent_txouts);
 
-  uint32_t num_unspent_txs = 0;
-  assert(get_unspent_transactions_for_address_nolock(address, &unspent_txs, &num_unspent_txs) == 0);
+  uint32_t num_unspent_txouts = 0;
+  assert(get_unspent_txouts_for_address_nolock(address, &unspent_txouts, &num_unspent_txouts) == 0);
 
   void *value = NULL;
   int index = 0;
-  vec_foreach(&unspent_txs, value, index)
+  vec_foreach(&unspent_txouts, value, index)
   {
     unspent_output_transaction_t *unspent_txout = (unspent_output_transaction_t*)value;
     assert(unspent_txout != NULL);
@@ -1449,7 +1517,7 @@ uint64_t get_balance_for_address_nolock(uint8_t *address)
     free(unspent_txout);
   }
 
-  vec_deinit(&unspent_txs);
+  vec_deinit(&unspent_txouts);
   return balance;
 }
 
@@ -1457,35 +1525,6 @@ uint64_t get_balance_for_address(uint8_t *address)
 {
   mtx_lock(&g_blockchain_lock);
   uint64_t balance = get_balance_for_address_nolock(address);
-  mtx_unlock(&g_blockchain_lock);
-  return balance;
-}
-
-int get_unspent_transactions_for_wallet_nolock(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
-{
-  assert(wallet != NULL);
-  assert(unspent_txs != NULL);
-  return get_unspent_transactions_for_address_nolock(wallet->address, unspent_txs, num_unspent_txs);
-}
-
-int get_unspent_transactions_for_wallet(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
-{
-  mtx_lock(&g_blockchain_lock);
-  int result = get_unspent_transactions_for_wallet_nolock(wallet, unspent_txs, num_unspent_txs);
-  mtx_unlock(&g_blockchain_lock);
-  return result;
-}
-
-uint64_t get_balance_for_wallet_nolock(wallet_t *wallet)
-{
-  assert(wallet != NULL);
-  return get_balance_for_address_nolock(wallet->address);
-}
-
-uint64_t get_balance_for_wallet(wallet_t *wallet)
-{
-  mtx_lock(&g_blockchain_lock);
-  uint64_t balance = get_balance_for_wallet_nolock(wallet);
   mtx_unlock(&g_blockchain_lock);
   return balance;
 }

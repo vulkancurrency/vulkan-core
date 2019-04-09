@@ -35,6 +35,7 @@
 #include "common/buffer.h"
 #include "common/logger.h"
 #include "common/util.h"
+#include "common/vec.h"
 
 #include "blockchain.h"
 #include "transaction.h"
@@ -54,6 +55,50 @@ static uint8_t g_transaction_zero_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00
 };
+
+transaction_t* make_transaction(void)
+{
+  transaction_t *tx = malloc(sizeof(transaction_t));
+  tx->txin_count = 0;
+  tx->txout_count = 0;
+  tx->txins = NULL;
+  tx->txouts = NULL;
+  return tx;
+}
+
+input_transaction_t* make_txin(void)
+{
+  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
+  memset(txin->transaction, 0, HASH_SIZE);
+  txin->txout_index = 0;
+  return txin;
+}
+
+output_transaction_t* make_txout(void)
+{
+  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  txout->amount = 0;
+  memset(txout->address, 0, ADDRESS_SIZE);
+  return txout;
+}
+
+unspent_transaction_t* make_unspent_transaction(void)
+{
+  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+  unspent_tx->coinbase = 0;
+  unspent_tx->unspent_txout_count = 0;
+  unspent_tx->unspent_txouts = NULL;
+  return unspent_tx;
+}
+
+unspent_output_transaction_t* make_unspent_txout(void)
+{
+  unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+  unspent_txout->amount = 0;
+  memset(unspent_txout->address, 0, ADDRESS_SIZE);
+  unspent_txout->spent = 0;
+  return unspent_txout;
+}
 
 /*
  * This function takes in:
@@ -338,7 +383,7 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
 int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out)
 {
   assert(buffer_iterator != NULL);
-  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
+  input_transaction_t *txin = make_txin();
   uint8_t *prev_tx_id = NULL;
   if (buffer_read_bytes(buffer_iterator, &prev_tx_id))
   {
@@ -403,7 +448,7 @@ int serialize_txout(buffer_t *buffer, output_transaction_t *txout)
 int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out)
 {
   assert(buffer_iterator != NULL);
-  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  output_transaction_t *txout = make_txout();
   txout->amount = 0;
   if (buffer_read_uint64(buffer_iterator, &txout->amount))
   {
@@ -496,12 +541,7 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
 int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out)
 {
   assert(buffer_iterator != NULL);
-  transaction_t *tx = malloc(sizeof(transaction_t));
-  tx->txin_count = 0;
-  tx->txout_count = 0;
-  tx->txins = NULL;
-  tx->txouts = NULL;
-
+  transaction_t *tx = make_transaction();
   uint8_t *id = NULL;
   if (buffer_read_bytes(buffer_iterator, &id))
   {
@@ -614,8 +654,7 @@ int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unsp
 int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output_transaction_t **unspent_txout_out)
 {
   assert(buffer_iterator != NULL);
-  unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
-  unspent_txout->amount = 0;
+  unspent_output_transaction_t *unspent_txout = make_unspent_txout();
   if (buffer_read_uint64(buffer_iterator, &unspent_txout->amount))
   {
     free(unspent_txout);
@@ -670,10 +709,7 @@ int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspe
 int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_transaction_t **unspent_tx_out)
 {
   assert(buffer_iterator != NULL);
-  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
-  unspent_tx->unspent_txout_count = 0;
-  unspent_tx->unspent_txouts = NULL;
-
+  unspent_transaction_t *unspent_tx = make_unspent_transaction();
   uint8_t *id = NULL;
   if (buffer_read_bytes(buffer_iterator, &id))
   {
@@ -721,21 +757,17 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
 unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout)
 {
   assert(txout != NULL);
-
-  unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+  unspent_output_transaction_t *unspent_txout = make_unspent_txout();
   unspent_txout->amount = txout->amount;
-
   memcpy(unspent_txout->address, txout->address, ADDRESS_SIZE);
   unspent_txout->spent = 0;
-
   return unspent_txout;
 }
 
 unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-
-  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+  unspent_transaction_t *unspent_tx = make_unspent_transaction();
   memcpy(unspent_tx->id, tx->id, HASH_SIZE);
 
   unspent_tx->coinbase = is_generation_tx(tx);
@@ -793,6 +825,28 @@ unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32
   return unspent_tx;
 }
 
+int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts)
+{
+  assert(unspent_tx != NULL);
+  assert(unspent_txouts != NULL);
+
+  for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
+  {
+    unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
+    assert(unspent_txout != NULL);
+
+    if (unspent_txout->spent == 0)
+    {
+      continue;
+    }
+
+    assert(vec_push(unspent_txouts, unspent_txout) == 0);
+    *num_unspent_txouts += 1;
+  }
+
+  return 0;
+}
+
 int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin)
 {
   assert(tx != NULL);
@@ -801,7 +855,9 @@ int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin)
   tx->txin_count++;
   tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
   assert(tx->txins != NULL);
-  tx->txins[tx->txin_count] = txin;
+
+  uint32_t txin_index = tx->txin_count - 1;
+  tx->txins[txin_index] = txin;
   return 0;
 }
 
@@ -813,7 +869,9 @@ int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout)
   tx->txout_count++;
   tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
   assert(tx->txouts != NULL);
-  tx->txouts[tx->txout_count] = txout;
+
+  uint32_t txout_index = tx->txout_count - 1;
+  tx->txouts[txout_index] = txout;
   return 0;
 }
 

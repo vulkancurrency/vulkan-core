@@ -55,13 +55,10 @@ typedef struct TransactionEntries
   uint64_t total_amount;
 } transaction_entries_t;
 
-input_transaction_t* make_txin(uint8_t *tx_id, uint32_t txout_index);
-output_transaction_t* make_txout(uint8_t *address, uint64_t amount);
-
-transaction_t* make_tx(wallet_t *wallet, transaction_entries_t transaction_entries);
-transaction_t* make_generation_tx(wallet_t *wallet, uint64_t block_reward);
-
 uint64_t get_total_entries_amount(transaction_entries_t transaction_entries);
+
+int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries);
+int make_generation_tx(transaction_t **tx_out, wallet_t *wallet, uint64_t block_reward);
 
 #ifdef __cplusplus
 }

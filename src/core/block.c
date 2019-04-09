@@ -347,8 +347,10 @@ block_t* compute_genesis_block(wallet_t *wallet)
   uint64_t block_reward = get_block_reward(0, 0);
   block->cumulative_emission = block_reward;
 
-  transaction_t *tx = make_generation_tx(wallet, block_reward);
+  transaction_t *tx = NULL;
+  assert(make_generation_tx(&tx, wallet, block_reward) == 0);
   assert(tx != NULL);
+
   assert(add_transaction_to_block(block, tx, 0) == 0);
 
   compute_self_merkle_root(block);

@@ -32,6 +32,7 @@
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/util.h"
+#include "common/vec.h"
 
 #include "crypto/cryptoutil.h"
 
@@ -105,6 +106,12 @@ typedef struct UnspentTransaction
   unspent_output_transaction_t **unspent_txouts;
 } unspent_transaction_t;
 
+transaction_t* make_transaction(void);
+input_transaction_t* make_txin(void);
+output_transaction_t* make_txout(void);
+unspent_transaction_t* make_unspent_transaction(void);
+unspent_output_transaction_t* make_unspent_txout(void);
+
 int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
 int get_txin_header(uint8_t *header, input_transaction_t *txin);
 int get_txout_header(uint8_t *header, output_transaction_t *txout);
@@ -151,6 +158,7 @@ unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout
 unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);
 int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx);
 unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);
+int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
 
 int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin);
 int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout);

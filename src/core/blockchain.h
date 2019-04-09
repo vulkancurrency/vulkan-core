@@ -136,14 +136,11 @@ int get_top_block_key(uint8_t *buffer);
 int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);
 int get_unspent_transactions_for_address(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);
 
+int get_unspent_txouts_for_address_nolock(uint8_t *address, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
+int get_unspent_txouts_for_address(uint8_t *address, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
+
 uint64_t get_balance_for_address_nolock(uint8_t *address);
 uint64_t get_balance_for_address(uint8_t *address);
-
-int get_unspent_transactions_for_wallet_nolock(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);
-int get_unspent_transactions_for_wallet(wallet_t *wallet, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);
-
-uint64_t get_balance_for_wallet_nolock(wallet_t *wallet);
-uint64_t get_balance_for_wallet(wallet_t *wallet);
 
 #ifdef __cplusplus
 }
