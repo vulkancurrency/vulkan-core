@@ -808,7 +808,7 @@ int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin)
 int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout)
 {
   assert(tx != NULL);
-  assert(txin != NULL);
+  assert(txout != NULL);
 
   tx->txout_count++;
   tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
