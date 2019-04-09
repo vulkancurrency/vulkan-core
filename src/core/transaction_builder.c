@@ -73,7 +73,6 @@ int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money,
 
   uint32_t num_unspent_txs = 0;
   assert(get_unspent_transactions_for_address(wallet->address, &unspent_txs, &num_unspent_txs) == 0);
-  vec_deinit(&unspent_txs);
 
   transaction_t *tx = make_transaction();
   for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
@@ -96,7 +95,6 @@ int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money,
 
       uint32_t num_unspent_txouts = 0;
       assert(get_unspent_txouts_from_unspent_tx(unspent_tx, &unspent_txouts, &num_unspent_txouts) == 0);
-      vec_deinit(&unspent_txouts);
 
       void *value2 = NULL;
       int index2 = 0;
@@ -188,6 +186,7 @@ int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money,
         }
       }
 
+      vec_deinit(&unspent_txouts);
       if (tx_constructed)
       {
         break;
@@ -205,6 +204,8 @@ int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money,
   // finalize tx
   compute_self_tx_id(tx);
   *tx_out = tx;
+
+  vec_deinit(&unspent_txs);
   return 0;
 }
 
