@@ -646,9 +646,9 @@ int insert_block_nolock(block_t *block)
     for (uint32_t txin_index = 0; txin_index < tx->txin_count; txin_index++)
     {
       input_transaction_t *txin = tx->txins[txin_index];
-      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
-
       assert(txin != NULL);
+
+      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
       assert(unspent_tx != NULL);
 
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)

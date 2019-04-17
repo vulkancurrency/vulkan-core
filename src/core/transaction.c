@@ -69,7 +69,6 @@ transaction_t* make_transaction(void)
 input_transaction_t* make_txin(void)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  memset(txin->transaction, 0, HASH_SIZE);
   txin->txout_index = 0;
   return txin;
 }
@@ -78,7 +77,6 @@ output_transaction_t* make_txout(void)
 {
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   txout->amount = 0;
-  memset(txout->address, 0, ADDRESS_SIZE);
   return txout;
 }
 
@@ -95,7 +93,6 @@ unspent_output_transaction_t* make_unspent_txout(void)
 {
   unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
   unspent_txout->amount = 0;
-  memset(unspent_txout->address, 0, ADDRESS_SIZE);
   unspent_txout->spent = 0;
   return unspent_txout;
 }
@@ -577,7 +574,11 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
     }
 
     tx->txin_count++;
+    assert(i == tx->txin_count - 1);
+
     tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
+    assert(tx->txins != NULL);
+
     tx->txins[i] = txin;
   }
 
@@ -592,7 +593,11 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
     }
 
     tx->txout_count++;
+    assert(i == tx->txout_count - 1);
+
     tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
+    assert(tx->txouts != NULL);
+
     tx->txouts[i] = txout;
   }
 
@@ -745,8 +750,11 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
     }
 
     unspent_tx->unspent_txout_count++;
+    assert(i == unspent_tx->unspent_txout_count - 1);
+
     unspent_tx->unspent_txouts = realloc(unspent_tx->unspent_txouts, sizeof(unspent_output_transaction_t) * unspent_tx->unspent_txout_count);
     assert(unspent_tx->unspent_txouts != NULL);
+
     unspent_tx->unspent_txouts[i] = unspent_txout;
   }
 
@@ -853,7 +861,7 @@ int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32
   assert(txin != NULL);
 
   tx->txin_count++;
-  assert(txin_index <= tx->txin_count);
+  assert(txin_index == tx->txin_count - 1);
 
   tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
   assert(tx->txins != NULL);
@@ -868,7 +876,7 @@ int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uin
   assert(txout != NULL);
 
   tx->txout_count++;
-  assert(txout_index <= tx->txout_count);
+  assert(txout_index == tx->txout_count - 1);
 
   tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
   assert(tx->txouts != NULL);
@@ -932,8 +940,11 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
 
       assert(other_txin != NULL);
       other_tx->txin_count++;
+      assert(i == other_tx->txin_count - 1);
+
       other_tx->txins = realloc(other_tx->txins, sizeof(input_transaction_t) * other_tx->txin_count);
       assert(other_tx->txins != NULL);
+
       other_tx->txins[i] = other_txin;
     }
 
@@ -951,8 +962,11 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
 
       assert(other_txout != NULL);
       other_tx->txout_count++;
+      assert(i == other_tx->txout_count - 1);
+
       other_tx->txouts = realloc(other_tx->txouts, sizeof(output_transaction_t) * other_tx->txout_count);
       assert(other_tx->txouts != NULL);
+
       other_tx->txouts[i] = other_txout;
     }
   }
@@ -1001,8 +1015,16 @@ int free_txouts(transaction_t *tx)
 int free_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-  free_txins(tx);
-  free_txouts(tx);
+  if (free_txins(tx))
+  {
+    return 1;
+  }
+
+  if (free_txouts(tx))
+  {
+    return 1;
+  }
+
   free(tx);
   return 0;
 }
@@ -1029,7 +1051,11 @@ int free_unspent_txouts(unspent_transaction_t *unspent_tx)
 int free_unspent_transaction(unspent_transaction_t *unspent_tx)
 {
   assert(unspent_tx != NULL);
-  free_unspent_txouts(unspent_tx);
+  if (free_unspent_txouts(unspent_tx))
+  {
+    return 1;
+  }
+
   free(unspent_tx);
   return 0;
 }

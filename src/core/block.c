@@ -116,7 +116,10 @@ int valid_block(block_t *block)
   for (uint32_t first_tx_index = 0; first_tx_index < block->transaction_count; first_tx_index++)
   {
     transaction_t *first_tx = block->transactions[first_tx_index];
-    assert(first_tx != NULL);
+    if (first_tx == NULL)
+    {
+      return 0;
+    }
 
     // check to see if we have more than one generational transaction
     if (first_tx_index != 0 && is_generation_tx(first_tx))
@@ -133,7 +136,10 @@ int valid_block(block_t *block)
     for (uint32_t second_tx_index = 0; second_tx_index < block->transaction_count; second_tx_index++)
     {
       transaction_t *second_tx = block->transactions[second_tx_index];
-      assert(second_tx != NULL);
+      if (second_tx == NULL)
+      {
+        return 0;
+      }
 
       if (first_tx_index == second_tx_index)
       {
@@ -147,15 +153,21 @@ int valid_block(block_t *block)
       }
 
       // check to see if any transactions reference same txout id + index
-      for (uint32_t first_txin_index = 0; first_txin_index < block->transactions[first_tx_index]->txin_count; first_txin_index++)
+      for (uint32_t first_txin_index = 0; first_txin_index < first_tx->txin_count; first_txin_index++)
       {
-        input_transaction_t *txin_first = first_tx->txins[first_tx_index];
-        assert(txin_first != NULL);
+        input_transaction_t *txin_first = first_tx->txins[first_txin_index];
+        if (txin_first == NULL)
+        {
+          return 0;
+        }
 
-        for (uint32_t second_txin_index = 0; second_txin_index < block->transactions[second_tx_index]->txin_count; second_txin_index++)
+        for (uint32_t second_txin_index = 0; second_txin_index < second_tx->txin_count; second_txin_index++)
         {
           input_transaction_t *txin_second = second_tx->txins[second_txin_index];
-          assert(txin_second != NULL);
+          if (txin_second == NULL)
+          {
+            return 0;
+          }
 
           if (compare_transaction_hash(txin_first->transaction, txin_second->transaction) && txin_first->txout_index == txin_second->txout_index)
           {
@@ -348,7 +360,7 @@ block_t* compute_genesis_block(wallet_t *wallet)
   block->cumulative_emission = block_reward;
 
   transaction_t *tx = NULL;
-  assert(make_generation_tx(&tx, wallet, block_reward) == 0);
+  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
   assert(tx != NULL);
 
   assert(add_transaction_to_block(block, tx, 0) == 0);
@@ -546,6 +558,7 @@ int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_
   if (block->transaction_count > 0)
   {
     block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
+    assert(block->transactions != NULL);
 
     // deserialize the transactions
     for (uint32_t i = 0; i < block->transaction_count; i++)
@@ -568,8 +581,11 @@ int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_inde
   assert(txin != NULL);
 
   block->transaction_count++;
+  assert(tx_index == block->transaction_count - 1);
+
   block->transactions = realloc(block->transactions, sizeof(transaction_t) * block->transaction_count);
   assert(block->transactions != NULL);
+
   block->transactions[tx_index] = tx;
   return 0;
 }
@@ -703,6 +719,7 @@ int free_block_transactions(block_t *block)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
+
       if (free_transaction(tx))
       {
         return 1;

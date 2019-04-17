@@ -131,7 +131,7 @@ block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wal
   block->cumulative_emission = cumulative_emission + block_reward;
 
   transaction_t *tx = NULL;
-  assert(make_generation_tx(&tx, wallet, block_reward) == 0);
+  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
   assert(tx != NULL);
 
   assert(add_transaction_to_block(block, tx, 0) == 0);

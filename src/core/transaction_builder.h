@@ -44,21 +44,20 @@ extern "C"
 
 typedef struct TransactionEntry
 {
-  uint8_t *address;
+  uint8_t address[ADDRESS_SIZE];
   uint64_t amount;
 } transaction_entry_t;
 
 typedef struct TransactionEntries
 {
   uint16_t num_entries;
-  transaction_entry_t entries[MAX_NUM_TX_ENTRIES];
-  uint64_t total_amount;
+  transaction_entry_t *entries[MAX_NUM_TX_ENTRIES];
 } transaction_entries_t;
 
 uint64_t get_total_entries_amount(transaction_entries_t transaction_entries);
 
-int make_tx(transaction_t **tx_out, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries);
-int make_generation_tx(transaction_t **tx_out, wallet_t *wallet, uint64_t block_reward);
+int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries);
+int construct_generation_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t block_reward);
 
 #ifdef __cplusplus
 }
