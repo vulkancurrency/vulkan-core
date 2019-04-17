@@ -249,11 +249,12 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
 {
   assert(block != NULL);
 
-  vec_void_t transactions;
-  vec_init(&transactions);
-
   void *value = NULL;
   int index = 0;
+
+  // skip over the generation tx
+  uint32_t tx_index = 1;
+
   vec_foreach(&g_mempool_transactions, value, index)
   {
     mempool_entry_t *mempool_entry = (mempool_entry_t*)value;
@@ -269,25 +270,10 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
       break;
     }
 
-    assert(vec_push(&transactions, tx) == 0);
-  }
-
-  value = NULL;
-  index = 0;
-
-  // skip over the generation tx
-  uint32_t tx_index = 1;
-  vec_foreach(&transactions, value, index)
-  {
-    transaction_t *tx = (transaction_t*)value;
-    assert(tx != NULL);
-
     assert(add_transaction_to_block(block, tx, tx_index) == 0);
-    assert(remove_tx_from_mempool_nolock(tx) == 0);
     tx_index++;
   }
 
-  vec_deinit(&transactions);
   return 0;
 }
 

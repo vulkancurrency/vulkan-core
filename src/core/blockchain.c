@@ -42,6 +42,7 @@
 #include "block.h"
 #include "blockchain.h"
 #include "difficulty.h"
+#include "mempool.h"
 
 #include "crypto/cryptoutil.h"
 
@@ -699,6 +700,13 @@ int insert_block_nolock(block_t *block)
 
         free_unspent_transaction(unspent_tx);
       }
+    }
+
+    // remove the transaction from the mempool if it is in the mempool,
+    // since the transaction is now part of this block we've received...
+    if (is_tx_in_mempool(tx))
+    {
+      assert(remove_tx_from_mempool(tx) == 0);
     }
   }
 
