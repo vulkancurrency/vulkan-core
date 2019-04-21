@@ -58,6 +58,7 @@ static int g_net_disable_port_mapping = 0;
 
 static task_t *g_net_resync_chain_task = NULL;
 static task_t *g_net_reconnect_seeds_task = NULL;
+static task_t *g_net_flush_connections_task = NULL;
 static net_connection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connections;
@@ -98,6 +99,8 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
   assert(connection != NULL);
   net_connection_t *net_connection = malloc(sizeof(net_connection_t));
   net_connection->connection = connection;
+  vec_init(&net_connection->send_queue);
+  net_connection->send_queue_size = 0;
 
   net_connection->is_receiving_data = 0;
   net_connection->expected_receiving_len = 0;
@@ -111,6 +114,7 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
 int free_net_connection(net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
+  vec_deinit(&net_connection->send_queue);
   if (net_connection->receiving_buffer != NULL)
   {
     buffer_free(net_connection->receiving_buffer);
@@ -222,7 +226,11 @@ int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_
 int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
-  mg_send(net_connection->connection, data, data_len);
+  mtx_lock(&g_net_lock);
+  buffer_t *buffer = buffer_init_data(0, data, data_len);
+  vec_push(&net_connection->send_queue, buffer);
+  net_connection->send_queue_size++;
+  mtx_unlock(&g_net_lock);
   return 0;
 }
 
@@ -526,10 +534,89 @@ int connect_net_to_seeds(void)
   return 0;
 }
 
+int flush_send_queue(net_connection_t *net_connection)
+{
+  assert(net_connection != NULL);
+  if (net_connection->send_queue_size > 0)
+  {
+    void *value = NULL;
+    int index = 0;
+
+    buffer_t *buffer = buffer_init();
+    vec_foreach(&net_connection->send_queue, value, index)
+    {
+      buffer_t *queued_buffer = (buffer_t*)value;
+      assert(queued_buffer != NULL);
+
+      uint8_t *data = buffer_get_data(queued_buffer);
+      size_t data_len = buffer_get_size(queued_buffer);
+
+      buffer_write(buffer, data, data_len);
+      buffer_free(queued_buffer);
+    }
+
+    vec_splice(&net_connection->send_queue, 0, net_connection->send_queue_size);
+    net_connection->send_queue_size = 0;
+
+    uint8_t *data = buffer_get_data(buffer);
+    size_t data_len = buffer_get_size(buffer);
+
+    mg_send(net_connection->connection, data, data_len);
+    buffer_free(buffer);
+  }
+
+  return 0;
+}
+
+int flush_all_connections_nolock(void)
+{
+  void *value = NULL;
+  int index = 0;
+  vec_foreach(&g_net_connections, value, index)
+  {
+    net_connection_t *net_connection = (net_connection_t*)value;
+    assert(net_connection != NULL);
+
+    if (flush_send_queue(net_connection))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+int flush_all_connections(void)
+{
+  mtx_lock(&g_net_lock);
+  int result = flush_all_connections_nolock();
+  mtx_unlock(&g_net_lock);
+  return result;
+}
+
+int flush_all_connections_noblock(void)
+{
+  if (mtx_trylock(&g_net_lock) == thrd_error)
+  {
+    return 0;
+  }
+
+  int result = flush_all_connections_nolock();
+  mtx_unlock(&g_net_lock);
+  return result;
+}
+
 task_result_t reconnect_seeds(task_t *task, va_list args)
 {
   assert(task != NULL);
   assert(connect_net_to_seeds() == 0);
+  return TASK_RESULT_WAIT;
+}
+
+task_result_t flush_connections(task_t *task, va_list args)
+{
+  assert(task != NULL);
+  assert(flush_all_connections_noblock() == 0);
   return TASK_RESULT_WAIT;
 }
 
@@ -569,6 +656,7 @@ int init_net(void)
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
   g_net_reconnect_seeds_task = add_task(reconnect_seeds, NET_RECONNECT_SEEDS_TASK_DELAY);
+  g_net_flush_connections_task = add_task(flush_connections, NET_FLUSH_CONNECTIONS_TASK_DELAY);
   g_net_initialized = 1;
   return net_run();
 }
@@ -584,6 +672,7 @@ int deinit_net(void)
   vec_deinit(&g_net_connections);
   remove_task(g_net_resync_chain_task);
   remove_task(g_net_reconnect_seeds_task);
+  remove_task(g_net_flush_connections_task);
   mtx_destroy(&g_net_lock);
 
   g_net_resync_chain_task = NULL;
