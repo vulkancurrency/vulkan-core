@@ -43,10 +43,10 @@ typedef struct BufferIterator
 buffer_iterator_t* buffer_iterator_init(buffer_t *buffer);
 int buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 
-int buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer);
+void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer);
 buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
 
-int buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
+void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
 size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
 int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);

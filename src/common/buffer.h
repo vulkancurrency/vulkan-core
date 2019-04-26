@@ -38,8 +38,8 @@ extern "C"
 typedef struct Buffer
 {
   uint8_t *data;
-  int size;
-  int offset;
+  size_t size;
+  size_t offset;
 } buffer_t;
 
 buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size);
@@ -47,11 +47,14 @@ buffer_t* buffer_init_size(size_t offset, size_t size);
 buffer_t* buffer_init_offset(size_t offset);
 buffer_t* buffer_init(void);
 
+void buffer_set_data(buffer_t *buffer, uint8_t *data, size_t size);
+uint8_t* buffer_get_data(buffer_t *buffer);
+
 void buffer_set_size(buffer_t *buffer, size_t size);
-int buffer_get_size(buffer_t *buffer);
+size_t buffer_get_size(buffer_t *buffer);
 
 void buffer_set_offset(buffer_t *buffer, size_t offset);
-int buffer_get_offset(buffer_t *buffer);
+size_t buffer_get_offset(buffer_t *buffer);
 
 int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
 int buffer_clear(buffer_t *buffer);
@@ -59,9 +62,6 @@ int buffer_free(buffer_t *buffer);
 
 int buffer_realloc(buffer_t *buffer, size_t size);
 int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);
-
-int buffer_get_size(buffer_t *buffer);
-uint8_t* buffer_get_data(buffer_t *buffer);
 
 int buffer_write_uint8(buffer_t *buffer, uint8_t value);
 int buffer_write_int8(buffer_t *buffer, int8_t value);

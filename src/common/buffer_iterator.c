@@ -46,12 +46,12 @@ int buffer_iterator_free(buffer_iterator_t *buffer_iterator)
   return 0;
 }
 
-int buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer)
+void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer)
 {
   assert(buffer_iterator != NULL);
   assert(buffer != NULL);
   buffer_iterator->buffer = buffer;
-  return 0;
+  buffer_iterator->offset = 0;
 }
 
 buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator)
@@ -60,11 +60,10 @@ buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator)
   return buffer_iterator->buffer;
 }
 
-int buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset)
+void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset)
 {
   assert(buffer_iterator != NULL);
   buffer_iterator->offset = offset;
-  return 0;
 }
 
 size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator)

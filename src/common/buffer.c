@@ -70,13 +70,27 @@ buffer_t* buffer_init(void)
   return buffer_init_offset(0);
 }
 
+void buffer_set_data(buffer_t *buffer, uint8_t *data, size_t size)
+{
+  assert(buffer != NULL);
+  memcpy(buffer->data, data, size);
+  buffer->size = size;
+  buffer->offset = 0;
+}
+
+uint8_t* buffer_get_data(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+  return buffer->data;
+}
+
 void buffer_set_size(buffer_t *buffer, size_t size)
 {
   assert(buffer != NULL);
   buffer->size = size;
 }
 
-int buffer_get_size(buffer_t *buffer)
+size_t buffer_get_size(buffer_t *buffer)
 {
   assert(buffer != NULL);
   return buffer->size;
@@ -88,7 +102,7 @@ void buffer_set_offset(buffer_t *buffer, size_t offset)
   buffer->offset = offset;
 }
 
-int buffer_get_offset(buffer_t *buffer)
+size_t buffer_get_offset(buffer_t *buffer)
 {
   assert(buffer != NULL);
   return buffer->offset;
@@ -155,12 +169,6 @@ int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
   memcpy(buffer->data + buffer->offset, data, size);
   buffer->offset += size;
   return 0;
-}
-
-uint8_t* buffer_get_data(buffer_t *buffer)
-{
-  assert(buffer != NULL);
-  return buffer->data;
 }
 
 int buffer_write_uint8(buffer_t *buffer, uint8_t value)
