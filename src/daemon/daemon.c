@@ -205,9 +205,13 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
         {
-          wallet_t *wallet = init_wallet(g_wallet_filename);
-          assert(wallet != NULL);
+          wallet_t *wallet = NULL;
+          if (init_wallet(g_wallet_filename, &wallet))
+          {
+            return 1;
+          }
 
+          assert(wallet != NULL);
           block_t *block = compute_genesis_block(wallet);
           assert(block != NULL);
 
@@ -279,9 +283,12 @@ int main(int argc, char **argv)
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
-    wallet = init_wallet(g_wallet_filename);
-    assert(wallet != NULL);
+    if (init_wallet(g_wallet_filename, &wallet))
+    {
+      return 1;
+    }
 
+    assert(wallet != NULL);
     set_current_wallet(wallet);
     start_mining();
   }

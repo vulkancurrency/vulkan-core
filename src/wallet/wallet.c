@@ -127,7 +127,7 @@ rocksdb_t* open_wallet(const char *wallet_filename, char *err)
   return rocksdb_open(options, wallet_filename, &err);
 }
 
-wallet_t* new_wallet(const char *wallet_filename)
+int new_wallet(const char *wallet_filename, wallet_t **wallet_out)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(wallet_filename, err);
@@ -135,10 +135,9 @@ wallet_t* new_wallet(const char *wallet_filename)
   if (err != NULL)
   {
     LOG_ERROR("Could not open wallet: %s!", wallet_filename);
-
     rocksdb_free(err);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   size_t read_len;
@@ -150,7 +149,7 @@ wallet_t* new_wallet(const char *wallet_filename)
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
@@ -181,12 +180,11 @@ wallet_t* new_wallet(const char *wallet_filename)
   if (err != NULL)
   {
     LOG_ERROR("Could not write to wallet: %s database!", wallet_filename);
-
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     rocksdb_writeoptions_destroy(woptions);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   LOG_INFO("Successfully created new wallet: %s", wallet_filename);
@@ -195,10 +193,12 @@ wallet_t* new_wallet(const char *wallet_filename)
   rocksdb_readoptions_destroy(roptions);
   rocksdb_writeoptions_destroy(woptions);
   rocksdb_close(db);
-  return wallet;
+
+  *wallet_out = wallet;
+  return 0;
 }
 
-wallet_t* get_wallet(const char *wallet_filename)
+int get_wallet(const char *wallet_filename, wallet_t **wallet_out)
 {
   char *err = NULL;
   rocksdb_t *db = open_wallet(wallet_filename, err);
@@ -206,10 +206,9 @@ wallet_t* get_wallet(const char *wallet_filename)
   if (err != NULL)
   {
     LOG_ERROR("Could not open wallet database: %s!", wallet_filename);
-
     rocksdb_free(err);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   size_t read_len;
@@ -219,11 +218,10 @@ wallet_t* get_wallet(const char *wallet_filename)
   if (err != NULL || wallet_data == NULL)
   {
     LOG_ERROR("Could not open wallet database: %s!", wallet_filename);
-
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
@@ -239,7 +237,7 @@ wallet_t* get_wallet(const char *wallet_filename)
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
     rocksdb_close(db);
-    return NULL;
+    return 1;
   }
 
   buffer_iterator_free(buffer_iterator);
@@ -251,18 +249,29 @@ wallet_t* get_wallet(const char *wallet_filename)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
   rocksdb_close(db);
-  return wallet;
+
+  *wallet_out = wallet;
+  return 0;
 }
 
-wallet_t* init_wallet(const char *wallet_filename)
+int init_wallet(const char *wallet_filename, wallet_t **wallet_out)
 {
-  wallet_t *wallet = new_wallet(wallet_filename);
-  if (wallet == NULL)
+  wallet_t *wallet = NULL;
+  if (new_wallet(wallet_filename, &wallet))
   {
-    wallet = get_wallet(wallet_filename);
+    return 1;
   }
 
-  return wallet;
+  if (wallet == NULL)
+  {
+    if (get_wallet(wallet_filename, &wallet))
+    {
+      return 1;
+    }
+  }
+
+  *wallet_out = wallet;
+  return 0;
 }
 
 void print_wallet(wallet_t *wallet)
@@ -280,7 +289,7 @@ void print_wallet(wallet_t *wallet)
 void print_public_key(wallet_t *wallet)
 {
   assert(wallet != NULL);
-  char public_key_str = bytes_to_str(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
+  char *public_key_str = bytes_to_str(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
   printf("Public Key: %s\n", public_key_str);
   free(public_key_str);
 }
@@ -288,7 +297,7 @@ void print_public_key(wallet_t *wallet)
 void print_secret_key(wallet_t *wallet)
 {
   assert(wallet != NULL);
-  char secret_key_str = bytes_to_str(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
+  char *secret_key_str = bytes_to_str(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
   printf("Secret Key: %s\n", secret_key_str);
   free(secret_key_str);
 }

@@ -55,9 +55,9 @@ int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
 int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
 
 rocksdb_t* open_wallet(const char *wallet_filename, char *err);
-wallet_t* new_wallet(const char *wallet_filename);
-wallet_t* get_wallet(const char *wallet_filename);
-wallet_t* init_wallet(const char *wallet_filename);
+int new_wallet(const char *wallet_filename, wallet_t **wallet_out);
+int get_wallet(const char *wallet_filename, wallet_t **wallet_out);
+int init_wallet(const char *wallet_filename, wallet_t **wallet_out);
 
 void print_wallet(wallet_t* wallet);
 void print_public_key(wallet_t *wallet);
