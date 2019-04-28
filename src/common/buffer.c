@@ -123,8 +123,12 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
 int buffer_clear(buffer_t *buffer)
 {
   assert(buffer != NULL);
-  free(buffer->data);
-  buffer->data = NULL;
+  if (buffer->data != NULL)
+  {
+    free(buffer->data);
+    buffer->data = NULL;
+  }
+
   buffer->size = 0;
   buffer->offset = 0;
   return 0;
