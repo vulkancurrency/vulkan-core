@@ -60,6 +60,8 @@ wallet_t* get_wallet(const char *wallet_filename);
 wallet_t* init_wallet(const char *wallet_filename);
 
 void print_wallet(wallet_t* wallet);
+void print_public_key(wallet_t *wallet);
+void print_secret_key(wallet_t *wallet);
 
 int compare_addresses(uint8_t *address, uint8_t *other_address);
 

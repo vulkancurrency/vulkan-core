@@ -277,6 +277,22 @@ void print_wallet(wallet_t *wallet)
   printf("Balance: %llu\n", balance);
 }
 
+void print_public_key(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+  char public_key_str = bytes_to_str(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
+  printf("Public Key: %s\n", public_key_str);
+  free(public_key_str);
+}
+
+void print_secret_key(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+  char secret_key_str = bytes_to_str(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
+  printf("Secret Key: %s\n", secret_key_str);
+  free(secret_key_str);
+}
+
 int compare_addresses(uint8_t *address, uint8_t *other_address)
 {
   return memcmp(address, other_address, ADDRESS_SIZE) == 0;
