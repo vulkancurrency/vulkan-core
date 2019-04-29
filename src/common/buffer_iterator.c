@@ -240,3 +240,29 @@ int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 
   return buffer_read(buffer_iterator, size, bytes);
 }
+
+int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  uint64_t size = 0;
+  if (buffer_read_uint64(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, (uint8_t**)string);
+}
+
+int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  uint64_t size = 0;
+  if (buffer_read_uint64(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, bytes);
+}
