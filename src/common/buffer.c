@@ -169,6 +169,7 @@ int buffer_realloc(buffer_t *buffer, size_t size)
 int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
 {
   assert(buffer != NULL);
+  assert(size > 0);
   buffer_realloc(buffer, size);
   memcpy(buffer->data + buffer->offset, data, size);
   buffer->offset += size;
@@ -251,6 +252,7 @@ int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
 {
   assert(buffer != NULL);
   assert(string != NULL);
+  assert(size > 0);
   uint32_t actual_size = sizeof(char) + size;
   buffer_write_uint32(buffer, actual_size);
   buffer_write(buffer, (const uint8_t*)string, actual_size);
@@ -261,6 +263,7 @@ int buffer_write_bytes(buffer_t *buffer, uint8_t *bytes, uint32_t size)
 {
   assert(buffer != NULL);
   assert(bytes != NULL);
+  assert(size > 0);
   uint32_t actual_size = sizeof(uint8_t) + size;
   buffer_write_uint32(buffer, actual_size);
   buffer_write(buffer, bytes, actual_size);
@@ -271,6 +274,7 @@ int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size
 {
   assert(buffer != NULL);
   assert(string != NULL);
+  assert(size > 0);
   uint64_t actual_size = sizeof(char) + size;
   buffer_write_uint64(buffer, actual_size);
   buffer_write(buffer, (const uint8_t*)string, actual_size);
@@ -281,6 +285,7 @@ int buffer_write_bytes_long(buffer_t *buffer, uint8_t *bytes, uint64_t size)
 {
   assert(buffer != NULL);
   assert(bytes != NULL);
+  assert(size > 0);
   uint64_t actual_size = sizeof(uint8_t) + size;
   buffer_write_uint64(buffer, actual_size);
   buffer_write(buffer, bytes, actual_size);
