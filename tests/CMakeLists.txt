@@ -31,4 +31,4 @@ add_library(unittests ${UNITTESTS})
 
 add_executable(tests ${UNITTESTS})
 
-target_link_libraries(tests common core wallet)
+target_link_libraries(tests common core crypto wallet)
