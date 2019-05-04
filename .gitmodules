@@ -7,3 +7,6 @@
 [submodule "external/libsodium-CMake"]
 	path = external/libsodium-CMake
 	url = https://github.com/vulkancurrency/libsodium-CMake.git
+[submodule "external/lmdb"]
+	path = external/lmdb
+	url = https://github.com/vulkancurrency/lmdb.git
