@@ -186,7 +186,7 @@ task_t* add_task(callable_func_t func, double delay, ...)
   task->delay = delay;
   task->timestamp = get_current_time();
 
-  mtx_init(&task->lock, mtx_plain);
+  mtx_init(&task->lock, mtx_recursive);
   queue_push_right(g_taskmgr_task_queue, task);
   return task;
 }
