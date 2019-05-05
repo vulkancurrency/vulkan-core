@@ -186,36 +186,6 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    /*case PKT_TYPE_INCOMING_BLOCK:
-      {
-        block_t *block = NULL;
-        if (deserialize_block(buffer_iterator, &block))
-        {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
-        }
-
-        incoming_block_t *packed_message = malloc(sizeof(incoming_block_t));
-        packed_message->block = block;
-        *message = packed_message;
-      }
-      break;*/
-    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
-      {
-        transaction_t *transaction = NULL;
-        if (deserialize_transaction(buffer_iterator, &transaction))
-        {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
-        }
-
-        incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
-        packed_message->transaction = transaction;
-        *message = packed_message;
-      }
-      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *packed_message = malloc(sizeof(get_block_height_request_t));
@@ -485,6 +455,21 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
+      {
+        transaction_t *transaction = NULL;
+        if (deserialize_transaction(buffer_iterator, &transaction))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          return 1;
+        }
+
+        incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
+        packed_message->transaction = transaction;
+        *message = packed_message;
+      }
+      break;
     default:
       LOG_DEBUG("Could not deserialize packet with unknown packet id: %u!", packet->id);
       buffer_iterator_free(buffer_iterator);
@@ -537,22 +522,6 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint32_t peerlist_data_size = buffer_get_size(peerlist_buffer);
         buffer_write_uint32(buffer, peerlist_data_size);
         buffer_write_bytes(buffer, buffer_get_data(peerlist_buffer), peerlist_data_size);
-      }
-      break;
-    /*case PKT_TYPE_INCOMING_BLOCK:
-      {
-        block_t *block = va_arg(args, block_t*);
-        assert(block != NULL);
-
-        serialize_block(buffer, block);
-      }
-      break;*/
-    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
-      {
-        transaction_t *transaction = va_arg(args, transaction_t*);
-        assert(transaction != NULL);
-
-        serialize_transaction(buffer, transaction);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -674,6 +643,14 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         serialize_transaction(buffer, transaction);
       }
       break;
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
+      {
+        transaction_t *transaction = va_arg(args, transaction_t*);
+        assert(transaction != NULL);
+
+        serialize_transaction(buffer, transaction);
+      }
+      break;
     default:
       LOG_DEBUG("Could not serialize packet with unknown packet id: %u!", packet_id);
       return 1;
@@ -723,20 +700,6 @@ void free_message(uint32_t packet_id, void *message_object)
       {
         get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
         free(message->peerlist_data);
-        free(message);
-      }
-      break;
-    /*case PKT_TYPE_INCOMING_BLOCK:
-      {
-        incoming_block_t *message = (incoming_block_t*)message_object;
-        free_block(message->block);
-        free(message);
-      }
-      break;*/
-    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
-      {
-        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
-        free_transaction(message->transaction);
         free(message);
       }
       break;
@@ -819,6 +782,13 @@ void free_message(uint32_t packet_id, void *message_object)
       {
         get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
         free(message->block_hash);
+        free(message);
+      }
+      break;
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
+      {
+        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
+        free_transaction(message->transaction);
         free(message);
       }
       break;
@@ -1415,33 +1385,6 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         buffer_free(buffer);
       }
       break;
-    /*case PKT_TYPE_INCOMING_BLOCK:
-      {
-        incoming_block_t *message = (incoming_block_t*)message_object;
-        if (validate_and_insert_block(message->block) == 0)
-        {
-          LOG_INFO("Added incoming block at height: %u.", get_block_height());
-        }
-      }
-      break;*/
-    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
-      {
-        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
-        if (validate_and_add_tx_to_mempool(message->transaction) == 0)
-        {
-          // relay this incoming mempool transaction to our peers only if we do not already
-          // know about the transaction, assuming our peers (or most of them) do not either...
-          if (handle_packet_broadcast(PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION, message->transaction))
-          {
-            return 1;
-          }
-        }
-        else
-        {
-          free_transaction(message->transaction);
-        }
-      }
-      break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *message = (get_block_height_request_t*)message_object;
@@ -1712,6 +1655,24 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         {
           free_transaction(message->transaction);
           return 1;
+        }
+      }
+      break;
+    case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
+      {
+        incoming_mempool_transaction_t *message = (incoming_mempool_transaction_t*)message_object;
+        if (validate_and_add_tx_to_mempool(message->transaction) == 0)
+        {
+          // relay this incoming mempool transaction to our peers only if we do not already
+          // know about the transaction, assuming our peers (or most of them) do not either...
+          if (handle_packet_broadcast(PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION, message->transaction))
+          {
+            return 1;
+          }
+        }
+        else
+        {
+          free_transaction(message->transaction);
         }
       }
       break;
