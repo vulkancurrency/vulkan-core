@@ -175,7 +175,6 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
 void print_txin(uint8_t txin_index, input_transaction_t *txin)
 {
   assert(txin != NULL);
-
   printf("Txin %u:\n", txin_index);
 
   char *previous_tx_str = hash_to_str(txin->transaction);
@@ -196,7 +195,6 @@ void print_txin(uint8_t txin_index, input_transaction_t *txin)
 void print_txout(uint8_t txout_index, output_transaction_t *txout)
 {
   assert(txout != NULL);
-
   printf("Txout %u:\n", txout_index);
   printf("Amount: %llu\n", txout->amount);
 
@@ -208,7 +206,6 @@ void print_txout(uint8_t txout_index, output_transaction_t *txout)
 void print_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-
   printf("Transaction:\n");
 
   char *tx_id_str = hash_to_str(tx->id);
@@ -249,6 +246,7 @@ void print_transaction(transaction_t *tx)
  */
 int valid_transaction(transaction_t *tx)
 {
+  assert(tx != NULL);
   if (tx->txin_count > 0 && tx->txout_count > 0)
   {
     uint32_t tx_header_size = get_tx_header_size(tx);
@@ -274,6 +272,7 @@ int valid_transaction(transaction_t *tx)
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)
 {
+  assert(tx != NULL);
   uint32_t valid_txins = 0;
   uint64_t input_money = 0;
   uint64_t required_money = 0;
@@ -327,13 +326,13 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 
 int is_generation_tx(transaction_t *tx)
 {
+  assert(tx != NULL);
   return (tx->txin_count == 1 && tx->txout_count == 1 && memcmp(tx->txins[0]->transaction, g_transaction_zero_hash, HASH_SIZE) == 0);
 }
 
 int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
 {
   assert(tx != NULL);
-
   uint32_t tx_header_size = get_tx_header_size(tx);
   assert(tx_header_size > 0);
 
@@ -350,6 +349,7 @@ int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
 
 int compute_self_tx_id(transaction_t *tx)
 {
+  assert(tx != NULL);
   compute_tx_id(tx->id, tx);
   return 0;
 }
