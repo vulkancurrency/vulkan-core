@@ -30,7 +30,7 @@
 #include "buffer_iterator.h"
 #include "buffer.h"
 
-buffer_iterator_t* buffer_iterator_init(buffer_t *buffer)
+buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer)
 {
   assert(buffer != NULL);
   buffer_iterator_t *buffer_iterator = malloc(sizeof(buffer_iterator_t));
@@ -46,7 +46,7 @@ int buffer_iterator_free(buffer_iterator_t *buffer_iterator)
   return 0;
 }
 
-void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer)
+void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer)
 {
   assert(buffer_iterator != NULL);
   assert(buffer != NULL);
@@ -54,7 +54,7 @@ void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *bu
   buffer_iterator->offset = 0;
 }
 
-buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator)
+const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator)
 {
   assert(buffer_iterator != NULL);
   return buffer_iterator->buffer;
@@ -84,12 +84,11 @@ int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes
   uint8_t *data = malloc(size);
   memcpy(data, buffer_iterator->buffer->data + buffer_iterator->offset, size);
   *bytes = data;
-
   buffer_iterator->offset += size;
   return 0;
 }
 
-int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator)
+size_t buffer_get_remaining_size(buffer_iterator_t *buffer_iterator)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);

@@ -36,21 +36,21 @@ extern "C"
 
 typedef struct BufferIterator
 {
-  buffer_t *buffer;
+  const buffer_t *buffer;
   size_t offset;
 } buffer_iterator_t;
 
-buffer_iterator_t* buffer_iterator_init(buffer_t *buffer);
+buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer);
 int buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 
-void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, buffer_t *buffer);
-buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
+void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer);
+const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
 
 void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
 size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
 int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
-int buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
+size_t buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
 uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
 
 int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value);
