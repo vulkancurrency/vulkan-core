@@ -10,3 +10,6 @@
 [submodule "external/lmdb"]
 	path = external/lmdb
 	url = https://github.com/vulkancurrency/lmdb.git
+[submodule "external/Collections-C"]
+	path = external/Collections-C
+	url = https://github.com/vulkancurrency/Collections-C.git

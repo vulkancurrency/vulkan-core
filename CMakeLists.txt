@@ -71,6 +71,9 @@ elseif(WITH_ROCKSDB)
   endif()
 endif()
 
+add_subdirectory(external/Collections-C)
+include_directories(external/Collections-C/src/include)
+
 add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
 

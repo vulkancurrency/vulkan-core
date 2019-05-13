@@ -44,6 +44,7 @@ add_library(daemon ${DAEMON})
 add_library(miner ${MINER})
 add_library(wallet ${WALLET})
 
+target_link_libraries(common collectc)
 target_link_libraries(core common crypto miner wallet)
 target_link_libraries(wallet common core crypto)
 target_link_libraries(daemon common core crypto miner wallet)
@@ -76,7 +77,6 @@ endif()
 
 if (UNIX)
   target_link_libraries(common ${CMAKE_THREAD_LIBS_INIT})
-  target_link_libraries(core ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 add_executable(${PROJECT_NAME} ${DAEMON})
