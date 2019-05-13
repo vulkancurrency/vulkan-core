@@ -51,7 +51,7 @@ int start_mempool(void);
 int stop_mempool(void);
 
 mempool_entry_t* init_mempool_entry(void);
-int free_mempool_entry(mempool_entry_t *mempool_entry);
+void free_mempool_entry(mempool_entry_t *mempool_entry);
 
 mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash);
 transaction_t* get_tx_from_mempool(uint8_t *tx_hash);

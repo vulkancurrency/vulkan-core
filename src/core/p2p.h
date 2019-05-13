@@ -37,7 +37,7 @@ typedef struct Peer
 } peer_t;
 
 peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection);
-int free_peer(peer_t *peer);
+void free_peer(peer_t *peer);
 
 peer_t* get_peer_nolock(uint64_t peer_id);
 peer_t* get_peer(uint64_t peer_id);

@@ -87,11 +87,10 @@ mempool_entry_t* init_mempool_entry(void)
   return mempool_entry;
 }
 
-int free_mempool_entry(mempool_entry_t *mempool_entry)
+void free_mempool_entry(mempool_entry_t *mempool_entry)
 {
   assert(mempool_entry != NULL);
   free(mempool_entry);
-  return 0;
 }
 
 mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)

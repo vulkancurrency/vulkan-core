@@ -217,7 +217,7 @@ typedef struct SyncEntry
 packet_t* make_packet(void);
 int serialize_packet(buffer_t *buffer, packet_t *packet);
 int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator);
-int free_packet(packet_t *packet);
+void free_packet(packet_t *packet);
 
 int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
 int deserialize_message(packet_t *packet, void **message);

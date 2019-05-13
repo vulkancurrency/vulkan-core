@@ -167,12 +167,12 @@ int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
 int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);
 int copy_transaction(transaction_t *tx, transaction_t *other_tx);
 
-int free_txins(transaction_t *tx);
-int free_txouts(transaction_t *tx);
-int free_transaction(transaction_t *tx);
+void free_txins(transaction_t *tx);
+void free_txouts(transaction_t *tx);
+void free_transaction(transaction_t *tx);
 
-int free_unspent_txouts(unspent_transaction_t *unspent_tx);
-int free_unspent_transaction(unspent_transaction_t *unspent_tx);
+void free_unspent_txouts(unspent_transaction_t *unspent_tx);
+void free_unspent_transaction(unspent_transaction_t *unspent_tx);
 
 #ifdef __cplusplus
 }

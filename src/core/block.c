@@ -654,11 +654,7 @@ int copy_block_transactions(block_t *block, block_t *other_block)
   assert(other_block != NULL);
 
   // free old transactions for the block we are copying to
-  if (free_block_transactions(other_block))
-  {
-    return 1;
-  }
-
+  free_block_transactions(other_block);
   if (block->transaction_count > 0 && block->transactions != NULL)
   {
     // copy the transactions
@@ -710,7 +706,7 @@ int copy_block(block_t *block, block_t *other_block)
   return 0;
 }
 
-int free_block_transactions(block_t *block)
+void free_block_transactions(block_t *block)
 {
   assert(block != NULL);
   if (block->transaction_count > 0 && block->transactions != NULL)
@@ -719,31 +715,20 @@ int free_block_transactions(block_t *block)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
-
-      if (free_transaction(tx))
-      {
-        return 1;
-      }
+      free_transaction(tx);
     }
 
     free(block->transactions);
     block->transactions = NULL;
   }
-
-  return 0;
 }
 
 /*
  * Frees an allocated block, and its corresponding TXs.
  */
-int free_block(block_t *block)
+void free_block(block_t *block)
 {
   assert(block != NULL);
-  if (free_block_transactions(block))
-  {
-    return 1;
-  }
-
+  free_block_transactions(block);
   free(block);
-  return 0;
 }

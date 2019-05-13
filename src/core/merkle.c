@@ -158,21 +158,16 @@ int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_
 /*
  * Frees a merkle tree in DFS postorder traversal.
  */
-int free_merkle_tree(merkle_tree_t *tree)
+void free_merkle_tree(merkle_tree_t *tree)
 {
   assert(tree != NULL);
   free_merkle_node(tree->root);
   free(tree);
-  return 0;
 }
 
-int free_merkle_node(merkle_node_t *node)
+void free_merkle_node(merkle_node_t *node)
 {
-  if (node == NULL)
-  {
-    return 1;
-  }
-
+  assert(node != NULL);
   if ((node->left != NULL) && (node->left == node->right))
   {
     free_merkle_node(node->left);
@@ -193,5 +188,4 @@ int free_merkle_node(merkle_node_t *node)
   }
 
   free(node);
-  return 0;
 }

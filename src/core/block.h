@@ -144,8 +144,8 @@ int32_t get_tx_index_from_tx_in_block(block_t *block, transaction_t *tx);
 int copy_block_transactions(block_t *block, block_t *other_block);
 int copy_block(block_t *block, block_t *other_block);
 
-int free_block_transactions(block_t *block);
-int free_block(block_t *block);
+void free_block_transactions(block_t *block);
+void free_block(block_t *block);
 
 #ifdef __cplusplus
 }

@@ -111,7 +111,7 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
   return net_connection;
 }
 
-int free_net_connection(net_connection_t *net_connection)
+void free_net_connection(net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
   vec_deinit(&net_connection->send_queue);
@@ -122,7 +122,6 @@ int free_net_connection(net_connection_t *net_connection)
   }
 
   free(net_connection);
-  return 0;
 }
 
 net_connection_t* get_net_connection_nolock(struct mg_connection *connection)

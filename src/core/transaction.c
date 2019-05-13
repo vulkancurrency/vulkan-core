@@ -913,15 +913,9 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
   assert(tx != NULL);
   assert(other_tx != NULL);
 
-  if (free_txins(other_tx))
-  {
-    return 1;
-  }
-
-  if (free_txouts(other_tx))
-  {
-    return 1;
-  }
+  // free the txins and txouts for the transaction we are copying to...
+  free_txins(other_tx);
+  free_txouts(other_tx);
 
   memcpy(&other_tx->id, &tx->id, HASH_SIZE);
   if ((tx->txin_count > 0 && tx->txins != NULL) && (tx->txout_count > 0 && tx->txouts != NULL))
@@ -974,7 +968,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
   return 0;
 }
 
-int free_txins(transaction_t *tx)
+void free_txins(transaction_t *tx)
 {
   assert(tx != NULL);
   if (tx->txin_count > 0 && tx->txins != NULL)
@@ -989,11 +983,9 @@ int free_txins(transaction_t *tx)
     free(tx->txins);
     tx->txins = NULL;
   }
-
-  return 0;
 }
 
-int free_txouts(transaction_t *tx)
+void free_txouts(transaction_t *tx)
 {
   assert(tx != NULL);
   if (tx->txout_count > 0 && tx->txouts != NULL)
@@ -1008,28 +1000,17 @@ int free_txouts(transaction_t *tx)
     free(tx->txouts);
     tx->txouts = NULL;
   }
-
-  return 0;
 }
 
-int free_transaction(transaction_t *tx)
+void free_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (free_txins(tx))
-  {
-    return 1;
-  }
-
-  if (free_txouts(tx))
-  {
-    return 1;
-  }
-
+  free_txins(tx);
+  free_txouts(tx);
   free(tx);
-  return 0;
 }
 
-int free_unspent_txouts(unspent_transaction_t *unspent_tx)
+void free_unspent_txouts(unspent_transaction_t *unspent_tx)
 {
   assert(unspent_tx != NULL);
   if (unspent_tx->unspent_txout_count > 0 && unspent_tx->unspent_txouts != NULL)
@@ -1044,18 +1025,11 @@ int free_unspent_txouts(unspent_transaction_t *unspent_tx)
     free(unspent_tx->unspent_txouts);
     unspent_tx->unspent_txouts = NULL;
   }
-
-  return 0;
 }
 
-int free_unspent_transaction(unspent_transaction_t *unspent_tx)
+void free_unspent_transaction(unspent_transaction_t *unspent_tx)
 {
   assert(unspent_tx != NULL);
-  if (free_unspent_txouts(unspent_tx))
-  {
-    return 1;
-  }
-
+  free_unspent_txouts(unspent_tx);
   free(unspent_tx);
-  return 0;
 }

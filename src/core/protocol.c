@@ -101,7 +101,7 @@ int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator)
   return 0;
 }
 
-int free_packet(packet_t *packet)
+void free_packet(packet_t *packet)
 {
   assert(packet != NULL);
   packet->id = 0;
@@ -114,7 +114,6 @@ int free_packet(packet_t *packet)
   }
 
   free(packet);
-  return 0;
 }
 
 int deserialize_message(packet_t *packet, void **message)

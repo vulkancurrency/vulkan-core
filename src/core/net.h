@@ -68,7 +68,7 @@ int get_net_disable_port_mapping(void);
 const char* get_net_bind_address(void);
 
 net_connection_t* init_net_connection(struct mg_connection *connection);
-int free_net_connection(net_connection_t *net_connection);
+void free_net_connection(net_connection_t *net_connection);
 
 net_connection_t* get_net_connection_nolock(struct mg_connection *connection);
 net_connection_t* get_net_connection(struct mg_connection *connection);

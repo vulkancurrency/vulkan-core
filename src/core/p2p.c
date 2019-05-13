@@ -46,11 +46,10 @@ peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
   return peer;
 }
 
-int free_peer(peer_t *peer)
+void free_peer(peer_t *peer)
 {
   assert(peer != NULL);
   free(peer);
-  return 0;
 }
 
 peer_t* get_peer_nolock(uint64_t peer_id)
