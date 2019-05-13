@@ -46,7 +46,7 @@ typedef struct Queue
 } queue_t;
 
 queue_t* queue_init(void);
-int queue_free(queue_t *queue);
+void queue_free(queue_t *queue);
 
 int queue_push(queue_t *queue, int index, void *queue_object);
 int queue_push_left(queue_t *queue, void *queue_object);

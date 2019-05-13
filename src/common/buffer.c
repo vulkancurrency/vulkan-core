@@ -136,7 +136,7 @@ int buffer_clear(buffer_t *buffer)
   return 0;
 }
 
-int buffer_free(buffer_t *buffer)
+void buffer_free(buffer_t *buffer)
 {
   assert(buffer != NULL);
   if (buffer->data != NULL)
@@ -148,7 +148,6 @@ int buffer_free(buffer_t *buffer)
   buffer->size = 0;
   buffer->offset = 0;
   free(buffer);
-  return 0;
 }
 
 int buffer_realloc(buffer_t *buffer, size_t size)

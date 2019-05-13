@@ -55,7 +55,7 @@ TEST init_and_free_queue(void)
 {
   queue_t *queue = queue_init();
   ASSERT(queue != NULL);
-  ASSERT_EQ(queue_free(queue), 0);
+  queue_free(queue);
   PASS();
 }
 
@@ -70,7 +70,7 @@ TEST init_and_free_buffer(void)
 {
   buffer_t *buffer1 = buffer_init();
   ASSERT(buffer1 != NULL);
-  ASSERT_EQ(buffer_free(buffer1), 0);
+  buffer_free(buffer1);
   PASS();
 }
 
@@ -105,7 +105,7 @@ TEST insert_object_into_queue_and_pop(void)
   ASSERT(queue_get_max_index(queue) == -1);
 
   free(test_queue_object);
-  ASSERT_EQ(queue_free(queue), 0);
+  queue_free(queue);
   PASS();
 }
 
@@ -215,8 +215,8 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_MEM_EQ(bytes, data2, strlen(data2));
 
   ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);
-  ASSERT(buffer_iterator_free(buffer_iterator) == 0);
-  ASSERT(buffer_free(buffer) == 0);
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
 
   buffer_t *buffer1 = buffer_init();
   ASSERT(buffer1 != NULL);
@@ -247,7 +247,7 @@ TEST pack_and_unpack_buffer(void)
   ASSERT(buffer_copy(buffer2, buffer1) == 0);
   ASSERT_EQ(buffer_get_size(buffer2), buffer_get_size(buffer1));
   ASSERT_EQ(string_equals((char*)buffer_get_data(buffer1), (char*)buffer_get_data(buffer2)), 1);
-  ASSERT(buffer_free(buffer2) == 0);
+  buffer_free(buffer2);
 
   // read
   buffer_iterator_t *buffer_iterator1 = buffer_iterator_init(buffer1);
@@ -303,8 +303,8 @@ TEST pack_and_unpack_buffer(void)
   ASSERT_EQ(v12, -0x7FFFFFFFFFFFFFFF);
 
   ASSERT(buffer_get_remaining_size(buffer_iterator1) == 0);
-  ASSERT(buffer_iterator_free(buffer_iterator1) == 0);
-  ASSERT(buffer_free(buffer1) == 0);
+  buffer_iterator_free(buffer_iterator1);
+  buffer_free(buffer1);
 
   PASS();
 }

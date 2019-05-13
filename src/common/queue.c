@@ -39,7 +39,7 @@ queue_t* queue_init(void)
   return queue;
 }
 
-int queue_free(queue_t *queue)
+void queue_free(queue_t *queue)
 {
   for (int i = 0; i <= queue->max_index; i++)
   {
@@ -51,7 +51,6 @@ int queue_free(queue_t *queue)
 
   mtx_destroy(&queue->lock);
   free(queue);
-  return 0;
 }
 
 int queue_get_size(queue_t *queue)

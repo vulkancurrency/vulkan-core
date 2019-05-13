@@ -232,8 +232,9 @@ int remove_task_by_id(int id)
   return remove_task(task);
 }
 
-int free_task(task_t *task)
+void free_task(task_t *task)
 {
+  assert(task != NULL);
   va_end(*task->args);
 
   task->id = -1;
@@ -243,18 +244,13 @@ int free_task(task_t *task)
 
   mtx_destroy(&task->lock);
   free(task);
-  return 0;
 }
 
-int free_task_by_id(int id)
+void free_task_by_id(int id)
 {
   task_t *task = get_task_by_id(id);
-  if (task == NULL)
-  {
-    return 1;
-  }
-
-  return free_task(task);
+  assert(task != NULL);
+  free_task(task);
 }
 
 int has_scheduler(task_scheduler_t *task_scheduler)
@@ -305,11 +301,7 @@ int remove_scheduler(task_scheduler_t *task_scheduler)
     return 1;
   }
 
-  if (free_scheduler(task_scheduler))
-  {
-    return 1;
-  }
-
+  free_scheduler(task_scheduler);
   return 0;
 }
 
@@ -324,20 +316,15 @@ int remove_scheduler_by_id(int id)
   return remove_scheduler(task_scheduler);
 }
 
-int free_scheduler(task_scheduler_t *task_scheduler)
+void free_scheduler(task_scheduler_t *task_scheduler)
 {
-  task_scheduler->id = -1;
+  assert(task_scheduler != NULL);
   free(task_scheduler);
-  return 0;
 }
 
-int free_scheduler_by_id(int id)
+void free_scheduler_by_id(int id)
 {
   task_scheduler_t *task_scheduler = get_scheduler_by_id(id);
-  if (task_scheduler == NULL)
-  {
-    return 1;
-  }
-
-  return free_scheduler(task_scheduler);
+  assert(task_scheduler != NULL);
+  free_scheduler(task_scheduler);
 }

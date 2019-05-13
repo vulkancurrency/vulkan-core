@@ -54,7 +54,7 @@ void set_current_wallet(wallet_t *current_wallet);
 wallet_t* get_current_wallet(void);
 
 miner_worker_t* init_worker(void);
-int free_worker(miner_worker_t *worker);
+void free_worker(miner_worker_t *worker);
 
 block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
 block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);

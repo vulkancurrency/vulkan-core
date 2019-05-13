@@ -41,7 +41,7 @@ typedef struct BufferIterator
 } buffer_iterator_t;
 
 buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer);
-int buffer_iterator_free(buffer_iterator_t *buffer_iterator);
+void buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 
 void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer);
 const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);

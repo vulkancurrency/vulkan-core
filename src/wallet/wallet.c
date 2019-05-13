@@ -52,11 +52,10 @@ wallet_t* make_wallet(void)
   return wallet;
 }
 
-int free_wallet(wallet_t *wallet)
+void free_wallet(wallet_t *wallet)
 {
   assert(wallet != NULL);
   free(wallet);
-  return 0;
 }
 
 int serialize_wallet(buffer_t *buffer, wallet_t *wallet)

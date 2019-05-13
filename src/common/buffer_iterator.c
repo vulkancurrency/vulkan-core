@@ -39,11 +39,10 @@ buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer)
   return buffer_iterator;
 }
 
-int buffer_iterator_free(buffer_iterator_t *buffer_iterator)
+void buffer_iterator_free(buffer_iterator_t *buffer_iterator)
 {
   assert(buffer_iterator != NULL);
   free(buffer_iterator);
-  return 0;
 }
 
 void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer)

@@ -49,7 +49,7 @@ typedef struct Wallet
 } wallet_t;
 
 wallet_t* make_wallet(void);
-int free_wallet(wallet_t* wallet);
+void free_wallet(wallet_t* wallet);
 
 int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
 int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);

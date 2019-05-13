@@ -58,7 +58,7 @@ size_t buffer_get_offset(buffer_t *buffer);
 
 int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
 int buffer_clear(buffer_t *buffer);
-int buffer_free(buffer_t *buffer);
+void buffer_free(buffer_t *buffer);
 
 int buffer_realloc(buffer_t *buffer, size_t size);
 int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);

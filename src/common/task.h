@@ -80,8 +80,8 @@ task_t* get_task_by_id(int id);
 int remove_task(task_t *task);
 int remove_task_by_id(int id);
 
-int free_task(task_t *task);
-int free_task_by_id(int id);
+void free_task(task_t *task);
+void free_task_by_id(int id);
 
 int has_scheduler(task_scheduler_t *task_scheduler);
 int has_scheduler_by_id(int id);
@@ -93,8 +93,8 @@ task_scheduler_t* get_scheduler_by_id(int id);
 int remove_scheduler(task_scheduler_t *task_scheduler);
 int remove_scheduler_by_id(int id);
 
-int free_scheduler(task_scheduler_t *task_scheduler);
-int free_scheduler_by_id(int id);
+void free_scheduler(task_scheduler_t *task_scheduler);
+void free_scheduler_by_id(int id);
 
 #ifdef __cplusplus
 }

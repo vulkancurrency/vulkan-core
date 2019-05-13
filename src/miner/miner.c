@@ -85,14 +85,13 @@ miner_worker_t* init_worker(void)
   return worker;
 }
 
-int free_worker(miner_worker_t *worker)
+void free_worker(miner_worker_t *worker)
 {
   assert(worker != NULL);
   worker->id = 0;
   worker->last_timestamp = 0;
   worker->last_hashrate = 0;
   free(worker);
-  return 0;
 }
 
 static void update_worker_hashrate(miner_worker_t *worker)
