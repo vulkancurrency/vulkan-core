@@ -337,7 +337,9 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
 static void ev_handler(struct mg_connection *connection, int ev, void *p)
 {
+  assert(connection != NULL);
   struct mbuf *io = &connection->recv_mbuf;
+  assert(io != NULL);
   switch (ev)
   {
     case MG_EV_ACCEPT:
