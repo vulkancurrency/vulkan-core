@@ -71,7 +71,7 @@ merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_o
 int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes)
 {
   assert(nodes != NULL);
-  for (int i = 0; i < num_of_hashes; i++)
+  for (uint32_t i = 0; i < num_of_hashes; i++)
   {
     merkle_node_t *node = malloc(sizeof(merkle_node_t));
     node->left = NULL;
@@ -90,10 +90,10 @@ int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_
 int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
 {
   assert(nodes != NULL);
-  int current_node_idx = 0;
+  uint32_t current_node_idx = 0;
   merkle_node_t **temp_nodes = malloc(sizeof(merkle_node_t) * (*num_of_nodes));
 
-  for (int i = 0; i < (*num_of_nodes - 1); i += 2)
+  for (uint32_t i = 0; i < (*num_of_nodes - 1); i += 2)
   {
     temp_nodes[current_node_idx] = construct_merkle_node(nodes[i], nodes[i + 1]);
     current_node_idx++;
@@ -105,7 +105,7 @@ int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
     current_node_idx++;
   }
 
-  for (int i = 0; i < current_node_idx; i++)
+  for (uint32_t i = 0; i < current_node_idx; i++)
   {
     nodes[i] = temp_nodes[i];
   }
@@ -122,6 +122,7 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
 {
   assert(left != NULL);
   assert(right != NULL);
+
   uint8_t *combined_hash = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
   uint8_t *node_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
 
