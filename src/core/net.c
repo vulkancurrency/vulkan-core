@@ -282,6 +282,7 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
     buffer_t *receiving_buffer = net_connection->receiving_buffer;
     assert(receiving_buffer != NULL);
 
+    buffer_write(receiving_buffer, data, data_len);
     if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
     {
       buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
@@ -290,23 +291,10 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
       net_connection->is_receiving_data = 0;
       net_connection->expected_receiving_len = 0;
+
+      assert(net_connection->receiving_buffer != NULL);
       buffer_free(net_connection->receiving_buffer);
       net_connection->receiving_buffer = NULL;
-    }
-    else
-    {
-      buffer_write(receiving_buffer, data, data_len);
-      if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
-      {
-        buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
-        process_incoming_packet(net_connection, buffer_iterator);
-        buffer_iterator_free(buffer_iterator);
-
-        net_connection->is_receiving_data = 0;
-        net_connection->expected_receiving_len = 0;
-        buffer_free(net_connection->receiving_buffer);
-        net_connection->receiving_buffer = NULL;
-      }
     }
   }
   else
