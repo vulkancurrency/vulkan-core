@@ -30,6 +30,7 @@ project(vulkan)
 
 option(WITH_ROCKSDB "Build with RocksDB" ON)
 option(WITH_LMDB "Build with LMDB" OFF)
+option(WITH_NET_QUEUE "Enable the network send/receive queue, sends/receives data every XXX interval" OFF)
 option(BUILD_STATIC "Build a staticly linked binary" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -69,6 +70,10 @@ elseif(WITH_ROCKSDB)
   else()
     include_directories(${ROCKSDB_INCLUDE_DIR})
   endif()
+endif()
+
+if (WITH_NET_QUEUE)
+  add_definitions(-DUSE_NET_QUEUE)
 endif()
 
 add_subdirectory(external/Collections-C)

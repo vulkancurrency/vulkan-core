@@ -226,9 +226,13 @@ int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
   mtx_lock(&g_net_lock);
+#ifdef USE_NET_QUEUE
   buffer_t *buffer = buffer_init_data(0, data, data_len);
   vec_push(&net_connection->send_queue, buffer);
   net_connection->send_queue_size++;
+#else
+  mg_send(net_connection->connection, data, data_len);
+#endif
   mtx_unlock(&g_net_lock);
   return 0;
 }
