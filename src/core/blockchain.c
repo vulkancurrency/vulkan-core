@@ -135,20 +135,19 @@ int open_blockchain(const char *blockchain_dir)
   if (err != NULL)
   {
     LOG_ERROR("Could not open blockchain database: %s!", err);
-
     rocksdb_free(err);
     rocksdb_free(options);
     return 1;
   }
+
+  rocksdb_free(err);
+  rocksdb_free(options);
 
   if (has_block_by_hash(genesis_block.hash) == 0)
   {
     if (validate_and_insert_block(&genesis_block))
     {
       LOG_ERROR("Could not insert genesis block into blockchain!");
-
-      rocksdb_free(err);
-      rocksdb_free(options);
       return 1;
     }
   }
@@ -158,9 +157,6 @@ int open_blockchain(const char *blockchain_dir)
     if (top_block == NULL)
     {
       LOG_ERROR("Could not get unknown blockchain top block!");
-
-      rocksdb_free(err);
-      rocksdb_free(options);
       return 1;
     }
 
@@ -170,9 +166,6 @@ int open_blockchain(const char *blockchain_dir)
 
   LOG_INFO("Successfully initialized blockchain.");
   g_blockchain_is_open = 1;
-
-  rocksdb_free(err);
-  rocksdb_free(options);
   return 0;
 }
 
