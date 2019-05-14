@@ -1193,10 +1193,10 @@ int transaction_received(net_connection_t *net_connection, transaction_t *transa
 
   if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.tx_sync_initiated)
   {
-    block_t *block = g_protocol_sync_entry.sync_pending_block;
-    assert(block != NULL);
+    block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
+    assert(pending_block != NULL);
 
-    assert(add_transaction_to_block(block, transaction, tx_index) == 0);
+    assert(add_transaction_to_block(pending_block, transaction, tx_index) == 0);
     if (tx_index + 1 < g_protocol_sync_entry.tx_sync_num_txs)
     {
       if (request_sync_next_transaction(net_connection))
@@ -1210,12 +1210,12 @@ int transaction_received(net_connection_t *net_connection, transaction_t *transa
       // compute the block's merkle root again and compare it against
       // the block's currently defined merkle root to see if
       // this block does infact have the correct transactions it requires...
-      if (valid_merkle_root(block))
+      if (valid_merkle_root(pending_block))
       {
         // must clear the tx sync entry cache before calling block_header_sync_complete,
         // otherwise the entire sync entry cache will be cleared and this assertion will fail...
         assert(clear_tx_sync_request() == 0);
-        if (block_header_sync_complete(net_connection, block))
+        if (block_header_sync_complete(net_connection, pending_block))
         {
           // we failed to add this block when trying to switch to it's
           // alternative chain, restore our previous working chain instead.
@@ -1527,7 +1527,21 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       {
         get_block_by_hash_response_t *message = (get_block_by_hash_response_t*)message_object;
-        if (block_header_received(net_connection, message->block))
+        if (g_protocol_sync_entry.sync_initiated || g_protocol_sync_entry.sync_finding_top_block)
+        {
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            free_block(message->block);
+            return 1;
+          }
+
+          if (block_header_received(net_connection, message->block))
+          {
+            free_block(message->block);
+            return 1;
+          }
+        }
+        else
         {
           free_block(message->block);
           return 1;
@@ -1556,7 +1570,21 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
         get_block_by_height_response_t *message = (get_block_by_height_response_t*)message_object;
-        if (block_header_received(net_connection, message->block))
+        if (g_protocol_sync_entry.sync_initiated || g_protocol_sync_entry.sync_finding_top_block)
+        {
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            free_block(message->block);
+            return 1;
+          }
+
+          if (block_header_received(net_connection, message->block))
+          {
+            free_block(message->block);
+            return 1;
+          }
+        }
+        else
         {
           free_block(message->block);
           return 1;
@@ -1586,10 +1614,15 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.sync_pending_block != NULL
           && g_protocol_sync_entry.tx_sync_initiated == 0)
         {
-          block_t *block = g_protocol_sync_entry.sync_pending_block;
-          assert(block != NULL);
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            return 1;
+          }
 
-          if (compare_block_hash(message->hash, block->hash))
+          block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
+          assert(pending_block != NULL);
+
+          if (compare_block_hash(message->hash, pending_block->hash))
           {
             if (g_protocol_sync_entry.sync_initiated)
             {
@@ -1619,7 +1652,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           }
 
           int32_t tx_index = get_tx_index_from_tx_in_block(block, transaction);
-          assert(tx_index >= 0);
+          if (tx_index < 0)
+          {
+            free_block(block);
+            free_transaction(transaction);
+            return 1;
+          }
 
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP,
             message->block_hash, tx_index, transaction))
@@ -1637,22 +1675,40 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
         get_block_transaction_by_hash_response_t *message = (get_block_transaction_by_hash_response_t*)message_object;
-        if (has_block_by_hash(message->block_hash))
+        if (g_protocol_sync_entry.tx_sync_initiated)
         {
-          free_transaction(message->transaction);
-          return 1;
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (has_block_by_hash(message->block_hash))
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
+          if (pending_block == NULL)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (compare_block_hash(pending_block->hash, message->block_hash) == 0)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (transaction_received(net_connection, message->transaction, message->tx_index))
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
         }
-
-        block_t *block = g_protocol_sync_entry.sync_pending_block;
-        assert(block != NULL);
-
-        if (compare_block_hash(block->hash, message->block_hash) == 0)
-        {
-          free_transaction(message->transaction);
-          return 1;
-        }
-
-        if (transaction_received(net_connection, message->transaction, message->tx_index))
+        else
         {
           free_transaction(message->transaction);
           return 1;
@@ -1685,22 +1741,40 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
         get_block_transaction_by_index_response_t *message = (get_block_transaction_by_index_response_t*)message_object;
-        if (has_block_by_hash(message->block_hash))
+        if (g_protocol_sync_entry.tx_sync_initiated)
         {
-          free_transaction(message->transaction);
-          return 1;
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (has_block_by_hash(message->block_hash))
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
+          if (pending_block == NULL)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (compare_block_hash(pending_block->hash, message->block_hash) == 0)
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
+
+          if (transaction_received(net_connection, message->transaction, message->tx_index))
+          {
+            free_transaction(message->transaction);
+            return 1;
+          }
         }
-
-        block_t *block = g_protocol_sync_entry.sync_pending_block;
-        assert(block != NULL);
-
-        if (compare_block_hash(block->hash, message->block_hash) == 0)
-        {
-          free_transaction(message->transaction);
-          return 1;
-        }
-
-        if (transaction_received(net_connection, message->transaction, message->tx_index))
+        else
         {
           free_transaction(message->transaction);
           return 1;
