@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #include <sodium.h>

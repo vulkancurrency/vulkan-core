@@ -25,10 +25,16 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 
 #include "net.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 typedef struct Peer
 {
@@ -64,3 +70,7 @@ int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, siz
 
 int init_p2p(void);
 int deinit_p2p(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -25,6 +25,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013, The CryptoNote Developers.
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>

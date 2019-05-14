@@ -53,7 +53,6 @@
 block_t* make_block(void)
 {
   block_t *block = malloc(sizeof(block_t));
-
   block->version = BLOCK_VERSION;
 
   memset(block->previous_hash, 0, HASH_SIZE);

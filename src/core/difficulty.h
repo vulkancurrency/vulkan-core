@@ -25,12 +25,18 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "common/vec.h"
 
 #include "parameters.h"
 #include "pow.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 typedef struct DifficultyInfo
 {
@@ -42,3 +48,7 @@ typedef struct DifficultyInfo
 } difficulty_info_t;
 
 uint64_t get_next_difficulty(difficulty_info_t difficulty_info);
+
+#ifdef __cplusplus
+}
+#endif

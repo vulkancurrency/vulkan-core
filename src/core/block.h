@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "common/buffer_iterator.h"

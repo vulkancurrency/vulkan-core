@@ -25,8 +25,18 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "crypto/cryptoutil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int check_pow(const uint8_t *hash, uint64_t difficulty);
+
+#ifdef __cplusplus
+}
+#endif
