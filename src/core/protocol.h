@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -94,6 +95,8 @@ typedef struct
 typedef struct
 {
   uint32_t host_port;
+  char *version_number;
+  char *version_name;
 } connection_req_t;
 
 typedef struct
@@ -213,6 +216,9 @@ typedef struct SyncEntry
   uint32_t last_tx_sync_ts;
   uint8_t last_tx_sync_tries;
 } sync_entry_t;
+
+void set_force_version_check(int force_version_check);
+int get_force_version_check(void);
 
 packet_t* make_packet(void);
 int serialize_packet(buffer_t *buffer, packet_t *packet);

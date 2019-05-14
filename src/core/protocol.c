@@ -41,10 +41,22 @@
 #include "net.h"
 #include "p2p.h"
 #include "protocol.h"
+#include "version.h"
 
 #include "crypto/cryptoutil.h"
 
 static sync_entry_t g_protocol_sync_entry;
+static int g_protocol_force_version_check = 0;
+
+void set_force_version_check(int force_version_check)
+{
+  g_protocol_force_version_check = force_version_check;
+}
+
+int get_force_version_check(void)
+{
+  return g_protocol_force_version_check;
+}
 
 packet_t* make_packet(void)
 {
@@ -144,8 +156,27 @@ int deserialize_message(packet_t *packet, void **message)
           return 1;
         }
 
+        char *version_number = NULL;
+        if (buffer_read_string(buffer_iterator, &version_number))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          return 1;
+        }
+
+        char* version_name = NULL;
+        if (buffer_read_string(buffer_iterator, &version_name))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          free(version_number);
+          return 1;
+        }
+
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
         packed_message->host_port = host_port;
+        packed_message->version_number = version_number;
+        packed_message->version_name = version_name;
         *message = packed_message;
       }
       break;
@@ -501,6 +532,8 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       {
         uint32_t host_port = va_arg(args, uint32_t);
         buffer_write_uint32(buffer, host_port);
+        buffer_write_string(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION));
+        buffer_write_string(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME));
       }
       break;
     case PKT_TYPE_CONNECT_RESP:
@@ -680,6 +713,8 @@ void free_message(uint32_t packet_id, void *message_object)
     case PKT_TYPE_CONNECT_REQ:
       {
         connection_req_t *message = (connection_req_t*)message_object;
+        free(message->version_number);
+        free(message->version_name);
         free(message);
       }
       break;
@@ -1250,6 +1285,21 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
         {
           LOG_DEBUG("Cannot add an already existant peer with id: %u!", peer_id);
           return 1;
+        }
+
+        if (g_protocol_force_version_check)
+        {
+          if (memcmp(message->version_number, APPLICATION_VERSION, strlen(APPLICATION_VERSION)) != 0)
+          {
+            LOG_DEBUG("Failed to verify version number: [%s] expected: [%s], for peer with id: [%llu]!\n", message->version_number, APPLICATION_VERSION, peer_id);
+            return 1;
+          }
+
+          if (memcmp(message->version_name, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME)) != 0)
+          {
+            LOG_DEBUG("Failed to verify version name: [%s] expected: [%s], for peer with id: [%llu]!\n", message->version_name, APPLICATION_RELEASE_NAME, peer_id);
+            return 1;
+          }
         }
 
         peer_t *peer = init_peer(peer_id, net_connection);

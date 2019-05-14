@@ -42,6 +42,7 @@
 #include "core/mempool.h"
 #include "core/net.h"
 #include "core/p2p.h"
+#include "core/protocol.h"
 #include "core/version.h"
 
 #include "miner/miner.h"
@@ -68,6 +69,7 @@ enum
   CMD_ARG_WALLET_FILENAME,
   CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
+  CMD_ARG_FORCE_VERSION_CHECK,
   CMD_ARG_MINE
 };
 
@@ -84,6 +86,7 @@ static argument_map_t g_arguments_map[] = {
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
+  {"force-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces version check when accepting new incoming connections.", "", 0},
   {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "<num_worker_threads>", 1}
 };
 
@@ -224,6 +227,9 @@ static int parse_commandline_args(int argc, char **argv)
           free_wallet(wallet);
         }
         return 1;
+      case CMD_ARG_FORCE_VERSION_CHECK:
+        set_force_version_check(1);
+        break;
       case CMD_ARG_MINE:
         i++;
         size_t num_worker_threads = atoi(argv[i]);
