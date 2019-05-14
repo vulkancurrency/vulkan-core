@@ -40,6 +40,7 @@
 #include "core/blockchain.h"
 #include "core/difficulty.h"
 #include "core/mempool.h"
+#include "core/net.h"
 #include "core/protocol.h"
 #include "core/transaction_builder.h"
 
@@ -54,6 +55,7 @@ static task_t *g_miner_worker_status_task = NULL;
 static mtx_t g_miner_lock;
 static miner_worker_t *g_miner_workers[MAX_NUM_WORKER_THREADS];
 static uint16_t g_num_worker_threads = 0;
+static int g_workers_paused = 0;
 
 void set_num_worker_threads(uint16_t num_worker_threads)
 {
@@ -74,6 +76,16 @@ void set_current_wallet(wallet_t *current_wallet)
 wallet_t* get_current_wallet(void)
 {
   return g_current_wallet;
+}
+
+void set_workers_paused(int workers_paused)
+{
+  g_workers_paused = workers_paused;
+}
+
+int get_workers_paused(void)
+{
+  return g_workers_paused;
 }
 
 miner_worker_t* init_worker(void)
@@ -136,8 +148,8 @@ block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wal
   assert(add_transaction_to_block(block, tx, 0) == 0);
   assert(fill_block_with_txs_from_mempool(block) == 0);
 
-  compute_self_merkle_root(block);
-  compute_self_block_hash(block);
+  assert(compute_self_merkle_root(block) == 0);
+  assert(compute_self_block_hash(block) == 0);
   return block;
 }
 
@@ -170,6 +182,7 @@ block_t* compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *p
 
 static int worker_mining_thread(void *arg)
 {
+  assert(arg != NULL);
   miner_worker_t *worker = (miner_worker_t*)arg;
   assert(worker != NULL);
 
@@ -178,6 +191,12 @@ static int worker_mining_thread(void *arg)
 
   while (g_miner_is_mining)
   {
+    if (g_workers_paused)
+    {
+      sleep(1);
+      continue;
+    }
+
     previous_block = get_current_block();
     block = compute_next_block(worker, g_current_wallet, previous_block);
     if (validate_and_insert_block(block) == 0)
@@ -203,6 +222,16 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   }
 
   return TASK_RESULT_WAIT;
+}
+
+int wake_all_workers(void)
+{
+  if (g_miner_is_mining == 0)
+  {
+    return 1;
+  }
+
+  return 0;
 }
 
 int start_mining(void)

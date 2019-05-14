@@ -280,6 +280,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (init_net())
+  {
+    return 1;
+  }
+
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
@@ -293,7 +298,7 @@ int main(int argc, char **argv)
     start_mining();
   }
 
-  if (init_net())
+  if (net_run())
   {
     return 1;
   }

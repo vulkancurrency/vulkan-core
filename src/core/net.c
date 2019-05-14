@@ -62,7 +62,7 @@ static task_t *g_net_flush_connections_task = NULL;
 static net_connection_t *g_net_connection = NULL;
 
 static vec_void_t g_net_connections;
-static int g_num_connections;
+static int g_num_connections = 0;
 
 void set_net_host_address(const char *host_address)
 {
@@ -651,7 +651,7 @@ int init_net(void)
   g_net_reconnect_seeds_task = add_task(reconnect_seeds, NET_RECONNECT_SEEDS_TASK_DELAY);
   g_net_flush_connections_task = add_task(flush_connections, NET_FLUSH_CONNECTIONS_TASK_DELAY);
   g_net_initialized = 1;
-  return net_run();
+  return 0;
 }
 
 int deinit_net(void)
