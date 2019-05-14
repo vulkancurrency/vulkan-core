@@ -649,7 +649,9 @@ int init_net(void)
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
   g_net_reconnect_seeds_task = add_task(reconnect_seeds, NET_RECONNECT_SEEDS_TASK_DELAY);
+#ifdef USE_NET_QUEUE
   g_net_flush_connections_task = add_task(flush_connections, NET_FLUSH_CONNECTIONS_TASK_DELAY);
+#endif
   g_net_initialized = 1;
   return 0;
 }
@@ -665,7 +667,9 @@ int deinit_net(void)
   vec_deinit(&g_net_connections);
   remove_task(g_net_resync_chain_task);
   remove_task(g_net_reconnect_seeds_task);
+#ifdef USE_NET_QUEUE
   remove_task(g_net_flush_connections_task);
+#endif
   mtx_destroy(&g_net_lock);
 
   g_net_resync_chain_task = NULL;
