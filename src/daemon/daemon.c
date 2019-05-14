@@ -86,7 +86,7 @@ static argument_map_t g_arguments_map[] = {
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
-  {"force-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces version check when accepting new incoming connections.", "", 0},
+  {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections...", "", 0},
   {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "<num_worker_threads>", 1}
 };
 
