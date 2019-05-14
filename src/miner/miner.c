@@ -201,7 +201,7 @@ static int worker_mining_thread(void *arg)
     block = compute_next_block(worker, g_current_wallet, previous_block);
     if (validate_and_insert_block(block) == 0)
     {
-      LOG_INFO("Worker: %hu found block at height: %u!", worker->id, get_block_height());
+      LOG_INFO("Worker[%hu]: found block at height: %u!", worker->id, get_block_height());
       print_block(block);
     }
 
@@ -218,7 +218,15 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   {
     miner_worker_t *worker = g_miner_workers[i];
     assert(worker != NULL);
-    LOG_INFO("Worker: %u running %u h/s.", worker->id, worker->last_hashrate);
+
+    if (g_workers_paused)
+    {
+      LOG_INFO("Worker[%u]: paused, waiting for resume...", worker->id);
+    }
+    else
+    {
+      LOG_INFO("Worker[%u]: running with %u h/s", worker->id, worker->last_hashrate);
+    }
   }
 
   return TASK_RESULT_WAIT;
