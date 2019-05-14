@@ -224,16 +224,6 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   return TASK_RESULT_WAIT;
 }
 
-int wake_all_workers(void)
-{
-  if (g_miner_is_mining == 0)
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
 int start_mining(void)
 {
   assert(g_current_wallet != NULL);
