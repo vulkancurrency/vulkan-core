@@ -1311,7 +1311,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
       }
     }
 
-    LOG_INFO("Received block at height: %u", g_protocol_sync_entry.last_sync_height);
+    LOG_INFO("Received block at height: %u out of %u block(s) remaining", g_protocol_sync_entry.last_sync_height, g_protocol_sync_entry.sync_height);
     if (check_sync_status())
     {
       if (request_sync_next_block(g_protocol_sync_entry.net_connection))
