@@ -552,8 +552,13 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(peerlist_buffer != NULL);
 
         uint32_t peerlist_data_size = buffer_get_size(peerlist_buffer);
+        assert(peerlist_data_size <= UINT32_MAX);
+
+        uint8_t *peerlist_data = buffer_get_data(peerlist_buffer);
+        assert(peerlist_data != NULL);
+
         buffer_write_uint32(buffer, peerlist_data_size);
-        buffer_write_bytes(buffer, buffer_get_data(peerlist_buffer), peerlist_data_size);
+        buffer_write_bytes(buffer, peerlist_data, peerlist_data_size);
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
