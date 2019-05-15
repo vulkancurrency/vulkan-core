@@ -160,6 +160,17 @@ typedef struct
 
 typedef struct
 {
+  uint32_t height;
+} get_grouped_blocks_from_height_request_t;
+
+typedef struct
+{
+  uint32_t block_data_size;
+  uint8_t *block_data;
+} get_grouped_blocks_from_height_response_t;
+
+typedef struct
+{
   uint8_t *hash;
 } get_block_num_transactions_request_t;
 
@@ -205,6 +216,10 @@ typedef struct SyncEntry
   block_t *sync_pending_block;
   uint32_t sync_height;
   int32_t sync_start_height;
+
+  int is_syncing_grouped_blocks;
+  vec_void_t sync_pending_blocks;
+  size_t sync_pending_blocks_count;
 
   uint32_t last_sync_height;
   uint32_t last_sync_ts;

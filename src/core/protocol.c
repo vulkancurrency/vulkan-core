@@ -40,6 +40,7 @@
 #include "mempool.h"
 #include "net.h"
 #include "p2p.h"
+#include "parameters.h"
 #include "protocol.h"
 #include "version.h"
 
@@ -131,8 +132,6 @@ void free_packet(packet_t *packet)
 int deserialize_message(packet_t *packet, void **message)
 {
   assert(packet != NULL);
-  assert(message != NULL);
-
   buffer_t *buffer = NULL;
   if (packet->size > 0)
   {
@@ -322,6 +321,55 @@ int deserialize_message(packet_t *packet, void **message)
         get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
         packed_message->hash = hash;
         packed_message->block = block;
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_RESP:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
+      {
+        uint32_t height = 0;
+        if (buffer_read_uint32(buffer_iterator, &height))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          return 1;
+        }
+
+        get_grouped_blocks_from_height_request_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_request_t));
+        packed_message->height = height;
+        *message = packed_message;
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
+      {
+        uint32_t block_data_size = 0;
+        if (buffer_read_uint32(buffer_iterator, &block_data_size))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          return 1;
+        }
+
+        uint8_t *block_data = NULL;
+        if (buffer_read_bytes(buffer_iterator, &block_data))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          return 1;
+        }
+
+        get_grouped_blocks_from_height_response_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_response_t));
+        packed_message->block_data_size = block_data_size;
+        packed_message->block_data = block_data;
         *message = packed_message;
       }
       break;
@@ -524,7 +572,6 @@ int deserialize_message(packet_t *packet, void **message)
 
 int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 {
-  assert(packet != NULL);
   buffer_t *buffer = buffer_init();
   switch (packet_id)
   {
@@ -610,6 +657,37 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
 
         buffer_write_bytes(buffer, hash, HASH_SIZE);
         serialize_block(buffer, block);
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_RESP:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
+      {
+        uint32_t height = va_arg(args, uint32_t);
+        buffer_write_uint32(buffer, height);
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
+      {
+        buffer_t *block_data_buffer = va_arg(args, buffer_t*);
+        assert(block_data_buffer != NULL);
+
+        uint32_t block_data_size = buffer_get_size(block_data_buffer);
+        assert(block_data_size <= UINT32_MAX);
+
+        uint8_t *block_data = buffer_get_data(block_data_buffer);
+        assert(block_data != NULL);
+
+        buffer_write_uint32(buffer, block_data_size);
+        buffer_write_bytes(buffer, block_data, block_data_size);
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
@@ -781,6 +859,29 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_RESP:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
+      {
+        get_grouped_blocks_from_height_request_t *message = (get_grouped_blocks_from_height_request_t*)message_object;
+        free(message);
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
+      {
+        get_grouped_blocks_from_height_response_t *message = (get_grouped_blocks_from_height_response_t*)message_object;
+        free(message->block_data);
+        free(message);
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
         get_block_num_transactions_request_t *message = (get_block_num_transactions_request_t*)message_object;
@@ -863,6 +964,10 @@ int init_sync_request(int height, net_connection_t *net_connection)
   g_protocol_sync_entry.sync_height = height;
   g_protocol_sync_entry.sync_start_height = -1;
 
+  g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
+  vec_init(&g_protocol_sync_entry.sync_pending_blocks);
+  g_protocol_sync_entry.sync_pending_blocks_count = 0;
+
   g_protocol_sync_entry.last_sync_height = 0;
   g_protocol_sync_entry.last_sync_ts = 0;
   g_protocol_sync_entry.last_sync_tries = 0;
@@ -908,6 +1013,10 @@ int clear_sync_request(int sync_success)
 
   g_protocol_sync_entry.sync_height = 0;
   g_protocol_sync_entry.sync_start_height = -1;
+
+  g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
+  vec_deinit(&g_protocol_sync_entry.sync_pending_blocks);
+  g_protocol_sync_entry.sync_pending_blocks_count = 0;
 
   g_protocol_sync_entry.last_sync_height = 0;
   g_protocol_sync_entry.last_sync_ts = 0;
@@ -1019,7 +1128,33 @@ int request_sync_next_block(net_connection_t *net_connection)
   }
 
   uint32_t sync_height = g_protocol_sync_entry.last_sync_height + 1;
-  return request_sync_block(net_connection, sync_height, NULL);
+  if (sync_height == g_protocol_sync_entry.last_sync_height)
+  {
+    g_protocol_sync_entry.last_sync_tries++;
+  }
+  else
+  {
+    g_protocol_sync_entry.last_sync_tries = 0;
+    g_protocol_sync_entry.last_sync_height = sync_height;
+  }
+
+  g_protocol_sync_entry.last_sync_ts = get_current_time();
+  if (g_protocol_sync_entry.sync_pending_blocks_count == 0)
+  {
+    if (handle_packet_sendto(net_connection, PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ, sync_height))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
+    assert(pending_block != NULL);
+    g_protocol_sync_entry.sync_pending_blocks_count--;
+    return block_header_received(net_connection, pending_block);
+  }
+
+  return 0;
 }
 
 int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash)
@@ -1596,6 +1731,107 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         }
       }
       break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_RESP:
+      {
+
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
+      {
+        get_grouped_blocks_from_height_request_t *message = (get_grouped_blocks_from_height_request_t*)message_object;
+        uint32_t current_block_height = get_block_height();
+        if (message->height <= current_block_height)
+        {
+          uint32_t top_block_height = MIN(message->height + MAX_GROUPED_BLOCKS_COUNT, current_block_height);
+          buffer_t *buffer = buffer_init();
+          buffer_write_uint32(buffer, MAX_GROUPED_BLOCKS_COUNT);
+          for (uint32_t i = message->height; i <= top_block_height; i++)
+          {
+            block_t *block = get_block_from_height(i);
+            assert(block != NULL);
+
+            serialize_block(buffer, block);
+            free_block(block);
+          }
+
+          if (handle_packet_sendto(net_connection, PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP, buffer))
+          {
+            buffer_free(buffer);
+            return 1;
+          }
+
+          buffer_free(buffer);
+        }
+      }
+      break;
+    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
+      {
+        get_grouped_blocks_from_height_response_t *message = (get_grouped_blocks_from_height_response_t*)message_object;
+        if (g_protocol_sync_entry.sync_pending_blocks_count == 0)
+        {
+          if (net_connection != g_protocol_sync_entry.net_connection)
+          {
+            return 1;
+          }
+
+          buffer_t *buffer = buffer_init_data(0, message->block_data, message->block_data_size);
+          buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+          uint32_t blocks_count = 0;
+          if (buffer_read_uint32(buffer_iterator, &blocks_count))
+          {
+            buffer_free(buffer);
+            buffer_iterator_free(buffer_iterator);
+            return 1;
+          }
+
+          if (blocks_count == 0)
+          {
+            LOG_ERROR("Got grouped block response with no blocks!");
+            buffer_free(buffer);
+            buffer_iterator_free(buffer_iterator);
+            return 1;
+          }
+          else if (blocks_count > MAX_GROUPED_BLOCKS_COUNT)
+          {
+            LOG_ERROR("Got grouped block response with blocks count %u greater than allowed %u!", blocks_count, MAX_GROUPED_BLOCKS_COUNT);
+            buffer_free(buffer);
+            buffer_iterator_free(buffer_iterator);
+            return 1;
+          }
+
+          for (int i = 0; i < blocks_count; i++)
+          {
+            block_t *block = NULL;
+            if (deserialize_block(buffer_iterator, &block))
+            {
+              buffer_free(buffer);
+              buffer_iterator_free(buffer_iterator);
+              return 1;
+            }
+
+            assert(block != NULL);
+            assert(vec_push(&g_protocol_sync_entry.sync_pending_blocks, block) == 0);
+            g_protocol_sync_entry.sync_pending_blocks_count++;
+          }
+
+          // reverse the queue and pull a block header off the top of the queue and begin
+          // synchronizing the block transactions and the rest of the pending headers...
+          vec_reverse(&g_protocol_sync_entry.sync_pending_blocks);
+          block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
+          assert(pending_block != NULL);
+          g_protocol_sync_entry.sync_pending_blocks_count--;
+          assert(block_header_received(net_connection, pending_block) == 0);
+
+          buffer_free(buffer);
+          buffer_iterator_free(buffer_iterator);
+        }
+      }
+      break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
         get_block_num_transactions_request_t *message = (get_block_num_transactions_request_t*)message_object;
@@ -1625,7 +1861,10 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           }
 
           block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
-          assert(pending_block != NULL);
+          if (pending_block == NULL)
+          {
+            return 1;
+          }
 
           if (compare_block_hash(message->hash, pending_block->hash))
           {

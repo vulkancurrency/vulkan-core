@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #define BLOCK_VERSION 0x01
@@ -58,6 +59,7 @@
 #define RPC_PORT 9898
 
 #define MAX_P2P_PEERS_COUNT 16
+#define MAX_GROUPED_BLOCKS_COUNT 8
 
 typedef struct SeedNodeEntry
 {
