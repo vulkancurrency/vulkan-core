@@ -564,6 +564,7 @@ int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_
     {
       transaction_t *tx = NULL;
       assert(deserialize_transaction(buffer_iterator, &tx) == 0);
+      assert(tx != NULL);
       block->transactions[i] = tx;
     }
   }
@@ -671,6 +672,7 @@ int copy_block_transactions(block_t *block, block_t *other_block)
       assert(other_tx != NULL);
       other_block->transaction_count++;
       other_block->transactions = realloc(other_block->transactions, sizeof(transaction_t) * block->transaction_count);
+
       assert(other_block->transactions != NULL);
       other_block->transactions[i] = other_tx;
     }
