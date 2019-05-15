@@ -1804,7 +1804,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          for (int i = 0; i < blocks_count; i++)
+          for (int i = 0; i <= blocks_count; i++)
           {
             block_t *block = NULL;
             if (deserialize_block(buffer_iterator, &block))
