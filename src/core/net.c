@@ -42,10 +42,11 @@
 #include "common/tinycthread.h"
 #include "common/vec.h"
 
-#include "parameters.h"
 #include "net.h"
 #include "p2p.h"
+#include "parameters.h"
 #include "protocol.h"
+#include "seed_nodes.h"
 #include "version.h"
 
 static int g_net_initialized = 0;

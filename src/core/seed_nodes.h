@@ -28,35 +28,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define BLOCK_VERSION 0x01
-#define MAX_BLOCK_SIZE 500000000
-#define MAX_TX_SIZE (1024 * 500)
-#define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
-#define TIMESTAMP_CHECK_WINDOW 32
+typedef struct SeedNodeEntry
+{
+  const char *address;
+  uint16_t port;
+} seed_node_entry_t;
 
-#define COIN ((uint64_t)100000000)
-#define TOTAL_SUPPLY 64000000
-#define MAX_MONEY ((uint64_t)(COIN * TOTAL_SUPPLY))
+static seed_node_entry_t SEED_NODES[] = {
+  {"127.0.0.1", P2P_PORT}
+};
 
-#define MAINNET_ADDRESS_ID 0x01
-#define TESTNET_ADDRESS_ID 0x02
-
-#define GENESIS_NONCE 10000
-#define GENESIS_TIMESTAMP 1552112098
-#define GENESIS_REWARD ((uint64_t)0)
-
-#define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
-
-#define DIFFICULTY_TARGET (60 * 2)
-#define DIFFICULTY_WINDOW 360
-#define DIFFICULTY_LAG 15
-#define DIFFICULTY_CUT 60
-#define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
-
-#define BLOCK_REWARD_EMISSION_FACTOR 18
-
-#define P2P_PORT 9899
-#define RPC_PORT 9898
-
-#define MAX_P2P_PEERS_COUNT 16
-#define MAX_GROUPED_BLOCKS_COUNT 6
+#define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
