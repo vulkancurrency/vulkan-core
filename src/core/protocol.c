@@ -324,7 +324,7 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+    /*case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
       {
 
       }
@@ -333,7 +333,7 @@ int deserialize_message(packet_t *packet, void **message)
       {
 
       }
-      break;
+      break;*/
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
       {
         uint32_t height = 0;
@@ -659,7 +659,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         serialize_block(buffer, block);
       }
       break;
-    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+    /*case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
       {
 
       }
@@ -668,7 +668,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       {
 
       }
-      break;
+      break;*/
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
       {
         uint32_t height = va_arg(args, uint32_t);
@@ -859,7 +859,7 @@ void free_message(uint32_t packet_id, void *message_object)
         free(message);
       }
       break;
-    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+    /*case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
       {
 
       }
@@ -868,7 +868,7 @@ void free_message(uint32_t packet_id, void *message_object)
       {
 
       }
-      break;
+      break;*/
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
       {
         get_grouped_blocks_from_height_request_t *message = (get_grouped_blocks_from_height_request_t*)message_object;
@@ -1731,7 +1731,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         }
       }
       break;
-    case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
+    /*case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
       {
 
       }
@@ -1740,7 +1740,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
       {
 
       }
-      break;
+      break;*/
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
       {
         get_grouped_blocks_from_height_request_t *message = (get_grouped_blocks_from_height_request_t*)message_object;
