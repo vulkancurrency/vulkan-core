@@ -59,7 +59,7 @@
 #define RPC_PORT 9898
 
 #define MAX_P2P_PEERS_COUNT 16
-#define MAX_GROUPED_BLOCKS_COUNT 8
+#define MAX_GROUPED_BLOCKS_COUNT 6
 
 typedef struct SeedNodeEntry
 {
