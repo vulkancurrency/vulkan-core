@@ -1772,7 +1772,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
       {
         get_grouped_blocks_from_height_response_t *message = (get_grouped_blocks_from_height_response_t*)message_object;
-        if (g_protocol_sync_entry.sync_pending_blocks_count == 0)
+        if (g_protocol_sync_entry.sync_initiated && g_protocol_sync_entry.sync_pending_blocks_count == 0)
         {
           if (net_connection != g_protocol_sync_entry.net_connection)
           {
