@@ -126,6 +126,7 @@ void free_net_connection(net_connection_t *net_connection)
 
 net_connection_t* get_net_connection_nolock(struct mg_connection *connection)
 {
+  assert(connection != NULL);
   void *value = NULL;
   int index = 0;
   vec_foreach(&g_net_connections, value, index)
@@ -152,6 +153,7 @@ net_connection_t* get_net_connection(struct mg_connection *connection)
 
 int has_net_connection_nolock(struct mg_connection *connection)
 {
+  assert(connection != NULL);
   return get_net_connection_nolock(connection) != NULL;
 }
 
@@ -239,6 +241,9 @@ int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 
 static int process_packet(net_connection_t *net_connection, buffer_iterator_t *buffer_iterator)
 {
+  assert(net_connection != NULL);
+  assert(buffer_iterator != NULL);
+
   packet_t *packet = make_packet();
   if (deserialize_packet(packet, buffer_iterator))
   {
@@ -258,6 +263,9 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
 
 static void process_incoming_packet(net_connection_t *net_connection, buffer_iterator_t *buffer_iterator)
 {
+  assert(net_connection != NULL);
+  assert(buffer_iterator != NULL);
+
   if (process_packet(net_connection, buffer_iterator))
   {
     LOG_DEBUG("Failed to handle incoming packet!");
@@ -279,6 +287,9 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
 void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
+  assert(data != NULL);
+  assert(data_len > 0);
+
   buffer_t *buffer = buffer_init_data(0, data, data_len);
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
   if (net_connection->is_receiving_data)
