@@ -1747,17 +1747,32 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         uint32_t current_block_height = get_block_height();
         if (message->height <= current_block_height)
         {
+          buffer_t *block_data_buffer = buffer_init();
+          uint32_t blocks_count = 0;
           uint32_t top_block_height = MIN(message->height + MAX_GROUPED_BLOCKS_COUNT, current_block_height);
-          buffer_t *buffer = buffer_init();
-          buffer_write_uint32(buffer, MAX_GROUPED_BLOCKS_COUNT);
-          for (uint32_t i = message->height; i <= top_block_height; i++)
+          for (uint32_t i = top_block_height - 1; i >= message->height; i--)
           {
             block_t *block = get_block_from_height(i);
             assert(block != NULL);
 
-            serialize_block(buffer, block);
+            serialize_block(block_data_buffer, block);
+            blocks_count++;
             free_block(block);
           }
+
+          if (blocks_count == 0)
+          {
+            buffer_free(block_data_buffer);
+            return 1;
+          }
+
+          uint8_t *block_data = buffer_get_data(block_data_buffer);
+          size_t block_data_size = buffer_get_size(block_data_buffer);
+
+          buffer_t *buffer = buffer_init();
+          buffer_write_uint32(buffer, blocks_count);
+          buffer_write(buffer, block_data, block_data_size);
+          buffer_free(block_data_buffer);
 
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP, buffer))
           {
@@ -1791,20 +1806,23 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 
           if (blocks_count == 0)
           {
-            LOG_ERROR("Got grouped block response with no blocks!");
+            LOG_DEBUG("Got grouped block response with no blocks!");
             buffer_free(buffer);
             buffer_iterator_free(buffer_iterator);
             return 1;
           }
           else if (blocks_count > MAX_GROUPED_BLOCKS_COUNT)
           {
-            LOG_ERROR("Got grouped block response with blocks count %u greater than allowed %u!", blocks_count, MAX_GROUPED_BLOCKS_COUNT);
+            LOG_DEBUG("Got grouped block response with blocks count: %u greater than allowed: %u!", blocks_count, MAX_GROUPED_BLOCKS_COUNT);
             buffer_free(buffer);
             buffer_iterator_free(buffer_iterator);
             return 1;
           }
 
-          for (int i = 0; i <= blocks_count; i++)
+          // blocks are sent in the reverse order and deserialized, placed in the
+          // queue in the correct order pushing the last block right and pulling
+          // the blocks from the queue left to right until the queue is empty...
+          for (int i = 0; i < blocks_count; i++)
           {
             block_t *block = NULL;
             if (deserialize_block(buffer_iterator, &block))
@@ -1819,9 +1837,6 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             g_protocol_sync_entry.sync_pending_blocks_count++;
           }
 
-          // reverse the queue and pull a block header off the top of the queue and begin
-          // synchronizing the block transactions and the rest of the pending headers...
-          vec_reverse(&g_protocol_sync_entry.sync_pending_blocks);
           block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
           assert(pending_block != NULL);
           g_protocol_sync_entry.sync_pending_blocks_count--;
