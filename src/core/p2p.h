@@ -29,6 +29,9 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "common/buffer.h"
+#include "common/buffer_iterator.h"
+
 #include "net.h"
 
 #ifdef __cplusplus
@@ -48,9 +51,6 @@ void free_peer(peer_t *peer);
 peer_t* get_peer_nolock(uint64_t peer_id);
 peer_t* get_peer(uint64_t peer_id);
 
-peer_t* get_peer_from_index_nolock(uint16_t index);
-peer_t* get_peer_from_index(uint16_t index);
-
 peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection);
 peer_t* get_peer_from_net_connection(net_connection_t *net_connection);
 
@@ -64,6 +64,12 @@ int add_peer(peer_t *peer);
 
 int remove_peer_nolock(peer_t *peer);
 int remove_peer(peer_t *peer);
+
+int serialize_peerlist_nolock(buffer_t *buffer);
+int serialize_peerlist(buffer_t *buffer);
+
+int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator);
+int deserialize_peerlist(buffer_iterator_t *buffer_iterator);
 
 int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len);

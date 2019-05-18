@@ -1475,25 +1475,11 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
     case PKT_TYPE_GET_PEERLIST_REQ:
       {
         get_peerlist_req_t *message = (get_peerlist_req_t*)message_object;
-        uint16_t num_peers = get_num_peers();
-
         buffer_t *buffer = buffer_init();
-        buffer_write_uint16(buffer, num_peers);
-
-        for (uint16_t i = 0; i < num_peers; i++)
+        if (serialize_peerlist(buffer))
         {
-          peer_t *peer = get_peer_from_index(i);
-          assert(peer != NULL);
-
-          net_connection_t *peer_net_connection = peer->net_connection;
-          assert(peer_net_connection != NULL);
-
-          struct mg_connection *peer_connection = peer_net_connection->connection;
-          assert(peer_connection != NULL);
-
-          uint32_t remote_ip = ntohl(*(uint32_t*)&peer_connection->sa.sin.sin_addr);
-          buffer_write_uint32(buffer, remote_ip);
-          buffer_write_uint16(buffer, peer_net_connection->host_port);
+          buffer_free(buffer);
+          return 1;
         }
 
         if (handle_packet_sendto(net_connection, PKT_TYPE_GET_PEERLIST_RESP, buffer))
@@ -1510,64 +1496,11 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         get_peerlist_resp_t *message = (get_peerlist_resp_t*)message_object;
         buffer_t *buffer = buffer_init_data(0, message->peerlist_data, message->peerlist_data_size);
         buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
-        uint16_t num_peers = 0;
-        if (buffer_read_uint16(buffer_iterator, &num_peers))
+        if (deserialize_peerlist(buffer_iterator))
         {
           buffer_iterator_free(buffer_iterator);
           buffer_free(buffer);
           return 1;
-        }
-
-        for (uint16_t i = 0; i < num_peers; i++)
-        {
-          uint32_t remote_ip = 0;
-          if (buffer_read_uint32(buffer_iterator, &remote_ip))
-          {
-            buffer_iterator_free(buffer_iterator);
-            buffer_free(buffer);
-            return 1;
-          }
-
-          uint16_t host_port = 0;
-          if (buffer_read_uint16(buffer_iterator, &host_port))
-          {
-            buffer_iterator_free(buffer_iterator);
-            buffer_free(buffer);
-            return 1;
-          }
-
-          if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
-          {
-            continue;
-          }
-          else
-          {
-            if (is_local_address(remote_ip) && host_port == get_net_host_port())
-            {
-              continue;
-            }
-          }
-
-          uint64_t peer_id = concatenate(remote_ip, host_port);
-          if (has_peer(peer_id))
-          {
-            continue;
-          }
-
-          if (get_num_peers() >= MAX_P2P_PEERS_COUNT)
-          {
-            break;
-          }
-
-          char *bind_address = convert_ip_to_str(remote_ip);
-          if (connect_net_to_peer(bind_address, host_port))
-          {
-            buffer_iterator_free(buffer_iterator);
-            buffer_free(buffer);
-            return 1;
-          }
-
-          free(bind_address);
         }
 
         buffer_iterator_free(buffer_iterator);

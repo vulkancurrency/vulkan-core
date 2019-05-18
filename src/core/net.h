@@ -32,6 +32,7 @@
 #include "common/buffer.h"
 #include "common/mongoose.h"
 #include "common/task.h"
+#include "common/vec.h"
 
 #define NET_MGR_POLL_DELAY 1000
 #define NET_RECONNECT_SEEDS_TASK_DELAY 10

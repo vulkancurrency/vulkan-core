@@ -24,17 +24,23 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 
-#include "common/vec.h"
+#include <hashtable.h>
 
+#include "common/buffer.h"
+#include "common/buffer_iterator.h"
+#include "common/util.h"
+
+#include "net.h"
 #include "p2p.h"
 #include "parameters.h"
 
 static int g_p2p_initialized = 0;
 static mtx_t g_p2p_lock;
-static vec_void_t g_p2p_peerlist;
+static HashTable* g_p2p_peerlist_table = NULL;
 static int g_num_peers = 0;
 
 peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
@@ -54,18 +60,17 @@ void free_peer(peer_t *peer)
 
 peer_t* get_peer_nolock(uint64_t peer_id)
 {
-  void *value = NULL;
-  int index = 0;
-  vec_foreach(&g_p2p_peerlist, value, index)
+  void *val = NULL;
+  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
   {
-    peer_t *peer = (peer_t*)value;
+    peer_t *peer = *(peer_t**)val;
     assert(peer != NULL);
 
     if (peer->id == peer_id)
     {
       return peer;
     }
-  }
+  })
 
   return NULL;
 }
@@ -78,34 +83,20 @@ peer_t* get_peer(uint64_t peer_id)
   return peer;
 }
 
-peer_t* get_peer_from_index_nolock(uint16_t index)
-{
-  return vec_get(&g_p2p_peerlist, index);
-}
-
-peer_t* get_peer_from_index(uint16_t index)
-{
-  mtx_lock(&g_p2p_lock);
-  peer_t *peer = get_peer_from_index_nolock(index);
-  mtx_unlock(&g_p2p_lock);
-  return peer;
-}
-
 peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
-  void *value = NULL;
-  int index = 0;
-  vec_foreach(&g_p2p_peerlist, value, index)
+  void *val = NULL;
+  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
   {
-    peer_t *peer = (peer_t*)value;
+    peer_t *peer = *(peer_t**)val;
     assert(peer != NULL);
 
     if (peer->net_connection == net_connection)
     {
       return peer;
     }
-  }
+  })
 
   return NULL;
 }
@@ -149,7 +140,7 @@ int add_peer_nolock(peer_t *peer)
     return 1;
   }
 
-  assert(vec_push(&g_p2p_peerlist, peer) == 0);
+  assert(hashtable_add(g_p2p_peerlist_table, &peer->id, peer) == CC_OK);
   g_num_peers++;
   return 0;
 }
@@ -170,7 +161,7 @@ int remove_peer_nolock(peer_t *peer)
     return 1;
   }
 
-  vec_remove(&g_p2p_peerlist, peer);
+  assert(hashtable_remove(g_p2p_peerlist_table, &peer->id, NULL) == CC_OK);
   g_num_peers--;
   return 0;
 }
@@ -183,18 +174,115 @@ int remove_peer(peer_t *peer)
   return result;
 }
 
+int serialize_peerlist_nolock(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+  buffer_write_uint16(buffer, g_num_peers);
+
+  void *val = NULL;
+  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+  {
+    peer_t *peer = *(peer_t**)val;
+    assert(peer != NULL);
+
+    net_connection_t *net_connection = peer->net_connection;
+    assert(net_connection != NULL);
+
+    struct mg_connection *connection = net_connection->connection;
+    assert(connection != NULL);
+
+    uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
+    buffer_write_uint32(buffer, remote_ip);
+    buffer_write_uint16(buffer, net_connection->host_port);
+  })
+
+  return 0;
+}
+
+int serialize_peerlist(buffer_t *buffer)
+{
+  mtx_lock(&g_p2p_lock);
+  int result = serialize_peerlist_nolock(buffer);
+  mtx_unlock(&g_p2p_lock);
+  return result;
+}
+
+int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
+{
+  assert(buffer_iterator != NULL);
+  uint16_t num_peers = 0;
+  if (buffer_read_uint16(buffer_iterator, &num_peers))
+  {
+    return 1;
+  }
+
+  for (uint16_t i = 0; i < num_peers; i++)
+  {
+    uint32_t remote_ip = 0;
+    if (buffer_read_uint32(buffer_iterator, &remote_ip))
+    {
+      return 1;
+    }
+
+    uint16_t host_port = 0;
+    if (buffer_read_uint16(buffer_iterator, &host_port))
+    {
+      return 1;
+    }
+
+    if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
+    {
+      continue;
+    }
+    else
+    {
+      if (is_local_address(remote_ip) && host_port == get_net_host_port())
+      {
+        continue;
+      }
+    }
+
+    uint64_t peer_id = concatenate(remote_ip, host_port);
+    if (has_peer(peer_id))
+    {
+      continue;
+    }
+
+    if (g_num_peers >= MAX_P2P_PEERS_COUNT)
+    {
+      break;
+    }
+
+    char *bind_address = convert_ip_to_str(remote_ip);
+    if (connect_net_to_peer(bind_address, host_port))
+    {
+      return 1;
+    }
+
+    free(bind_address);
+  }
+
+  return 0;
+}
+
+int deserialize_peerlist(buffer_iterator_t *buffer_iterator)
+{
+  mtx_lock(&g_p2p_lock);
+  int result = deserialize_peerlist_noblock(buffer_iterator);
+  mtx_unlock(&g_p2p_lock);
+  return result;
+}
+
 int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
-  void *value = NULL;
-  int index = 0;
-  vec_foreach(&g_p2p_peerlist, value, index)
+  assert(data != NULL);
+  void *val = NULL;
+  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
   {
-    peer_t *peer = (peer_t*)value;
+    peer_t *peer = *(peer_t**)val;
     assert(peer != NULL);
 
-    // do not relay this message back to the sender, as we are intended to relay
-    // this message to all other peers in our peerlist...
     if (peer->net_connection == net_connection)
     {
       continue;
@@ -204,7 +292,7 @@ int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *da
     {
       return 1;
     }
-  }
+  })
 
   return 0;
 }
@@ -225,7 +313,7 @@ int init_p2p(void)
   }
 
   mtx_init(&g_p2p_lock, mtx_recursive);
-  vec_init(&g_p2p_peerlist);
+  assert(hashtable_new(&g_p2p_peerlist_table) == CC_OK);
   g_p2p_initialized = 1;
   return 0;
 }
@@ -237,7 +325,7 @@ int deinit_p2p(void)
     return 1;
   }
 
-  vec_deinit(&g_p2p_peerlist);
+  hashtable_destroy(g_p2p_peerlist_table);
   mtx_destroy(&g_p2p_lock);
   g_num_peers = 0;
   g_p2p_initialized = 0;
