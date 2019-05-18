@@ -216,6 +216,7 @@ int close_net_connection(net_connection_t *net_connection)
   assert(connection != NULL);
 
   connection->flags |= MG_F_CLOSE_IMMEDIATELY;
+  printf("close_net_connection\n");
   return 0;
 }
 
@@ -248,12 +249,14 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
   packet_t *packet = make_packet();
   if (deserialize_packet(packet, buffer_iterator))
   {
+    LOG_DEBUG("Failed to deserialize incoming packet!");
     free_packet(packet);
     return 1;
   }
 
   if (handle_receive_packet(net_connection, packet))
   {
+    LOG_DEBUG("Failed to handle incoming packet with id: %u!", packet->id);
     free_packet(packet);
     return 1;
   }
@@ -269,7 +272,6 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
 
   if (process_packet(net_connection, buffer_iterator))
   {
-    LOG_DEBUG("Failed to handle incoming packet!");
     assert(close_net_connection(net_connection) == 0);
     return;
   }
@@ -318,6 +320,7 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
     packet_t *packet = make_packet();
     if (deserialize_packet(packet, buffer_iterator))
     {
+      printf("pkt failed to deserialize!\n");
       assert(close_net_connection(net_connection) == 0);
     }
     else

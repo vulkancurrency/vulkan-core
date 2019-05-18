@@ -201,6 +201,7 @@ int serialize_peerlist_nolock(buffer_t *buffer)
 
 int serialize_peerlist(buffer_t *buffer)
 {
+  assert(buffer != NULL);
   mtx_lock(&g_p2p_lock);
   int result = serialize_peerlist_nolock(buffer);
   mtx_unlock(&g_p2p_lock);
@@ -267,6 +268,7 @@ int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
 
 int deserialize_peerlist(buffer_iterator_t *buffer_iterator)
 {
+  assert(buffer_iterator != NULL);
   mtx_lock(&g_p2p_lock);
   int result = deserialize_peerlist_noblock(buffer_iterator);
   mtx_unlock(&g_p2p_lock);
