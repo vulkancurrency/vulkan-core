@@ -1696,7 +1696,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           if (blocks_count == 0)
           {
             buffer_free(block_data_buffer);
-            return 1;
+            return 0;
           }
 
           uint8_t *block_data = buffer_get_data(block_data_buffer);
