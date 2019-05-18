@@ -32,6 +32,7 @@
 #include "common/greatest.h"
 
 #include "core/blockchain.h"
+#include "core/p2p.h"
 
 static const char *g_blockchain_dir = "blockchain_tests";
 
@@ -59,6 +60,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (init_p2p())
+  {
+    return 1;
+  }
+
   GREATEST_MAIN_BEGIN();
 
   RUN_SUITE(common_suite);
@@ -73,6 +79,11 @@ int main(int argc, char **argv)
   GREATEST_MAIN_END();
 
   if (close_blockchain())
+  {
+    return 1;
+  }
+
+  if (deinit_p2p())
   {
     return 1;
   }

@@ -29,11 +29,14 @@
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/greatest.h"
+#include "common/mongoose.h"
 #include "common/util.h"
 
 #include "core/block.h"
-#include "core/transaction.h"
+#include "core/net.h"
+#include "core/p2p.h"
 #include "core/protocol.h"
+#include "core/transaction.h"
 
 #include "crypto/cryptoutil.h"
 
@@ -145,7 +148,25 @@ TEST can_serialize_deserialize_packet(void)
   PASS();
 }
 
+TEST can_add_and_remove_peer_from_peerlist(void)
+{
+  uint64_t peer_id = 1;
+  struct mg_connection *nc = malloc(sizeof(struct mg_connection));
+  net_connection_t *net_connection = init_net_connection(nc);
+  ASSERT(net_connection != NULL);
+  peer_t *peer = init_peer(peer_id, net_connection);
+  ASSERT(peer != NULL);
+  ASSERT(add_peer(peer) == 0);
+  ASSERT(has_peer(peer_id) == 1);
+  peer_t *peer2 = get_peer(peer_id);
+  ASSERT(peer2 != NULL);
+  ASSERT(peer == peer2);
+  ASSERT(remove_peer(peer) == 0);
+  PASS();
+}
+
 GREATEST_SUITE(protocol_suite)
 {
   RUN_TEST(can_serialize_deserialize_packet);
+  RUN_TEST(can_add_and_remove_peer_from_peerlist);
 }
