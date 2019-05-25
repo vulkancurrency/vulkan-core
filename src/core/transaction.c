@@ -327,7 +327,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 int is_generation_tx(transaction_t *tx)
 {
   assert(tx != NULL);
-  return (tx->txin_count == 1 && tx->txout_count == 1 && memcmp(tx->txins[0]->transaction, g_transaction_zero_hash, HASH_SIZE) == 0);
+  return (tx->txin_count == 1 && tx->txout_count == 1 && compare_transaction_hash(tx->txins[0]->transaction, g_transaction_zero_hash));
 }
 
 int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
