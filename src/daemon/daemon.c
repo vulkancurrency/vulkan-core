@@ -66,6 +66,7 @@ enum
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_CLEAR_BLOCKCHAIN,
   CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION,
+  CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE,
   CMD_ARG_WALLET_FILENAME,
   CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
@@ -83,6 +84,7 @@ static argument_map_t g_arguments_map[] = {
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
+  {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use.", "<compression_method>", 1},
   {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
@@ -186,7 +188,7 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_BIND_PORT:
         i++;
-        uint32_t host_port = atoi(argv[i]);
+        uint32_t host_port = (uint32_t)atoi(argv[i]);
         set_net_host_port(host_port);
         break;
       case CMD_ARG_BLOCKCHAIN_DIR:
@@ -198,6 +200,17 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION:
         set_want_blockchain_compression(0);
+        break;
+      case CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE:
+        i++;
+        int compression_type = (int)atoi(argv[i]);
+        if (valid_compression_type(compression_type) == 0)
+        {
+          fprintf(stderr, "Invalid blockchain compression type: %s!\n", get_compression_type_str(compression_type));
+          return 1;
+        }
+
+        set_blockchain_compression_type(compression_type);
         break;
       case CMD_ARG_WALLET_FILENAME:
         i++;

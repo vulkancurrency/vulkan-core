@@ -48,8 +48,14 @@ extern "C"
 #define DB_KEY_PREFIX_SIZE_BLOCK 1
 #define DB_KEY_PREFIX_SIZE_TOP_BLOCK 2
 
+int valid_compression_type(int compression_type);
+const char* get_compression_type_str(int compression_type);
+
 void set_want_blockchain_compression(int want_blockchain_compression);
 int get_want_blockchain_compression(void);
+
+void set_blockchain_compression_type(int compression_type);
+int get_blockchain_compression_type(void);
 
 const char* get_blockchain_dir(void);
 const char* get_blockchain_backup_dir(const char *blockchain_dir);

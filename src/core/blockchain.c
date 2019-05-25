@@ -65,6 +65,7 @@ static const char *g_blockchain_dir = NULL;
 static const char *g_blockchain_backup_dir = "_backup";
 
 static int g_blockchain_want_compression = 1;
+static int g_blockchain_compression_type = rocksdb_lz4_compression;
 
 static int g_blockchain_is_open = 0;
 static int g_blockchain_backup_is_open = 0;
@@ -93,6 +94,46 @@ static uint8_t g_difficulty_for_next_block_top_hash[HASH_SIZE] = {
 
 static uint32_t g_difficulty_for_next_block = 1;
 
+int valid_compression_type(int compression_type)
+{
+  switch (compression_type)
+  {
+    case rocksdb_snappy_compression:
+    case rocksdb_zlib_compression:
+    case rocksdb_bz2_compression:
+    case rocksdb_lz4_compression:
+    case rocksdb_lz4hc_compression:
+    case rocksdb_xpress_compression:
+    case rocksdb_zstd_compression:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+const char* get_compression_type_str(int compression_type)
+{
+  switch (compression_type)
+  {
+    case rocksdb_snappy_compression:
+      return "Snappy";
+    case rocksdb_zlib_compression:
+      return "Zlib";
+    case rocksdb_bz2_compression:
+      return "BZ2";
+    case rocksdb_lz4_compression:
+      return "LZ4";
+    case rocksdb_lz4hc_compression:
+      return "LZ4hc";
+    case rocksdb_xpress_compression:
+      return "Xpress";
+    case rocksdb_zstd_compression:
+      return "Zstandard";
+    default:
+      return "unknown";
+  }
+}
+
 void set_want_blockchain_compression(int want_blockchain_compression)
 {
   g_blockchain_want_compression = want_blockchain_compression;
@@ -101,6 +142,17 @@ void set_want_blockchain_compression(int want_blockchain_compression)
 int get_want_blockchain_compression(void)
 {
   return g_blockchain_want_compression;
+}
+
+void set_blockchain_compression_type(int compression_type)
+{
+  assert(valid_compression_type(compression_type) == 1);
+  g_blockchain_compression_type = compression_type;
+}
+
+int get_blockchain_compression_type(void)
+{
+  return g_blockchain_compression_type;
 }
 
 const char* get_blockchain_dir(void)
@@ -221,12 +273,13 @@ int open_backup_blockchain(void)
   rocksdb_options_set_create_if_missing(options, 1);
   if (g_blockchain_want_compression)
   {
-    rocksdb_options_set_compression(options, rocksdb_lz4_compression);
-    LOG_INFO("Blockchain storage compression is enabled.");
+    rocksdb_options_set_compression(options, g_blockchain_compression_type);
+    LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm!",
+      get_compression_type_str(g_blockchain_compression_type));
   }
   else
   {
-    LOG_INFO("Blockchain storage compression is disabled.");
+    LOG_INFO("Blockchain storage compression is disabled!");
   }
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
