@@ -34,7 +34,7 @@ typedef struct SeedNodeEntry
   uint16_t port;
 } seed_node_entry_t;
 
-static seed_node_entry_t SEED_NODES[] = {
+static const seed_node_entry_t SEED_NODES[] = {
   {"127.0.0.1", P2P_PORT}
 };
 
