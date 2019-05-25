@@ -273,6 +273,7 @@ int valid_transaction(transaction_t *tx)
 int do_txins_reference_unspent_txouts(transaction_t *tx)
 {
   assert(tx != NULL);
+
   uint32_t valid_txins = 0;
   uint64_t input_money = 0;
   uint64_t required_money = 0;
@@ -289,7 +290,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
           (unspent_tx->unspent_txouts[txin->txout_index] == NULL))
       {
         char *tx_hash_str = hash_to_str(unspent_tx->id);
-        LOG_ERROR("Failed to validate txin referencing invalid unspent tx: %s with txout at index: %u!", tx_hash_str, txin->txout_index);
+        LOG_ERROR("Failed to validate txin referencing invalid unspent tx <%s> with txout at index: %u!", tx_hash_str, txin->txout_index);
         free(tx_hash_str);
         return 0;
       }
@@ -313,12 +314,16 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
   {
     output_transaction_t *txout = tx->txouts[i];
     assert(txout != NULL);
-    required_money += txout->amount;
 
     if (valid_address(txout->address) == 0)
     {
+      char *tx_hash_str = hash_to_str(tx->id);
+      LOG_ERROR("Failed to validate txin <%s> invalid txout address at index <%u>!", tx_hash_str, i);
+      free(tx_hash_str);
       return 0;
     }
+
+    required_money += txout->amount;
   }
 
   return (valid_txins == tx->txin_count) && (input_money == required_money);
