@@ -203,10 +203,11 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE:
         i++;
-        int compression_type = (int)atoi(argv[i]);
+        const char *compression_type_str = (const char*)argv[i];
+        int compression_type = get_compression_type_from_str(compression_type_str);
         if (valid_compression_type(compression_type) == 0)
         {
-          fprintf(stderr, "Invalid blockchain compression type: %s!\n", get_compression_type_str(compression_type));
+          fprintf(stderr, "Unknown blockchain compression type: %s!\n", compression_type_str);
           return 1;
         }
 

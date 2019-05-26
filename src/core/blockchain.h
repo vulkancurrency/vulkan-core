@@ -50,6 +50,7 @@ extern "C"
 
 int valid_compression_type(int compression_type);
 const char* get_compression_type_str(int compression_type);
+int get_compression_type_from_str(const char *compression_type_str);
 
 void set_want_blockchain_compression(int want_blockchain_compression);
 int get_want_blockchain_compression(void);

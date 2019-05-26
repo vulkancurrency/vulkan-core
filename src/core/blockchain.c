@@ -106,6 +106,7 @@ int valid_compression_type(int compression_type)
     case rocksdb_xpress_compression:
     case rocksdb_zstd_compression:
       return 1;
+    case rocksdb_no_compression:
     default:
       return 0;
   }
@@ -116,22 +117,57 @@ const char* get_compression_type_str(int compression_type)
   switch (compression_type)
   {
     case rocksdb_snappy_compression:
-      return "Snappy";
+      return "snappy";
     case rocksdb_zlib_compression:
-      return "Zlib";
+      return "zlib";
     case rocksdb_bz2_compression:
-      return "BZ2";
+      return "bz2";
     case rocksdb_lz4_compression:
-      return "LZ4";
+      return "lz4";
     case rocksdb_lz4hc_compression:
-      return "LZ4hc";
+      return "lz4hc";
     case rocksdb_xpress_compression:
-      return "Xpress";
+      return "xpress";
     case rocksdb_zstd_compression:
-      return "Zstandard";
+      return "zstandard";
+    case rocksdb_no_compression:
     default:
       return "unknown";
   }
+}
+
+int get_compression_type_from_str(const char *compression_type_str)
+{
+  if (string_equals(compression_type_str, "snappy"))
+  {
+    return rocksdb_snappy_compression;
+  }
+  else if (string_equals(compression_type_str, "zlib"))
+  {
+    return rocksdb_zlib_compression;
+  }
+  else if (string_equals(compression_type_str, "bz2"))
+  {
+    return rocksdb_bz2_compression;
+  }
+  else if (string_equals(compression_type_str, "lz4"))
+  {
+    return rocksdb_lz4_compression;
+  }
+  else if (string_equals(compression_type_str, "lz4hc"))
+  {
+    return rocksdb_lz4hc_compression;
+  }
+  else if (string_equals(compression_type_str, "xpress"))
+  {
+    return rocksdb_xpress_compression;
+  }
+  else if (string_equals(compression_type_str, "zstandard"))
+  {
+    return rocksdb_zstd_compression;
+  }
+
+  return rocksdb_no_compression;
 }
 
 void set_want_blockchain_compression(int want_blockchain_compression)
