@@ -53,6 +53,9 @@ uint16_t get_num_worker_threads(void);
 void set_current_wallet(wallet_t *current_wallet);
 wallet_t* get_current_wallet(void);
 
+void set_workers_paused(int workers_paused);
+int get_workers_paused(void);
+
 miner_worker_t* init_worker(void);
 void free_worker(miner_worker_t *worker);
 
