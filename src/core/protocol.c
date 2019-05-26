@@ -1756,7 +1756,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           // blocks are sent in the reverse order and deserialized, placed in the
           // queue in the correct order pushing the last block right and pulling
           // the blocks from the queue left to right until the queue is empty...
-          for (int i = 0; i < blocks_count; i++)
+          for (uint32_t i = 0; i < blocks_count; i++)
           {
             block_t *block = NULL;
             if (deserialize_block(buffer_iterator, &block))
