@@ -1243,7 +1243,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
         g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
         can_rollback_and_resync = 1;
       }
-      else if (g_protocol_sync_entry.last_sync_height <= 0)
+      else if (g_protocol_sync_entry.last_sync_height <= 1)
       {
         LOG_WARNING("Unable to find sync starting height, continuing anyway...");
         g_protocol_sync_entry.sync_start_height = 0;
@@ -1261,12 +1261,18 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       if (can_rollback_and_resync)
       {
         g_protocol_sync_entry.sync_finding_top_block = 0;
-        if (rollback_blockchain_and_resync())
+        if (backup_blockchain_and_rollback())
         {
           // if by some way we fail to rollback and resync and we
           // fail to clear our sync request, then throw an assertion,
           // this should never happen...
           assert(clear_sync_request(0) == 0);
+          return 1;
+        }
+
+        g_protocol_sync_entry.last_sync_height = 0;
+        if (request_sync_next_block(g_protocol_sync_entry.net_connection))
+        {
           return 1;
         }
       }
@@ -1374,7 +1380,7 @@ int transaction_received(net_connection_t *net_connection, transaction_t *transa
   return 0;
 }
 
-int rollback_blockchain_and_resync(void)
+int backup_blockchain_and_rollback(void)
 {
   uint32_t current_block_height = get_block_height();
   if (current_block_height > 0)
@@ -1394,11 +1400,6 @@ int rollback_blockchain_and_resync(void)
         return 1;
       }
     }
-  }
-
-  if (request_sync_next_block(g_protocol_sync_entry.net_connection))
-  {
-    return 1;
   }
 
   return 0;
