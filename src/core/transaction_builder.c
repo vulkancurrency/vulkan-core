@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "common/logger.h"
 #include "common/util.h"
@@ -63,7 +64,7 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
     uint64_t available_money = get_balance_for_address(wallet->address);
     if (available_money < money_required)
     {
-      LOG_ERROR("Cannot make transaction, wallet has insufficient funds: %llu!", money_required - available_money);
+      LOG_ERROR("Cannot make transaction, wallet has insufficient funds: %" PRIu64 "!", money_required - available_money);
       return 1;
     }
   }

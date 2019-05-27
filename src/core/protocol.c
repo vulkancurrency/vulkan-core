@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include "common/buffer.h"
 #include "common/logger.h"
@@ -1432,13 +1433,13 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
         {
           if (memcmp(message->version_number, APPLICATION_VERSION, strlen(APPLICATION_VERSION)) != 0)
           {
-            LOG_DEBUG("Failed to verify version number: [%s] expected: [%s], for peer with id: [%llu]!\n", message->version_number, APPLICATION_VERSION, peer_id);
+            LOG_DEBUG("Failed to verify version number: [%s] expected: [%s], for peer with id: [%" PRIu64 "]!\n", message->version_number, APPLICATION_VERSION, peer_id);
             return 1;
           }
 
           if (memcmp(message->version_name, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME)) != 0)
           {
-            LOG_DEBUG("Failed to verify version name: [%s] expected: [%s], for peer with id: [%llu]!\n", message->version_name, APPLICATION_RELEASE_NAME, peer_id);
+            LOG_DEBUG("Failed to verify version name: [%s] expected: [%s], for peer with id: [%" PRIu64 "]!\n", message->version_name, APPLICATION_RELEASE_NAME, peer_id);
             return 1;
           }
         }

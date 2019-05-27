@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <sodium.h>
 
@@ -380,7 +381,7 @@ void print_wallet(wallet_t *wallet)
   printf("Public Address: %s\n", public_address_str);
   free(public_address_str);
 
-  printf("Balance: %llu\n", balance);
+  printf("Balance: %" PRIu64 "\n", balance);
 }
 
 void print_public_key(wallet_t *wallet)

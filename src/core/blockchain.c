@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #ifdef USE_LEVELDB
 #include <leveldb/c.h>
@@ -1113,7 +1114,7 @@ int validate_and_insert_block_nolock(block_t *block)
 
     if (check_pow(block->hash, expected_difficulty) == 0)
     {
-      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %llu expected: %llu!", block->difficulty, expected_difficulty);
+      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %" PRIu64 " expected: %" PRIu64 "!", block->difficulty, expected_difficulty);
       return 1;
     }
   }

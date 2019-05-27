@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <sodium.h>
 
@@ -196,7 +197,7 @@ void print_txout(uint8_t txout_index, output_transaction_t *txout)
 {
   assert(txout != NULL);
   printf("Txout %u:\n", txout_index);
-  printf("Amount: %llu\n", txout->amount);
+  printf("Amount: %" PRIu64 "\n", txout->amount);
 
   char *address_str = address_to_str(txout->address);
   printf("Address: %s\n", address_str);
