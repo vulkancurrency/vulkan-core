@@ -458,6 +458,7 @@ static int purge_all_entries_from_database(leveldb_t *db)
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(db, roptions);
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_writebatch_t *write_batch = leveldb_writebatch_create();
 
   for (leveldb_iter_seek_to_first(iterator);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
@@ -466,25 +467,27 @@ static int purge_all_entries_from_database(leveldb_t *db)
     uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
     assert(key != NULL);
 
-    leveldb_delete(db, woptions, (char*)key, key_length, &err);
-    if (err != NULL)
-    {
-      LOG_ERROR("Failed to delete entry with key: %s from database!", key);
-      leveldb_free(err);
-      leveldb_readoptions_destroy(roptions);
-      leveldb_iter_destroy(iterator);
-      leveldb_writeoptions_destroy(woptions);
-      leveldb_free(key);
-      return 1;
-    }
-
+    leveldb_writebatch_delete(write_batch, (char*)key, key_length);
     leveldb_free(key);
+  }
+
+  leveldb_write(to_db, woptions, write_batch, &err);
+  if (err != NULL)
+  {
+    LOG_ERROR("Failed to purge all entries from database!");
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+    leveldb_iter_destroy(iterator);
+    leveldb_writeoptions_destroy(woptions);
+    leveldb_writebatch_destroy(write_batch);
+    return 1;
   }
 
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_destroy(write_batch);
   return 0;
 }
 #endif
@@ -499,6 +502,7 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(from_db, roptions);
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_writebatch_t *write_batch = leveldb_writebatch_create();
 
   for (leveldb_iter_seek_to_first(iterator);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
@@ -516,32 +520,34 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
       leveldb_readoptions_destroy(roptions);
       leveldb_iter_destroy(iterator);
       leveldb_writeoptions_destroy(woptions);
+      leveldb_writebatch_destroy(write_batch);
       leveldb_free(key);
       leveldb_free(value);
       return 1;
     }
 
-    leveldb_put(to_db, woptions, (char*)key, key_length, (char*)value, read_len, &err);
-    if (err != NULL)
-    {
-      LOG_ERROR("Failed to write value to database with key: %s!", key);
-      leveldb_free(err);
-      leveldb_readoptions_destroy(roptions);
-      leveldb_iter_destroy(iterator);
-      leveldb_writeoptions_destroy(woptions);
-      leveldb_free(key);
-      leveldb_free(value);
-      return 1;
-    }
-
+    leveldb_writebatch_put(write_batch, (char*)key, key_length, (char*)value, read_len);
     leveldb_free(key);
     leveldb_free(value);
+  }
+
+  leveldb_write(to_db, woptions, write_batch, &err);
+  if (err != NULL)
+  {
+    LOG_ERROR("Failed to copy entries to database!");
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+    leveldb_iter_destroy(iterator);
+    leveldb_writeoptions_destroy(woptions);
+    leveldb_writebatch_destroy(write_batch);
+    return 1;
   }
 
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_destroy(write_batch);
   return 0;
 }
 #endif
