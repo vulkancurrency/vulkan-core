@@ -30,7 +30,11 @@
 #include <unistd.h>
 #include <assert.h>
 
+#ifdef USE_LEVELDB
+#include <leveldb/c.h>
+#else
 #include <rocksdb/c.h>
+#endif
 
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
@@ -65,13 +69,23 @@ static const char *g_blockchain_dir = NULL;
 static const char *g_blockchain_backup_dir = "_backup";
 
 static int g_blockchain_want_compression = 1;
+
+#ifdef USE_LEVELDB
+static int g_blockchain_compression_type = leveldb_snappy_compression;
+#else
 static int g_blockchain_compression_type = rocksdb_lz4_compression;
+#endif
 
 static int g_blockchain_is_open = 0;
 static int g_blockchain_backup_is_open = 0;
 
+#ifdef USE_LEVELDB
+static leveldb_t *g_blockchain_db = NULL;
+static leveldb_t *g_blockchain_backup_db = NULL;
+#else
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
+#endif
 
 static vec_int_t g_timestamps;
 static vec_int_t g_cumulative_difficulties;
@@ -98,6 +112,13 @@ int valid_compression_type(int compression_type)
 {
   switch (compression_type)
   {
+  #ifdef USE_LEVELDB
+    case leveldb_snappy_compression:
+      return 1;
+    case leveldb_no_compression:
+    default:
+      return 0;
+  #else
     case rocksdb_snappy_compression:
     case rocksdb_zlib_compression:
     case rocksdb_bz2_compression:
@@ -109,6 +130,7 @@ int valid_compression_type(int compression_type)
     case rocksdb_no_compression:
     default:
       return 0;
+  #endif
   }
 }
 
@@ -116,6 +138,13 @@ const char* get_compression_type_str(int compression_type)
 {
   switch (compression_type)
   {
+  #ifdef USE_LEVELDB
+    case leveldb_snappy_compression:
+      return "snappy";
+    case leveldb_no_compression:
+    default:
+      return "unknown";
+  #else
     case rocksdb_snappy_compression:
       return "snappy";
     case rocksdb_zlib_compression:
@@ -133,11 +162,20 @@ const char* get_compression_type_str(int compression_type)
     case rocksdb_no_compression:
     default:
       return "unknown";
+  #endif
   }
 }
 
 int get_compression_type_from_str(const char *compression_type_str)
 {
+#ifdef USE_LEVELDB
+  if (string_equals(compression_type_str, "snappy"))
+  {
+    return leveldb_snappy_compression;
+  }
+
+  return leveldb_no_compression;
+#else
   if (string_equals(compression_type_str, "snappy"))
   {
     return rocksdb_snappy_compression;
@@ -168,6 +206,7 @@ int get_compression_type_from_str(const char *compression_type_str)
   }
 
   return rocksdb_no_compression;
+#endif
 }
 
 void set_want_blockchain_compression(int want_blockchain_compression)
@@ -215,21 +254,39 @@ int open_blockchain(const char *blockchain_dir)
   vec_init(&g_cumulative_difficulties);
 
   char *err = NULL;
+#ifdef USE_LEVELDB
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_options_set_create_if_missing(options, 1);
+
+  g_blockchain_db = leveldb_open(options, blockchain_dir, &err);
+#else
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
 
   g_blockchain_db = rocksdb_open(options, blockchain_dir, &err);
+#endif
 
   if (err != NULL)
   {
     LOG_ERROR("Could not open blockchain database: %s!", err);
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_free(options);
+  #else
     rocksdb_free(err);
     rocksdb_free(options);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_free(options);
+#else
   rocksdb_free(err);
   rocksdb_free(options);
+#endif
 
   if (has_block_by_hash(genesis_block.hash) == 0)
   {
@@ -280,7 +337,12 @@ int close_blockchain(void)
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_close(g_blockchain_db);
+#else
   rocksdb_close(g_blockchain_db);
+#endif
+
   mtx_destroy(&g_blockchain_lock);
   g_blockchain_is_open = 0;
 
@@ -305,11 +367,22 @@ int open_backup_blockchain(void)
   }
 
   char *err = NULL;
+#ifdef USE_LEVELDB
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_options_set_create_if_missing(options, 1);
+#else
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
+#endif
+
   if (g_blockchain_want_compression)
   {
+  #ifdef USE_LEVELDB
+    leveldb_options_set_compression(options, g_blockchain_compression_type);
+  #else
     rocksdb_options_set_compression(options, g_blockchain_compression_type);
+  #endif
+
     LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm!",
       get_compression_type_str(g_blockchain_compression_type));
   }
@@ -319,21 +392,35 @@ int open_backup_blockchain(void)
   }
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
+#ifdef USE_LEVELDB
+  g_blockchain_backup_db = leveldb_open(options, blockchain_backup_dir, &err);
+#else
   g_blockchain_backup_db = rocksdb_backup_engine_open(options, blockchain_backup_dir, &err);
+#endif
 
   if (err != NULL)
   {
     LOG_ERROR("Could not open backup blockchain database: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_free(options);
+  #else
     rocksdb_free(err);
     rocksdb_free(options);
+  #endif
     return 1;
   }
 
-  g_blockchain_backup_is_open = 1;
-
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_free(options);
+#else
   rocksdb_free(err);
   rocksdb_free(options);
+#endif
+
+  g_blockchain_backup_is_open = 1;
   return 0;
 }
 
@@ -344,7 +431,12 @@ int close_backup_blockchain(void)
     return 1;
   }
 
-  rocksdb_backup_engine_close(g_blockchain_backup_db);
+  #ifdef USE_LEVELDB
+    leveldb_close(g_blockchain_backup_db);
+  #else
+    rocksdb_backup_engine_close(g_blockchain_backup_db);
+  #endif
+
   g_blockchain_backup_is_open = 0;
   return 0;
 }
@@ -356,6 +448,102 @@ int init_blockchain(const char *blockchain_dir)
   return 0;
 }
 
+#ifdef USE_LEVELDB
+static int purge_all_entries_from_database(leveldb_t *db)
+{
+  assert(db != NULL);
+
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  leveldb_iterator_t *iterator = leveldb_create_iterator(db, roptions);
+
+  for (leveldb_iter_seek_to_first(iterator);
+    leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+  {
+    size_t key_length;
+    uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
+    assert(key != NULL);
+
+    char *err = NULL;
+    leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+    leveldb_delete(db, woptions, (char*)key, sizeof(key), &err);
+    if (err != NULL)
+    {
+      LOG_ERROR("Failed to delete entry with key: %s from database!", key);
+      leveldb_readoptions_destroy(roptions);
+      leveldb_iter_destroy(iterator);
+      leveldb_free(key);
+      leveldb_free(err);
+      leveldb_writeoptions_destroy(woptions);
+      return 1;
+    }
+
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  }
+
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+  return 0;
+}
+#endif
+
+#ifdef USE_LEVELDB
+static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
+{
+  assert(from_db != NULL);
+  assert(to_db != NULL);
+
+  char *err = NULL;
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_iterator_t *iterator = leveldb_create_iterator(from_db, roptions);
+
+  for (leveldb_iter_seek_to_first(iterator);
+    leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+  {
+    size_t key_length;
+    uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
+    assert(key != NULL);
+
+    size_t read_len;
+    uint8_t *value = (uint8_t*)leveldb_get(from_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+    if (err != NULL || value == NULL)
+    {
+      LOG_ERROR("Failed to retrieve value from key: %s in database!", key);
+      leveldb_readoptions_destroy(roptions);
+      leveldb_writeoptions_destroy(woptions);
+      leveldb_iter_destroy(iterator);
+      leveldb_free(key);
+      leveldb_free(err);
+      leveldb_free(value);
+      return 1;
+    }
+
+    leveldb_put(to_db, woptions, (char*)key, sizeof(key), (char*)value, read_len, &err);
+    if (err != NULL)
+    {
+      LOG_ERROR("Failed to write value to database with key: %s!", key);
+      leveldb_readoptions_destroy(roptions);
+      leveldb_writeoptions_destroy(woptions);
+      leveldb_iter_destroy(iterator);
+      leveldb_free(key);
+      leveldb_free(err);
+      leveldb_free(value);
+      return 1;
+    }
+
+    leveldb_free(key);
+    leveldb_free(value);
+  }
+
+  leveldb_readoptions_destroy(roptions);
+  leveldb_writeoptions_destroy(woptions);
+  leveldb_iter_destroy(iterator);
+  leveldb_free(err);
+  return 0;
+}
+#endif
+
 int backup_blockchain_nolock(void)
 {
   if (g_blockchain_backup_is_open == 0)
@@ -363,6 +551,19 @@ int backup_blockchain_nolock(void)
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  if (purge_all_entries_from_database(g_blockchain_backup_db))
+  {
+    LOG_ERROR("Could not backup blockchain database, failed to purge old backups!");
+    return 1;
+  }
+
+  if (copy_all_entries_to_database(g_blockchain_backup_db, g_blockchain_db))
+  {
+    LOG_ERROR("Could not backup blockchain database, failed to copy entries to backup database!");
+    return 1;
+  }
+#else
   char *err = NULL;
   rocksdb_backup_engine_purge_old_backups(g_blockchain_backup_db, 0, &err);
   if (err != NULL)
@@ -381,6 +582,7 @@ int backup_blockchain_nolock(void)
   }
 
   rocksdb_free(err);
+#endif
   return 0;
 }
 
@@ -399,6 +601,19 @@ int restore_blockchain_nolock(void)
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  if (purge_all_entries_from_database(g_blockchain_db))
+  {
+    LOG_ERROR("Could not restore blockchain database from backup, failed to purge blockchain database!");
+    return 1;
+  }
+
+  if (copy_all_entries_to_database(g_blockchain_db, g_blockchain_backup_db))
+  {
+    LOG_ERROR("Could not backup blockchain database, failed to copy entires from backup database!");
+    return 1;
+  }
+#else
   char *err = NULL;
   rocksdb_restore_options_t *restore_options = rocksdb_restore_options_create();
   rocksdb_backup_engine_restore_db_from_latest_backup(g_blockchain_backup_db, g_blockchain_dir,
@@ -414,6 +629,7 @@ int restore_blockchain_nolock(void)
 
   rocksdb_free(err);
   rocksdb_restore_options_destroy(restore_options);
+#endif
   return 0;
 }
 
@@ -708,8 +924,13 @@ int insert_block_nolock(block_t *block)
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#endif
   buffer_free(buffer);
 
   for (uint32_t i = 0; i < block->transaction_count; i++)
@@ -737,11 +958,15 @@ int insert_block_nolock(block_t *block)
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
         LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was not found!");
-
         free_unspent_transaction(unspent_tx);
 
+      #ifdef USE_LEVELDB
+        leveldb_free(err);
+        leveldb_writeoptions_destroy(woptions);
+      #else
         rocksdb_free(err);
         rocksdb_writeoptions_destroy(woptions);
+      #endif
         continue;
       }
       else
@@ -752,11 +977,15 @@ int insert_block_nolock(block_t *block)
         if (unspent_txout->spent == 1)
         {
           LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was already spent!");
-
           free_unspent_transaction(unspent_tx);
 
+        #ifdef USE_LEVELDB
+          leveldb_free(err);
+          leveldb_writeoptions_destroy(woptions);
+        #else
           rocksdb_free(err);
           rocksdb_writeoptions_destroy(woptions);
+        #endif
           continue;
         }
 
@@ -796,16 +1025,26 @@ int insert_block_nolock(block_t *block)
   {
     LOG_ERROR("Could not insert block into blockchain storage: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 1;
   }
 
   // update our current top block hash in the blockchain
   set_current_block(block);
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 0;
 }
 
@@ -898,14 +1137,25 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   get_block_key(key, block_hash);
 
   size_t read_len;
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  uint8_t *serialized_block = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   uint8_t *serialized_block = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#endif
 
   if (err != NULL || serialized_block == NULL)
   {
+  #ifdef USE_LEVELDB
+    leveldb_free(serialized_block);
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+  #else
     rocksdb_free(serialized_block);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+  #endif
     return NULL;
   }
 
@@ -919,9 +1169,15 @@ block_t *get_block_from_hash(uint8_t *block_hash)
     buffer_iterator_free(buffer_iterator);
     buffer_free(buffer);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(serialized_block);
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+  #else
     rocksdb_free(serialized_block);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+  #endif
     return NULL;
   }
 
@@ -931,9 +1187,15 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 
+#ifdef USE_LEVELDB
+  leveldb_free(serialized_block);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
   rocksdb_free(serialized_block);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
+#endif
   return block;
 }
 
@@ -1048,20 +1310,35 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx->id);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
+#endif
 
   if (err != NULL)
   {
     LOG_ERROR("Could not insert tx into blockchain: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 0;
 }
 
@@ -1080,21 +1357,36 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#endif
   buffer_free(buffer);
 
   if (err != NULL)
   {
     LOG_ERROR("Could not insert tx into blockchain: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 0;
 }
 
@@ -1111,21 +1403,36 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
+#endif
   buffer_free(buffer);
 
   if (err != NULL)
   {
     LOG_ERROR("Could not insert unspent tx into blockchain: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 0;
 }
 
@@ -1137,23 +1444,40 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
   get_unspent_tx_key(key, tx_id);
 
   size_t read_len;
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  uint8_t *serialized_tx = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#endif
 
   if (err != NULL || serialized_tx == NULL)
   {
+  #ifdef USE_LEVELDB
+    leveldb_free(serialized_tx);
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+  #else
     rocksdb_free(serialized_tx);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+  #endif
     return NULL;
   }
 
   unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(serialized_tx, read_len);
   assert(unspent_tx != NULL);
 
+#ifdef USE_LEVELDB
+  leveldb_free(serialized_tx);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
   rocksdb_free(serialized_tx);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
+#endif
   return unspent_tx;
 }
 
@@ -1165,23 +1489,40 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
   get_tx_key(key, tx_id);
 
   size_t read_len;
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  uint8_t *block_key = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   uint8_t *block_key = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#endif
 
   if (err != NULL || block_key == NULL)
   {
+  #ifdef USE_LEVELDB
+    leveldb_free(block_key);
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+  #else
     rocksdb_free(block_key);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+  #endif
     return NULL;
   }
 
   uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
   memcpy(block_hash, block_key + 1, HASH_SIZE);
 
+#ifdef USE_LEVELDB
+  leveldb_free(block_key);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
   rocksdb_free(block_key);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
+#endif
   return block_hash;
 }
 
@@ -1209,22 +1550,38 @@ uint32_t get_block_height(void)
 {
   int32_t block_height = -1;
 
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  leveldb_iterator_t *iterator = leveldb_create_iterator(g_blockchain_db, roptions);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+#endif
 
+#ifdef USE_LEVELDB
+  for (leveldb_iter_seek(iterator, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
+    leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+#else
   for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
     rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+#endif
   {
     size_t key_length;
-    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
+    uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
+    assert(key != NULL);
     if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_BLOCK)
     {
       block_height++;
     }
   }
 
+#ifdef USE_LEVELDB
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+#else
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+#endif
 
   if (block_height < 0)
   {
@@ -1239,12 +1596,18 @@ uint32_t get_block_height(void)
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#endif
 
   if (err != NULL)
   {
@@ -1252,13 +1615,23 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     LOG_ERROR("Could not delete block: %s from blockchain storage!", block_hash_str);
     free(block_hash_str);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 0;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 1;
 }
 
@@ -1269,8 +1642,13 @@ int delete_tx_from_index(uint8_t *tx_id)
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
   get_tx_key(key, tx_id);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#endif
 
   if (err != NULL)
   {
@@ -1278,13 +1656,23 @@ int delete_tx_from_index(uint8_t *tx_id)
     LOG_ERROR("Could not delete tx: %s from index!", tx_hash_str);
     free(tx_hash_str);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 0;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 1;
 }
 
@@ -1295,20 +1683,35 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
   get_unspent_tx_key(key, tx_id);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_delete(g_blockchain_db, woptions, (char*)key, sizeof(key), &err);
+#endif
 
   if (err != NULL)
   {
     LOG_ERROR("Could not delete tx: %s from unspent index!", hash_to_str(tx_id));
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 0;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 1;
 }
 
@@ -1319,20 +1722,35 @@ int set_top_block_hash(uint8_t *block_hash)
   uint8_t key[DB_KEY_PREFIX_SIZE_TOP_BLOCK];
   get_top_block_key(key);
 
+#ifdef USE_LEVELDB
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_hash, HASH_SIZE, &err);
+#else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
   rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_hash, HASH_SIZE, &err);
+#endif
 
   if (err != NULL)
   {
     LOG_ERROR("Could not set blockchain storage top block hash: %s!", err);
 
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
     rocksdb_free(err);
     rocksdb_writeoptions_destroy(woptions);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
   rocksdb_free(err);
   rocksdb_writeoptions_destroy(woptions);
+#endif
   return 0;
 }
 
@@ -1343,18 +1761,33 @@ uint8_t* get_top_block_hash(void)
   get_top_block_key(key);
 
   size_t read_len;
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  uint8_t *block_hash = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   uint8_t *block_hash = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+#endif
 
   if (err != NULL || block_hash == NULL)
   {
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+  #else
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
+  #endif
     return NULL;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
+#endif
   return block_hash;
 }
 
@@ -1468,18 +1901,38 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
   assert(address != NULL);
   assert(unspent_txs != NULL);
 
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  leveldb_iterator_t *iterator = leveldb_create_iterator(g_blockchain_db, roptions);
+#else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
   rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+#endif
 
+#ifdef USE_LEVELDB
+  for (leveldb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
+    leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+#else
   for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
     rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+#endif
   {
     size_t key_length;
+  #ifdef USE_LEVELDB
+    char *key = (char*)leveldb_iter_key(iterator, &key_length);
+  #else
     char *key = (char*)rocksdb_iter_key(iterator, &key_length);
+  #endif
+    assert(key != NULL);
+
     if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_UNSPENT_TX)
     {
       size_t data_len;
+    #ifdef USE_LEVELDB
+      uint8_t *data = (uint8_t*)leveldb_iter_value(iterator, &data_len);
+    #else
       uint8_t *data = (uint8_t*)rocksdb_iter_value(iterator, &data_len);
+    #endif
       assert(data != NULL);
 
       unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(data, data_len);
@@ -1520,8 +1973,14 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
     }
   }
 
+#ifdef USE_LEVELDB
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+#else
   rocksdb_readoptions_destroy(roptions);
   rocksdb_iter_destroy(iterator);
+#endif
+
   return 0;
 }
 

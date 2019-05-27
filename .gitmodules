@@ -13,3 +13,6 @@
 [submodule "external/Collections-C"]
 	path = external/Collections-C
 	url = https://github.com/vulkancurrency/Collections-C.git
+[submodule "external/leveldb"]
+	path = external/leveldb
+	url = https://github.com/vulkancurrency/leveldb.git

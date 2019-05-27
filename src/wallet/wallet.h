@@ -30,7 +30,11 @@
 
 #include <sodium.h>
 
+#ifdef USE_LEVELDB
+#include <leveldb/c.h>
+#else
 #include <rocksdb/c.h>
+#endif
 
 #include "common/util.h"
 
@@ -55,7 +59,12 @@ void free_wallet(wallet_t* wallet);
 int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
 int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
 
+#ifdef USE_LEVELDB
+leveldb_t* open_wallet(const char *wallet_filename, char *err);
+#else
 rocksdb_t* open_wallet(const char *wallet_filename, char *err);
+#endif
+
 int new_wallet(const char *wallet_filename, wallet_t **wallet_out);
 int get_wallet(const char *wallet_filename, wallet_t **wallet_out);
 int init_wallet(const char *wallet_filename, wallet_t **wallet_out);
