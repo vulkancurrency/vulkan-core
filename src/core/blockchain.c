@@ -984,13 +984,13 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
     if (compare_block_hash(block->hash, block_hash))
     {
       block_height = i;
+      free_block(block);
       break;
     }
 
     free_block(block);
   }
 
-  free_block(block);
   return block_height;
 }
 
@@ -1144,7 +1144,7 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
   {
     rocksdb_free(serialized_tx);
     rocksdb_free(err);
-    rocksdb_free(roptions);
+    rocksdb_readoptions_destroy(roptions);
     return NULL;
   }
 
