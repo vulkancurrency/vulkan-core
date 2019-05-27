@@ -1567,7 +1567,11 @@ uint32_t get_block_height(void)
 #endif
   {
     size_t key_length;
+  #ifdef USE_LEVELDB
     uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
+  #else
+    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
+  #endif
     assert(key != NULL);
     if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_BLOCK)
     {
