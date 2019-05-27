@@ -558,7 +558,7 @@ int backup_blockchain_nolock(void)
     return 1;
   }
 
-  if (copy_all_entries_to_database(g_blockchain_backup_db, g_blockchain_db))
+  if (copy_all_entries_to_database(g_blockchain_db, g_blockchain_backup_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entries to backup database!");
     return 1;
@@ -608,7 +608,7 @@ int restore_blockchain_nolock(void)
     return 1;
   }
 
-  if (copy_all_entries_to_database(g_blockchain_db, g_blockchain_backup_db))
+  if (copy_all_entries_to_database(g_blockchain_backup_db, g_blockchain_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entires from backup database!");
     return 1;
