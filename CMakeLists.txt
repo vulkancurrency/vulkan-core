@@ -83,7 +83,7 @@ add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
 
 include_directories(src)
-add_subdirectory(src)
-
 include_directories(tests)
+
+add_subdirectory(src)
 add_subdirectory(tests)
