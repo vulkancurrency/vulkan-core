@@ -61,7 +61,6 @@ typedef struct Block
   transaction_t **transactions;
 } block_t;
 
-
 static block_t genesis_block = {
   .version = BLOCK_VERSION,
   .previous_hash = {
