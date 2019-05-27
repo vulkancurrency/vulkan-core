@@ -474,6 +474,13 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
   }
 }
 
+TEST can_backup_and_restore_blockchain(void)
+{
+  ASSERT(backup_blockchain() == 0);
+  ASSERT(restore_blockchain() == 0);
+  PASS();
+}
+
 GREATEST_SUITE(blockchain_suite)
 {
   RUN_TEST(check_blocks_in_blockchain);
@@ -485,4 +492,5 @@ GREATEST_SUITE(blockchain_suite)
   RUN_TEST(can_insert_unspent_tx_into_index);
   RUN_TEST(inserting_block_into_blockchain_marks_txouts_as_spent);
   RUN_TEST(tx_is_valid_only_if_it_has_money_unspent);
+  RUN_TEST(can_backup_and_restore_blockchain);
 }
