@@ -468,7 +468,6 @@ static int purge_all_entries_from_database(leveldb_t *db)
     assert(key != NULL);
 
     leveldb_writebatch_delete(write_batch, (char*)key, key_length);
-    leveldb_free(key);
   }
 
   leveldb_write(db, woptions, write_batch, &err);
@@ -479,6 +478,7 @@ static int purge_all_entries_from_database(leveldb_t *db)
     leveldb_readoptions_destroy(roptions);
     leveldb_iter_destroy(iterator);
     leveldb_writeoptions_destroy(woptions);
+    leveldb_writebatch_clear(write_batch);
     leveldb_writebatch_destroy(write_batch);
     return 1;
   }
@@ -487,6 +487,7 @@ static int purge_all_entries_from_database(leveldb_t *db)
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
   return 0;
 }
@@ -520,6 +521,7 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
       leveldb_readoptions_destroy(roptions);
       leveldb_iter_destroy(iterator);
       leveldb_writeoptions_destroy(woptions);
+      leveldb_writebatch_clear(write_batch);
       leveldb_writebatch_destroy(write_batch);
       leveldb_free(key);
       leveldb_free(value);
@@ -527,8 +529,6 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
     }
 
     leveldb_writebatch_put(write_batch, (char*)key, key_length, (char*)value, read_len);
-    leveldb_free(key);
-    leveldb_free(value);
   }
 
   leveldb_write(to_db, woptions, write_batch, &err);
@@ -539,6 +539,7 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
     leveldb_readoptions_destroy(roptions);
     leveldb_iter_destroy(iterator);
     leveldb_writeoptions_destroy(woptions);
+    leveldb_writebatch_clear(write_batch);
     leveldb_writebatch_destroy(write_batch);
     return 1;
   }
@@ -547,6 +548,7 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
   return 0;
 }
