@@ -471,7 +471,7 @@ static int purge_all_entries_from_database(leveldb_t *db)
     leveldb_free(key);
   }
 
-  leveldb_write(to_db, woptions, write_batch, &err);
+  leveldb_write(db, woptions, write_batch, &err);
   if (err != NULL)
   {
     LOG_ERROR("Failed to purge all entries from database!");
