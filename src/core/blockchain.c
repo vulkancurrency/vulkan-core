@@ -71,19 +71,15 @@ static const char *g_blockchain_backup_dir = "_backup";
 
 static int g_blockchain_want_compression = 1;
 
-#ifdef USE_LEVELDB
-static int g_blockchain_compression_type = leveldb_snappy_compression;
-#else
-static int g_blockchain_compression_type = rocksdb_lz4_compression;
-#endif
-
 static int g_blockchain_is_open = 0;
 static int g_blockchain_backup_is_open = 0;
 
 #ifdef USE_LEVELDB
+static int g_blockchain_compression_type = leveldb_snappy_compression;
 static leveldb_t *g_blockchain_db = NULL;
 static leveldb_t *g_blockchain_backup_db = NULL;
 #else
+static int g_blockchain_compression_type = rocksdb_lz4_compression;
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
 #endif
@@ -1635,15 +1631,13 @@ uint32_t get_block_height(void)
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(g_blockchain_db, roptions);
-#else
-  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
-#endif
 
-#ifdef USE_LEVELDB
   for (leveldb_iter_seek(iterator, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
 #else
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+
   for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
     rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
 #endif
@@ -1990,15 +1984,13 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(g_blockchain_db, roptions);
-#else
-  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
-#endif
 
-#ifdef USE_LEVELDB
   for (leveldb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
 #else
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+
   for (rocksdb_iter_seek(iterator, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
     rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
 #endif
