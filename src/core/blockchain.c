@@ -259,11 +259,31 @@ int open_blockchain(const char *blockchain_dir)
   leveldb_options_t *options = leveldb_options_create();
   leveldb_options_set_create_if_missing(options, 1);
 
-  g_blockchain_db = leveldb_open(options, blockchain_dir, &err);
+  leveldb_repair_db(options, blockchain_dir, &err);
 #else
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
 
+  rocksdb_repair_db(options, blockchain_dir, &err);
+#endif
+
+  if (err != NULL)
+  {
+    LOG_ERROR("Could not open blockchain database, failed to repair db: %s!", err);
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_free(options);
+  #else
+    rocksdb_free(err);
+    rocksdb_options_destroy(options);
+  #endif
+    return 1;
+  }
+
+#ifdef USE_LEVELDB
+  g_blockchain_db = leveldb_open(options, blockchain_dir, &err);
+#else
   g_blockchain_db = rocksdb_open(options, blockchain_dir, &err);
 #endif
 
@@ -425,6 +445,26 @@ int open_backup_blockchain(void)
   }
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
+#ifdef USE_LEVELDB
+  leveldb_repair_db(options, blockchain_backup_dir, &err);
+#else
+  rocksdb_repair_db(options, blockchain_backup_dir, &err);
+#endif
+
+  if (err != NULL)
+  {
+    LOG_ERROR("Could not open backup blockchain database, failed to repair db: %s!", err);
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_free(options);
+  #else
+    rocksdb_free(err);
+    rocksdb_options_destroy(options);
+  #endif
+    return 1;
+  }
+
 #ifdef USE_LEVELDB
   g_blockchain_backup_db = leveldb_open(options, blockchain_backup_dir, &err);
 #else

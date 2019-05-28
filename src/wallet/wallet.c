@@ -128,7 +128,10 @@ leveldb_t* open_wallet(const char *wallet_dir, char *err)
   leveldb_t *db;
   leveldb_options_t *options = leveldb_options_create();
   leveldb_options_set_create_if_missing(options, 1);
-  return leveldb_open(options, wallet_dir, &err);
+
+  db = leveldb_open(options, wallet_dir, &err);
+  leveldb_options_destroy(options);
+  return db;
 }
 #else
 rocksdb_t* open_wallet(const char *wallet_dir, char *err)
@@ -136,7 +139,10 @@ rocksdb_t* open_wallet(const char *wallet_dir, char *err)
   rocksdb_t *db;
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
-  return rocksdb_open(options, wallet_dir, &err);
+
+  db = rocksdb_open(options, wallet_dir, &err);
+  rocksdb_options_destroy(options);
+  return db;
 }
 #endif
 
@@ -160,7 +166,6 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
     rocksdb_free(err);
     rocksdb_close(db);
   #endif
-
     return 1;
   }
 
@@ -184,7 +189,6 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
     rocksdb_readoptions_destroy(roptions);
     rocksdb_close(db);
   #endif
-
     return 1;
   }
 
@@ -233,7 +237,6 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
     rocksdb_writeoptions_destroy(woptions);
     rocksdb_close(db);
   #endif
-
     return 1;
   }
 
@@ -258,7 +261,6 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
 int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
 {
   char *err = NULL;
-
 #ifdef USE_LEVELDB
   leveldb_t *db = open_wallet(wallet_dir, err);
 #else
@@ -276,7 +278,6 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
     rocksdb_free(err);
     rocksdb_close(db);
   #endif
-
     return 1;
   }
 
@@ -349,6 +350,26 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
   return 0;
 }
 
+void repair_wallet(const char *wallet_dir)
+{
+  char *err = NULL;
+#ifdef USE_LEVELDB
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_options_set_create_if_missing(options, 1);
+
+  leveldb_repair_db(options, wallet_dir, &err);
+  leveldb_free(err);
+  leveldb_free(options);
+#else
+  rocksdb_options_t *options = rocksdb_options_create();
+  rocksdb_options_set_create_if_missing(options, 1);
+
+  rocksdb_repair_db(options, wallet_dir, &err);
+  rocksdb_free(err);
+  rocksdb_options_destroy(options);
+#endif
+}
+
 int init_wallet(const char *wallet_dir, wallet_t **wallet_out)
 {
   wallet_t *wallet = NULL;
@@ -359,6 +380,7 @@ int init_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (wallet == NULL)
   {
+    repair_wallet(wallet_dir);
     if (get_wallet(wallet_dir, &wallet))
     {
       return 1;
