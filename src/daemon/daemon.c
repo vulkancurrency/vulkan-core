@@ -52,7 +52,7 @@
 static int g_enable_miner = 0;
 
 static const char *g_blockchain_data_dir = "blockchain";
-static const char *g_wallet_filename = "wallet";
+static const char *g_wallet_dir = "wallet";
 static const char *g_logger_log_filename = "daemon.log";
 
 enum
@@ -67,7 +67,7 @@ enum
   CMD_ARG_CLEAR_BLOCKCHAIN,
   CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION,
   CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE,
-  CMD_ARG_WALLET_FILENAME,
+  CMD_ARG_WALLET_DIR,
   CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
   CMD_ARG_FORCE_VERSION_CHECK,
@@ -85,7 +85,7 @@ static argument_map_t g_arguments_map[] = {
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
   {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use.", "<compression_method>", 1},
-  {"wallet-filename", CMD_ARG_WALLET_FILENAME, "Change the wallet database output filename.", "<wallet_filename>", 1},
+  {"wallet-filename", CMD_ARG_WALLET_DIR, "Change the wallet database output directory.", "<wallet_dir>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
   {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections...", "", 0},
@@ -213,17 +213,17 @@ static int parse_commandline_args(int argc, char **argv)
 
         set_blockchain_compression_type(compression_type);
         break;
-      case CMD_ARG_WALLET_FILENAME:
+      case CMD_ARG_WALLET_DIR:
         i++;
-        g_wallet_filename = (const char*)argv[i];
+        g_wallet_dir = (const char*)argv[i];
         break;
       case CMD_ARG_CLEAR_WALLET:
-        rmrf(g_wallet_filename);
+        assert(remove_wallet(g_wallet_dir) == 0);
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
         {
           wallet_t *wallet = NULL;
-          if (init_wallet(g_wallet_filename, &wallet))
+          if (init_wallet(g_wallet_dir, &wallet))
           {
             return 1;
           }
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
-    if (init_wallet(g_wallet_filename, &wallet))
+    if (init_wallet(g_wallet_dir, &wallet))
     {
       return 1;
     }

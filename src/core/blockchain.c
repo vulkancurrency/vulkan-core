@@ -276,7 +276,7 @@ int open_blockchain(const char *blockchain_dir)
     leveldb_free(options);
   #else
     rocksdb_free(err);
-    rocksdb_free(options);
+    rocksdb_options_destroy(options);
   #endif
     return 1;
   }
@@ -286,7 +286,7 @@ int open_blockchain(const char *blockchain_dir)
   leveldb_free(options);
 #else
   rocksdb_free(err);
-  rocksdb_free(options);
+  rocksdb_options_destroy(options);
 #endif
 
   if (has_block_by_hash(genesis_block.hash) == 0)
@@ -317,17 +317,49 @@ int open_blockchain(const char *blockchain_dir)
 
 int remove_blockchain(const char *blockchain_dir)
 {
-  if (rmrf(blockchain_dir) != 0)
+  char *err = NULL;
+#ifdef USE_LEVELDB
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_destroy_db(options, blockchain_dir, &err);
+#else
+  rocksdb_options_t *options = rocksdb_options_create();
+  rocksdb_destroy_db(options, blockchain_dir, &err);
+#endif
+
+  if (err != NULL)
   {
+    LOG_ERROR("Failed to remove blockchain database: %s!", err);
+  #ifdef USE_LEVELDB
+    leveldb_options_destroy(options);
+  #else
+    rocksdb_options_destroy(options);
+  #endif
     return 1;
   }
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(blockchain_dir);
-  if (rmrf(blockchain_backup_dir) != 0)
+#ifdef USE_LEVELDB
+  leveldb_destroy_db(options, blockchain_backup_dir, &err);
+#else
+  rocksdb_destroy_db(options, blockchain_backup_dir, &err);
+#endif
+
+  if (err != NULL)
   {
+    LOG_ERROR("Failed to remove blockchain backup database: %s!", err);
+  #ifdef USE_LEVELDB
+    leveldb_options_destroy(options);
+  #else
+    rocksdb_options_destroy(options);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
+  leveldb_options_destroy(options);
+#else
+  rocksdb_options_destroy(options);
+#endif
   return 0;
 }
 
@@ -408,7 +440,7 @@ int open_backup_blockchain(void)
     leveldb_free(options);
   #else
     rocksdb_free(err);
-    rocksdb_free(options);
+    rocksdb_options_destroy(options);
   #endif
     return 1;
   }
@@ -418,7 +450,7 @@ int open_backup_blockchain(void)
   leveldb_free(options);
 #else
   rocksdb_free(err);
-  rocksdb_free(options);
+  rocksdb_options_destroy(options);
 #endif
 
   g_blockchain_backup_is_open = 1;

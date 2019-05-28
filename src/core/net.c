@@ -272,7 +272,7 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
 
   if (process_packet(net_connection, buffer_iterator))
   {
-    assert(close_net_connection(net_connection) == 0);
+    //assert(close_net_connection(net_connection) == 0);
     return;
   }
 
@@ -533,6 +533,7 @@ int connect_net_to_seeds(void)
       continue;
     }
 
+    printf("connect_net_to_peer, address=%s, port=%hu\n", seed_node_entry.address, seed_node_entry.port);
     if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
     {
       continue;

@@ -60,14 +60,15 @@ int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
 int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
 
 #ifdef USE_LEVELDB
-leveldb_t* open_wallet(const char *wallet_filename, char *err);
+leveldb_t* open_wallet(const char *wallet_dir, char *err);
 #else
-rocksdb_t* open_wallet(const char *wallet_filename, char *err);
+rocksdb_t* open_wallet(const char *wallet_dir, char *err);
 #endif
 
-int new_wallet(const char *wallet_filename, wallet_t **wallet_out);
-int get_wallet(const char *wallet_filename, wallet_t **wallet_out);
-int init_wallet(const char *wallet_filename, wallet_t **wallet_out);
+int new_wallet(const char *wallet_dir, wallet_t **wallet_out);
+int get_wallet(const char *wallet_dir, wallet_t **wallet_out);
+int init_wallet(const char *wallet_dir, wallet_t **wallet_out);
+int remove_wallet(const char *wallet_dir);
 
 void print_wallet(wallet_t* wallet);
 void print_public_key(wallet_t *wallet);

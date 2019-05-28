@@ -27,11 +27,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define _XOPEN_SOURCE 500
-#define _XOPEN_SOURCE_EXTENDED 1
-#define __USE_XOPEN_EXTENDED 1
-#include <ftw.h>
-
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>
@@ -172,22 +167,6 @@ char* address_to_str(uint8_t *in_address)
 uint32_t get_current_time(void)
 {
   return (uint32_t)time(NULL);
-}
-
-static int unlink_callback(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
-{
-  int rv = remove(fpath);
-  if (rv)
-  {
-    perror(fpath);
-  }
-
-  return rv;
-}
-
-int rmrf(const char *path)
-{
-  return nftw(path, unlink_callback, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 int sort_compare(const void* a, const void* b)
