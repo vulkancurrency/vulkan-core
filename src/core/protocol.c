@@ -1289,10 +1289,8 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
         assert(clear_sync_request(0) == 0);
         return 1;
       }
-      else
-      {
-        g_protocol_sync_entry.sync_pending_block = block;
-      }
+
+      g_protocol_sync_entry.sync_pending_block = block;
     }
   }
 
@@ -1943,12 +1941,6 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          if (has_block_by_hash(message->block_hash))
-          {
-            free_transaction(message->transaction);
-            return 1;
-          }
-
           block_t *pending_block = g_protocol_sync_entry.sync_pending_block;
           if (pending_block == NULL)
           {
@@ -1956,7 +1948,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          if (compare_block_hash(pending_block->hash, message->block_hash) == 0)
+          if (compare_block_hash(message->block_hash, pending_block->hash) == 0)
           {
             free_transaction(message->transaction);
             return 1;
