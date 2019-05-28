@@ -135,10 +135,10 @@ block_t *get_current_block(void);
 uint32_t get_blocks_since_hash(uint8_t *block_hash);
 uint32_t get_blocks_since_block(block_t *block);
 
-int get_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
-int get_block_key(uint8_t *buffer, uint8_t *block_hash);
-int get_top_block_key(uint8_t *buffer);
+void get_tx_key(uint8_t *buffer, uint8_t *tx_id);
+void get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id);
+void get_block_key(uint8_t *buffer, uint8_t *block_hash);
+void get_top_block_key(uint8_t *buffer);
 
 int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);
 int get_unspent_transactions_for_address(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs);

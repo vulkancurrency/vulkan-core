@@ -1942,38 +1942,34 @@ uint32_t get_blocks_since_block(block_t *block)
   return get_blocks_since_hash(block->hash);
 }
 
-int get_tx_key(uint8_t *buffer, uint8_t *tx_id)
+void get_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
   assert(buffer != NULL);
   assert(tx_id != NULL);
   memcpy(buffer, DB_KEY_PREFIX_TX, DB_KEY_PREFIX_SIZE_TX);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_TX, tx_id, HASH_SIZE);
-  return 0;
 }
 
-int get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
+void get_unspent_tx_key(uint8_t *buffer, uint8_t *tx_id)
 {
   assert(buffer != NULL);
   assert(tx_id != NULL);
   memcpy(buffer, DB_KEY_PREFIX_UNSPENT_TX, DB_KEY_PREFIX_SIZE_UNSPENT_TX);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_UNSPENT_TX, tx_id, HASH_SIZE);
-  return 0;
 }
 
-int get_block_key(uint8_t *buffer, uint8_t *block_hash)
+void get_block_key(uint8_t *buffer, uint8_t *block_hash)
 {
   assert(buffer != NULL);
   assert(block_hash != NULL);
   memcpy(buffer, DB_KEY_PREFIX_BLOCK, DB_KEY_PREFIX_SIZE_BLOCK);
   memcpy(buffer + DB_KEY_PREFIX_SIZE_BLOCK, block_hash, HASH_SIZE);
-  return 0;
 }
 
-int get_top_block_key(uint8_t *buffer)
+void get_top_block_key(uint8_t *buffer)
 {
   assert(buffer != NULL);
   memcpy(buffer, DB_KEY_PREFIX_TOP_BLOCK, DB_KEY_PREFIX_SIZE_TOP_BLOCK);
-  return 0;
 }
 
 int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *unspent_txs, uint32_t *num_unspent_txs)
