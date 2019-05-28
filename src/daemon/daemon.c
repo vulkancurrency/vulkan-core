@@ -85,7 +85,7 @@ static argument_map_t g_arguments_map[] = {
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
   {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use.", "<compression_method>", 1},
-  {"wallet-filename", CMD_ARG_WALLET_DIR, "Change the wallet database output directory.", "<wallet_dir>", 1},
+  {"wallet-dir", CMD_ARG_WALLET_DIR, "Change the wallet database output directory.", "<wallet_dir>", 1},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
   {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections...", "", 0},
