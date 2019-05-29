@@ -242,7 +242,7 @@ void free_packet(packet_t *packet);
 
 int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
 int deserialize_message(packet_t *packet, void **message);
-void free_message(uint32_t packet_id, void *message_object);
+void free_message(uint32_t packet_id, int did_packet_fail, void *message_object);
 
 net_connection_t* get_sync_net_connection(void);
 int get_sync_initiated(void);
@@ -265,6 +265,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
 int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index);
 int backup_blockchain_and_rollback(void);
 
+int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id);
 int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
 int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
 int handle_receive_packet(net_connection_t *net_connection, packet_t *packet);
