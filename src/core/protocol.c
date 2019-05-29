@@ -1255,7 +1255,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       else if (g_protocol_sync_entry.last_sync_height <= 1)
       {
         LOG_WARNING("Unable to find sync starting height, continuing anyway...");
-        g_protocol_sync_entry.sync_start_height = 0;
+        g_protocol_sync_entry.sync_start_height = 1;
         can_rollback_and_resync = 1;
       }
       else
@@ -1280,7 +1280,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
         }
 
         assert(clear_grouped_sync_request() == 0);
-        g_protocol_sync_entry.last_sync_height = 0;
+        g_protocol_sync_entry.last_sync_height = g_protocol_sync_entry.sync_start_height;
         if (request_sync_next_block(g_protocol_sync_entry.net_connection))
         {
           return 1;
