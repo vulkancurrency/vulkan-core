@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <miniupnpc.h>
 #include <upnpcommands.h>
@@ -381,19 +382,26 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
         net_connection_t *net_connection = get_net_connection(connection);
         assert(net_connection != NULL);
 
-        // check to see if we are trying to sync to the connection
-        // that was just closed by the remote host...
-        if (get_sync_initiated() && get_sync_net_connection() == net_connection)
-        {
-          if (check_sync_status())
-          {
-            assert(clear_sync_request(0) == 0);
-          }
-        }
-
         peer_t *peer = get_peer_from_net_connection(net_connection);
         if (peer != NULL)
         {
+          // check to see if we are trying to sync to the connection
+          // that was just closed by the remote host...
+          if (get_sync_initiated() && get_sync_net_connection() == net_connection)
+          {
+            if (check_sync_status())
+            {
+              assert(clear_sync_request(0) == 0);
+            }
+
+            uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
+            char *address_str = convert_ip_to_str(remote_ip);
+            LOG_INFO("Connection closed during syncronization with peer %s:%u, continuing anyways...",
+              address_str, net_connection->host_port);
+
+            free(address_str);
+          }
+
           assert(remove_peer(peer) == 0);
           free_peer(peer);
         }
