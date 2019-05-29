@@ -1006,12 +1006,6 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.sync_did_backup_blockchain = 0;
   g_protocol_sync_entry.sync_finding_top_block = 0;
 
-  if (g_protocol_sync_entry.sync_pending_block != NULL)
-  {
-    free_block(g_protocol_sync_entry.sync_pending_block);
-    g_protocol_sync_entry.sync_pending_block = NULL;
-  }
-
   g_protocol_sync_entry.sync_height = 0;
   g_protocol_sync_entry.sync_start_height = -1;
 
@@ -1043,6 +1037,20 @@ int clear_tx_sync_request(void)
   g_protocol_sync_entry.last_tx_sync_index = -1;
   g_protocol_sync_entry.last_tx_sync_ts = 0;
   g_protocol_sync_entry.last_tx_sync_tries = 0;
+  return 0;
+}
+
+int clear_grouped_sync_request(void)
+{
+  if (g_protocol_sync_entry.sync_initiated == 0)
+  {
+    return 1;
+  }
+
+  g_protocol_sync_entry.sync_pending_block = NULL;
+  g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
+  vec_init(&g_protocol_sync_entry.sync_pending_blocks);
+  g_protocol_sync_entry.sync_pending_blocks_count = 0;
   return 0;
 }
 
@@ -1271,6 +1279,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
           return 1;
         }
 
+        assert(clear_grouped_sync_request() == 0);
         g_protocol_sync_entry.last_sync_height = 0;
         if (request_sync_next_block(g_protocol_sync_entry.net_connection))
         {

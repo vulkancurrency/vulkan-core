@@ -249,6 +249,8 @@ int get_sync_initiated(void);
 
 int init_sync_request(int height, net_connection_t *net_connection);
 int clear_sync_request(int sync_success);
+int clear_tx_sync_request(void);
+int clear_grouped_sync_request(void);
 int check_sync_status(void);
 
 int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_t *hash);
