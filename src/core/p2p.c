@@ -247,7 +247,6 @@ int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
     uint64_t peer_id = concatenate(remote_ip, host_port);
     if (has_peer(peer_id))
     {
-      printf("has peer with, connect_net_to_peer, bind_address=%s, host_port=%hu\n", bind_address, host_port);
       continue;
     }
 
@@ -256,7 +255,6 @@ int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
       break;
     }
 
-    printf("connect_net_to_peer, bind_address=%s, host_port=%hu\n", bind_address, host_port);
     //if (connect_net_to_peer(bind_address, host_port))
     //{
     //  return 1;

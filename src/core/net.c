@@ -216,7 +216,6 @@ int close_net_connection(net_connection_t *net_connection)
   assert(connection != NULL);
 
   connection->flags |= MG_F_CLOSE_IMMEDIATELY;
-  printf("close_net_connection\n");
   return 0;
 }
 
@@ -320,7 +319,6 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
     packet_t *packet = make_packet();
     if (deserialize_packet(packet, buffer_iterator))
     {
-      printf("pkt failed to deserialize!\n");
       assert(close_net_connection(net_connection) == 0);
     }
     else
@@ -533,7 +531,6 @@ int connect_net_to_seeds(void)
       continue;
     }
 
-    printf("connect_net_to_peer, address=%s, port=%hu\n", seed_node_entry.address, seed_node_entry.port);
     if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
     {
       continue;
