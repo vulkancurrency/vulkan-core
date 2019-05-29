@@ -389,17 +389,15 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
           // that was just closed by the remote host...
           if (get_sync_initiated() && get_sync_net_connection() == net_connection)
           {
-            if (check_sync_status())
-            {
-              assert(clear_sync_request(0) == 0);
-            }
-
             uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
             char *address_str = convert_ip_to_str(remote_ip);
-            LOG_INFO("Connection closed during syncronization with peer %s:%u, continuing anyways...",
-              address_str, net_connection->host_port);
-
+            LOG_INFO("Connection closed during syncronization with peer %s:%u, continuing anyways...", address_str, net_connection->host_port);
             free(address_str);
+
+            // forcefully end syncronization, since the connection we tried to sync to
+            // has been closed, let's assume we have the top block so that we don't
+            // restore the blockchain to the point before we started syncronizing...
+            check_sync_status(1);
           }
 
           assert(remove_peer(peer) == 0);

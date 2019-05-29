@@ -1074,19 +1074,15 @@ int clear_grouped_sync_request(void)
   return 0;
 }
 
-int check_sync_status(void)
+int check_sync_status(int force_sync_complete)
 {
   uint32_t current_block_height = get_block_height();
-  if (current_block_height >= g_protocol_sync_entry.sync_height)
+  if (current_block_height >= g_protocol_sync_entry.sync_height || force_sync_complete)
   {
     if (clear_sync_request(1) == 0)
     {
       LOG_INFO("Successfully synced blockchain at block height: %u", current_block_height);
       return 0;
-    }
-    else
-    {
-      return 1;
     }
   }
 
@@ -1346,7 +1342,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
     }
 
     LOG_INFO("Received block at height: %u out of %u block(s) remaining", g_protocol_sync_entry.last_sync_height, g_protocol_sync_entry.sync_height);
-    if (check_sync_status())
+    if (check_sync_status(0))
     {
       if (request_sync_next_block(g_protocol_sync_entry.net_connection))
       {
