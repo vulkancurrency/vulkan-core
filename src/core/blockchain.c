@@ -781,14 +781,35 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
       return 1;
     }
 
-    uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
-    get_block_key(key, block->hash);
+    uint8_t block_key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
+    get_block_key(block_key, block->hash);
 
   #ifdef USE_LEVELDB
-    leveldb_writebatch_delete(write_batch, (char*)key, sizeof(key));
+    leveldb_writebatch_delete(write_batch, (char*)block_key, sizeof(block_key));
   #else
-    rocksdb_writebatch_delete(write_batch, (char*)key, sizeof(key));
+    rocksdb_writebatch_delete(write_batch, (char*)block_key, sizeof(block_key));
   #endif
+
+    // now delete the block's transactions including the unspent transactions...
+    for (uint32_t i = 0; i < block->transaction_count; i++)
+    {
+      transaction_t *tx = block->transactions[i];
+      assert(tx != NULL);
+
+      uint8_t tx_key[HASH_SIZE + DB_KEY_PREFIX_SIZE_TX];
+      uint8_t unspent_tx_key[HASH_SIZE + DB_KEY_PREFIX_SIZE_UNSPENT_TX];
+
+      get_tx_key(tx_key, tx->id);
+      get_unspent_tx_key(unspent_tx_key, tx->id);
+
+      #ifdef USE_LEVELDB
+        leveldb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
+        leveldb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
+      #else
+        rocksdb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
+        rocksdb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
+      #endif
+    }
   }
 
 #ifdef USE_LEVELDB
@@ -1759,6 +1780,9 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     return 1;
   }
 
+  block_t *block = get_block_from_hash(block_hash);
+  assert(block != NULL);
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
@@ -1785,6 +1809,16 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     rocksdb_writeoptions_destroy(woptions);
   #endif
     return 0;
+  }
+
+  // now delete the block's transactions including the unspent transactions...
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    assert(delete_tx_from_index(tx->id) == 0);
+    assert(delete_unspent_tx_from_index(tx->id) == 0);
   }
 
 #ifdef USE_LEVELDB
@@ -1855,7 +1889,7 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not delete tx: %s from unspent index!", hash_to_str(tx_id));
+    LOG_ERROR("Could not delete unspent tx: %s from unspent index!", hash_to_str(tx_id));
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
