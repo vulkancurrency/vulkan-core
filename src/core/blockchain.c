@@ -778,6 +778,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
       rocksdb_writebatch_clear(write_batch);
       rocksdb_writebatch_destroy(write_batch);
     #endif
+      free_block(block);
       return 1;
     }
 
@@ -810,6 +811,8 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
         rocksdb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
       #endif
     }
+
+    free_block(block);
   }
 
 #ifdef USE_LEVELDB
@@ -1801,6 +1804,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     LOG_ERROR("Could not delete block: %s from blockchain storage!", block_hash_str);
     free(block_hash_str);
 
+    free_block(block);
   #ifdef USE_LEVELDB
     leveldb_free(err);
     leveldb_writeoptions_destroy(woptions);
@@ -1821,6 +1825,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     assert(delete_unspent_tx_from_index(tx->id) == 0);
   }
 
+  free_block(block);
 #ifdef USE_LEVELDB
   leveldb_free(err);
   leveldb_writeoptions_destroy(woptions);
