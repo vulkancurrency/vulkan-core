@@ -226,11 +226,11 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
 
     if (g_workers_paused)
     {
-      LOG_INFO("Worker[%u]: paused, waiting for resume...", worker->id);
+      LOG_INFO("Worker[%u]: miner thread paused, waiting for resume...", worker->id);
     }
     else
     {
-      LOG_INFO("Worker[%u]: running with %u h/s", worker->id, worker->last_hashrate);
+      LOG_INFO("Worker[%u]: miner thread running with %u h/s", worker->id, worker->last_hashrate);
     }
   }
 
