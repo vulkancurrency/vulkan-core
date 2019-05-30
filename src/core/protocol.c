@@ -1641,6 +1641,8 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
         {
           return 1;
         }
+
+        return 0;
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_RESP:
@@ -1703,6 +1705,8 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             }
           }
         }
+
+        return 0;
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
