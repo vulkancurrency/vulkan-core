@@ -47,6 +47,8 @@ typedef struct MinerWorker
   uint32_t last_hashrate;
 } miner_worker_t;
 
+int get_is_miner_initialized(void);
+
 void set_num_worker_threads(uint16_t num_worker_threads);
 uint16_t get_num_worker_threads(void);
 

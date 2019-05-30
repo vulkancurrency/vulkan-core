@@ -48,7 +48,7 @@
 
 #include "wallet/wallet.h"
 
-static int g_miner_is_mining = 0;
+static int g_miner_initialized = 0;
 static wallet_t *g_current_wallet = NULL;
 static task_t *g_miner_worker_status_task = NULL;
 
@@ -56,6 +56,11 @@ static mtx_t g_miner_lock;
 static miner_worker_t *g_miner_workers[MAX_NUM_WORKER_THREADS];
 static uint16_t g_num_worker_threads = 0;
 static int g_workers_paused = 0;
+
+int get_is_miner_initialized(void)
+{
+  return g_miner_initialized;
+}
 
 void set_num_worker_threads(uint16_t num_worker_threads)
 {
@@ -189,7 +194,7 @@ static int worker_mining_thread(void *arg)
   block_t *previous_block = NULL;
   block_t *block = NULL;
 
-  while (g_miner_is_mining)
+  while (g_miner_initialized)
   {
     if (g_workers_paused)
     {
@@ -235,14 +240,14 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
 int start_mining(void)
 {
   assert(g_current_wallet != NULL);
-  if (g_miner_is_mining)
+  if (g_miner_initialized)
   {
     return 1;
   }
 
   mtx_init(&g_miner_lock, mtx_recursive);
 
-  g_miner_is_mining = 1;
+  g_miner_initialized = 1;
   g_miner_worker_status_task = add_task(report_worker_mining_status, WORKER_STATUS_TASK_DELAY);
 
   for (uint16_t i = 0; i < g_num_worker_threads; i++)
@@ -264,7 +269,7 @@ int start_mining(void)
 
 int stop_mining(void)
 {
-  if (g_miner_is_mining == 0)
+  if (g_miner_initialized == 0)
   {
     return 1;
   }
@@ -279,7 +284,7 @@ int stop_mining(void)
     free_worker(worker);
   }
 
-  g_miner_is_mining = 0;
+  g_miner_initialized = 0;
   g_current_wallet = NULL;
   g_miner_worker_status_task = NULL;
   g_num_worker_threads = 0;

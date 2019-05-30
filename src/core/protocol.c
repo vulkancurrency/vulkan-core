@@ -47,6 +47,8 @@
 
 #include "crypto/cryptoutil.h"
 
+#include "miner/miner.h"
+
 static sync_entry_t g_protocol_sync_entry;
 static int g_protocol_force_version_check = 0;
 
@@ -1042,6 +1044,8 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.last_tx_sync_index = -1;
   g_protocol_sync_entry.last_tx_sync_ts = 0;
   g_protocol_sync_entry.last_tx_sync_tries = 0;
+
+  handle_sync_stopped();
   return 0;
 }
 
@@ -1074,6 +1078,29 @@ int clear_grouped_sync_request(void)
   return 0;
 }
 
+void handle_sync_started(void)
+{
+  if (get_is_miner_initialized())
+  {
+    LOG_INFO("Syncronization in progress, pausing miner worker threads...");
+    set_workers_paused(1);
+  }
+}
+
+void handle_sync_stopped(void)
+{
+
+}
+
+void handle_sync_completed(void)
+{
+  if (get_workers_paused())
+  {
+    LOG_INFO("Syncronization completed, resuming miner worker threads...");
+    set_workers_paused(0);
+  }
+}
+
 int check_sync_status(int force_sync_complete)
 {
   uint32_t current_block_height = get_block_height();
@@ -1082,6 +1109,7 @@ int check_sync_status(int force_sync_complete)
     if (clear_sync_request(1) == 0)
     {
       LOG_INFO("Successfully synced blockchain at block height: %u", current_block_height);
+      handle_sync_completed();
       return 0;
     }
   }
@@ -1271,7 +1299,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       else if (g_protocol_sync_entry.last_sync_height <= 1)
       {
         LOG_WARNING("Unable to find sync starting height, continuing anyway...");
-        g_protocol_sync_entry.sync_start_height = 1;
+        g_protocol_sync_entry.sync_start_height = 0;
         can_rollback_and_resync = 1;
       }
       else
@@ -1668,6 +1696,8 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
                   return 1;
                 }
               }
+
+              handle_sync_started();
             }
           }
         }
