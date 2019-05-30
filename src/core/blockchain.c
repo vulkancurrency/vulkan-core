@@ -728,6 +728,31 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
     return 1;
   }
 
+  // get the new top block after we rollback the blockchain
+  block_t *new_top_block = NULL;
+  if (rollback_height == 0)
+  {
+    new_top_block = get_block_from_hash(genesis_block.hash);
+    assert(new_top_block != NULL);
+  }
+  else
+  {
+    new_top_block = get_block_from_height(rollback_height--);
+    assert(new_top_block != NULL);
+  }
+
+  char *err = NULL;
+#ifdef USE_LEVELDB
+  leveldb_readoptions_t *roptions = leveldb_readoptions_create();
+  leveldb_iterator_t *iterator = leveldb_create_iterator(g_blockchain_db, roptions);
+  leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
+  leveldb_writebatch_t *write_batch = leveldb_writebatch_create();
+#else
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(g_blockchain_db, roptions);
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
+  rocksdb_writebatch_t *write_batch = rocksdb_writebatch_create();
+#endif
   for (uint32_t i = current_block_height; i > 0; i--)
   {
     if (i == rollback_height)
@@ -738,31 +763,81 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
     block_t *block = get_block_from_height(i);
     if (block == NULL)
     {
-      LOG_WARNING("Could not reset blockchain, unknown block at height: %u!", i);
+      LOG_ERROR("Could not rollback blockchain, unknown block at height: %u!", i);
+
+    #ifdef USE_LEVELDB
+      leveldb_readoptions_destroy(roptions);
+      leveldb_iter_destroy(iterator);
+      leveldb_writeoptions_destroy(woptions);
+      leveldb_writebatch_clear(write_batch);
+      leveldb_writebatch_destroy(write_batch);
+    #else
+      rocksdb_readoptions_destroy(roptions);
+      rocksdb_iter_destroy(iterator);
+      rocksdb_writeoptions_destroy(woptions);
+      rocksdb_writebatch_clear(write_batch);
+      rocksdb_writebatch_destroy(write_batch);
+    #endif
       return 1;
     }
 
-    if (delete_block_from_blockchain(block->hash) == 0)
-    {
-      free_block(block);
-      return 1;
-    }
+    uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
+    get_block_key(key, block->hash);
 
-    // check to see if are rolling back the top block in the blockchain,
-    // if so then we need to reset the top block to the previous block of
-    // the block we just rolled back.
-    if (compare_block_hash(get_current_block_hash(), block->hash))
-    {
-      block_t *previous_block = get_block_from_hash(block->previous_hash);
-      assert(previous_block != NULL);
-      set_current_block(previous_block);
-      free_block(previous_block);
-    }
-
-    free_block(block);
+  #ifdef USE_LEVELDB
+    leveldb_writebatch_delete(write_batch, (char*)key, sizeof(key));
+  #else
+    rocksdb_writebatch_delete(write_batch, (char*)key, sizeof(key));
+  #endif
   }
 
+#ifdef USE_LEVELDB
+  leveldb_write(g_blockchain_db, woptions, write_batch, &err);
+#else
+  rocksdb_write(g_blockchain_db, woptions, write_batch, &err);
+#endif
+  if (err != NULL)
+  {
+    LOG_ERROR("Failed to rollback blockchain!");
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_readoptions_destroy(roptions);
+    leveldb_iter_destroy(iterator);
+    leveldb_writeoptions_destroy(woptions);
+    leveldb_writebatch_clear(write_batch);
+    leveldb_writebatch_destroy(write_batch);
+  #else
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    rocksdb_iter_destroy(iterator);
+    rocksdb_writeoptions_destroy(woptions);
+    rocksdb_writebatch_clear(write_batch);
+    rocksdb_writebatch_destroy(write_batch);
+  #endif
+    return 1;
+  }
+
+  // finally set the new top block provided above
+  set_current_block(new_top_block);
+  free_block(new_top_block);
+
   LOG_INFO("Successfully rolled back blockchain to height: %u!", rollback_height);
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+  leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_clear(write_batch);
+  leveldb_writebatch_destroy(write_batch);
+#else
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  rocksdb_writeoptions_destroy(woptions);
+  rocksdb_writebatch_clear(write_batch);
+  rocksdb_writebatch_destroy(write_batch);
+#endif
   return 0;
 }
 
