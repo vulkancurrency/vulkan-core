@@ -1676,6 +1676,13 @@ uint32_t get_block_height(void)
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
+  if (compare_block_hash(block_hash, genesis_block.hash))
+  {
+    char *genesis_block_hash = hash_to_str(block_hash);
+    LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash);
+    free(genesis_block_hash);
+    return 1;
+  }
 
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
