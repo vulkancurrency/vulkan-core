@@ -803,13 +803,13 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
       get_tx_key(tx_key, tx->id);
       get_unspent_tx_key(unspent_tx_key, tx->id);
 
-      #ifdef USE_LEVELDB
-        leveldb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
-        leveldb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
-      #else
-        rocksdb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
-        rocksdb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
-      #endif
+    #ifdef USE_LEVELDB
+      leveldb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
+      leveldb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
+    #else
+      rocksdb_writebatch_delete(write_batch, (char*)tx_key, sizeof(tx_key));
+      rocksdb_writebatch_delete(write_batch, (char*)unspent_tx_key, sizeof(unspent_tx_key));
+    #endif
     }
 
     free_block(block);
