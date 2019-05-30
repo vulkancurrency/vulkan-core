@@ -737,7 +737,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
   }
   else
   {
-    new_top_block = get_block_from_height(rollback_height--);
+    new_top_block = get_block_from_height(rollback_height - 1);
     assert(new_top_block != NULL);
   }
 
