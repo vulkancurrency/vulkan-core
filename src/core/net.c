@@ -491,7 +491,7 @@ int connect_net_to_peer(const char *address, uint16_t port)
   struct mg_connection *connection = mg_connect(&g_net_mgr, bind_address, ev_handler);
   if (connection == NULL)
   {
-    LOG_WARNING("Failed to connect to peer with address: %s!", bind_address);
+    LOG_WARNING("Failed to connect to peer with address: %s:%hu", bind_address, port);
     return 1;
   }
 
