@@ -1471,8 +1471,10 @@ int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id
       return 1;
 
     case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
-    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
       return 1;
+    case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
+      check_sender = 1;
+      break;
 
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       return 1;
