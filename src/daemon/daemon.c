@@ -99,6 +99,15 @@ static argument_map_t g_arguments_map[] = {
 
 static void perform_shutdown(int sig)
 {
+  if (g_enable_miner)
+  {
+    if (stop_mining())
+    {
+      exit(1);
+      return;
+    }
+  }
+
   if (logger_close())
   {
     exit(1);
@@ -127,15 +136,6 @@ static void perform_shutdown(int sig)
   {
     exit(1);
     return;
-  }
-
-  if (g_enable_miner)
-  {
-    if (stop_mining())
-    {
-      exit(1);
-      return;
-    }
   }
 
   exit(0);
