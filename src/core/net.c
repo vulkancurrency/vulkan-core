@@ -41,6 +41,7 @@
 #include "common/mongoose.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
+#include "common/util.h"
 #include "common/vec.h"
 
 #include "net.h"
