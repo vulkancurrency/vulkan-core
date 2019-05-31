@@ -197,7 +197,7 @@ static int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_CONNECT:
         {
           i++;
-          char *connect_address_str = (char*)argv[i];
+          const char *connect_address_str = (const char*)argv[i];
           char *token = strtok((char*)connect_address_str, ":");
 
           // get address
