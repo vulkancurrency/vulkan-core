@@ -34,6 +34,7 @@
 #include "common/task.h"
 #include "common/vec.h"
 
+#define NET_MAX_NUM_CONNECTION_ENTRIES 1024
 #define NET_MGR_POLL_DELAY 1000
 #define NET_RECONNECT_SEEDS_TASK_DELAY 10
 #define NET_FLUSH_CONNECTIONS_TASK_DELAY 0.01
@@ -56,6 +57,18 @@ typedef struct NetConnection
   uint32_t host_port;
   int anonymous;
 } net_connection_t;
+
+typedef struct ConnectionEntry
+{
+  char *address;
+  uint16_t port;
+} connection_entry_t;
+
+typedef struct ConnectionEntries
+{
+  uint16_t num_entries;
+  connection_entry_t entries[NET_MAX_NUM_CONNECTION_ENTRIES];
+} connection_entries_t;
 
 void set_net_host_address(const char *host_address);
 const char* get_net_host_address(void);
@@ -102,7 +115,7 @@ task_result_t reconnect_seeds(task_t *task, va_list args);
 task_result_t flush_connections(task_t *task, va_list args);
 
 int net_run(void);
-int init_net(void);
+int init_net(connection_entries_t connection_entries);
 int deinit_net(void);
 
 #ifdef __cplusplus

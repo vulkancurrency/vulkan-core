@@ -633,7 +633,7 @@ task_result_t flush_connections(task_t *task, va_list args)
   return TASK_RESULT_WAIT;
 }
 
-int init_net(void)
+int init_net(connection_entries_t connection_entries)
 {
   if (g_net_initialized)
   {
@@ -666,6 +666,21 @@ int init_net(void)
 
   // connect to the peers in the seeds list
   assert(connect_net_to_seeds() == 0);
+
+  // connect to manually specified connection entries
+  for (uint16_t i = 0; i < connection_entries.num_entries; i++)
+  {
+    connection_entry_t *connection_entry = &connection_entries.entries[i];
+    assert(connection_entry != NULL);
+
+    LOG_INFO("Attempting to connect to manually provided address: %s:%u...", connection_entry->address, connection_entry->port);
+    if (connect_net_to_peer(connection_entry->address, connection_entry->port))
+    {
+      LOG_INFO("Failed to establish manual connection with %s:%u!", connection_entry->address, connection_entry->port);
+    }
+
+    free(connection_entry->address);
+  }
 
   g_net_resync_chain_task = add_task(resync_chain, RESYNC_CHAIN_TASK_DELAY);
   g_net_reconnect_seeds_task = add_task(reconnect_seeds, NET_RECONNECT_SEEDS_TASK_DELAY);

@@ -49,6 +49,7 @@
 
 #include "wallet/wallet.h"
 
+static connection_entries_t g_connection_entries;
 static int g_enable_miner = 0;
 
 static const char *g_blockchain_data_dir = "blockchain";
@@ -63,6 +64,7 @@ enum
   CMD_ARG_DISABLE_PORT_MAPPING,
   CMD_ARG_BIND_ADDRESS,
   CMD_ARG_BIND_PORT,
+  CMD_ARG_CONNECT,
   CMD_ARG_BLOCKCHAIN_DIR,
   CMD_ARG_CLEAR_BLOCKCHAIN,
   CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION,
@@ -81,6 +83,7 @@ static argument_map_t g_arguments_map[] = {
   {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", "", 0},
   {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", "<bind_address>", 1},
   {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 1},
+  {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer.", "<address:port>", 1},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
@@ -191,6 +194,30 @@ static int parse_commandline_args(int argc, char **argv)
         uint32_t host_port = (uint32_t)atoi(argv[i]);
         set_net_host_port(host_port);
         break;
+      case CMD_ARG_CONNECT:
+        {
+          i++;
+          char *connect_address_str = (char*)argv[i];
+          char *token = strtok((char*)connect_address_str, ":");
+
+          // get address
+          char *address = malloc(strlen(token));
+          memcpy(address, token, strlen(token));
+          address[strlen(token)] = '\0';
+
+          // get port
+          token = strtok(NULL, ":");
+          uint16_t port = (uint16_t)atoi(token);
+
+          connection_entry_t connection_entry;
+          connection_entry.address = address;
+          connection_entry.port = port;
+
+          assert(g_connection_entries.num_entries < NET_MAX_NUM_CONNECTION_ENTRIES);
+          g_connection_entries.entries[g_connection_entries.num_entries] = connection_entry;
+          g_connection_entries.num_entries++;
+        }
+        break;
       case CMD_ARG_BLOCKCHAIN_DIR:
         i++;
         g_blockchain_data_dir = (const char*)argv[i];
@@ -246,10 +273,10 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_MINE:
         i++;
-        size_t num_worker_threads = atoi(argv[i]);
+        uint16_t num_worker_threads = (uint16_t)atoi(argv[i]);
         if (num_worker_threads < 1)
         {
-          fprintf(stderr, "Invalid number of worker threads: %zu!\n", num_worker_threads);
+          fprintf(stderr, "Invalid number of worker threads: %u!\n", num_worker_threads);
           return 1;
         }
 
@@ -300,7 +327,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if (init_net())
+  if (init_net(g_connection_entries))
   {
     return 1;
   }
