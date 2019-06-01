@@ -58,6 +58,7 @@ static struct mg_mgr g_net_mgr;
 
 static const char *g_net_host_address = "0.0.0.0";
 static uint16_t g_net_host_port = P2P_PORT;
+static const char *g_net_external_address = "";
 static int g_net_disable_port_mapping = 0;
 
 static task_t *g_net_resync_chain_task = NULL;
@@ -86,6 +87,11 @@ void set_net_host_port(uint32_t host_port)
 uint32_t get_net_host_port(void)
 {
   return g_net_host_port;
+}
+
+const char* get_net_external_address(void)
+{
+  return g_net_external_address;
 }
 
 void set_net_disable_port_mapping(int disable_port_mapping)
@@ -418,7 +424,7 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
   }
 }
 
-void setup_net_port_mapping(uint16_t port)
+int setup_net_port_mapping(uint16_t port)
 {
   LOG_INFO("Trying to add IGD port mapping...");
   int result;
@@ -435,6 +441,16 @@ void setup_net_port_mapping(uint16_t port)
   char lanAddress[64];
   result = UPNP_GetValidIGD(deviceList, &urls, &igdData, lanAddress, sizeof lanAddress);
   freeUPNPDevlist(deviceList);
+
+  // get our external pv4 address
+  char *external_address = malloc(40);
+  int external_ip_result = UPNP_GetExternalIPAddress(urls.controlURL, igdData.first.servicetype, external_address);
+  g_net_external_address = (const char*)external_address;
+  if (external_ip_result != UPNPCOMMAND_SUCCESS)
+  {
+    LOG_ERROR("Failed to get external IPV4 address!");
+    return 1;
+  }
 
   if (result > 0)
   {
@@ -477,6 +493,8 @@ void setup_net_port_mapping(uint16_t port)
   {
     LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
   }
+
+  return 0;
 }
 
 int net_run(void)
@@ -524,16 +542,17 @@ int connect_net_to_seeds(void)
   {
     seed_node_entry_t seed_node_entry = SEED_NODES[i];
     uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
-    if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
+    if (peer_ip == convert_str_to_ip(g_net_external_address) && seed_node_entry.port == g_net_host_port)
     {
       continue;
     }
-    else
+    else if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
     {
-      if (is_local_address(peer_ip) && seed_node_entry.port == g_net_host_port)
-      {
-        continue;
-      }
+      continue;
+    }
+    else if (is_local_address(peer_ip) || is_private_address(peer_ip))
+    {
+      continue;
     }
 
     uint64_t peer_id = concatenate(peer_ip, seed_node_entry.port);
@@ -651,7 +670,10 @@ int init_net(connection_entries_t connection_entries)
   // setup port mapping
   if (g_net_disable_port_mapping == 0)
   {
-    setup_net_port_mapping(g_net_host_port);
+    if (setup_net_port_mapping(g_net_host_port))
+    {
+      return 1;
+    }
   }
 
   // setup the checkpoint data

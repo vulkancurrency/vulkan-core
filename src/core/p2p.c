@@ -231,16 +231,17 @@ int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
       return 1;
     }
 
-    if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
+    if (remote_ip == convert_str_to_ip(get_net_external_address()) && host_port == get_net_host_port())
     {
       continue;
     }
-    else
+    else if (remote_ip == convert_str_to_ip(get_net_host_address()) && host_port == get_net_host_port())
     {
-      if (is_local_address(remote_ip) && host_port == get_net_host_port())
-      {
-        continue;
-      }
+      continue;
+    }
+    else if (is_local_address(remote_ip) || is_private_address(remote_ip))
+    {
+      continue;
     }
 
     char *bind_address = convert_ip_to_str(remote_ip);
@@ -255,10 +256,10 @@ int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator)
       break;
     }
 
-    //if (connect_net_to_peer(bind_address, host_port))
-    //{
-    //  return 1;
-    //}
+    if (connect_net_to_peer(bind_address, host_port))
+    {
+      return 1;
+    }
 
     free(bind_address);
   }

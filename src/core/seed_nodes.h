@@ -35,7 +35,7 @@ typedef struct SeedNodeEntry
 } seed_node_entry_t;
 
 static const seed_node_entry_t SEED_NODES[] = {
-  {"127.0.0.1", P2P_PORT}
+
 };
 
 #define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
