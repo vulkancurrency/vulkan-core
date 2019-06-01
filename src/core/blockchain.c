@@ -647,6 +647,8 @@ int backup_blockchain_nolock(void)
 
   rocksdb_free(err);
 #endif
+
+  LOG_INFO("Successfully backed up blockchain database!");
   return 0;
 }
 
