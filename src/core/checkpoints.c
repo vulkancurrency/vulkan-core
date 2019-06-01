@@ -29,8 +29,10 @@
 
 #include <hashtable.h>
 
+#include "common/logger.h"
 #include "common/util.h"
 
+#include "checkpoint_data.h"
 #include "checkpoints.h"
 #include "parameters.h"
 
@@ -80,6 +82,23 @@ int remove_checkpoint(uint32_t height)
   return 0;
 }
 
+static int load_checkpoint(checkpoint_entry_t checkpoint_entry)
+{
+  // convert block hash as hex back to bytes
+  size_t hash_size = 0;
+  uint8_t *hash = hex2bin(checkpoint_entry.block_hash, &hash_size);
+  assert(hash_size == HASH_SIZE);
+
+  // add hash as to checkpoint at height
+  if (add_checkpoint(checkpoint_entry.height, hash))
+  {
+    return 1;
+  }
+
+  LOG_INFO("Loaded checkpoint: %s at block height: %u", checkpoint_entry.block_hash, checkpoint_entry.height);
+  return 0;
+}
+
 int init_checkpoints(void)
 {
   if (g_checkpoints_initialized)
@@ -88,17 +107,21 @@ int init_checkpoints(void)
   }
 
   assert(hashtable_new(&g_checkpoints_table) == CC_OK);
-  for (int i = 0; i < NUM_CHECKPOINTS; i++)
+  if (parameters_get_use_testnet())
   {
-    checkpoint_entry_t checkpoint_entry = CHECKPOINTS[i];
-
-    // convert block hash as hex back to bytes
-    size_t hash_size = 0;
-    uint8_t *hash = hex2bin(checkpoint_entry.block_hash, &hash_size);
-    assert(hash_size == HASH_SIZE);
-
-    // add hash as to checkpoint at height
-    assert(add_checkpoint(checkpoint_entry.height, hash) == 0);
+    for (int i = 0; i < NUM_TESTNET_CHECKPOINTS; i++)
+    {
+      checkpoint_entry_t checkpoint_entry = TESTNET_CHECKPOINTS[i];
+      assert(load_checkpoint(checkpoint_entry) == 0);
+    }
+  }
+  else
+  {
+    for (int i = 0; i < NUM_CHECKPOINTS; i++)
+    {
+      checkpoint_entry_t checkpoint_entry = CHECKPOINTS[i];
+      assert(load_checkpoint(checkpoint_entry) == 0);
+    }
   }
 
   g_checkpoints_initialized = 0;

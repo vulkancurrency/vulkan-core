@@ -28,8 +28,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "checkpoints.h"
-
 #define BLOCK_VERSION 0x01
 #define MAX_BLOCK_SIZE (1024 * 1024 * 500) // 500mb
 #define MAX_TX_SIZE (1024 * 500) // 500kb
@@ -71,12 +69,6 @@
 
 #define MAX_P2P_PEERS_COUNT 16
 #define MAX_GROUPED_BLOCKS_COUNT 6
-
-static const checkpoint_entry_t CHECKPOINTS[] = {
-
-};
-
-#define NUM_CHECKPOINTS (sizeof(CHECKPOINTS) / sizeof(checkpoint_entry_t))
 
 void parameters_set_use_testnet(int use_testnet);
 int parameters_get_use_testnet(void);
