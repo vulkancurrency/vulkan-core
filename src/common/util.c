@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>
@@ -164,6 +163,29 @@ char* address_to_str(uint8_t *in_address)
   return out_address;
 }
 
+uint8_t* hex2bin(const char *hexstr, size_t *size)
+{
+  size_t hexstr_len = strlen(hexstr);
+  size_t bytes_len = hexstr_len / 2;
+
+  uint8_t* bytes = (uint8_t*)malloc(bytes_len);
+  int count = 0;
+  const char* pos = hexstr;
+
+  for (count = 0; count < bytes_len; count++)
+  {
+    sscanf(pos, "%2hhx", &bytes[count]);
+    pos += 2;
+  }
+
+  if (size != NULL)
+  {
+    *size = bytes_len;
+  }
+
+  return bytes;
+}
+
 uint32_t get_current_time(void)
 {
   return (uint32_t)time(NULL);
@@ -183,8 +205,7 @@ void sort(void *base, size_t nitems, size_t size)
 
 int is_private_address(uint32_t ip)
 {
-  unsigned char bytes[4];
-
+  uint8_t bytes[4];
   bytes[0] = ip & 0xFF;
   bytes[1] = (ip >> 8) & 0xFF;
   bytes[2] = (ip >> 16) & 0xFF;
@@ -213,8 +234,7 @@ int is_private_address(uint32_t ip)
 
 int is_local_address(uint32_t ip)
 {
-  unsigned char bytes[4];
-
+  uint8_t bytes[4];
   bytes[0] = ip & 0xFF;
   bytes[1] = (ip >> 8) & 0xFF;
   bytes[2] = (ip >> 16) & 0xFF;
@@ -238,7 +258,7 @@ int is_local_address(uint32_t ip)
 char* convert_ip_to_str(uint32_t ip)
 {
   char *out = malloc(sizeof(char) * 15);
-  unsigned char bytes[4];
+  uint8_t bytes[4];
 
   bytes[0] = ip & 0xFF;
   bytes[1] = (ip >> 8) & 0xFF;

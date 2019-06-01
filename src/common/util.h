@@ -58,6 +58,7 @@ int make_hash(char *digest, unsigned char *string);
 char* bytes_to_str(uint8_t *in_hash, size_t in_size);
 char* hash_to_str(uint8_t *in_hash);
 char* address_to_str(uint8_t *in_address);
+uint8_t* hex2bin(const char *hexstr, size_t *size);
 
 uint32_t get_current_time(void);
 int rmrf(const char *path);
