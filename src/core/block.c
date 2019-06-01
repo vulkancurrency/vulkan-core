@@ -428,15 +428,13 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 
   if (buffer_read_uint32(buffer_iterator, &block->version))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   uint8_t *previous_hash = NULL;
   if (buffer_read_bytes(buffer_iterator, &previous_hash))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(block->previous_hash, previous_hash, HASH_SIZE);
@@ -445,8 +443,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
   uint8_t *hash = NULL;
   if (buffer_read_bytes(buffer_iterator, &hash))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(block->hash, hash, HASH_SIZE);
@@ -454,39 +451,33 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 
   if (buffer_read_uint32(buffer_iterator, &block->timestamp))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   if (buffer_read_uint32(buffer_iterator, &block->nonce))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->difficulty))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->cumulative_difficulty))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   if (buffer_read_uint64(buffer_iterator, &block->cumulative_emission))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   uint8_t *merkle_root = NULL;
   if (buffer_read_bytes(buffer_iterator, &merkle_root))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(block->merkle_root, merkle_root, HASH_SIZE);
@@ -494,12 +485,15 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 
   if (buffer_read_uint32(buffer_iterator, &block->transaction_count))
   {
-    free_block(block);
-    return 1;
+    goto deserialize_fail;
   }
 
   *block_out = block;
   return 0;
+
+deserialize_fail:
+  free_block(block);
+  return 1;
 }
 
 int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)

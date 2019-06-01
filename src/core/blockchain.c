@@ -266,15 +266,7 @@ int open_blockchain(const char *blockchain_dir)
   if (err != NULL)
   {
     LOG_ERROR("Could not open blockchain database, failed to repair db: %s!", err);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_free(options);
-  #else
-    rocksdb_free(err);
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto bc_open_fail;
   }
 
 #ifdef USE_LEVELDB
@@ -286,15 +278,7 @@ int open_blockchain(const char *blockchain_dir)
   if (err != NULL)
   {
     LOG_ERROR("Could not open blockchain database: %s!", err);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_free(options);
-  #else
-    rocksdb_free(err);
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto bc_open_fail;
   }
 
 #ifdef USE_LEVELDB
@@ -332,6 +316,16 @@ int open_blockchain(const char *blockchain_dir)
   LOG_INFO("Successfully initialized blockchain.");
   g_blockchain_is_open = 1;
   return 0;
+
+bc_open_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_free(options);
+#else
+  rocksdb_free(err);
+  rocksdb_options_destroy(options);
+#endif
+  return 1;
 }
 
 int remove_blockchain(const char *blockchain_dir)
@@ -348,12 +342,7 @@ int remove_blockchain(const char *blockchain_dir)
   if (err != NULL)
   {
     LOG_ERROR("Failed to remove blockchain database: %s!", err);
-  #ifdef USE_LEVELDB
-    leveldb_options_destroy(options);
-  #else
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto remove_db_fail;
   }
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(blockchain_dir);
@@ -366,12 +355,7 @@ int remove_blockchain(const char *blockchain_dir)
   if (err != NULL)
   {
     LOG_ERROR("Failed to remove blockchain backup database: %s!", err);
-  #ifdef USE_LEVELDB
-    leveldb_options_destroy(options);
-  #else
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto remove_db_fail;
   }
 
 #ifdef USE_LEVELDB
@@ -380,6 +364,14 @@ int remove_blockchain(const char *blockchain_dir)
   rocksdb_options_destroy(options);
 #endif
   return 0;
+
+remove_db_fail:
+#ifdef USE_LEVELDB
+  leveldb_options_destroy(options);
+#else
+  rocksdb_options_destroy(options);
+#endif
+  return 1;
 }
 
 int close_blockchain(void)
@@ -453,15 +445,7 @@ int open_backup_blockchain(void)
   if (err != NULL)
   {
     LOG_ERROR("Could not open backup blockchain database, failed to repair db: %s!", err);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_free(options);
-  #else
-    rocksdb_free(err);
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto backup_bc_open_fail;
   }
 
 #ifdef USE_LEVELDB
@@ -473,15 +457,7 @@ int open_backup_blockchain(void)
   if (err != NULL)
   {
     LOG_ERROR("Could not open backup blockchain database: %s!", err);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_free(options);
-  #else
-    rocksdb_free(err);
-    rocksdb_options_destroy(options);
-  #endif
-    return 1;
+    goto backup_bc_open_fail;
   }
 
 #ifdef USE_LEVELDB
@@ -494,6 +470,16 @@ int open_backup_blockchain(void)
 
   g_blockchain_backup_is_open = 1;
   return 0;
+
+backup_bc_open_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_free(options);
+#else
+  rocksdb_free(err);
+  rocksdb_options_destroy(options);
+#endif
+  return 1;
 }
 
 int close_backup_blockchain(void)
@@ -588,15 +574,9 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
     if (err != NULL || value == NULL)
     {
       LOG_ERROR("Failed to retrieve value from key: %s in database!", key);
-      leveldb_free(err);
-      leveldb_readoptions_destroy(roptions);
-      leveldb_iter_destroy(iterator);
-      leveldb_writeoptions_destroy(woptions);
-      leveldb_writebatch_clear(write_batch);
-      leveldb_writebatch_destroy(write_batch);
       leveldb_free(key);
       leveldb_free(value);
-      return 1;
+      goto copy_entries_fail;
     }
 
     leveldb_writebatch_put(write_batch, (char*)key, key_length, (char*)value, read_len);
@@ -606,13 +586,7 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
   if (err != NULL)
   {
     LOG_ERROR("Failed to copy entries to database!");
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-    leveldb_iter_destroy(iterator);
-    leveldb_writeoptions_destroy(woptions);
-    leveldb_writebatch_clear(write_batch);
-    leveldb_writebatch_destroy(write_batch);
-    return 1;
+    goto copy_entries_fail;
   }
 
   leveldb_free(err);
@@ -622,6 +596,15 @@ static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
   leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
   return 0;
+
+copy_entries_fail:
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+  leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_clear(write_batch);
+  leveldb_writebatch_destroy(write_batch);
+  return 1;
 }
 #endif
 
@@ -770,22 +753,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
     if (block == NULL)
     {
       LOG_ERROR("Could not rollback blockchain, unknown block at height: %u!", i);
-
-    #ifdef USE_LEVELDB
-      leveldb_readoptions_destroy(roptions);
-      leveldb_iter_destroy(iterator);
-      leveldb_writeoptions_destroy(woptions);
-      leveldb_writebatch_clear(write_batch);
-      leveldb_writebatch_destroy(write_batch);
-    #else
-      rocksdb_readoptions_destroy(roptions);
-      rocksdb_iter_destroy(iterator);
-      rocksdb_writeoptions_destroy(woptions);
-      rocksdb_writebatch_clear(write_batch);
-      rocksdb_writebatch_destroy(write_batch);
-    #endif
-      free_block(block);
-      return 1;
+      goto rollback_fail;
     }
 
     uint8_t block_key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
@@ -829,23 +797,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
   if (err != NULL)
   {
     LOG_ERROR("Failed to rollback blockchain!");
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-    leveldb_iter_destroy(iterator);
-    leveldb_writeoptions_destroy(woptions);
-    leveldb_writebatch_clear(write_batch);
-    leveldb_writebatch_destroy(write_batch);
-  #else
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-    rocksdb_iter_destroy(iterator);
-    rocksdb_writeoptions_destroy(woptions);
-    rocksdb_writebatch_clear(write_batch);
-    rocksdb_writebatch_destroy(write_batch);
-  #endif
-    return 1;
+    goto rollback_fail;
   }
 
   // finally set the new top block provided above
@@ -869,6 +821,24 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
   rocksdb_writebatch_destroy(write_batch);
 #endif
   return 0;
+
+rollback_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+  leveldb_iter_destroy(iterator);
+  leveldb_writeoptions_destroy(woptions);
+  leveldb_writebatch_clear(write_batch);
+  leveldb_writebatch_destroy(write_batch);
+#else
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  rocksdb_writeoptions_destroy(woptions);
+  rocksdb_writebatch_clear(write_batch);
+  rocksdb_writebatch_destroy(write_batch);
+#endif
+  return 1;
 }
 
 int rollback_blockchain(uint32_t rollback_height)
@@ -1139,19 +1109,14 @@ int insert_block_nolock(block_t *block)
       unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
       assert(unspent_tx != NULL);
 
-      if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) || unspent_tx->unspent_txouts[txin->txout_index] == NULL)
+      if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
+        unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
-        LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was not found!");
+        char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+        LOG_ERROR("A txin tried to mark a unspent txout: %s as spent, but it was not found!", unspent_tx_hash_str);
+        free(unspent_tx_hash_str);
         free_unspent_transaction(unspent_tx);
-
-      #ifdef USE_LEVELDB
-        leveldb_free(err);
-        leveldb_writeoptions_destroy(woptions);
-      #else
-        rocksdb_free(err);
-        rocksdb_writeoptions_destroy(woptions);
-      #endif
-        continue;
+        goto insert_block_fail;
       }
       else
       {
@@ -1160,17 +1125,11 @@ int insert_block_nolock(block_t *block)
 
         if (unspent_txout->spent == 1)
         {
-          LOG_DEBUG("A txin tried to mark a unspent txout as spent, but it was already spent!");
+          char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+          LOG_ERROR("A txin tried to mark a unspent txout: %s as spent, but it was already spent!", unspent_tx_hash_str);
+          free(unspent_tx_hash_str);
           free_unspent_transaction(unspent_tx);
-
-        #ifdef USE_LEVELDB
-          leveldb_free(err);
-          leveldb_writeoptions_destroy(woptions);
-        #else
-          rocksdb_free(err);
-          rocksdb_writeoptions_destroy(woptions);
-        #endif
-          continue;
+          goto insert_block_fail;
         }
 
         unspent_txout->spent = 1;
@@ -1208,15 +1167,7 @@ int insert_block_nolock(block_t *block)
   if (err != NULL)
   {
     LOG_ERROR("Could not insert block into blockchain storage: %s!", err);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_writeoptions_destroy(woptions);
-  #else
-    rocksdb_free(err);
-    rocksdb_writeoptions_destroy(woptions);
-  #endif
-    return 1;
+    goto insert_block_fail;
   }
 
   // update our current top block hash in the blockchain
@@ -1230,6 +1181,16 @@ int insert_block_nolock(block_t *block)
   rocksdb_writeoptions_destroy(woptions);
 #endif
   return 0;
+
+insert_block_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_writeoptions_destroy(woptions);
+#else
+  rocksdb_free(err);
+  rocksdb_writeoptions_destroy(woptions);
+#endif
+  return 1;
 }
 
 int insert_block(block_t *block)
@@ -1331,16 +1292,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
   if (err != NULL || serialized_block == NULL)
   {
-  #ifdef USE_LEVELDB
-    leveldb_free(serialized_block);
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-  #else
-    rocksdb_free(serialized_block);
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-  #endif
-    return NULL;
+    goto block_retrieval_fail;
   }
 
   buffer_t *buffer = buffer_init_data(0, serialized_block, read_len);
@@ -1352,17 +1304,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   {
     buffer_iterator_free(buffer_iterator);
     buffer_free(buffer);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(serialized_block);
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-  #else
-    rocksdb_free(serialized_block);
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-  #endif
-    return NULL;
+    goto block_retrieval_fail;
   }
 
   // deserialize the block's transactions
@@ -1381,6 +1323,18 @@ block_t *get_block_from_hash(uint8_t *block_hash)
   rocksdb_readoptions_destroy(roptions);
 #endif
   return block;
+
+block_retrieval_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(serialized_block);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
+  rocksdb_free(serialized_block);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+#endif
+  return NULL;
 }
 
 block_t *get_block_from_height(uint32_t height)

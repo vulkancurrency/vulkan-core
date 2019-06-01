@@ -548,8 +548,7 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
   uint8_t *id = NULL;
   if (buffer_read_bytes(buffer_iterator, &id))
   {
-    free_transaction(tx);
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(tx->id, id, HASH_SIZE);
@@ -558,15 +557,13 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
   uint32_t txin_count = 0;
   if (buffer_read_uint32(buffer_iterator, &txin_count))
   {
-    free_transaction(tx);
-    return 1;
+    goto deserialize_fail;
   }
 
   uint32_t txout_count = 0;
   if (buffer_read_uint32(buffer_iterator, &txout_count))
   {
-    free_transaction(tx);
-    return 1;
+    goto deserialize_fail;
   }
 
   // read txins
@@ -575,8 +572,7 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
     input_transaction_t *txin = NULL;
     if (deserialize_txin(buffer_iterator, &txin))
     {
-      free_transaction(tx);
-      return 1;
+      goto deserialize_fail;
     }
 
     tx->txin_count++;
@@ -594,8 +590,7 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
     output_transaction_t *txout = NULL;
     if (deserialize_txout(buffer_iterator, &txout))
     {
-      free_transaction(tx);
-      return 1;
+      goto deserialize_fail;
     }
 
     tx->txout_count++;
@@ -609,6 +604,10 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
 
   *tx_out = tx;
   return 0;
+
+deserialize_fail:
+  free_transaction(tx);
+  return 1;
 }
 
 int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx)
