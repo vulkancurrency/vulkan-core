@@ -1777,7 +1777,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
   assert(block_hash != NULL);
   if (compare_block_hash(block_hash, genesis_block.hash))
   {
-    char *genesis_block_hash = hash_to_str(block_hash);
+    char *genesis_block_hash = bin2hex(block_hash, HASH_SIZE);
     LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash);
     free(genesis_block_hash);
     return 1;
@@ -1800,7 +1800,7 @@ int delete_block_from_blockchain(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    char *block_hash_str = hash_to_str(block_hash);
+    char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
     LOG_ERROR("Could not delete block: %s from blockchain storage!", block_hash_str);
     free(block_hash_str);
 
@@ -1853,7 +1853,7 @@ int delete_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    char *tx_hash_str = hash_to_str(tx_id);
+    char *tx_hash_str = bin2hex(tx_id, HASH_SIZE);
     LOG_ERROR("Could not delete tx: %s from index!", tx_hash_str);
     free(tx_hash_str);
 
@@ -1894,7 +1894,9 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not delete unspent tx: %s from unspent index!", hash_to_str(tx_id));
+    char *unspent_tx_hash_str = bin2hex(tx_id, HASH_SIZE);
+    LOG_ERROR("Could not delete unspent tx: %s from unspent index!", unspent_tx_hash_str);
+    free(unspent_tx_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);

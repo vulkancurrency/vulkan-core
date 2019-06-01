@@ -241,11 +241,11 @@ void print_block(block_t *block)
   printf("Block:\n");
   printf("Version: %u\n", block->version);
 
-  char *previous_hash_str = hash_to_str(block->previous_hash);
+  char *previous_hash_str = bin2hex(block->previous_hash, HASH_SIZE);
   printf("Previous Hash: %s\n", previous_hash_str);
   free(previous_hash_str);
 
-  char *hash_str = hash_to_str(block->hash);
+  char *hash_str = bin2hex(block->hash, HASH_SIZE);
   printf("Hash: %s\n", hash_str);
   free(hash_str);
 
@@ -255,7 +255,7 @@ void print_block(block_t *block)
   printf("Cumulative Difficulty: %" PRIu64 "\n", block->cumulative_difficulty);
   printf("Cumulative Emission: %" PRIu64 "\n", block->cumulative_emission);
 
-  char *merkle_root_str = hash_to_str(block->merkle_root);
+  char *merkle_root_str = bin2hex(block->merkle_root, HASH_SIZE);
   printf("Merkle Root: %s\n", merkle_root_str);
   free(merkle_root_str);
 

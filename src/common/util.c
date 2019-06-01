@@ -118,7 +118,6 @@ int make_hash(char *digest, unsigned char *string)
 {
   unsigned char hash[crypto_hash_sha256_BYTES];
   crypto_hash_sha256d(hash, string, strlen((char*)string));
-
   for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
   {
     sprintf(&digest[i*2], "%02x", (unsigned int) hash[i]);
@@ -127,40 +126,15 @@ int make_hash(char *digest, unsigned char *string)
   return 0;
 }
 
-char* bytes_to_str(uint8_t *in_hash, size_t in_size)
+char* bin2hex(uint8_t *bin, size_t bin_size)
 {
-  int hash_len = (in_size * 2);
-  char *out_hash = malloc(sizeof(char) * hash_len);
-  for (int i = 0; i < in_size; i++)
+  char *hex = malloc((bin_size * 2) + 1);
+  for (int i = 0; i < bin_size; i++)
   {
-    sprintf(out_hash + (i * 2), "%02x", (unsigned int)in_hash[i]);
+    sprintf(hex + (i * 2), "%02x", (unsigned int)bin[i]);
   }
 
-  return out_hash;
-}
-
-char* hash_to_str(uint8_t *in_hash)
-{
-  int hash_len = (crypto_hash_sha256_BYTES * 2) + 1;
-  char *out_hash = malloc(sizeof(char) * hash_len);
-  for (int i = 0; i < crypto_hash_sha256_BYTES; i++)
-  {
-    sprintf(out_hash + (i * 2), "%02x", (unsigned int)in_hash[i]);
-  }
-
-  return out_hash;
-}
-
-char* address_to_str(uint8_t *in_address)
-{
-  int address_len = (ADDRESS_SIZE * 2) + 1;
-  char *out_address = malloc(sizeof(char) * address_len);
-  for (int i = 0; i < ADDRESS_SIZE; i++)
-  {
-    sprintf(out_address + (i * 2), "%02x", (unsigned int)in_address[i]);
-  }
-
-  return out_address;
+  return hex;
 }
 
 uint8_t* hex2bin(const char *hexstr, size_t *size)

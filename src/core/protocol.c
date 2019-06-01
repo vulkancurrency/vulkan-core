@@ -1293,8 +1293,8 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 
       if (compare_block_hash(block->hash, checkpoint_hash) == 0)
       {
-        char *checkpoint_hash_str = hash_to_str(checkpoint_hash);
-        char *block_hash_str = hash_to_str(block->hash);
+        char *checkpoint_hash_str = bin2hex(checkpoint_hash, HASH_SIZE);
+        char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
         LOG_ERROR("Failed to receive block header, found checkpoint at height: %u, block received: %s "
           "does not match checkpoint hash: %s!", g_protocol_sync_entry.last_sync_height, checkpoint_hash_str, block_hash_str);
 

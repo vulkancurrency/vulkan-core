@@ -178,17 +178,17 @@ void print_txin(uint8_t txin_index, input_transaction_t *txin)
   assert(txin != NULL);
   printf("Txin %u:\n", txin_index);
 
-  char *previous_tx_str = hash_to_str(txin->transaction);
+  char *previous_tx_str = bin2hex(txin->transaction, HASH_SIZE);
   printf("Previous Tx: %s\n", previous_tx_str);
   free(previous_tx_str);
 
   printf("Index: %u\n", txin->txout_index);
 
-  char *signature_str = bytes_to_str(txin->signature, crypto_sign_BYTES);
+  char *signature_str = bin2hex(txin->signature, crypto_sign_BYTES);
   printf("Signature: %s\n", signature_str);
   free(signature_str);
 
-  char *public_key_str = bytes_to_str(txin->public_key, crypto_sign_PUBLICKEYBYTES);
+  char *public_key_str = bin2hex(txin->public_key, crypto_sign_PUBLICKEYBYTES);
   printf("Public Key: %s\n", public_key_str);
   free(public_key_str);
 }
@@ -199,7 +199,7 @@ void print_txout(uint8_t txout_index, output_transaction_t *txout)
   printf("Txout %u:\n", txout_index);
   printf("Amount: %" PRIu64 "\n", txout->amount);
 
-  char *address_str = address_to_str(txout->address);
+  char *address_str = bin2hex(txout->address, ADDRESS_SIZE);
   printf("Address: %s\n", address_str);
   free(address_str);
 }
@@ -209,7 +209,7 @@ void print_transaction(transaction_t *tx)
   assert(tx != NULL);
   printf("Transaction:\n");
 
-  char *tx_id_str = hash_to_str(tx->id);
+  char *tx_id_str = bin2hex(tx->id, HASH_SIZE);
   printf("Id: %s\n", tx_id_str);
   free(tx_id_str);
 
@@ -290,7 +290,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
           (unspent_tx->unspent_txouts[txin->txout_index] == NULL))
       {
-        char *tx_hash_str = hash_to_str(unspent_tx->id);
+        char *tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
         LOG_ERROR("Failed to validate txin referencing invalid unspent tx <%s> with txout at index: %u!", tx_hash_str, txin->txout_index);
         free(tx_hash_str);
         return 0;
@@ -318,7 +318,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 
     if (valid_address(txout->address) == 0)
     {
-      char *tx_hash_str = hash_to_str(tx->id);
+      char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
       LOG_ERROR("Failed to validate txin <%s> invalid txout address at index <%u>!", tx_hash_str, i);
       free(tx_hash_str);
       return 0;

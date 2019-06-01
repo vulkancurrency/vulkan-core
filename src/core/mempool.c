@@ -310,7 +310,7 @@ int clear_expired_txs_in_mempool_nolock(void)
     }
     else if (tx_age > MEMPOOL_TX_EXPIRE_TIME)
     {
-      char *tx_hash_str = hash_to_str(tx->id);
+      char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
       LOG_DEBUG("Removing transaction: %s from mempool due to expired age: %u!", tx_hash_str, tx_age);
       free(tx_hash_str);
       assert(vec_push(&transactions_to_remove, tx) == 0);

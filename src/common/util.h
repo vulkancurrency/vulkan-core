@@ -55,9 +55,7 @@ int string_count(const char *string, const char *countstr, int countbreak);
 const char* string_copy(const char *string, const char *other_string);
 
 int make_hash(char *digest, unsigned char *string);
-char* bytes_to_str(uint8_t *in_hash, size_t in_size);
-char* hash_to_str(uint8_t *in_hash);
-char* address_to_str(uint8_t *in_address);
+char* bin2hex(uint8_t *bin, size_t bin_size);
 uint8_t* hex2bin(const char *hexstr, size_t *size);
 
 uint32_t get_current_time(void);

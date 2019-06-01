@@ -426,7 +426,7 @@ void print_wallet(wallet_t *wallet)
   assert(wallet != NULL);
   uint64_t balance = get_balance_for_address(wallet->address) / COIN;
 
-  char *public_address_str = address_to_str(wallet->address);
+  char *public_address_str = bin2hex(wallet->address, ADDRESS_SIZE);
   printf("Public Address: %s\n", public_address_str);
   free(public_address_str);
 
@@ -436,7 +436,7 @@ void print_wallet(wallet_t *wallet)
 void print_public_key(wallet_t *wallet)
 {
   assert(wallet != NULL);
-  char *public_key_str = bytes_to_str(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
+  char *public_key_str = bin2hex(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
   printf("Public Key: %s\n", public_key_str);
   free(public_key_str);
 }
@@ -444,7 +444,7 @@ void print_public_key(wallet_t *wallet)
 void print_secret_key(wallet_t *wallet)
 {
   assert(wallet != NULL);
-  char *secret_key_str = bytes_to_str(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
+  char *secret_key_str = bin2hex(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
   printf("Secret Key: %s\n", secret_key_str);
   free(secret_key_str);
 }
