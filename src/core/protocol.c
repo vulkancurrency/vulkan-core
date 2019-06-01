@@ -1105,7 +1105,7 @@ void handle_sync_completed(void)
 int check_sync_status(int force_sync_complete)
 {
   uint32_t current_block_height = get_block_height();
-  if (current_block_height >= g_protocol_sync_entry.sync_height || force_sync_complete)
+  if (current_block_height > 0 && (current_block_height >= g_protocol_sync_entry.sync_height || force_sync_complete))
   {
     if (clear_sync_request(1) == 0)
     {

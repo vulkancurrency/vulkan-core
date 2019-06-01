@@ -399,7 +399,10 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
             // forcefully end syncronization, since the connection we tried to sync to
             // has been closed, let's assume we have the top block so that we don't
             // restore the blockchain to the point before we started syncronizing...
-            check_sync_status(1);
+            if (check_sync_status(1))
+            {
+              assert(clear_sync_request(0) == 0);
+            }
           }
 
           assert(remove_peer(peer) == 0);
