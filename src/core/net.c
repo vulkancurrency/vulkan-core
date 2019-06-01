@@ -424,7 +424,7 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
   }
 }
 
-int setup_net_port_mapping(uint16_t port)
+void setup_net_port_mapping(uint16_t port)
 {
   LOG_INFO("Trying to add IGD port mapping...");
   int result;
@@ -448,8 +448,7 @@ int setup_net_port_mapping(uint16_t port)
   g_net_external_address = (const char*)external_address;
   if (external_ip_result != UPNPCOMMAND_SUCCESS)
   {
-    LOG_ERROR("Failed to get external IPV4 address!");
-    return 1;
+    LOG_WARNING("Failed to get external IPV4 address!");
   }
 
   if (result > 0)
@@ -493,8 +492,6 @@ int setup_net_port_mapping(uint16_t port)
   {
     LOG_WARNING("Failed to add IGD port mapping, UPnP device was not recoginzed as IGD!");
   }
-
-  return 0;
 }
 
 int net_run(void)
@@ -670,10 +667,7 @@ int init_net(connection_entries_t connection_entries)
   // setup port mapping
   if (g_net_disable_port_mapping == 0)
   {
-    if (setup_net_port_mapping(g_net_host_port))
-    {
-      return 1;
-    }
+    setup_net_port_mapping(g_net_host_port);
   }
 
   // setup the checkpoint data

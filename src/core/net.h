@@ -105,7 +105,7 @@ int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_
 int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
-int setup_net_port_mapping(uint16_t port);
+void setup_net_port_mapping(uint16_t port);
 int connect_net_to_peer(const char *address, uint16_t port);
 
 int flush_send_queue(net_connection_t *net_connection);
