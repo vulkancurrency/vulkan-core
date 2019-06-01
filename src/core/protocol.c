@@ -38,6 +38,7 @@
 #include "common/util.h"
 
 #include "blockchain.h"
+#include "checkpoints.h"
 #include "mempool.h"
 #include "net.h"
 #include "p2p.h"
