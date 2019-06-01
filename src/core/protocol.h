@@ -97,6 +97,7 @@ typedef struct
   uint32_t host_port;
   char *version_number;
   char *version_name;
+  uint8_t use_testnet;
 } connection_req_t;
 
 typedef struct

@@ -305,9 +305,12 @@ int open_blockchain(const char *blockchain_dir)
   rocksdb_options_destroy(options);
 #endif
 
-  if (has_block_by_hash(genesis_block.hash) == 0)
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
+
+  if (has_block_by_hash(genesis_block->hash) == 0)
   {
-    if (validate_and_insert_block(&genesis_block))
+    if (validate_and_insert_block(genesis_block))
     {
       LOG_ERROR("Could not insert genesis block into blockchain!");
       return 1;
@@ -732,7 +735,10 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
   block_t *new_top_block = NULL;
   if (rollback_height == 0)
   {
-    new_top_block = get_block_from_hash(genesis_block.hash);
+    block_t *genesis_block = get_genesis_block();
+    assert(genesis_block != NULL);
+
+    new_top_block = get_block_from_hash(genesis_block->hash);
     assert(new_top_block != NULL);
   }
   else
@@ -885,9 +891,10 @@ uint64_t get_cumulative_emission(void)
 uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission)
 {
   uint64_t block_reward = (MAX_MONEY - cumulative_emission) >> BLOCK_REWARD_EMISSION_FACTOR;
-  if (cumulative_emission == 0 && GENESIS_REWARD > 0)
+  uint64_t genesis_reward = parameters_get_genesis_reward();
+  if (cumulative_emission == 0 && genesis_reward > 0)
   {
-    block_reward = GENESIS_REWARD;
+    block_reward = genesis_reward;
   }
 
   return block_reward;
@@ -987,7 +994,7 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
 
   difficulty_info.num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
   difficulty_info.num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
-  difficulty_info.target_seconds = DIFFICULTY_TARGET;
+  difficulty_info.target_seconds = parameters_get_difficulty_target();
 
   uint64_t difficulty = get_next_difficulty(difficulty_info);
 
@@ -1386,7 +1393,10 @@ block_t *get_block_from_height(uint32_t height)
 
   if (height == 0)
   {
-    return get_block_from_hash(genesis_block.hash);
+    block_t *genesis_block = get_genesis_block();
+    assert(genesis_block != NULL);
+
+    return get_block_from_hash(genesis_block->hash);
   }
 
   block_t *block = get_current_block();
@@ -1775,9 +1785,12 @@ uint32_t get_block_height(void)
 int delete_block_from_blockchain(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
-  if (compare_block_hash(block_hash, genesis_block.hash))
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
+
+  if (compare_block_hash(block_hash, genesis_block->hash))
   {
-    char *genesis_block_hash = bin2hex(block_hash, HASH_SIZE);
+    char *genesis_block_hash = bin2hex(genesis_block->hash, HASH_SIZE);
     LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash);
     free(genesis_block_hash);
     return 1;

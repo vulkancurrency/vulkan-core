@@ -65,7 +65,7 @@ block_t* make_block(void)
   block->cumulative_difficulty = 0;
   block->cumulative_emission = 0;
 
-  memcpy(block->merkle_root, &genesis_block.merkle_root, HASH_SIZE);
+  memset(block->merkle_root, 0, HASH_SIZE);
   block->transaction_count = 0;
   block->transactions = NULL;
   return block;
@@ -318,6 +318,7 @@ uint32_t get_block_header_size(block_t *block)
   {
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
+
     block_header_size += get_tx_header_size(tx);
   }
 
@@ -336,14 +337,21 @@ int compare_block(block_t *block, block_t *other_block)
   return (compare_block_hash(block->hash, other_block->hash) && compare_merkle_hash(block->merkle_root, other_block->merkle_root));
 }
 
+block_t *get_genesis_block(void)
+{
+  return parameters_get_use_testnet() ? &testnet_genesis_block : &mainnet_genesis_block;
+}
+
 int compare_with_genesis_block(block_t *block)
 {
   assert(block != NULL);
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
 
   compute_self_block_hash(block);
-  compute_self_block_hash(&genesis_block);
+  compute_self_block_hash(genesis_block);
 
-  return compare_block(block, &genesis_block);
+  return compare_block(block, genesis_block);
 }
 
 block_t* compute_genesis_block(wallet_t *wallet)
@@ -351,8 +359,8 @@ block_t* compute_genesis_block(wallet_t *wallet)
   assert(wallet != NULL);
 
   block_t *block = make_block();
-  block->timestamp = GENESIS_TIMESTAMP;
-  block->nonce = GENESIS_NONCE;
+  block->timestamp = parameters_get_genesis_timestamp();
+  block->nonce = parameters_get_genesis_nonce();
   block->difficulty = 1;
   block->cumulative_difficulty = 1;
 

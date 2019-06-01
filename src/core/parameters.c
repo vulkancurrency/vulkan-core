@@ -23,24 +23,54 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
-
 #include <stdlib.h>
 #include <stdint.h>
 
-typedef struct SeedNodeEntry
+#include "parameters.h"
+
+static int g_parameters_use_testnet = 0;
+
+void parameters_set_use_testnet(int use_testnet)
 {
-  const char *address;
-  uint16_t port;
-} seed_node_entry_t;
+  g_parameters_use_testnet = use_testnet;
+}
 
-static const seed_node_entry_t SEED_NODES[] = {
+int parameters_get_use_testnet(void)
+{
+  return g_parameters_use_testnet;
+}
 
-};
+uint8_t parameters_get_address_id(void)
+{
+  return g_parameters_use_testnet ? TESTNET_ADDRESS_ID : MAINNET_ADDRESS_ID;
+}
 
-static const seed_node_entry_t TESTNET_SEED_NODES[] = {
+uint32_t parameters_get_genesis_nonce(void)
+{
+  return g_parameters_use_testnet ? TESTNET_GENESIS_NONCE : GENESIS_NONCE;
+}
 
-};
+uint32_t parameters_get_genesis_timestamp(void)
+{
+  return g_parameters_use_testnet ? TESTNET_GENESIS_TIMESTAMP : GENESIS_TIMESTAMP;
+}
 
-#define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
-#define NUM_TESTNET_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
+uint64_t parameters_get_genesis_reward(void)
+{
+  return g_parameters_use_testnet ? TESTNET_GENESIS_REWARD : GENESIS_REWARD;
+}
+
+uint64_t parameters_get_difficulty_target(void)
+{
+  return g_parameters_use_testnet ? TESTNET_DIFFICULTY_TARGET : DIFFICULTY_TARGET;
+}
+
+uint16_t parameters_get_p2p_port(void)
+{
+  return g_parameters_use_testnet ? TESTNET_P2P_PORT : P2P_PORT;
+}
+
+uint16_t parameters_get_rpc_port(void)
+{
+  return g_parameters_use_testnet ? TESTNET_RPC_PORT : RPC_PORT;
+}

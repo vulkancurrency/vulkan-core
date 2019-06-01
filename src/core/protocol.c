@@ -176,10 +176,21 @@ int deserialize_message(packet_t *packet, void **message)
           return 1;
         }
 
+        uint8_t use_testnet = 0;
+        if (buffer_read_uint8(buffer_iterator, &use_testnet))
+        {
+          buffer_iterator_free(buffer_iterator);
+          buffer_free(buffer);
+          free(version_number);
+          free(version_name);
+          return 1;
+        };
+
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
         packed_message->host_port = host_port;
         packed_message->version_number = version_number;
         packed_message->version_name = version_name;
+        packed_message->use_testnet = use_testnet;
         *message = packed_message;
       }
       break;
@@ -582,9 +593,11 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
     case PKT_TYPE_CONNECT_REQ:
       {
         uint32_t host_port = va_arg(args, uint32_t);
+        uint8_t use_testnet = va_arg(args, int);
         buffer_write_uint32(buffer, host_port);
         buffer_write_string(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION));
         buffer_write_string(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME));
+        buffer_write_uint8(buffer, use_testnet);
       }
       break;
     case PKT_TYPE_CONNECT_RESP:
@@ -1589,6 +1602,13 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
             LOG_DEBUG("Failed to verify version name: [%s] expected: [%s], for peer with id: [%" PRIu64 "]!\n", message->version_name, APPLICATION_RELEASE_NAME, peer_id);
             return 1;
           }
+        }
+
+        // check to see if the peer is connected to the right network,
+        // that's appropriate to what mode they are running in...
+        if (message->use_testnet != parameters_get_use_testnet())
+        {
+          return 1;
         }
 
         peer_t *peer = init_peer(peer_id, net_connection);

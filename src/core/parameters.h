@@ -44,12 +44,18 @@
 #define TESTNET_ADDRESS_ID 0x02
 
 #define GENESIS_NONCE 10000
-#define GENESIS_TIMESTAMP 1552112098
+#define GENESIS_TIMESTAMP 0
 #define GENESIS_REWARD ((uint64_t)0)
+
+#define TESTNET_GENESIS_NONCE 10001
+#define TESTNET_GENESIS_TIMESTAMP 0
+#define TESTNET_GENESIS_REWARD ((uint64_t)0)
 
 #define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
 
-#define DIFFICULTY_TARGET 1//(60 * 2)
+#define DIFFICULTY_TARGET 120
+#define TESTNET_DIFFICULTY_TARGET 60
+
 #define DIFFICULTY_WINDOW 360
 #define DIFFICULTY_LAG 15
 #define DIFFICULTY_CUT 60
@@ -60,6 +66,9 @@
 #define P2P_PORT 9899
 #define RPC_PORT 9898
 
+#define TESTNET_P2P_PORT 8899
+#define TESTNET_RPC_PORT 8898
+
 #define MAX_P2P_PEERS_COUNT 16
 #define MAX_GROUPED_BLOCKS_COUNT 6
 
@@ -68,3 +77,17 @@ static const checkpoint_entry_t CHECKPOINTS[] = {
 };
 
 #define NUM_CHECKPOINTS (sizeof(CHECKPOINTS) / sizeof(checkpoint_entry_t))
+
+void parameters_set_use_testnet(int use_testnet);
+int parameters_get_use_testnet(void);
+
+uint8_t parameters_get_address_id(void);
+
+uint32_t parameters_get_genesis_nonce(void);
+uint32_t parameters_get_genesis_timestamp(void);
+uint64_t parameters_get_genesis_reward(void);
+
+uint64_t parameters_get_difficulty_target(void);
+
+uint16_t parameters_get_p2p_port(void);
+uint16_t parameters_get_rpc_port(void);

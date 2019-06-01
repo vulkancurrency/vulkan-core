@@ -73,6 +73,7 @@ enum
   CMD_ARG_CLEAR_WALLET,
   CMD_ARG_CREATE_GENESIS_BLOCK,
   CMD_ARG_FORCE_VERSION_CHECK,
+  CMD_ARG_TESTNET,
   CMD_ARG_MINE
 };
 
@@ -83,6 +84,7 @@ static argument_map_t g_arguments_map[] = {
   {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", "", 0},
   {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", "<bind_address>", 1},
   {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 1},
+  {"testnet", CMD_ARG_TESTNET, "Enable testnet mode which will only allow for custom testnet only parameters separate from the mainnet...", "", 0},
   {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer.", "<address:port>", 1},
   {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
@@ -191,8 +193,11 @@ static int parse_commandline_args(int argc, char **argv)
         break;
       case CMD_ARG_BIND_PORT:
         i++;
-        uint32_t host_port = (uint32_t)atoi(argv[i]);
+        uint16_t host_port = (uint16_t)atoi(argv[i]);
         set_net_host_port(host_port);
+        break;
+      case CMD_ARG_TESTNET:
+        parameters_set_use_testnet(1);
         break;
       case CMD_ARG_CONNECT:
         {

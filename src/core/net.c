@@ -57,7 +57,7 @@ static mtx_t g_net_lock;
 static struct mg_mgr g_net_mgr;
 
 static const char *g_net_host_address = "0.0.0.0";
-static uint16_t g_net_host_port = P2P_PORT;
+static uint16_t g_net_host_port = 0;
 static const char *g_net_external_address = "";
 static int g_net_disable_port_mapping = 0;
 
@@ -374,7 +374,9 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
       {
         net_connection_t *net_connection = get_net_connection(connection);
         assert(net_connection != NULL);
-        assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_REQ, g_net_host_port) == 0);
+
+        uint8_t use_testnet = parameters_get_use_testnet();
+        assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_REQ, g_net_host_port, use_testnet) == 0);
       }
       break;
     case MG_EV_RECV:
@@ -533,34 +535,58 @@ int connect_net_to_peer(const char *address, uint16_t port)
   return 0;
 }
 
+int connect_seed_node(seed_node_entry_t seed_node_entry)
+{
+  uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
+  if (peer_ip == convert_str_to_ip(g_net_external_address) && seed_node_entry.port == g_net_host_port)
+  {
+    return 0;
+  }
+  else if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
+  {
+    return 0;
+  }
+  else if (is_local_address(peer_ip) || is_private_address(peer_ip))
+  {
+    return 0;
+  }
+
+  uint64_t peer_id = concatenate(peer_ip, seed_node_entry.port);
+  if (has_peer(peer_id))
+  {
+    return 0;
+  }
+
+  if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
 int connect_net_to_seeds(void)
 {
-  for (int i = 0; i < NUM_SEED_NODES; i++)
+  if (parameters_get_use_testnet())
   {
-    seed_node_entry_t seed_node_entry = SEED_NODES[i];
-    uint32_t peer_ip = convert_str_to_ip(seed_node_entry.address);
-    if (peer_ip == convert_str_to_ip(g_net_external_address) && seed_node_entry.port == g_net_host_port)
+    for (int i = 0; i < NUM_TESTNET_SEED_NODES; i++)
     {
-      continue;
+      seed_node_entry_t seed_node_entry = TESTNET_SEED_NODES[i];
+      if (connect_seed_node(seed_node_entry))
+      {
+        LOG_WARNING("Failed to connect to testnet seed node on address: %s%u!", seed_node_entry.address, seed_node_entry.port);
+      }
     }
-    else if (peer_ip == convert_str_to_ip(g_net_host_address) && seed_node_entry.port == g_net_host_port)
+  }
+  else
+  {
+    for (int i = 0; i < NUM_SEED_NODES; i++)
     {
-      continue;
-    }
-    else if (is_local_address(peer_ip) || is_private_address(peer_ip))
-    {
-      continue;
-    }
-
-    uint64_t peer_id = concatenate(peer_ip, seed_node_entry.port);
-    if (has_peer(peer_id))
-    {
-      continue;
-    }
-
-    if (connect_net_to_peer(seed_node_entry.address, seed_node_entry.port))
-    {
-      continue;
+      seed_node_entry_t seed_node_entry = SEED_NODES[i];
+      if (connect_seed_node(seed_node_entry))
+      {
+        LOG_WARNING("Failed to connect to seed node on address: %s%u!", seed_node_entry.address, seed_node_entry.port);
+      }
     }
   }
 
@@ -663,6 +689,11 @@ int init_net(connection_entries_t connection_entries)
   vec_init(&g_net_connections);
   mtx_init(&g_net_lock, mtx_recursive);
   mg_mgr_init(&g_net_mgr, NULL);
+
+  if (g_net_host_port == 0)
+  {
+    g_net_host_port = parameters_get_p2p_port();
+  }
 
   // setup port mapping
   if (g_net_disable_port_mapping == 0)

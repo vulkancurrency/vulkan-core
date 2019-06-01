@@ -451,35 +451,41 @@ void print_secret_key(wallet_t *wallet)
 
 int compare_addresses(uint8_t *address, uint8_t *other_address)
 {
+  assert(address != NULL);
+  assert(other_address != NULL);
   return memcmp(address, other_address, ADDRESS_SIZE) == 0;
 }
 
 int public_key_to_address(uint8_t *address, uint8_t *pk)
 {
-  uint8_t address_id = MAINNET_ADDRESS_ID;
-  memcpy(address, &address_id, sizeof(uint8_t) * 1);
+  assert(address != NULL);
+  assert(pk != NULL);
+
+  uint8_t address_id = parameters_get_address_id();
+  address[0] = address_id;
   crypto_hash_sha256d(address + 1, pk, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 
 uint8_t get_address_id(uint8_t *address)
 {
+  assert(address != NULL);
   return address[0];
 }
 
 int valid_address(uint8_t *address)
 {
+  assert(address != NULL);
   uint8_t address_id = get_address_id(address);
-  switch(address_id)
+  switch (address_id)
   {
+    // check address id's to see if the correct id corresponds
+    // to the current network state...
     case MAINNET_ADDRESS_ID:
+      return parameters_get_use_testnet() == 0;
     case TESTNET_ADDRESS_ID:
-    {
-      return 1;
-    }
+      return parameters_get_use_testnet() == 1;
     default:
-    {
       return 0;
-    }
   }
 }

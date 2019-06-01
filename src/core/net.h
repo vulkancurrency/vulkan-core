@@ -34,6 +34,8 @@
 #include "common/task.h"
 #include "common/vec.h"
 
+#include "seed_nodes.h"
+
 #define NET_MAX_NUM_CONNECTION_ENTRIES 1024
 #define NET_MGR_POLL_DELAY 1000
 #define NET_RECONNECT_SEEDS_TASK_DELAY 10
@@ -107,6 +109,9 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
 void setup_net_port_mapping(uint16_t port);
 int connect_net_to_peer(const char *address, uint16_t port);
+
+int connect_seed_node(seed_node_entry_t seed_node_entry);
+int connect_net_to_seeds(void);
 
 int flush_send_queue(net_connection_t *net_connection);
 int flush_all_connections_nolock(void);
