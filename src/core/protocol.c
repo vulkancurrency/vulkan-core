@@ -1280,6 +1280,29 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 
   if (g_protocol_sync_entry.sync_initiated)
   {
+    int has_checkpoint = has_checkpoint_hash_by_height(g_protocol_sync_entry.last_sync_height);
+    if (has_checkpoint)
+    {
+      uint8_t *checkpoint_hash = NULL;
+      assert(get_checkpoint_hash_from_height(g_protocol_sync_entry.last_sync_height, &checkpoint_hash) == 0);
+
+      if (compare_block_hash(block->hash, checkpoint_hash) == 0)
+      {
+        char *checkpoint_hash_str = hash_to_str(checkpoint_hash);
+        char *block_hash_str = hash_to_str(block->hash);
+        LOG_ERROR("Failed to receive block header, found checkpoint at height: %u, block received: %s "
+          "does not match checkpoint hash: %s!", g_protocol_sync_entry.last_sync_height, checkpoint_hash_str, block_hash_str);
+
+        free(checkpoint_hash_str);
+        free(block_hash_str);
+
+        // since we failed to get the correct hash corresponding to the
+        // predefined checkpoint hash, clear this sync request...
+        assert(clear_sync_request(0) == 0);
+        return 1;
+      }
+    }
+
     if (g_protocol_sync_entry.sync_start_height == -1)
     {
       if (g_protocol_sync_entry.sync_finding_top_block == 0)
@@ -1887,7 +1910,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
           assert(pending_block != NULL);
           g_protocol_sync_entry.sync_pending_blocks_count--;
-          assert(block_header_received(net_connection, pending_block) == 0);
+          if (block_header_received(net_connection, pending_block))
+          {
+            buffer_free(buffer);
+            buffer_iterator_free(buffer_iterator);
+            return 1;
+          }
 
           buffer_free(buffer);
           buffer_iterator_free(buffer_iterator);

@@ -44,6 +44,7 @@
 #include "common/util.h"
 #include "common/vec.h"
 
+#include "checkpoints.h"
 #include "net.h"
 #include "p2p.h"
 #include "parameters.h"
@@ -650,6 +651,12 @@ int init_net(connection_entries_t connection_entries)
     setup_net_port_mapping(g_net_host_port);
   }
 
+  // setup the checkpoint data
+  if (init_checkpoints())
+  {
+    return 1;
+  }
+
   // setup the new connection
   char *bind_address = convert_to_addr_str(g_net_host_address, g_net_host_port);
   struct mg_connection *connection = mg_bind(&g_net_mgr, bind_address, ev_handler);
@@ -694,6 +701,11 @@ int init_net(connection_entries_t connection_entries)
 int deinit_net(void)
 {
   if (g_net_initialized == 0)
+  {
+    return 1;
+  }
+
+  if (deinit_checkpoints())
   {
     return 1;
   }

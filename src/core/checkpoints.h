@@ -28,43 +28,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "checkpoints.h"
+typedef struct CheckpointEntry
+{
+  uint32_t height;
+  const char *block_hash;
+} checkpoint_entry_t;
 
-#define BLOCK_VERSION 0x01
-#define MAX_BLOCK_SIZE (1024 * 1024 * 500) // 500mb
-#define MAX_TX_SIZE (1024 * 500) // 500kb
-#define MAX_FUTURE_BLOCK_TIME (60 * 60 * 2)
-#define TIMESTAMP_CHECK_WINDOW 32
+int get_checkpoint_hash_from_height(uint32_t height, uint8_t **hash_out);
+int has_checkpoint_hash_by_height(uint32_t height);
 
-#define COIN ((uint64_t)100000000)
-#define TOTAL_SUPPLY 64000000
-#define MAX_MONEY ((uint64_t)(COIN * TOTAL_SUPPLY))
+int add_checkpoint(uint32_t height, uint8_t *hash);
+int remove_checkpoint(uint32_t height);
 
-#define MAINNET_ADDRESS_ID 0x01
-#define TESTNET_ADDRESS_ID 0x02
-
-#define GENESIS_NONCE 10000
-#define GENESIS_TIMESTAMP 1552112098
-#define GENESIS_REWARD ((uint64_t)0)
-
-#define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
-
-#define DIFFICULTY_TARGET 1//(60 * 2)
-#define DIFFICULTY_WINDOW 360
-#define DIFFICULTY_LAG 15
-#define DIFFICULTY_CUT 60
-#define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
-
-#define BLOCK_REWARD_EMISSION_FACTOR 20
-
-#define P2P_PORT 9899
-#define RPC_PORT 9898
-
-#define MAX_P2P_PEERS_COUNT 16
-#define MAX_GROUPED_BLOCKS_COUNT 6
-
-static const checkpoint_entry_t CHECKPOINTS[] = {
-
-};
-
-#define NUM_CHECKPOINTS (sizeof(CHECKPOINTS) / sizeof(checkpoint_entry_t))
+int init_checkpoints(void);
+int deinit_checkpoints(void);
