@@ -1088,6 +1088,12 @@ void handle_sync_started(void)
   }
 }
 
+void handle_sync_added_block(void)
+{
+  float sync_progress_percentage = ((float)g_protocol_sync_entry.last_sync_height / (float)g_protocol_sync_entry.sync_height) * 100;
+  LOG_INFO("Received block at height: %u/%u block(s) remaining (%.2f%% complete)", g_protocol_sync_entry.last_sync_height, g_protocol_sync_entry.sync_height, sync_progress_percentage);
+}
+
 void handle_sync_stopped(void)
 {
 
@@ -1271,8 +1277,6 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
   assert(net_connection != NULL);
   assert(block != NULL);
 
-  // validate the block's hash before attempting to establish a sync request
-  // at that block's height in the blockchain...
   if (valid_block_hash(block) == 0)
   {
     assert(clear_sync_request(0) == 0);
@@ -1393,8 +1397,7 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
       }
     }
 
-    float sync_progress_percentage = ((float)g_protocol_sync_entry.last_sync_height / (float)g_protocol_sync_entry.sync_height) * 100;
-    LOG_INFO("Received block at height: %u/%u block(s) remaining (%.2f%% complete)", g_protocol_sync_entry.last_sync_height, g_protocol_sync_entry.sync_height, sync_progress_percentage);
+    handle_sync_added_block();
     if (check_sync_status(0))
     {
       if (request_sync_next_block(g_protocol_sync_entry.net_connection))

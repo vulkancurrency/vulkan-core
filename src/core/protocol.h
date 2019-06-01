@@ -253,6 +253,7 @@ int clear_tx_sync_request(void);
 int clear_grouped_sync_request(void);
 
 void handle_sync_started(void);
+void handle_sync_added_block(void);
 void handle_sync_stopped(void);
 void handle_sync_completed(void);
 
