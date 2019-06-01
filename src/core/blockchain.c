@@ -1113,10 +1113,10 @@ int insert_block_nolock(block_t *block)
         unspent_tx->unspent_txouts[txin->txout_index] == NULL)
       {
         char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
-        LOG_ERROR("A txin tried to mark a unspent txout: %s as spent, but it was not found!", unspent_tx_hash_str);
+        LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was not found!", unspent_tx_hash_str);
         free(unspent_tx_hash_str);
         free_unspent_transaction(unspent_tx);
-        goto insert_block_fail;
+        continue;
       }
       else
       {
@@ -1126,10 +1126,10 @@ int insert_block_nolock(block_t *block)
         if (unspent_txout->spent == 1)
         {
           char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
-          LOG_ERROR("A txin tried to mark a unspent txout: %s as spent, but it was already spent!", unspent_tx_hash_str);
+          LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was already spent!", unspent_tx_hash_str);
           free(unspent_tx_hash_str);
           free_unspent_transaction(unspent_tx);
-          goto insert_block_fail;
+          continue;
         }
 
         unspent_txout->spent = 1;
@@ -1167,7 +1167,15 @@ int insert_block_nolock(block_t *block)
   if (err != NULL)
   {
     LOG_ERROR("Could not insert block into blockchain storage: %s!", err);
-    goto insert_block_fail;
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_writeoptions_destroy(woptions);
+  #else
+    rocksdb_free(err);
+    rocksdb_writeoptions_destroy(woptions);
+  #endif
+    return 1;
   }
 
   // update our current top block hash in the blockchain
@@ -1181,16 +1189,6 @@ int insert_block_nolock(block_t *block)
   rocksdb_writeoptions_destroy(woptions);
 #endif
   return 0;
-
-insert_block_fail:
-#ifdef USE_LEVELDB
-  leveldb_free(err);
-  leveldb_writeoptions_destroy(woptions);
-#else
-  rocksdb_free(err);
-  rocksdb_writeoptions_destroy(woptions);
-#endif
-  return 1;
 }
 
 int insert_block(block_t *block)
