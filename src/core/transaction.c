@@ -120,6 +120,47 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
   return 0;
 }
 
+int validate_txin_signature(transaction_t *tx, input_transaction_t *txin)
+{
+  assert(tx != NULL);
+  assert(txin != NULL);
+
+  uint32_t header_size = get_tx_sign_header_size(tx) + TXIN_HEADER_SIZE;
+  uint8_t header[header_size];
+
+  assert(get_txin_header(header, txin) == 0);
+  assert(get_tx_sign_header(header + TXIN_HEADER_SIZE, tx) == 0);
+
+  if (crypto_sign_verify_detached(txin->signature, header, header_size, txin->public_key))
+  {
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    char *public_key_str = bin2hex(txin->public_key, crypto_sign_PUBLICKEYBYTES);
+    LOG_ERROR("Failed to verify signature for transaction: %s with public key: %s!", tx_hash_str, public_key_str);
+    free(tx_hash_str);
+    free(public_key_str);
+    return 1;
+  }
+
+  return 0;
+}
+
+int validate_tx_signatures(transaction_t *tx)
+{
+  assert(tx != NULL);
+  for (uint32_t txin_index = 0; txin_index < tx->txin_count; txin_index++)
+  {
+    input_transaction_t *txin = tx->txins[txin_index];
+    assert(txin != NULL);
+
+    if (validate_txin_signature(tx, txin))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 int get_txin_header(uint8_t *header, input_transaction_t *txin)
 {
   memcpy(header, &txin->transaction, HASH_SIZE);
@@ -263,6 +304,11 @@ int valid_transaction(transaction_t *tx)
     }
 
     if (do_txins_reference_unspent_txouts(tx))
+    {
+      return 1;
+    }
+
+    if (validate_tx_signatures(tx))
     {
       return 1;
     }

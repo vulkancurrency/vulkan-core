@@ -61,10 +61,12 @@ TEST can_sign_txin(void)
     }
   };
 
+  input_transaction_t *txin_p = &txin;
   output_transaction_t *txout_p = &txout;
   transaction_t tx = {
     .txin_count = 1,
     .txout_count = 1,
+    .txins = &txin_p,
     .txouts = &txout_p
   };
 
@@ -76,17 +78,9 @@ TEST can_sign_txin(void)
 
   ASSERT_MEM_EQ(pk, txin.public_key, crypto_sign_PUBLICKEYBYTES);
 
-  // --- Now to verify the TXIN signature
-
-  uint32_t header_size = get_tx_sign_header_size(&tx) + TXIN_HEADER_SIZE;
-  uint8_t header[header_size];
-  uint8_t hash[HASH_SIZE];
-
-  get_txin_header(header, &txin);
-  get_tx_sign_header(header + TXIN_HEADER_SIZE, &tx);
-
-  ASSERT(crypto_sign_verify_detached(txin.signature, header, header_size, pk) == 0);
-
+  // verify the txin signature
+  ASSERT(validate_txin_signature(&tx, &txin) == 0);
+  ASSERT(validate_tx_signatures(&tx) == 0);
   PASS();
 }
 
@@ -118,7 +112,6 @@ TEST can_serialize_tx(void)
 
   input_transaction_t *txin_p = &txin;
   output_transaction_t *txout_p = &txout;
-
   transaction_t tx = {
     .txout_count = 1,
     .txouts = &txout_p
@@ -138,7 +131,6 @@ TEST can_serialize_tx(void)
 
   transaction_to_serialized(&buffer, &buffer_len, &tx);
   free(buffer);
-
   PASS();
 }
 
