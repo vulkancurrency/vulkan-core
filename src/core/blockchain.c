@@ -1158,12 +1158,6 @@ int insert_block_nolock(block_t *block)
       }
     }
 
-    // remove the transaction from the mempool if it is in the mempool,
-    // since the transaction is now part of this block we've received...
-    if (is_tx_in_mempool(tx))
-    {
-      assert(remove_tx_from_mempool(tx) == 0);
-    }
   }
 
   if (err != NULL)
@@ -1182,6 +1176,11 @@ int insert_block_nolock(block_t *block)
 
   // update our current top block hash in the blockchain
   set_current_block(block);
+
+  // clear the block's transactions from the mempool if any are
+  // currently in our mempool, this prevents us from adding transactions
+  // to another block that have already been used...
+  assert(clear_txs_in_mempool_from_block(block) == 0);
 
 #ifdef USE_LEVELDB
   leveldb_free(err);

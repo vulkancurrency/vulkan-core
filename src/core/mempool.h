@@ -76,6 +76,9 @@ uint64_t get_num_txs_in_mempool(void);
 int fill_block_with_txs_from_mempool_nolock(block_t *block);
 int fill_block_with_txs_from_mempool(block_t *block);
 
+int clear_txs_in_mempool_from_block_nolock(block_t *block);
+int clear_txs_in_mempool_from_block(block_t *block);
+
 int clear_expired_txs_in_mempool_nolock(void);
 int clear_expired_txs_in_mempool_noblock(void);
 int clear_expired_txs_in_mempool(void);

@@ -1397,19 +1397,6 @@ int block_header_sync_complete(net_connection_t *net_connection, block_t *block)
   assert(block != NULL);
   if (validate_and_insert_block(block) == 0)
   {
-    // if any of this block's transactions are still in our memory pool,
-    // remove them since they have been "set in stone" within the block...
-    for (uint32_t i = 0; i < block->transaction_count; i++)
-    {
-      transaction_t *tx = block->transactions[i];
-      assert(tx != NULL);
-
-      if (is_tx_in_mempool(tx))
-      {
-        assert(remove_tx_from_mempool(tx) == 0);
-      }
-    }
-
     handle_sync_added_block();
     if (check_sync_status(0))
     {

@@ -30,8 +30,10 @@
 #include <sodium.h>
 
 #include "common/greatest.h"
+#include "common/task.h"
 
 #include "core/blockchain.h"
+#include "core/mempool.h"
 #include "core/p2p.h"
 
 static const char *g_blockchain_dir = "blockchain_tests";
@@ -54,8 +56,18 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (taskmgr_init())
+  {
+    return 1;
+  }
+
   remove_blockchain(g_blockchain_dir);
   if (init_blockchain(g_blockchain_dir))
+  {
+    return 1;
+  }
+
+  if (start_mempool())
   {
     return 1;
   }
@@ -83,7 +95,17 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (stop_mempool())
+  {
+    return 1;
+  }
+
   if (deinit_p2p())
+  {
+    return 1;
+  }
+
+  if (taskmgr_shutdown())
   {
     return 1;
   }

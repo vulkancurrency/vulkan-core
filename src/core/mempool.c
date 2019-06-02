@@ -28,11 +28,12 @@
 #include <assert.h>
 #include <time.h>
 
+#include <array.h>
+
 #include "common/logger.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
 #include "common/util.h"
-#include "common/vec.h"
 
 #include "block.h"
 #include "mempool.h"
@@ -41,7 +42,7 @@
 static mtx_t g_mempool_lock;
 static int g_mempool_initialized = 0;
 
-static vec_void_t g_mempool_transactions;
+static Array *g_mempool_transactions = NULL;
 static int g_mempool_num_transactions = 0;
 
 static task_t *g_mempool_flush_task = NULL;
@@ -54,7 +55,7 @@ int start_mempool(void)
   }
 
   mtx_init(&g_mempool_lock, mtx_recursive);
-  vec_init(&g_mempool_transactions);
+  assert(array_new(&g_mempool_transactions) == CC_OK);
 
   g_mempool_num_transactions = 0;
   g_mempool_flush_task = add_task(flush_mempool, FLUSH_MEMPOOL_TASK_DELAY);
@@ -71,7 +72,7 @@ int stop_mempool(void)
 
   remove_task(g_mempool_flush_task);
   mtx_destroy(&g_mempool_lock);
-  vec_deinit(&g_mempool_transactions);
+  array_destroy(g_mempool_transactions);
 
   g_mempool_num_transactions = 0;
   g_mempool_flush_task = NULL;
@@ -95,16 +96,10 @@ void free_mempool_entry(mempool_entry_t *mempool_entry)
 
 mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)
 {
-  mempool_entry_t *found_mempool_entry = NULL;
-
-  // find the mempool entry by iterating through all of the pointers
-  // in the vector array, find the mempool entry that has the same
-  // transaction pointer memory address...
-  void *value = NULL;
-  int index = 0;
-  vec_foreach(&g_mempool_transactions, value, index)
+  void *val = NULL;
+  ARRAY_FOREACH(val, g_mempool_transactions,
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)value;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
@@ -112,12 +107,11 @@ mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)
 
     if (compare_transaction_hash(tx->id, tx_hash))
     {
-      found_mempool_entry = mempool_entry;
-      break;
+      return mempool_entry;
     }
-  }
+  })
 
-  return found_mempool_entry;
+  return NULL;
 }
 
 transaction_t* get_tx_from_mempool(uint8_t *tx_hash)
@@ -152,7 +146,12 @@ int add_tx_to_mempool_nolock(transaction_t *tx)
   mempool_entry->tx = tx;
   mempool_entry->received_ts = get_current_time();
 
-  assert(vec_push(&g_mempool_transactions, mempool_entry) == 0);
+  if (array_add(g_mempool_transactions, mempool_entry) != CC_OK)
+  {
+    free_mempool_entry(mempool_entry);
+    return 1;
+  }
+
   g_mempool_num_transactions++;
   return 0;
 }
@@ -204,7 +203,12 @@ int remove_tx_from_mempool_nolock(transaction_t *tx)
 
   mempool_entry_t *mempool_entry = get_mempool_entry_from_mempool(tx->id);
   assert(mempool_entry != NULL);
-  vec_remove(&g_mempool_transactions, mempool_entry);
+
+  if (array_remove(g_mempool_transactions, mempool_entry, NULL) != CC_OK)
+  {
+    return 1;
+  }
+
   g_mempool_num_transactions--;
   free_mempool_entry(mempool_entry);
   return 0;
@@ -220,7 +224,10 @@ int remove_tx_from_mempool(transaction_t *tx)
 
 transaction_t* pop_tx_from_mempool_nolock(void)
 {
-  mempool_entry_t *mempool_entry = vec_pop(&g_mempool_transactions);
+  void *val = NULL;
+  assert(array_remove_at(g_mempool_transactions, 0, &val) == CC_OK);
+
+  mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
   assert(mempool_entry != NULL);
 
   transaction_t *tx = mempool_entry->tx;
@@ -248,15 +255,13 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
 {
   assert(block != NULL);
 
-  void *value = NULL;
-  int index = 0;
-
   // skip over the generation tx
   uint32_t tx_index = 1;
 
-  vec_foreach(&g_mempool_transactions, value, index)
+  void *val = NULL;
+  ARRAY_FOREACH(val, g_mempool_transactions,
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)value;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
@@ -264,71 +269,95 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
 
     // check the new block header size
     uint32_t block_header_size = get_block_header_size(block) + get_tx_header_size(tx);
-    if (block_header_size > MAX_BLOCK_SIZE)
+    if (block_header_size >= MAX_BLOCK_SIZE)
     {
       break;
     }
 
     assert(add_transaction_to_block(block, tx, tx_index) == 0);
     tx_index++;
-  }
+  })
 
   return 0;
 }
 
 int fill_block_with_txs_from_mempool(block_t *block)
 {
+  assert(block != NULL);
   mtx_lock(&g_mempool_lock);
   int result = fill_block_with_txs_from_mempool_nolock(block);
   mtx_unlock(&g_mempool_lock);
   return result;
 }
 
+int clear_txs_in_mempool_from_block_nolock(block_t *block)
+{
+  assert(block != NULL);
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    remove_tx_from_mempool_nolock(tx);
+  }
+
+  return 0;
+}
+
+int clear_txs_in_mempool_from_block(block_t *block)
+{
+  assert(block != NULL);
+  mtx_lock(&g_mempool_lock);
+  int result = clear_txs_in_mempool_from_block_nolock(block);
+  mtx_unlock(&g_mempool_lock);
+  return result;
+}
+
 int clear_expired_txs_in_mempool_nolock(void)
 {
-  vec_void_t transactions_to_remove;
-  vec_init(&transactions_to_remove);
+  Array *txs_to_remove;
+  assert(array_new(&txs_to_remove) == CC_OK);
 
-  void *value = NULL;
-  int index = 0;
-  vec_foreach(&g_mempool_transactions, value, index)
+  void *val = NULL;
+  ARRAY_FOREACH(val, g_mempool_transactions,
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)value;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
     assert(tx != NULL);
 
+    int remove_tx = 0;
     uint32_t tx_age = get_current_time() - mempool_entry->received_ts;
-
-    // it is possible that multiple transactions spending money that has already
-    // been spent have made it into the mempool, check for invalid transactions based
-    // on the unspent transactions in the blockchain and remove those that are invalid...
     if (valid_transaction(tx) == 0)
     {
-      assert(vec_push(&transactions_to_remove, tx) == 0);
+      remove_tx = 1;
     }
     else if (tx_age > MEMPOOL_TX_EXPIRE_TIME)
     {
       char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
       LOG_DEBUG("Removing transaction: %s from mempool due to expired age: %u!", tx_hash_str, tx_age);
       free(tx_hash_str);
-      assert(vec_push(&transactions_to_remove, tx) == 0);
+      remove_tx = 1;
     }
-  }
 
-  value = NULL;
-  index = 0;
-  vec_foreach(&transactions_to_remove, value, index)
+    if (remove_tx)
+    {
+      assert(array_add(txs_to_remove, tx) == CC_OK);
+    }
+  })
+
+  val = NULL;
+  ARRAY_FOREACH(val, txs_to_remove,
   {
-    transaction_t *tx = (transaction_t*)value;
+    transaction_t *tx = (transaction_t*)val;
     assert(tx != NULL);
 
     assert(remove_tx_from_mempool_nolock(tx) == 0);
     free_transaction(tx);
-  }
+  })
 
-  vec_deinit(&transactions_to_remove);
+  array_destroy(txs_to_remove);
   return 0;
 }
 

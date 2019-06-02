@@ -59,13 +59,6 @@ TEST init_and_free_queue(void)
   PASS();
 }
 
-TEST init_and_shutdown_taskmgr(void)
-{
-  ASSERT_EQ(taskmgr_init(), 0);
-  ASSERT_EQ(taskmgr_shutdown(), 0);
-  PASS();
-}
-
 TEST init_and_free_buffer(void)
 {
   buffer_t *buffer1 = buffer_init();
@@ -111,8 +104,6 @@ TEST insert_object_into_queue_and_pop(void)
 
 TEST add_remove_and_update_tasks(void)
 {
-  ASSERT_EQ(taskmgr_init(), 0);
-
   task_t *task1 = add_task(task1_func, 0);
   task_t *task2 = add_task(task2_func, 0);
 
@@ -138,8 +129,6 @@ TEST add_remove_and_update_tasks(void)
 
   ASSERT(remove_task(task1) == 0);
   ASSERT(remove_task_by_id(task2->id) == 0);
-
-  ASSERT_EQ(taskmgr_shutdown(), 0);
   PASS();
 }
 
@@ -312,7 +301,6 @@ TEST pack_and_unpack_buffer(void)
 GREATEST_SUITE(common_suite)
 {
   RUN_TEST(init_and_free_queue);
-  RUN_TEST(init_and_shutdown_taskmgr);
   RUN_TEST(init_and_free_buffer);
   RUN_TEST(insert_object_into_queue_and_pop);
   RUN_TEST(add_remove_and_update_tasks);
