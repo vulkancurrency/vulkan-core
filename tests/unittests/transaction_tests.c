@@ -130,6 +130,10 @@ TEST can_serialize_tx(void)
   uint32_t buffer_len;
 
   transaction_to_serialized(&buffer, &buffer_len, &tx);
+
+  ASSERT(buffer != NULL);
+  ASSERT(buffer_len > 0);
+
   free(buffer);
   PASS();
 }
