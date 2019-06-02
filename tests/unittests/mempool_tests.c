@@ -79,9 +79,6 @@ TEST can_add_to_mempool(void)
   tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
   tx->txins[0] = txin;
 
-  taskmgr_init();
-  start_mempool();
-
   ASSERT_EQ(get_num_txs_in_mempool(), 0);
   add_tx_to_mempool(tx);
   ASSERT_EQ(get_num_txs_in_mempool(), 1);
@@ -90,10 +87,6 @@ TEST can_add_to_mempool(void)
   ASSERT_EQ(get_num_txs_in_mempool(), 0);
 
   ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, HASH_SIZE);
-
-  stop_mempool();
-  taskmgr_shutdown();
-
   PASS();
 }
 
