@@ -154,36 +154,28 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t host_port = 0;
         if (buffer_read_uint32(buffer_iterator, &host_port))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         char *version_number = NULL;
         if (buffer_read_string(buffer_iterator, &version_number))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         char* version_name = NULL;
         if (buffer_read_string(buffer_iterator, &version_name))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
           free(version_number);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint8_t use_testnet = 0;
         if (buffer_read_uint8(buffer_iterator, &use_testnet))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
           free(version_number);
           free(version_name);
-          return 1;
+          goto packet_serialize_fail;
         };
 
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
@@ -211,17 +203,13 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t peerlist_data_size = 0;
         if (buffer_read_uint32(buffer_iterator, &peerlist_data_size))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint8_t *peerlist_data = NULL;
         if (buffer_read_bytes(buffer_iterator, &peerlist_data))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_peerlist_resp_t *packed_message = malloc(sizeof(get_peerlist_resp_t));
@@ -241,17 +229,13 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_height_response_t *packed_message = malloc(sizeof(get_block_height_response_t));
@@ -265,9 +249,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_by_hash_request_t *packed_message = malloc(sizeof(get_block_by_hash_request_t));
@@ -280,17 +262,13 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_by_hash_response_t *packed_message = malloc(sizeof(get_block_by_hash_response_t));
@@ -304,9 +282,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_by_height_request_t *packed_message = malloc(sizeof(get_block_by_height_request_t));
@@ -319,18 +295,14 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         block_t *block = NULL;
         if (deserialize_block(buffer_iterator, &block))
         {
           free(hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
@@ -354,9 +326,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t height = 0;
         if (buffer_read_uint32(buffer_iterator, &height))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_grouped_blocks_from_height_request_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_request_t));
@@ -369,17 +339,13 @@ int deserialize_message(packet_t *packet, void **message)
         uint32_t block_data_size = 0;
         if (buffer_read_uint32(buffer_iterator, &block_data_size))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint8_t *block_data = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_data))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_grouped_blocks_from_height_response_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_response_t));
@@ -393,9 +359,7 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_num_transactions_request_t *packed_message = malloc(sizeof(get_block_num_transactions_request_t));
@@ -408,18 +372,14 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint64_t num_transactions = 0;
         if (buffer_read_uint64(buffer_iterator, &num_transactions))
         {
           free(hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_num_transactions_response_t *packed_message = malloc(sizeof(get_block_num_transactions_response_t));
@@ -433,18 +393,14 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint8_t *tx_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &tx_hash))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_transaction_by_hash_request_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_request_t));
@@ -458,27 +414,21 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_transaction_by_hash_response_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_response_t));
@@ -493,18 +443,14 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_transaction_by_index_request_t *packed_message = malloc(sizeof(get_block_transaction_by_index_request_t));
@@ -518,27 +464,21 @@ int deserialize_message(packet_t *packet, void **message)
         uint8_t *block_hash = NULL;
         if (buffer_read_bytes(buffer_iterator, &block_hash))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         uint32_t tx_index = 0;
         if (buffer_read_uint32(buffer_iterator, &tx_index))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
           free(block_hash);
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         get_block_transaction_by_index_response_t *packed_message = malloc(sizeof(get_block_transaction_by_index_response_t));
@@ -553,9 +493,7 @@ int deserialize_message(packet_t *packet, void **message)
         transaction_t *transaction = NULL;
         if (deserialize_transaction(buffer_iterator, &transaction))
         {
-          buffer_iterator_free(buffer_iterator);
-          buffer_free(buffer);
-          return 1;
+          goto packet_serialize_fail;
         }
 
         incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
@@ -565,9 +503,7 @@ int deserialize_message(packet_t *packet, void **message)
       break;
     default:
       LOG_DEBUG("Could not deserialize packet with unknown packet id: %u!", packet->id);
-      buffer_iterator_free(buffer_iterator);
-      buffer_free(buffer);
-      return 1;
+      goto packet_serialize_fail;
   }
 
   // check to see if there is any extraneous data in the buffer
@@ -575,14 +511,17 @@ int deserialize_message(packet_t *packet, void **message)
   if (remaining_size > 0)
   {
     LOG_ERROR("Could not deserialize packet with id: %u, packet has extraneous data of size: %u!", packet->id, remaining_size);
-    buffer_iterator_free(buffer_iterator);
-    buffer_free(buffer);
-    return 1;
+    goto packet_serialize_fail;
   }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
   return 0;
+
+packet_serialize_fail:
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
+  return 1;
 }
 
 int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
