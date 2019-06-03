@@ -507,9 +507,9 @@ int init_blockchain(const char *blockchain_dir)
 }
 
 #ifdef USE_LEVELDB
-int purge_all_entries_from_database_nolock(leveldb_t *db)
+int purge_all_entries_from_database(leveldb_t *db)
 #else
-int purge_all_entries_from_database_nolock(rocksdb_t *db)
+int purge_all_entries_from_database(rocksdb_t *db)
 #endif
 {
   assert(db != NULL);
@@ -595,21 +595,9 @@ int purge_all_entries_from_database_nolock(rocksdb_t *db)
 }
 
 #ifdef USE_LEVELDB
-int purge_all_entries_from_database(leveldb_t *db)
+int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
 #else
-int purge_all_entries_from_database(rocksdb_t *db)
-#endif
-{
-  mtx_lock(&g_blockchain_lock);
-  int result = purge_all_entries_from_database_nolock(db);
-  mtx_unlock(&g_blockchain_lock);
-  return result;
-}
-
-#ifdef USE_LEVELDB
-int copy_all_entries_to_database_nolock(leveldb_t *from_db, leveldb_t *to_db)
-#else
-int copy_all_entries_to_database_nolock(rocksdb_t *from_db, rocksdb_t *to_db)
+int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db)
 #endif
 {
   assert(from_db != NULL);
@@ -719,18 +707,6 @@ copy_entries_fail:
   return 1;
 }
 
-#ifdef USE_LEVELDB
-int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
-#else
-int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db)
-#endif
-{
-  mtx_lock(&g_blockchain_lock);
-  int result = copy_all_entries_to_database_nolock(from_db, to_db);
-  mtx_unlock(&g_blockchain_lock);
-  return result;
-}
-
 int backup_blockchain_nolock(void)
 {
   if (g_blockchain_backup_is_open == 0)
@@ -739,13 +715,13 @@ int backup_blockchain_nolock(void)
   }
 
 #ifdef USE_LEVELDB
-  if (purge_all_entries_from_database_nolock(g_blockchain_backup_db))
+  if (purge_all_entries_from_database(g_blockchain_backup_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to purge old backups!");
     return 1;
   }
 
-  if (copy_all_entries_to_database_nolock(g_blockchain_db, g_blockchain_backup_db))
+  if (copy_all_entries_to_database(g_blockchain_db, g_blockchain_backup_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entries to backup database!");
     return 1;
@@ -791,13 +767,13 @@ int restore_blockchain_nolock(void)
   }
 
 #ifdef USE_LEVELDB
-  if (purge_all_entries_from_database_nolock(g_blockchain_db))
+  if (purge_all_entries_from_database(g_blockchain_db))
   {
     LOG_ERROR("Could not restore blockchain database from backup, failed to purge blockchain database!");
     return 1;
   }
 
-  if (copy_all_entries_to_database_nolock(g_blockchain_backup_db, g_blockchain_db))
+  if (copy_all_entries_to_database(g_blockchain_backup_db, g_blockchain_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entires from backup database!");
     return 1;
@@ -832,7 +808,7 @@ int restore_blockchain(void)
 
 int rollback_blockchain_nolock(uint32_t rollback_height)
 {
-  uint32_t current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height_nolock();
   if (rollback_height > current_block_height)
   {
     LOG_WARNING("Could not rollback blockchain to height: %u, current blockchain top block height is: %u!", rollback_height, current_block_height);
@@ -846,12 +822,12 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
     block_t *genesis_block = get_genesis_block();
     assert(genesis_block != NULL);
 
-    new_top_block = get_block_from_hash(genesis_block->hash);
+    new_top_block = get_block_from_hash_nolock(genesis_block->hash);
     assert(new_top_block != NULL);
   }
   else
   {
-    new_top_block = get_block_from_height(rollback_height - 1);
+    new_top_block = get_block_from_height_nolock(rollback_height - 1);
     assert(new_top_block != NULL);
   }
 
@@ -874,7 +850,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
       break;
     }
 
-    block_t *block = get_block_from_height(i);
+    block_t *block = get_block_from_height_nolock(i);
     if (block == NULL)
     {
       LOG_ERROR("Could not rollback blockchain, unknown block at height: %u!", i);
@@ -1016,7 +992,7 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
   if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
     uint32_t index = height - 1;
-    block_t *block = get_block_from_height(index);
+    block_t *block = get_block_from_height_nolock(index);
     assert(block != NULL);
 
     assert(vec_push(&g_timestamps, block->timestamp) == 0);
@@ -1063,7 +1039,7 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
 
     for (; offset < height; offset++)
     {
-      block_t *block = get_block_from_height(offset);
+      block_t *block = get_block_from_height_nolock(offset);
       assert(block != NULL);
 
       assert(vec_push(&difficulty_info.timestamps, block->timestamp) == 0);
@@ -1109,7 +1085,7 @@ uint64_t get_block_difficulty(uint32_t block_height)
 
 uint64_t get_next_block_difficulty_nolock(void)
 {
-  uint32_t current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height_nolock();
   uint8_t *current_block_hash = get_current_block_hash();
 
   if (compare_block_hash(current_block_hash, (uint8_t*)&g_difficulty_for_next_block_top_hash))
@@ -1224,8 +1200,8 @@ int insert_block_nolock(block_t *block)
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
 
-    assert(insert_tx_into_index(key, tx) == 0);
-    assert(insert_tx_into_unspent_index(tx) == 0);
+    assert(insert_tx_into_index_nolock(key, tx) == 0);
+    assert(insert_tx_into_unspent_index_nolock(tx) == 0);
 
     if (is_generation_tx(tx))
     {
@@ -1277,11 +1253,11 @@ int insert_block_nolock(block_t *block)
 
         if (spent_txs == unspent_tx->unspent_txout_count)
         {
-          delete_unspent_tx_from_index(unspent_tx->id);
+          delete_unspent_tx_from_index_nolock(unspent_tx->id);
         }
         else
         {
-          insert_unspent_tx_into_index(unspent_tx);
+          insert_unspent_tx_into_index_nolock(unspent_tx);
         }
 
         free_unspent_transaction(unspent_tx);
@@ -1324,6 +1300,7 @@ int insert_block_nolock(block_t *block)
 
 int insert_block(block_t *block)
 {
+  assert(block != NULL);
   mtx_lock(&g_blockchain_lock);
   int result = insert_block_nolock(block);
   mtx_unlock(&g_blockchain_lock);
@@ -1333,7 +1310,7 @@ int insert_block(block_t *block)
 int validate_and_insert_block_nolock(block_t *block)
 {
   assert(block != NULL);
-  uint32_t current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height_nolock();
 
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
@@ -1397,13 +1374,14 @@ int validate_and_insert_block_nolock(block_t *block)
 
 int validate_and_insert_block(block_t *block)
 {
+  assert(block != NULL);
   mtx_lock(&g_blockchain_lock);
   int result = validate_and_insert_block_nolock(block);
   mtx_unlock(&g_blockchain_lock);
   return result;
 }
 
-block_t *get_block_from_hash(uint8_t *block_hash)
+block_t *get_block_from_hash_nolock(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
   char *err = NULL;
@@ -1466,7 +1444,16 @@ block_retrieval_fail:
   return NULL;
 }
 
-block_t *get_block_from_height(uint32_t height)
+block_t *get_block_from_hash(uint8_t *block_hash)
+{
+  assert(block_hash != NULL);
+  mtx_lock(&g_blockchain_lock);
+  block_t *block = get_block_from_hash_nolock(block_hash);
+  mtx_unlock(&g_blockchain_lock);
+  return block;
+}
+
+block_t *get_block_from_height_nolock(uint32_t height)
 {
   uint32_t current_block_height = get_block_height();
   if (height > current_block_height)
@@ -1501,7 +1488,15 @@ block_t *get_block_from_height(uint32_t height)
   return block;
 }
 
-int32_t get_block_height_from_hash(uint8_t *block_hash)
+block_t *get_block_from_height(uint32_t height)
+{
+  mtx_lock(&g_blockchain_lock);
+  block_t *block = get_block_from_height_nolock(height);
+  mtx_unlock(&g_blockchain_lock);
+  return block;
+}
+
+int32_t get_block_height_from_hash_nolock(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
   uint32_t current_block_height = get_block_height();
@@ -1524,6 +1519,15 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
     free_block(block);
   }
 
+  return block_height;
+}
+
+int32_t get_block_height_from_hash(uint8_t *block_hash)
+{
+  assert(block_hash != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int32_t block_height = get_block_height_from_hash_nolock(block_hash);
+  mtx_unlock(&g_blockchain_lock);
   return block_height;
 }
 
@@ -1572,7 +1576,7 @@ int has_block_by_height(uint32_t height)
   return 1;
 }
 
-int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
+int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx)
 {
   assert(block_key != NULL);
   assert(tx != NULL);
@@ -1613,7 +1617,18 @@ int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
   return 0;
 }
 
-int insert_tx_into_unspent_index(transaction_t *tx)
+int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
+{
+  assert(block_key != NULL);
+  assert(tx != NULL);
+
+  mtx_lock(&g_blockchain_lock);
+  int result = insert_tx_into_index(block_key, tx);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int insert_tx_into_unspent_index_nolock(transaction_t *tx)
 {
   assert(tx != NULL);
   char *err = NULL;
@@ -1661,7 +1676,16 @@ int insert_tx_into_unspent_index(transaction_t *tx)
   return 0;
 }
 
-int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
+int insert_tx_into_unspent_index(transaction_t *tx)
+{
+  assert(tx != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = insert_tx_into_unspent_index_nolock(tx);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int insert_unspent_tx_into_index_nolock(unspent_transaction_t *unspent_tx)
 {
   assert(unspent_tx != NULL);
   char *err = NULL;
@@ -1707,7 +1731,16 @@ int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
   return 0;
 }
 
-unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
+int insert_unspent_tx_into_index(unspent_transaction_t *unspent_tx)
+{
+  assert(unspent_tx != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = insert_unspent_tx_into_index_nolock(unspent_tx);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+unspent_transaction_t *get_unspent_tx_from_index_nolock(uint8_t *tx_id)
 {
   assert(tx_id != NULL);
   char *err = NULL;
@@ -1752,7 +1785,16 @@ unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
   return unspent_tx;
 }
 
-uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
+unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
+{
+  assert(tx_id != NULL);
+  mtx_lock(&g_blockchain_lock);
+  unspent_transaction_t *unspent_tx = get_unspent_tx_from_index_nolock(tx_id);
+  mtx_unlock(&g_blockchain_lock);
+  return unspent_tx;
+}
+
+uint8_t *get_block_hash_from_tx_id_nolock(uint8_t *tx_id)
 {
   assert(tx_id != NULL);
   char *err = NULL;
@@ -1797,6 +1839,15 @@ uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
   return block_hash;
 }
 
+uint8_t *get_block_hash_from_tx_id(uint8_t *tx_id)
+{
+  assert(tx_id != NULL);
+  mtx_lock(&g_blockchain_lock);
+  uint8_t *block_hash = get_block_hash_from_tx_id_nolock(tx_id);
+  mtx_unlock(&g_blockchain_lock);
+  return block_hash;
+}
+
 block_t *get_block_from_tx_id(uint8_t *tx_id)
 {
   assert(tx_id != NULL);
@@ -1817,7 +1868,7 @@ block_t *get_block_from_tx_id(uint8_t *tx_id)
  *
  * For the sake of dev time, only blocks in the g_blockchain_db are valid + main chain.
  */
-uint32_t get_block_height(void)
+uint32_t get_block_height_nolock(void)
 {
   int32_t block_height = -1;
 
@@ -1860,13 +1911,19 @@ uint32_t get_block_height(void)
   {
     return 0;
   }
-  else
-  {
-    return block_height;
-  }
+
+  return block_height;
 }
 
-int delete_block_from_blockchain(uint8_t *block_hash)
+uint32_t get_block_height(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = get_block_height_nolock();
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int delete_block_from_blockchain_nolock(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
   block_t *genesis_block = get_genesis_block();
@@ -1918,8 +1975,8 @@ int delete_block_from_blockchain(uint8_t *block_hash)
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
 
-    assert(delete_tx_from_index(tx->id) == 0);
-    assert(delete_unspent_tx_from_index(tx->id) == 0);
+    assert(delete_tx_from_index_nolock(tx->id) == 0);
+    assert(delete_unspent_tx_from_index_nolock(tx->id) == 0);
   }
 
   free_block(block);
@@ -1933,7 +1990,16 @@ int delete_block_from_blockchain(uint8_t *block_hash)
   return 1;
 }
 
-int delete_tx_from_index(uint8_t *tx_id)
+int delete_block_from_blockchain(uint8_t *block_hash)
+{
+  assert(block_hash != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = delete_block_from_blockchain_nolock(block_hash);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int delete_tx_from_index_nolock(uint8_t *tx_id)
 {
   assert(tx_id != NULL);
   char *err = NULL;
@@ -1974,7 +2040,16 @@ int delete_tx_from_index(uint8_t *tx_id)
   return 1;
 }
 
-int delete_unspent_tx_from_index(uint8_t *tx_id)
+int delete_tx_from_index(uint8_t *tx_id)
+{
+  assert(tx_id != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = delete_tx_from_index_nolock(tx_id);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int delete_unspent_tx_from_index_nolock(uint8_t *tx_id)
 {
   assert(tx_id != NULL);
   char *err = NULL;
@@ -2015,7 +2090,16 @@ int delete_unspent_tx_from_index(uint8_t *tx_id)
   return 1;
 }
 
-int set_top_block_hash(uint8_t *block_hash)
+int delete_unspent_tx_from_index(uint8_t *tx_id)
+{
+  assert(tx_id != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = delete_unspent_tx_from_index_nolock(tx_id);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+int set_top_block_hash_noblock(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
   char *err = NULL;
@@ -2054,7 +2138,16 @@ int set_top_block_hash(uint8_t *block_hash)
   return 0;
 }
 
-uint8_t* get_top_block_hash(void)
+int set_top_block_hash(uint8_t *block_hash)
+{
+  assert(block_hash != NULL);
+  mtx_lock(&g_blockchain_lock);
+  int result = set_top_block_hash_noblock(block_hash);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+uint8_t* get_top_block_hash_noblock(void)
 {
   char *err = NULL;
   uint8_t key[DB_KEY_PREFIX_SIZE_TOP_BLOCK];
@@ -2088,6 +2181,14 @@ uint8_t* get_top_block_hash(void)
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 #endif
+  return block_hash;
+}
+
+uint8_t* get_top_block_hash(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  uint8_t *block_hash = get_top_block_hash_noblock();
+  mtx_unlock(&g_blockchain_lock);
   return block_hash;
 }
 
@@ -2150,10 +2251,8 @@ uint32_t get_blocks_since_hash(uint8_t *block_hash)
   {
     return current_block_height - block_height;
   }
-  else
-  {
-    return 0;
-  }
+
+  return 0;
 }
 
 uint32_t get_blocks_since_block(block_t *block)
