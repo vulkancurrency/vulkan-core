@@ -147,7 +147,7 @@ static int parse_commandline_args(int argc, char **argv)
 {
   for (int i = 1; i < argc; i++)
   {
-    int16_t arg_type = argparse_get_argument_from_str((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, argv[i]);
+    int16_t arg_type = argparse_get_argument_with_prefix_from_str((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, argv[i]);
     argument_map_t *argument_map = argparse_get_argument_map_from_type((argument_map_t*)&g_arguments_map, NUM_ARGUMENTS, arg_type);
     if (argument_map == NULL)
     {
@@ -167,6 +167,11 @@ static int parse_commandline_args(int argc, char **argv)
     switch (arg_type)
     {
       case CMD_ARG_HELP:
+        printf("%s v%s-%s\n", APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_RELEASE_NAME);
+        printf("\n");
+        printf("Usage:\n");
+        printf("  vulkan [command-line options]\n");
+        printf("\n");
         printf("Command-line Options:\n");
         for (int i = 0; i < NUM_ARGUMENTS; i++)
         {
