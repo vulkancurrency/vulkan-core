@@ -61,8 +61,7 @@ uint8_t* hex2bin(const char *hexstr, size_t *size);
 uint32_t get_current_time(void);
 int rmrf(const char *path);
 
-int sort_compare(const void* a, const void* b);
-void sort(void *base, size_t nitems, size_t size);
+int cmp_least_greatest(const void *a, const void *b);
 
 int is_private_address(uint32_t ip);
 int is_local_address(uint32_t ip);

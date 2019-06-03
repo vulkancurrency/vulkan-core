@@ -165,16 +165,21 @@ uint32_t get_current_time(void)
   return (uint32_t)time(NULL);
 }
 
-int sort_compare(const void* a, const void* b)
+int cmp_least_greatest(const void *a, const void *b)
 {
-  int c = *((int*)a);
-  int d = *((int*)b);
-  return (c > d) - (c < d);
-}
+  int f = *((int*)a);
+  int s = *((int*)b);
+  if (f > s)
+  {
+    return 1;
+  }
 
-void sort(void *base, size_t nitems, size_t size)
-{
-  qsort(base, nitems, size, sort_compare);
+  if (f < s)
+  {
+    return -1;
+  }
+
+  return 0;
 }
 
 int is_private_address(uint32_t ip)

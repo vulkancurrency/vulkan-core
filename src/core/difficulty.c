@@ -48,7 +48,7 @@ uint64_t get_next_difficulty(difficulty_info_t difficulty_info)
 
   assert(DIFFICULTY_WINDOW >= 2);
   assert(length <= DIFFICULTY_WINDOW);
-  vec_sort(&difficulty_info.timestamps, sort_compare);
+  vec_sort(&difficulty_info.timestamps, cmp_least_greatest);
   size_t cut_begin = 0, cut_end = 0;
   assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2);
   if (length <= DIFFICULTY_WINDOW - 2 * DIFFICULTY_CUT)
