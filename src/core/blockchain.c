@@ -981,7 +981,7 @@ uint64_t get_block_difficulty(uint32_t block_height)
   return difficulty;
 }
 
-uint64_t get_next_block_difficulty(void)
+uint64_t get_next_block_difficulty_nolock(void)
 {
   uint32_t current_block_height = get_block_height();
   uint8_t *current_block_hash = get_current_block_hash();
@@ -991,11 +991,18 @@ uint64_t get_next_block_difficulty(void)
     return g_difficulty_for_next_block;
   }
 
-  uint64_t difficulty = get_block_difficulty(current_block_height);
+  uint64_t difficulty = get_block_difficulty_nolock(current_block_height);
 
   memcpy(g_difficulty_for_next_block_top_hash, current_block_hash, HASH_SIZE);
   g_difficulty_for_next_block = difficulty;
+  return difficulty;
+}
 
+uint64_t get_next_block_difficulty(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  uint64_t difficulty = get_next_block_difficulty_nolock();
+  mtx_unlock(&g_blockchain_lock);
   return difficulty;
 }
 
@@ -1246,7 +1253,7 @@ int validate_and_insert_block_nolock(block_t *block)
       return 1;
     }
 
-    uint64_t expected_difficulty = get_next_block_difficulty();
+    uint64_t expected_difficulty = get_next_block_difficulty_nolock();
     if (block->difficulty != expected_difficulty)
     {
       return 1;
