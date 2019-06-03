@@ -1214,7 +1214,7 @@ int insert_block_nolock(block_t *block)
       input_transaction_t *txin = tx->txins[txin_index];
       assert(txin != NULL);
 
-      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(txin->transaction);
+      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index_nolock(txin->transaction);
       assert(unspent_tx != NULL);
 
       if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
@@ -1466,7 +1466,7 @@ block_t *get_block_from_height_nolock(uint32_t height)
     block_t *genesis_block = get_genesis_block();
     assert(genesis_block != NULL);
 
-    return get_block_from_hash(genesis_block->hash);
+    return get_block_from_hash_nolock(genesis_block->hash);
   }
 
   block_t *block = get_current_block();
@@ -1479,7 +1479,7 @@ block_t *get_block_from_height_nolock(uint32_t height)
       break;
     }
 
-    block_t *previous_block = get_block_from_hash(block->previous_hash);
+    block_t *previous_block = get_block_from_hash_nolock(block->previous_hash);
     assert(previous_block != NULL);
     free_block(block);
     block = previous_block;
@@ -1506,7 +1506,7 @@ int32_t get_block_height_from_hash_nolock(uint8_t *block_hash)
 
   for (uint32_t i = 0; i <= current_block_height; i++)
   {
-    block = get_block_from_height(i);
+    block = get_block_from_height_nolock(i);
     assert(block != NULL);
 
     if (compare_block_hash(block->hash, block_hash))
