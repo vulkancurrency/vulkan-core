@@ -843,7 +843,10 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
   block_t *new_top_block = NULL;
   if (rollback_height == 0)
   {
-    block_t *new_top_block = get_genesis_block();
+    block_t *genesis_block = get_genesis_block();
+    assert(genesis_block != NULL);
+
+    new_top_block = get_block_from_hash(genesis_block->hash);
     assert(new_top_block != NULL);
   }
   else
