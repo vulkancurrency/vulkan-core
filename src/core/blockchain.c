@@ -507,106 +507,229 @@ int init_blockchain(const char *blockchain_dir)
 }
 
 #ifdef USE_LEVELDB
-static int purge_all_entries_from_database(leveldb_t *db)
+int purge_all_entries_from_database_nolock(leveldb_t *db)
+#else
+int purge_all_entries_from_database_nolock(rocksdb_t *db)
+#endif
 {
   assert(db != NULL);
 
   char *err = NULL;
+#ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(db, roptions);
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
   leveldb_writebatch_t *write_batch = leveldb_writebatch_create();
+#else
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(db, roptions);
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
+  rocksdb_writebatch_t *write_batch = rocksdb_writebatch_create();
+#endif
 
+#ifdef USE_LEVELDB
   for (leveldb_iter_seek_to_first(iterator);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+#else
+  for (rocksdb_iter_seek_to_first(iterator);
+    rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+#endif
   {
     size_t key_length;
+  #ifdef USE_LEVELDB
     uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
     assert(key != NULL);
 
     leveldb_writebatch_delete(write_batch, (char*)key, key_length);
+  #else
+    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
+    assert(key != NULL);
+
+    rocksdb_writebatch_delete(write_batch, (char*)key, key_length);
+  #endif
   }
 
+#ifdef USE_LEVELDB
   leveldb_write(db, woptions, write_batch, &err);
+#else
+  rocksdb_write(db, woptions, write_batch, &err);
+#endif
   if (err != NULL)
   {
     LOG_ERROR("Failed to purge all entries from database!");
+
+  #ifdef USE_LEVELDB
     leveldb_free(err);
     leveldb_readoptions_destroy(roptions);
     leveldb_iter_destroy(iterator);
     leveldb_writeoptions_destroy(woptions);
     leveldb_writebatch_clear(write_batch);
     leveldb_writebatch_destroy(write_batch);
+  #else
+    rocksdb_free(err);
+    rocksdb_readoptions_destroy(roptions);
+    rocksdb_iter_destroy(iterator);
+    rocksdb_writeoptions_destroy(woptions);
+    rocksdb_writebatch_clear(write_batch);
+    rocksdb_writebatch_destroy(write_batch);
+  #endif
     return 1;
   }
 
+#ifdef USE_LEVELDB
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
   leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
+#else
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  rocksdb_writeoptions_destroy(woptions);
+  rocksdb_writebatch_clear(write_batch);
+  rocksdb_writebatch_destroy(write_batch);
+#endif
   return 0;
 }
-#endif
 
 #ifdef USE_LEVELDB
-static int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
+int purge_all_entries_from_database(leveldb_t *db)
+#else
+int purge_all_entries_from_database(rocksdb_t *db)
+#endif
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = purge_all_entries_from_database_nolock(db);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
+#ifdef USE_LEVELDB
+int copy_all_entries_to_database_nolock(leveldb_t *from_db, leveldb_t *to_db)
+#else
+int copy_all_entries_to_database_nolock(rocksdb_t *from_db, rocksdb_t *to_db)
+#endif
 {
   assert(from_db != NULL);
   assert(to_db != NULL);
 
   char *err = NULL;
+#ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
   leveldb_iterator_t *iterator = leveldb_create_iterator(from_db, roptions);
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
   leveldb_writebatch_t *write_batch = leveldb_writebatch_create();
+#else
+  rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
+  rocksdb_iterator_t *iterator = rocksdb_create_iterator(from_db, roptions);
+  rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
+  rocksdb_writebatch_t *write_batch = rocksdb_writebatch_create();
+#endif
 
+#ifdef USE_LEVELDB
   for (leveldb_iter_seek_to_first(iterator);
     leveldb_iter_valid(iterator); leveldb_iter_next(iterator))
+#else
+  for (rocksdb_iter_seek_to_first(iterator);
+    rocksdb_iter_valid(iterator); rocksdb_iter_next(iterator))
+#endif
   {
     size_t key_length;
+  #ifdef USE_LEVELDB
     uint8_t *key = (uint8_t*)leveldb_iter_key(iterator, &key_length);
     assert(key != NULL);
+  #else
+    uint8_t *key = (uint8_t*)rocksdb_iter_key(iterator, &key_length);
+    assert(key != NULL);
+  #endif
 
     size_t read_len;
+  #ifdef USE_LEVELDB
     uint8_t *value = (uint8_t*)leveldb_get(from_db, roptions, (char*)key, key_length, &read_len, &err);
+  #else
+    uint8_t *value = (uint8_t*)rocksdb_get(from_db, roptions, (char*)key, key_length, &read_len, &err);
+  #endif
     if (err != NULL || value == NULL)
     {
       LOG_ERROR("Failed to retrieve value from key: %s in database!", key);
+
+    #ifdef USE_LEVELDB
       leveldb_free(key);
       leveldb_free(value);
+    #else
+      rocksdb_free(key);
+      rocksdb_free(value);
+    #endif
       goto copy_entries_fail;
     }
 
+  #ifdef USE_LEVELDB
     leveldb_writebatch_put(write_batch, (char*)key, key_length, (char*)value, read_len);
+  #else
+    rocksdb_writebatch_put(write_batch, (char*)key, key_length, (char*)value, read_len);
+  #endif
   }
 
+#ifdef USE_LEVELDB
   leveldb_write(to_db, woptions, write_batch, &err);
+#else
+  rocksdb_write(to_db, woptions, write_batch, &err);
+#endif
   if (err != NULL)
   {
     LOG_ERROR("Failed to copy entries to database!");
     goto copy_entries_fail;
   }
 
+#ifdef USE_LEVELDB
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
   leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
+#else
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  rocksdb_writeoptions_destroy(woptions);
+  rocksdb_writebatch_clear(write_batch);
+  rocksdb_writebatch_destroy(write_batch);
+#endif
   return 0;
 
 copy_entries_fail:
+#ifdef USE_LEVELDB
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
   leveldb_iter_destroy(iterator);
   leveldb_writeoptions_destroy(woptions);
   leveldb_writebatch_clear(write_batch);
   leveldb_writebatch_destroy(write_batch);
+#else
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_iter_destroy(iterator);
+  rocksdb_writeoptions_destroy(woptions);
+  rocksdb_writebatch_clear(write_batch);
+  rocksdb_writebatch_destroy(write_batch);
+#endif
   return 1;
 }
+
+#ifdef USE_LEVELDB
+int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db)
+#else
+int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db)
 #endif
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = copy_all_entries_to_database_nolock(from_db, to_db);
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
 
 int backup_blockchain_nolock(void)
 {
@@ -616,13 +739,13 @@ int backup_blockchain_nolock(void)
   }
 
 #ifdef USE_LEVELDB
-  if (purge_all_entries_from_database(g_blockchain_backup_db))
+  if (purge_all_entries_from_database_nolock(g_blockchain_backup_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to purge old backups!");
     return 1;
   }
 
-  if (copy_all_entries_to_database(g_blockchain_db, g_blockchain_backup_db))
+  if (copy_all_entries_to_database_nolock(g_blockchain_db, g_blockchain_backup_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entries to backup database!");
     return 1;
@@ -668,13 +791,13 @@ int restore_blockchain_nolock(void)
   }
 
 #ifdef USE_LEVELDB
-  if (purge_all_entries_from_database(g_blockchain_db))
+  if (purge_all_entries_from_database_nolock(g_blockchain_db))
   {
     LOG_ERROR("Could not restore blockchain database from backup, failed to purge blockchain database!");
     return 1;
   }
 
-  if (copy_all_entries_to_database(g_blockchain_backup_db, g_blockchain_db))
+  if (copy_all_entries_to_database_nolock(g_blockchain_backup_db, g_blockchain_db))
   {
     LOG_ERROR("Could not backup blockchain database, failed to copy entires from backup database!");
     return 1;
@@ -1387,6 +1510,7 @@ int32_t get_block_height_from_hash(uint8_t *block_hash)
   {
     block = get_block_from_height(i);
     assert(block != NULL);
+
     if (compare_block_hash(block->hash, block_hash))
     {
       block_height = i;
@@ -2087,20 +2211,22 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
     size_t key_length;
   #ifdef USE_LEVELDB
     char *key = (char*)leveldb_iter_key(iterator, &key_length);
+    assert(key != NULL);
   #else
     char *key = (char*)rocksdb_iter_key(iterator, &key_length);
-  #endif
     assert(key != NULL);
+  #endif
 
     if (key_length > 0 && key[0] == (char)*DB_KEY_PREFIX_UNSPENT_TX)
     {
       size_t data_len;
     #ifdef USE_LEVELDB
       uint8_t *data = (uint8_t*)leveldb_iter_value(iterator, &data_len);
+      assert(data != NULL);
     #else
       uint8_t *data = (uint8_t*)rocksdb_iter_value(iterator, &data_len);
-    #endif
       assert(data != NULL);
+    #endif
 
       unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(data, data_len);
       assert(unspent_tx != NULL);

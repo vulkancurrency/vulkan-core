@@ -25,7 +25,14 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
+
+#ifdef USE_LEVELDB
+#include <leveldb/c.h>
+#else
+#include <rocksdb/c.h>
+#endif
 
 #include "block.h"
 #include "transaction.h"
@@ -69,6 +76,22 @@ int close_backup_blockchain(void);
 
 int init_blockchain(const char *blockchain_dir);
 int remove_blockchain(const char *blockchain_dir);
+
+#ifdef USE_LEVELDB
+int purge_all_entries_from_database_nolock(leveldb_t *db);
+int purge_all_entries_from_database(leveldb_t *db);
+#else
+int purge_all_entries_from_database_nolock(rocksdb_t *db);
+int purge_all_entries_from_database(rocksdb_t *db);
+#endif
+
+#ifdef USE_LEVELDB
+int copy_all_entries_to_database_nolock(leveldb_t *from_db, leveldb_t *to_db);
+int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db);
+#else
+int copy_all_entries_to_database_nolock(rocksdb_t *from_db, rocksdb_t *to_db);
+int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db);
+#endif
 
 int backup_blockchain_nolock(void);
 int backup_blockchain(void);
