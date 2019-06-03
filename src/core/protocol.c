@@ -1645,7 +1645,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
 
           if (can_initiate_sync)
           {
-            LOG_INFO("Found potential alternative blockchain at height: %u.", message->height);
+            LOG_INFO("Found potential alternative blockchain at height: %u", message->height);
             clear_sync_request(0);
 
             if (init_sync_request(message->height, net_connection) == 0)
