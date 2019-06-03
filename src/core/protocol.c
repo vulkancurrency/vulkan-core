@@ -511,6 +511,7 @@ int deserialize_message(packet_t *packet, void **message)
   if (remaining_size > 0)
   {
     LOG_ERROR("Could not deserialize packet with id: %u, packet has extraneous data of size: %u!", packet->id, remaining_size);
+    free_message(packet->id, 1, *message);
     goto packet_deserialize_fail;
   }
 
