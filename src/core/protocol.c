@@ -1092,11 +1092,8 @@ int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_
 
   if (g_protocol_sync_entry.last_sync_tries > RESYNC_BLOCK_MAX_TRIES)
   {
-    if (clear_sync_request(0))
-    {
-      LOG_WARNING("Timed out when requesting block at height: %u!", sync_height);
-    }
-
+    assert(clear_sync_request(0) == 0);
+    LOG_WARNING("Timed out when trying to request block at height: %u!", sync_height);
     return 1;
   }
 
