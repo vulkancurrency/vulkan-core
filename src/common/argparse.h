@@ -42,4 +42,5 @@ enum
 };
 
 int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg);
+int16_t argparse_get_argument_with_prefix_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg);
 argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uint16_t num_args, int16_t arg_type);

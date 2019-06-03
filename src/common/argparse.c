@@ -36,14 +36,6 @@
 int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg)
 {
   assert(arg_map != NULL);
-
-  // verify command argument prefix
-  if (string_startswith(arg, "-") == 0 || string_count(arg, "-", 1) > 2)
-  {
-    return CMD_ARG_UNKNOWN;
-  }
-
-  // determine the argument type
   for (int i = 0; i < num_args; i++)
   {
     argument_map_t *argument_map = &arg_map[i];
@@ -56,6 +48,16 @@ int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_arg
   }
 
   return CMD_ARG_UNKNOWN;
+}
+
+int16_t argparse_get_argument_with_prefix_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg)
+{
+  if (string_startswith(arg, "-") == 0 || string_count(arg, "-", 1) > 2)
+  {
+    return CMD_ARG_UNKNOWN;
+  }
+
+  return argparse_get_argument_from_str(arg_map, num_args, arg);
 }
 
 argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uint16_t num_args, int16_t arg_type)
