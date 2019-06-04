@@ -1073,7 +1073,10 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
   difficulty_info.num_timestamps = g_num_timestamps;
   difficulty_info.num_cumulative_difficulties = g_num_cumulative_difficulties;
   difficulty_info.target_seconds = parameters_get_difficulty_target();
-  return get_next_difficulty(difficulty_info);
+
+  uint64_t difficulty = get_next_difficulty(difficulty_info);
+  assert(difficulty > 0);
+  return difficulty;
 }
 
 uint64_t get_block_difficulty(uint32_t block_height)
