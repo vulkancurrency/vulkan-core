@@ -926,7 +926,7 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
 #endif
   if (err != NULL)
   {
-    LOG_ERROR("Failed to rollback blockchain!");
+    LOG_ERROR("Failed to rollback blockchain, error occurred: %s!", err);
     goto rollback_fail;
   }
 
