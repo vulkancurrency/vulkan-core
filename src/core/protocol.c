@@ -1240,6 +1240,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
     {
       uint8_t *checkpoint_hash = NULL;
       assert(get_checkpoint_hash_from_height(g_protocol_sync_entry.last_sync_height, &checkpoint_hash) == 0);
+      assert(checkpoint_hash != NULL);
 
       if (compare_block_hash(block->hash, checkpoint_hash) == 0)
       {
