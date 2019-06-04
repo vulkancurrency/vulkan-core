@@ -39,6 +39,9 @@
 
 uint64_t get_next_difficulty(difficulty_info_t difficulty_info)
 {
+  assert(difficulty_info.num_timestamps <= DIFFICULTY_WINDOW);
+  assert(difficulty_info.num_cumulative_difficulties <= DIFFICULTY_WINDOW);
+
   size_t length = difficulty_info.num_timestamps;
   assert(length == difficulty_info.num_cumulative_difficulties);
   if (length <= 1)

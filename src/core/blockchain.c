@@ -986,9 +986,6 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
   uint32_t height = block_height;
   height++;
 
-  vec_init(&difficulty_info.timestamps);
-  vec_init(&difficulty_info.cumulative_difficulties);
-
   if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
   {
     uint32_t index = height - 1;
@@ -1015,27 +1012,35 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
       g_num_cumulative_difficulties--;
     }
 
-    vec_extend(&difficulty_info.timestamps, &g_timestamps);
-    vec_extend(&difficulty_info.cumulative_difficulties, &g_cumulative_difficulties);
-
     g_timestamps_and_difficulties_height = height;
+    difficulty_info.timestamps = g_timestamps;
+    difficulty_info.cumulative_difficulties = g_cumulative_difficulties;
   }
   else
   {
+    vec_init(&difficulty_info.timestamps);
+    vec_init(&difficulty_info.cumulative_difficulties);
+
+    g_num_timestamps = 0;
+    g_num_cumulative_difficulties = 0;
+
     uint32_t offset = height - (uint32_t)(MIN(height, (uint32_t)DIFFICULTY_BLOCKS_COUNT));
     if (offset == 0)
     {
       offset++;
     }
 
+    vec_clear(&g_timestamps);
+    vec_clear(&g_cumulative_difficulties);
+
+    vec_deinit(&g_timestamps);
+    vec_deinit(&g_cumulative_difficulties);
+
     if (height > offset)
     {
       assert(vec_reserve(&difficulty_info.timestamps, height - offset) == 0);
       assert(vec_reserve(&difficulty_info.cumulative_difficulties, height - offset) == 0);
     }
-
-    g_num_timestamps = 0;
-    g_num_cumulative_difficulties = 0;
 
     for (; offset < height; offset++)
     {
@@ -1051,28 +1056,24 @@ uint64_t get_block_difficulty_nolock(uint32_t block_height)
       g_num_cumulative_difficulties++;
     }
 
-    vec_clear(&g_timestamps);
-    vec_clear(&g_cumulative_difficulties);
-
-    vec_extend(&g_timestamps, &difficulty_info.timestamps);
-    vec_extend(&g_cumulative_difficulties, &difficulty_info.cumulative_difficulties);
-
     g_timestamps_and_difficulties_height = height;
+    g_timestamps = difficulty_info.timestamps;
+    g_cumulative_difficulties = difficulty_info.cumulative_difficulties;
   }
 
-  vec_truncate(&difficulty_info.timestamps, DIFFICULTY_WINDOW);
-  vec_truncate(&difficulty_info.cumulative_difficulties, DIFFICULTY_WINDOW);
+  if (g_num_timestamps > DIFFICULTY_WINDOW)
+  {
+    vec_truncate(&g_timestamps, DIFFICULTY_WINDOW);
+    vec_truncate(&g_cumulative_difficulties, DIFFICULTY_WINDOW);
 
-  difficulty_info.num_timestamps = MIN(g_num_timestamps, DIFFICULTY_WINDOW);
-  difficulty_info.num_cumulative_difficulties = MIN(g_num_cumulative_difficulties, DIFFICULTY_WINDOW);
+    g_num_timestamps = DIFFICULTY_WINDOW;
+    g_num_cumulative_difficulties = DIFFICULTY_WINDOW;
+  }
+
+  difficulty_info.num_timestamps = g_num_timestamps;
+  difficulty_info.num_cumulative_difficulties = g_num_cumulative_difficulties;
   difficulty_info.target_seconds = parameters_get_difficulty_target();
-
-  uint64_t difficulty = get_next_difficulty(difficulty_info);
-
-  vec_deinit(&difficulty_info.timestamps);
-  vec_deinit(&difficulty_info.cumulative_difficulties);
-
-  return difficulty;
+  return get_next_difficulty(difficulty_info);
 }
 
 uint64_t get_block_difficulty(uint32_t block_height)
