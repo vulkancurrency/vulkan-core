@@ -1547,7 +1547,10 @@ int32_t get_block_height_from_hash_nolock(uint8_t *block_hash)
   for (uint32_t i = 0; i <= current_block_height; i++)
   {
     block = get_block_from_height_nolock(i);
-    assert(block != NULL);
+    if (block == NULL)
+    {
+      break;
+    }
 
     if (compare_block_hash(block->hash, block_hash))
     {
