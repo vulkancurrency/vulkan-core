@@ -68,6 +68,7 @@ int get_blockchain_compression_type(void);
 const char* get_blockchain_dir(void);
 const char* get_blockchain_backup_dir(const char *blockchain_dir);
 
+int repair_blockchain(const char *blockchain_dir);
 int open_blockchain(const char *blockchain_dir);
 int close_blockchain(void);
 

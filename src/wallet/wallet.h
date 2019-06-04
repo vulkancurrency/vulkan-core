@@ -67,7 +67,7 @@ rocksdb_t* open_wallet(const char *wallet_dir, char *err);
 
 int new_wallet(const char *wallet_dir, wallet_t **wallet_out);
 int get_wallet(const char *wallet_dir, wallet_t **wallet_out);
-void repair_wallet(const char *wallet_dir);
+int repair_wallet(const char *wallet_dir);
 int init_wallet(const char *wallet_dir, wallet_t **wallet_out);
 int remove_wallet(const char *wallet_dir);
 

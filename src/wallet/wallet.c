@@ -350,24 +350,47 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
   return 0;
 }
 
-void repair_wallet(const char *wallet_dir)
+int repair_wallet(const char *wallet_dir)
 {
   char *err = NULL;
 #ifdef USE_LEVELDB
   leveldb_options_t *options = leveldb_options_create();
   leveldb_options_set_create_if_missing(options, 1);
-
-  leveldb_repair_db(options, wallet_dir, &err);
-  leveldb_free(err);
-  leveldb_free(options);
 #else
   rocksdb_options_t *options = rocksdb_options_create();
   rocksdb_options_set_create_if_missing(options, 1);
+#endif
 
+#ifdef USE_LEVELDB
+  leveldb_repair_db(options, wallet_dir, &err);
+#else
   rocksdb_repair_db(options, wallet_dir, &err);
+#endif
+
+  if (err != NULL)
+  {
+    LOG_ERROR("Could not repair wallet database: %s, error occurred: %s!", wallet_dir, err);
+
+  #ifdef USE_LEVELDB
+    leveldb_free(err);
+    leveldb_free(options);
+  #else
+    rocksdb_free(err);
+    rocksdb_options_destroy(options);
+  #endif
+    return 1;
+  }
+
+#ifdef USE_LEVELDB
+  leveldb_free(err);
+  leveldb_free(options);
+#else
   rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
+
+  LOG_INFO("Successfully repaired wallet database: %s!", wallet_dir);
+  return 0;
 }
 
 int init_wallet(const char *wallet_dir, wallet_t **wallet_out)
@@ -380,7 +403,6 @@ int init_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (wallet == NULL)
   {
-    repair_wallet(wallet_dir);
     if (get_wallet(wallet_dir, &wallet))
     {
       return 1;
