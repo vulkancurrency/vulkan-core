@@ -815,6 +815,12 @@ int rollback_blockchain_nolock(uint32_t rollback_height)
     return 1;
   }
 
+  if (current_block_height == rollback_height)
+  {
+    LOG_INFO("Blockchain already at rollback height: %u, nothing to rollback!", rollback_height);
+    return 0;
+  }
+
   // get the new top block after we rollback the blockchain
   block_t *new_top_block = NULL;
   if (rollback_height == 0)
