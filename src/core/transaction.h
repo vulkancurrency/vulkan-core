@@ -115,11 +115,11 @@ unspent_output_transaction_t* make_unspent_txout(void);
 int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
 int validate_txin_signature(transaction_t *tx, input_transaction_t *txin);
 int validate_tx_signatures(transaction_t *tx);
-int get_txin_header(uint8_t *header, input_transaction_t *txin);
-int get_txout_header(uint8_t *header, output_transaction_t *txout);
+void get_txin_header(uint8_t *header, input_transaction_t *txin);
+void get_txout_header(uint8_t *header, output_transaction_t *txout);
 uint32_t get_tx_sign_header_size(transaction_t *tx);
 uint32_t get_tx_header_size(transaction_t *tx);
-int get_tx_sign_header(uint8_t *header, transaction_t *tx);
+void get_tx_sign_header(uint8_t *header, transaction_t *tx);
 
 int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
 int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);

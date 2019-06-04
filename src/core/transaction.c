@@ -107,16 +107,22 @@ unspent_output_transaction_t* make_unspent_txout(void)
  */
 int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key)
 {
+  assert(txin != NULL);
+  assert(tx != NULL);
+  assert(public_key != NULL);
+  assert(secret_key != NULL);
+
   uint32_t header_size = get_tx_sign_header_size(tx) + TXIN_HEADER_SIZE;
   uint8_t header[header_size];
   uint8_t hash[HASH_SIZE];
 
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
+
   crypto_hash_sha256d(hash, header, header_size);
   crypto_sign_detached(txin->signature, NULL, header, header_size, secret_key);
-  memcpy(&txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
 
+  memcpy(&txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 
@@ -128,8 +134,8 @@ int validate_txin_signature(transaction_t *tx, input_transaction_t *txin)
   uint32_t header_size = get_tx_sign_header_size(tx) + TXIN_HEADER_SIZE;
   uint8_t header[header_size];
 
-  assert(get_txin_header(header, txin) == 0);
-  assert(get_tx_sign_header(header + TXIN_HEADER_SIZE, tx) == 0);
+  get_txin_header(header, txin);
+  get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
 
   if (crypto_sign_verify_detached(txin->signature, header, header_size, txin->public_key))
   {
@@ -161,22 +167,27 @@ int validate_tx_signatures(transaction_t *tx)
   return 0;
 }
 
-int get_txin_header(uint8_t *header, input_transaction_t *txin)
+void get_txin_header(uint8_t *header, input_transaction_t *txin)
 {
+  assert(header != NULL);
+  assert(txin != NULL);
+
   memcpy(header, &txin->transaction, HASH_SIZE);
   memcpy(header + HASH_SIZE, &txin->txout_index, 4);
-  return 0;
 }
 
-int get_txout_header(uint8_t *header, output_transaction_t *txout)
+void get_txout_header(uint8_t *header, output_transaction_t *txout)
 {
+  assert(header != NULL);
+  assert(txout != NULL);
+
   memcpy(header, &txout->amount, 4);
   memcpy(header, &txout->address, ADDRESS_SIZE);
-  return 0;
 }
 
 uint32_t get_tx_header_size(transaction_t *tx)
 {
+  assert(tx != NULL);
   uint32_t txin_header_sizes = TXIN_HEADER_SIZE * tx->txin_count;
   uint32_t txout_header_sizes = TXOUT_HEADER_SIZE * tx->txout_count;
   return txin_header_sizes + txout_header_sizes;
@@ -190,27 +201,36 @@ uint32_t get_tx_header_size(transaction_t *tx)
  */
 uint32_t get_tx_sign_header_size(transaction_t *tx)
 {
+  assert(tx != NULL);
   uint32_t txout_header_sizes = TXOUT_HEADER_SIZE * tx->txout_count;
   return txout_header_sizes;
 }
 
-int get_tx_sign_header(uint8_t *header, transaction_t *tx)
+void get_tx_sign_header(uint8_t *header, transaction_t *tx)
 {
+  assert(header != NULL);
+  assert(tx != NULL);
+
   for (uint32_t i = 0; i < tx->txout_count; i++)
   {
-    get_txout_header(header + (TXOUT_HEADER_SIZE * i), tx->txouts[i]);
-  }
+    output_transaction_t *txout = tx->txouts[i];
+    assert(txout != NULL);
 
-  return 0;
+    get_txout_header(header + (TXOUT_HEADER_SIZE * i), txout);
+  }
 }
 
 int compare_transaction_hash(uint8_t *id, uint8_t *other_id)
 {
+  assert(id != NULL);
+  assert(other_id != NULL);
   return memcmp(id, other_id, HASH_SIZE) == 0;
 }
 
 int compare_transaction(transaction_t *transaction, transaction_t *other_transaction)
 {
+  assert(transaction != NULL);
+  assert(other_transaction != NULL);
   return compare_transaction_hash(transaction->id, other_transaction->id);
 }
 
