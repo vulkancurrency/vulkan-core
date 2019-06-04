@@ -1226,13 +1226,6 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
 {
   assert(net_connection != NULL);
   assert(block != NULL);
-
-  if (valid_block_hash(block) == 0)
-  {
-    assert(clear_sync_request(0) == 0);
-    return 1;
-  }
-
   if (g_protocol_sync_entry.sync_initiated)
   {
     int has_checkpoint = has_checkpoint_hash_by_height(g_protocol_sync_entry.last_sync_height);
