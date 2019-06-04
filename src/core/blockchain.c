@@ -1363,12 +1363,14 @@ int validate_and_insert_block_nolock(block_t *block)
     uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
     if (block->cumulative_difficulty != expected_cumulative_difficulty)
     {
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid cumulative difficulty: %" PRIu64 " expected: %" PRIu64 "!", block->cumulative_difficulty, expected_cumulative_difficulty);
       return 1;
     }
 
     uint64_t expected_difficulty = get_next_block_difficulty_nolock();
     if (block->difficulty != expected_difficulty)
     {
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %" PRIu64 " expected: %" PRIu64 "!", block->difficulty, expected_difficulty);
       return 1;
     }
 
