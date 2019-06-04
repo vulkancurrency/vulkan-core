@@ -1490,7 +1490,12 @@ block_t *get_block_from_height_nolock(uint32_t height)
     }
 
     block_t *previous_block = get_block_from_hash_nolock(block->previous_hash);
-    assert(previous_block != NULL);
+    if (previous_block == NULL)
+    {
+      free_block(block);
+      return NULL;
+    }
+
     free_block(block);
     block = previous_block;
   }
