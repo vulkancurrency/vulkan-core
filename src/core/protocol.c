@@ -1273,7 +1273,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       {
         // check the block's actual height in our blockchain to make sure
         // the height corresponds with the last sync height we've counted...
-        uint32_t actual_height = get_block_height_from_hash(block->hash);
+        /*uint32_t actual_height = get_block_height_from_hash(block->hash);
         if (actual_height != g_protocol_sync_entry.last_sync_height)
         {
           char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
@@ -1283,7 +1283,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
           free(block_hash_str);
           assert(clear_sync_request(0) == 0);
           return 1;
-        }
+        }*/
 
         LOG_INFO("Found sync starting block at height: %u!", g_protocol_sync_entry.last_sync_height);
         g_protocol_sync_entry.sync_start_height = g_protocol_sync_entry.last_sync_height;
