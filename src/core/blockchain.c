@@ -1465,7 +1465,7 @@ block_t *get_block_from_hash(uint8_t *block_hash)
 
 block_t *get_block_from_height_nolock(uint32_t height)
 {
-  uint32_t current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height_nolock();
   if (height > current_block_height)
   {
     return NULL;
@@ -1514,7 +1514,7 @@ block_t *get_block_from_height(uint32_t height)
 int32_t get_block_height_from_hash_nolock(uint8_t *block_hash)
 {
   assert(block_hash != NULL);
-  uint32_t current_block_height = get_block_height();
+  uint32_t current_block_height = get_block_height_nolock();
 
   block_t *block = NULL;
   int32_t block_height = -1;
