@@ -23,9 +23,9 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
 
 #include "buffer_iterator.h"
 #include "buffer.h"
@@ -69,6 +69,13 @@ size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator)
 {
   assert(buffer_iterator != NULL);
   return buffer_iterator->offset;
+}
+
+void buffer_iterator_clear(buffer_iterator_t *buffer_iterator)
+{
+  assert(buffer_iterator != NULL);
+  buffer_iterator->buffer = NULL;
+  buffer_iterator->offset = 0;
 }
 
 int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes)
@@ -213,19 +220,6 @@ int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
   return 0;
 }
 
-int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string)
-{
-  assert(buffer_iterator != NULL);
-  assert(buffer_iterator->buffer != NULL);
-  uint32_t size = 0;
-  if (buffer_read_uint32(buffer_iterator, &size))
-  {
-    return 1;
-  }
-
-  return buffer_read(buffer_iterator, size, (uint8_t**)string);
-}
-
 int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
@@ -239,17 +233,11 @@ int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
   return buffer_read(buffer_iterator, size, bytes);
 }
 
-int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string)
+int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  uint64_t size = 0;
-  if (buffer_read_uint64(buffer_iterator, &size))
-  {
-    return 1;
-  }
-
-  return buffer_read(buffer_iterator, size, (uint8_t**)string);
+  return buffer_read_bytes(buffer_iterator, (uint8_t**)string);
 }
 
 int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
@@ -263,4 +251,11 @@ int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
   }
 
   return buffer_read(buffer_iterator, size, bytes);
+}
+
+int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  return buffer_read_bytes_long(buffer_iterator, (uint8_t**)string);
 }

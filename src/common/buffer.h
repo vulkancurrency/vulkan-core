@@ -57,7 +57,7 @@ void buffer_set_offset(buffer_t *buffer, size_t offset);
 size_t buffer_get_offset(buffer_t *buffer);
 
 int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
-int buffer_clear(buffer_t *buffer);
+void buffer_clear(buffer_t *buffer);
 void buffer_free(buffer_t *buffer);
 
 int buffer_realloc(buffer_t *buffer, size_t size);
@@ -75,11 +75,10 @@ int buffer_write_int32(buffer_t *buffer, int32_t value);
 int buffer_write_uint64(buffer_t *buffer, uint64_t value);
 int buffer_write_int64(buffer_t *buffer, int64_t value);
 
-int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
 int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size);
-
-int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size);
+int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
 int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t size);
+int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size);
 
 #ifdef __cplusplus
 }

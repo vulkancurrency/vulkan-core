@@ -50,6 +50,8 @@ const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
 void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
 size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
+void buffer_iterator_clear(buffer_iterator_t *buffer_iterator);
+
 int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
 size_t buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
 uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
@@ -66,11 +68,10 @@ int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value);
 uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value);
 int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value);
 
-int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string);
 int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
-
-int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string);
+int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string);
 int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
+int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string);
 
 #ifdef __cplusplus
 }

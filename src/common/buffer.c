@@ -23,10 +23,10 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <assert.h>
 #include <string.h>
 
 #include "buffer.h"
@@ -114,7 +114,7 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
 {
   assert(buffer != NULL);
   assert(other_buffer != NULL);
-  assert(buffer_clear(buffer) == 0);
+  buffer_clear(buffer);
   assert(buffer_realloc(buffer, other_buffer->size) == 0);
   memcpy(buffer->data, other_buffer->data, other_buffer->size);
   buffer->size = other_buffer->size;
@@ -122,7 +122,7 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
   return 0;
 }
 
-int buffer_clear(buffer_t *buffer)
+void buffer_clear(buffer_t *buffer)
 {
   assert(buffer != NULL);
   if (buffer->data != NULL)
@@ -133,7 +133,6 @@ int buffer_clear(buffer_t *buffer)
 
   buffer->size = 0;
   buffer->offset = 0;
-  return 0;
 }
 
 void buffer_free(buffer_t *buffer)
@@ -248,16 +247,6 @@ int buffer_write_int64(buffer_t *buffer, int64_t value)
   return 0;
 }
 
-int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
-{
-  assert(buffer != NULL);
-  assert(string != NULL);
-  assert(size > 0);
-  buffer_write_uint32(buffer, size);
-  buffer_write(buffer, (const uint8_t*)string, size);
-  return 0;
-}
-
 int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
 {
   assert(buffer != NULL);
@@ -268,14 +257,12 @@ int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
   return 0;
 }
 
-int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size)
+int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
 {
   assert(buffer != NULL);
   assert(string != NULL);
   assert(size > 0);
-  buffer_write_uint64(buffer, size);
-  buffer_write(buffer, (const uint8_t*)string, size);
-  return 0;
+  return buffer_write_bytes(buffer, (const uint8_t*)string, size);
 }
 
 int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t size)
@@ -286,4 +273,12 @@ int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t siz
   buffer_write_uint64(buffer, size);
   buffer_write(buffer, bytes, size);
   return 0;
+}
+
+int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size)
+{
+  assert(buffer != NULL);
+  assert(string != NULL);
+  assert(size > 0);
+  return buffer_write_bytes_long(buffer, (const uint8_t*)string, size);
 }
