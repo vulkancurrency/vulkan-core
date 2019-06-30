@@ -54,8 +54,9 @@ static task_t *g_miner_worker_status_task = NULL;
 
 static mtx_t g_miner_lock;
 static miner_worker_t *g_miner_workers[MAX_NUM_WORKER_THREADS];
-static uint16_t g_num_worker_threads = 0;
-static int g_workers_paused = 0;
+static uint16_t g_num_worker_threads = 1;
+static int g_miner_workers_paused = 0;
+static int g_miner_generate_genesis = 0;
 
 int get_is_miner_initialized(void)
 {
@@ -85,18 +86,29 @@ wallet_t* get_current_wallet(void)
 
 void set_workers_paused(int workers_paused)
 {
-  g_workers_paused = workers_paused;
+  g_miner_workers_paused = workers_paused;
 }
 
 int get_workers_paused(void)
 {
-  return g_workers_paused;
+  return g_miner_workers_paused;
+}
+
+void set_miner_generate_genesis(int generate_genesis)
+{
+  g_miner_generate_genesis = generate_genesis;
+}
+
+int get_miner_generate_genesis(void)
+{
+  return g_miner_generate_genesis;
 }
 
 miner_worker_t* init_worker(void)
 {
   miner_worker_t *worker = malloc(sizeof(miner_worker_t));
   worker->id = 0;
+  worker->running = 0;
   worker->last_timestamp = get_current_time();
   worker->last_hashrate = 0;
   return worker;
@@ -106,6 +118,7 @@ void free_worker(miner_worker_t *worker)
 {
   assert(worker != NULL);
   worker->id = 0;
+  worker->running = 0;
   worker->last_timestamp = 0;
   worker->last_hashrate = 0;
   free(worker);
@@ -124,7 +137,7 @@ static void update_worker_hashrate(miner_worker_t *worker)
   worker->last_hashrate++;
 }
 
-block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
 {
   assert(worker != NULL);
   assert(wallet != NULL);
@@ -142,8 +155,7 @@ block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wal
 
   block->timestamp = current_time;
   block->nonce = nonce;
-  block->difficulty = get_next_block_difficulty();
-  block->cumulative_difficulty = previous_block->cumulative_difficulty + block->difficulty;
+  block->bits = get_next_block_difficulty();
   block->cumulative_emission = cumulative_emission + block_reward;
 
   transaction_t *tx = NULL;
@@ -158,31 +170,47 @@ block_t* construct_computable_block_nolock(miner_worker_t *worker, wallet_t *wal
   return block;
 }
 
-block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+block_t* construct_computable_genesis_block(wallet_t *wallet)
 {
-  mtx_lock(&g_miner_lock);
-  block_t *block = construct_computable_block_nolock(worker, wallet, previous_block);
-  mtx_unlock(&g_miner_lock);
-  return block;
+  assert(wallet != NULL);
+
+  block_t *genesis_block = make_block();
+  genesis_block->timestamp = parameters_get_genesis_timestamp();
+  genesis_block->nonce = parameters_get_genesis_nonce();
+  genesis_block->bits = parameters_get_genesis_bits();
+
+  uint64_t block_reward = get_block_reward(0, 0);
+  genesis_block->cumulative_emission = block_reward;
+
+  // add genesis transactions
+  transaction_t *tx = NULL;
+  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
+  assert(tx != NULL);
+  assert(add_transaction_to_block(genesis_block, tx, 0) == 0);
+
+  assert(compute_self_merkle_root(genesis_block) == 0);
+  assert(compute_self_block_hash(genesis_block) == 0);
+  return genesis_block;
 }
 
-block_t* compute_next_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block)
+int compute_block(miner_worker_t *worker, block_t *block)
 {
-  assert(worker != NULL);
-  assert(wallet != NULL);
-  assert(previous_block != NULL);
-
-  block_t *block = construct_computable_block(worker, wallet, previous_block);
   assert(block != NULL);
-
   while (valid_block_hash(block) == 0)
   {
     block->nonce++;
-    compute_self_block_hash(block);
-    update_worker_hashrate(worker);
+    if (compute_self_block_hash(block))
+    {
+      return 1;
+    }
+
+    if (worker != NULL)
+    {
+      update_worker_hashrate(worker);
+    }
   }
 
-  return block;
+  return 0;
 }
 
 static int worker_mining_thread(void *arg)
@@ -191,19 +219,56 @@ static int worker_mining_thread(void *arg)
   miner_worker_t *worker = (miner_worker_t*)arg;
   assert(worker != NULL);
 
+  if (g_miner_generate_genesis)
+  {
+    block_t *genesis_block = construct_computable_genesis_block(g_current_wallet);
+    assert(genesis_block != NULL);
+
+    if (compute_block(NULL, genesis_block))
+    {
+      char *block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
+      LOG_ERROR("Failed to compute newly constructed genesis block: %s", block_hash_str);
+      free(block_hash_str);
+      free_block(genesis_block);
+      goto worker_thread_fail;
+    }
+
+    char *block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
+    LOG_INFO("Found genesis block: %s", block_hash_str);
+    free(block_hash_str);
+
+    print_block(genesis_block);
+    print_block_transactions(genesis_block);
+
+    free_block(genesis_block);
+    goto worker_thread_succeed;
+  }
+
   block_t *previous_block = NULL;
   block_t *block = NULL;
 
   while (g_miner_initialized)
   {
-    if (g_workers_paused)
+    if (g_miner_workers_paused)
     {
       sleep(1);
       continue;
     }
 
     previous_block = get_current_block();
-    block = compute_next_block(worker, g_current_wallet, previous_block);
+    assert(previous_block != NULL);
+
+    block_t *block = construct_computable_block(worker, g_current_wallet, previous_block);
+    assert(block != NULL);
+
+    if (compute_block(worker, block))
+    {
+      char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
+      LOG_ERROR("Failed to compute newly constructed block: %s", block_hash_str);
+      free(block_hash_str);
+      goto worker_thread_fail;
+    }
+
     if (validate_and_insert_block(block) == 0)
     {
       LOG_INFO("Worker[%hu]: found block at height: %u!", worker->id, get_block_height());
@@ -214,6 +279,14 @@ static int worker_mining_thread(void *arg)
     free_block(block);
   }
 
+  goto worker_thread_succeed;
+
+worker_thread_fail:
+  worker->running = 1;
+  return 1;
+
+worker_thread_succeed:
+  worker->running = 1;
   return 0;
 }
 
@@ -224,7 +297,7 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
     miner_worker_t *worker = g_miner_workers[i];
     assert(worker != NULL);
 
-    if (g_workers_paused)
+    if (g_miner_workers_paused)
     {
       LOG_INFO("Worker[%u]: miner thread paused, waiting for resume...", worker->id);
     }
@@ -235,6 +308,24 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   }
 
   return TASK_RESULT_WAIT;
+}
+
+void wait_for_threads_to_stop(void)
+{
+  while (g_miner_initialized)
+  {
+    sleep(1);
+    for (int i = 0; i < g_num_worker_threads; i++)
+    {
+      miner_worker_t *worker = g_miner_workers[i];
+      assert(worker != NULL);
+
+      if (worker->running)
+      {
+        continue;
+      }
+    }
+  }
 }
 
 int start_mining(void)
@@ -254,6 +345,7 @@ int start_mining(void)
   {
     miner_worker_t *worker = init_worker();
     worker->id = i;
+    worker->running = 1;
     if (thrd_create(&worker->thread, worker_mining_thread, worker) != thrd_success)
     {
       LOG_ERROR("Failed to start mining thread: %hu!", i);
@@ -264,6 +356,13 @@ int start_mining(void)
   }
 
   LOG_INFO("Started mining on %hu threads...", g_num_worker_threads);
+  if (g_miner_generate_genesis)
+  {
+    // since we are trying to mine the genesis block, wait until
+    // all of the worker threads stop before releasing the main thread...
+    wait_for_threads_to_stop();
+  }
+
   return 0;
 }
 

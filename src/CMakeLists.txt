@@ -65,6 +65,10 @@ else()
   target_link_libraries(core libsodium_Cmake)
 endif()
 
+if (OPENSSL_FOUND)
+  target_link_libraries(crypto ${OPENSSL_LIBRARIES})
+endif()
+
 if (WITH_LEVELDB)
   if (LEVELDB_FOUND)
     target_link_libraries(core ${LEVELDB_LIBRARIES})

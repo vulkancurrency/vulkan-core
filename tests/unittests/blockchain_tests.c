@@ -83,8 +83,7 @@ TEST check_blocks_in_blockchain(void)
     },
     .timestamp = 0,
     .nonce = 10000,
-    .difficulty = 1,
-    .cumulative_difficulty = 1,
+    .bits = 1,
     .cumulative_emission = 0,
     .merkle_root = {
       0xf8, 0x99, 0x8c, 0xfc,

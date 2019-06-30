@@ -52,8 +52,7 @@ typedef struct Block
 
   uint32_t timestamp;
   uint32_t nonce;
-  uint64_t difficulty;
-  uint64_t cumulative_difficulty;
+  uint32_t bits;
   uint64_t cumulative_emission;
 
   uint8_t merkle_root[HASH_SIZE];
@@ -85,8 +84,7 @@ static block_t mainnet_genesis_block = {
   },
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
-  .difficulty = 1,
-  .cumulative_difficulty = 1,
+  .bits = GENESIS_BITS,
   .cumulative_emission = 0,
   .merkle_root = {
     0xf8, 0x99, 0x8c, 0xfc,
@@ -126,8 +124,7 @@ static block_t testnet_genesis_block = {
   },
   .timestamp = TESTNET_GENESIS_TIMESTAMP,
   .nonce = TESTNET_GENESIS_NONCE,
-  .difficulty = 1,
-  .cumulative_difficulty = 1,
+  .bits = TESTNET_GENESIS_BITS,
   .cumulative_emission = 0,
   .merkle_root = {
     0xf8, 0x99, 0x8c, 0xfc,
@@ -153,7 +150,6 @@ int compare_block(block_t *block, block_t *other_block);
 
 block_t *get_genesis_block(void);
 int compare_with_genesis_block(block_t *block);
-block_t* compute_genesis_block(wallet_t *wallet);
 
 int valid_block_timestamp(block_t *block);
 int valid_block(block_t *block);

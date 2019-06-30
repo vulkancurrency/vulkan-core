@@ -136,8 +136,7 @@ TEST can_serialize_deserialize_packet(void)
 
   ASSERT_EQ(deserialized_block->timestamp, block->timestamp);
   ASSERT_EQ(deserialized_block->nonce, block->nonce);
-  ASSERT_EQ(deserialized_block->difficulty, block->difficulty);
-  ASSERT_EQ(deserialized_block->cumulative_difficulty, block->cumulative_difficulty);
+  ASSERT_EQ(deserialized_block->bits, block->bits);
   ASSERT_EQ(deserialized_block->cumulative_emission, block->cumulative_emission);
 
   ASSERT_MEM_EQ(deserialized_block->merkle_root, block->merkle_root, HASH_SIZE);

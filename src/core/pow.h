@@ -28,15 +28,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "crypto/cryptoutil.h"
+#include "crypto/bignum_util.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-int check_pow(const uint8_t *hash, uint64_t difficulty);
-
-#ifdef __cplusplus
-}
-#endif
+int get_pow_limit(BIGNUM *num);
+int check_proof_of_work(const uint8_t *hash, uint32_t bits);

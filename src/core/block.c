@@ -47,6 +47,8 @@
 #include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
 
+#include "miner/miner.h"
+
 /* Allocates a block for usage.
  *
  * Later to be free'd with `free_block`
@@ -61,8 +63,7 @@ block_t* make_block(void)
 
   block->timestamp = 0;
   block->nonce = 0;
-  block->difficulty = 0;
-  block->cumulative_difficulty = 0;
+  block->bits = 0;
   block->cumulative_emission = 0;
 
   memset(block->merkle_root, 0, HASH_SIZE);
@@ -251,8 +252,7 @@ void print_block(block_t *block)
 
   printf("Timestamp (epoch): %u\n", block->timestamp);
   printf("Nonce: %u\n", block->nonce);
-  printf("Difficulty: %" PRIu64 "\n", block->difficulty);
-  printf("Cumulative Difficulty: %" PRIu64 "\n", block->cumulative_difficulty);
+  printf("Bits: %u\n", block->bits);
   printf("Cumulative Emission: %" PRIu64 "\n", block->cumulative_emission);
 
   char *merkle_root_str = bin2hex(block->merkle_root, HASH_SIZE);
@@ -287,7 +287,8 @@ int valid_block_hash(block_t *block)
   // to see if the block has the correct corresponding hash;
   // also check to see if the block's hash target matches
   // it's corresponding proof-of-work difficulty...
-  return (compare_block_hash(expected_block_hash, block->hash) && check_pow(block->hash, block->difficulty));
+  return (compare_block_hash(expected_block_hash, block->hash) &&
+    check_proof_of_work(block->hash, block->bits));
 }
 
 int compute_block_hash(uint8_t *hash, block_t *block)
@@ -334,7 +335,8 @@ int compare_block(block_t *block, block_t *other_block)
 {
   assert(block != NULL);
   assert(other_block != NULL);
-  return (compare_block_hash(block->hash, other_block->hash) && compare_merkle_hash(block->merkle_root, other_block->merkle_root));
+  return (compare_block_hash(block->hash, other_block->hash) &&
+    compare_merkle_hash(block->merkle_root, other_block->merkle_root));
 }
 
 block_t *get_genesis_block(void)
@@ -354,33 +356,6 @@ int compare_with_genesis_block(block_t *block)
   return compare_block(block, genesis_block);
 }
 
-block_t* compute_genesis_block(wallet_t *wallet)
-{
-  assert(wallet != NULL);
-
-  block_t *block = make_block();
-  block->timestamp = parameters_get_genesis_timestamp();
-  block->nonce = parameters_get_genesis_nonce();
-  block->difficulty = 1;
-  block->cumulative_difficulty = 1;
-
-  uint64_t block_reward = get_block_reward(0, 0);
-  block->cumulative_emission = block_reward;
-
-  transaction_t *tx = NULL;
-  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
-  assert(tx != NULL);
-
-  assert(add_transaction_to_block(block, tx, 0) == 0);
-
-  compute_self_merkle_root(block);
-  compute_self_block_hash(block);
-
-  assert(valid_merkle_root(block) == 1);
-  assert(valid_block_hash(block) == 1);
-  return block;
-}
-
 int serialize_block_header(buffer_t *buffer, block_t *block)
 {
   assert(block != NULL);
@@ -389,11 +364,9 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   buffer_write_uint32(buffer, block->version);
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint64(buffer, block->difficulty);
-  buffer_write_uint64(buffer, block->cumulative_difficulty);
+  buffer_write_uint32(buffer, block->bits);
   buffer_write_uint64(buffer, block->cumulative_emission);
 
-  // write raw hash's
   buffer_write(buffer, block->previous_hash, HASH_SIZE);
   buffer_write(buffer, block->merkle_root, HASH_SIZE);
   return 0;
@@ -411,8 +384,7 @@ int serialize_block(buffer_t *buffer, block_t *block)
 
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint64(buffer, block->difficulty);
-  buffer_write_uint64(buffer, block->cumulative_difficulty);
+  buffer_write_uint64(buffer, block->bits);
   buffer_write_uint64(buffer, block->cumulative_emission);
 
   buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
@@ -459,12 +431,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
     goto deserialize_fail;
   }
 
-  if (buffer_read_uint64(buffer_iterator, &block->difficulty))
-  {
-    goto deserialize_fail;
-  }
-
-  if (buffer_read_uint64(buffer_iterator, &block->cumulative_difficulty))
+  if (buffer_read_uint32(buffer_iterator, &block->bits))
   {
     goto deserialize_fail;
   }
@@ -566,7 +533,11 @@ int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_
     for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = NULL;
-      assert(deserialize_transaction(buffer_iterator, &tx) == 0);
+      if (deserialize_transaction(buffer_iterator, &tx))
+      {
+        return 1;
+      }
+
       assert(tx != NULL);
       block->transactions[i] = tx;
     }
@@ -696,8 +667,7 @@ int copy_block(block_t *block, block_t *other_block)
 
   other_block->timestamp = block->timestamp;
   other_block->nonce = block->nonce;
-  other_block->difficulty = block->difficulty;
-  other_block->cumulative_difficulty = block->cumulative_difficulty;
+  other_block->bits = block->bits;
   other_block->cumulative_emission = block->cumulative_emission;
 
   memcpy(&other_block->merkle_root, &block->merkle_root, HASH_SIZE);

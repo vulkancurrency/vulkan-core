@@ -26,7 +26,7 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 cmake_minimum_required(VERSION 3.5)
-project(vulkan)
+project(vulkan C)
 
 option(WITH_ROCKSDB "Build with RocksDB support" ON)
 option(WITH_LEVELDB "Build with LevelDB support" OFF)
@@ -59,6 +59,19 @@ if (NOT SODIUM_FOUND)
   include_directories(external/libsodium-CMake/src/libsodium/include)
 else()
   include_directories(${SODIUM_INCLUDE_DIR})
+endif()
+
+# ensure that we've set the openssl root and lib directory paths
+if (APPLE AND NOT DEFINED ENV{OPENSSL_ROOT_DIR})
+  set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl" "/usr/local/ssl/*" "/usr/local/Cellar/openssl/*")
+  set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib" "/usr/local/ssl/*/lib" "/usr/local/Cellar/openssl/*/lib")
+endif()
+
+find_package(OpenSSL QUIET)
+if (NOT OPENSSL_FOUND)
+  message(FATAL_ERROR "Failed to find OpenSSL dependency!")
+else()
+  include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
 if (WITH_LEVELDB)

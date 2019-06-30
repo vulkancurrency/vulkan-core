@@ -58,6 +58,7 @@ static const char *g_logger_log_filename = "daemon.log";
 
 static int g_repair_blockchain = 0;
 static int g_repair_wallet = 0;
+static int g_generate_genesis = 0;
 
 enum
 {
@@ -79,6 +80,7 @@ enum
   CMD_ARG_CREATE_GENESIS_BLOCK,
   CMD_ARG_FORCE_VERSION_CHECK,
   CMD_ARG_TESTNET,
+  CMD_ARG_NUM_WORKER_THREADS,
   CMD_ARG_MINE
 };
 
@@ -101,7 +103,8 @@ static argument_map_t g_arguments_map[] = {
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
   {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections...", "", 0},
-  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "<num_worker_threads>", 1}
+  {"worker-threads", CMD_ARG_NUM_WORKER_THREADS, "Sets the number of miner worker threads to use when mining blocks.", "<num_workers>", 1},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "", 0}
 };
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
@@ -271,40 +274,25 @@ static int parse_commandline_args(int argc, char **argv)
         assert(remove_wallet(g_wallet_dir) == 0);
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
-        {
-          wallet_t *wallet = NULL;
-          if (init_wallet(g_wallet_dir, &wallet))
-          {
-            return 1;
-          }
-
-          assert(wallet != NULL);
-          block_t *block = compute_genesis_block(wallet);
-          assert(block != NULL);
-
-          printf("Generated new genesis block.\n");
-          print_block(block);
-          printf("\n");
-          print_block_transactions(block);
-
-          free_block(block);
-          free_wallet(wallet);
-        }
-        return 1;
+        g_generate_genesis = 1;
+        set_miner_generate_genesis(1);
+        break;
       case CMD_ARG_FORCE_VERSION_CHECK:
         set_force_version_check(1);
         break;
-      case CMD_ARG_MINE:
+      case CMD_ARG_NUM_WORKER_THREADS:
         i++;
         uint16_t num_worker_threads = (uint16_t)atoi(argv[i]);
         if (num_worker_threads < 1)
         {
-          fprintf(stderr, "Invalid number of worker threads: %u!\n", num_worker_threads);
+          fprintf(stderr, "Must have at least one worker thread!\n");
           return 1;
         }
 
-        g_enable_miner = 1;
         set_num_worker_threads(num_worker_threads);
+        break;
+      case CMD_ARG_MINE:
+        g_enable_miner = 1;
         break;
       default:
         fprintf(stderr, "Unknown command line argument: %s\n", argv[i]);
@@ -375,7 +363,15 @@ int main(int argc, char **argv)
 
     assert(wallet != NULL);
     set_current_wallet(wallet);
-    start_mining();
+    if (start_mining())
+    {
+      return 1;
+    }
+
+    if (g_generate_genesis)
+    {
+      return 0;
+    }
   }
 
   if (net_run())

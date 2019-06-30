@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <inttypes.h>
 
+#include <openssl/bn.h>
+
 #ifdef USE_LEVELDB
 #include <leveldb/c.h>
 #else
@@ -49,6 +51,7 @@
 #include "difficulty.h"
 #include "mempool.h"
 
+#include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"
 
 #include "wallet/wallet.h"
@@ -83,27 +86,6 @@ static int g_blockchain_compression_type = rocksdb_lz4_compression;
 static rocksdb_t *g_blockchain_db = NULL;
 static rocksdb_backup_engine_t *g_blockchain_backup_db = NULL;
 #endif
-
-static vec_int_t g_timestamps;
-static vec_int_t g_cumulative_difficulties;
-
-static size_t g_num_timestamps = 0;
-static size_t g_num_cumulative_difficulties = 0;
-
-static uint32_t g_timestamps_and_difficulties_height = 0;
-
-static uint8_t g_difficulty_for_next_block_top_hash[HASH_SIZE] = {
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00
-};
-
-static uint32_t g_difficulty_for_next_block = 1;
 
 int valid_compression_type(int compression_type)
 {
@@ -296,9 +278,6 @@ int open_blockchain(const char *blockchain_dir)
   mtx_init(&g_blockchain_lock, mtx_recursive);
   g_blockchain_dir = blockchain_dir;
 
-  vec_init(&g_timestamps);
-  vec_init(&g_cumulative_difficulties);
-
   char *err = NULL;
 #ifdef USE_LEVELDB
   leveldb_options_t *options = leveldb_options_create();
@@ -425,18 +404,8 @@ int close_blockchain(void)
 #endif
 
   mtx_destroy(&g_blockchain_lock);
-  g_blockchain_is_open = 0;
-
-  vec_deinit(&g_timestamps);
-  vec_deinit(&g_cumulative_difficulties);
-
-  g_num_timestamps = 0;
-  g_num_cumulative_difficulties = 0;
-  g_timestamps_and_difficulties_height = 0;
-
-  g_difficulty_for_next_block = 0;
-
   close_backup_blockchain();
+  g_blockchain_is_open = 0;
   return 0;
 }
 
@@ -1000,140 +969,67 @@ uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission)
   return block_reward;
 }
 
-uint64_t get_block_cumulative_difficulty(uint32_t block_height)
+uint32_t get_block_difficulty_nolock(uint32_t block_height)
 {
+  if (block_height == 0)
+  {
+    return parameters_get_pow_initial_difficulty_bits();
+  }
+
+  BIGNUM bn_powlimit;
+  BN_init(&bn_powlimit);
+  get_pow_limit(&bn_powlimit);
+
   block_t *block = get_block_from_height(block_height);
   assert(block != NULL);
-  uint64_t cumulative_difficulty = block->cumulative_difficulty;
-  free_block(block);
-  return cumulative_difficulty;
+
+  int32_t height_first = block_height - (parameters_get_difficulty_adjustment_interval() - 1);
+  assert(height_first >= 0);
+  block_t *first_block = get_block_from_height(height_first);
+  assert(first_block != NULL);
+
+  // limit adjustment step
+  uint32_t actual_timespan = block->timestamp - first_block->timestamp;
+  if (actual_timespan < parameters_get_pow_target_timespan() / 4)
+  {
+    actual_timespan = parameters_get_pow_target_timespan() / 4;
+  }
+
+  if (actual_timespan > parameters_get_pow_target_timespan() * 4)
+  {
+    actual_timespan = parameters_get_pow_target_timespan() * 4;
+  }
+
+  // retarget
+  BIGNUM bn_new;
+  BN_init(&bn_new);
+  bignum_set_compact(&bn_new, first_block->bits);
+  BN_mul_word(&bn_new, actual_timespan);
+  BN_div_word(&bn_new, parameters_get_pow_target_timespan());
+
+  if (BN_cmp(&bn_new, &bn_powlimit) == 1)
+  {
+    return bignum_get_compact(&bn_powlimit);
+  }
+
+  return bignum_get_compact(&bn_new);
 }
 
-uint64_t get_block_difficulty_nolock(uint32_t block_height)
-{
-  difficulty_info_t difficulty_info;
-  uint32_t height = block_height;
-  height++;
-
-  if (g_timestamps_and_difficulties_height != 0 && ((height - g_timestamps_and_difficulties_height) == 1) && g_num_timestamps >= DIFFICULTY_BLOCKS_COUNT)
-  {
-    uint32_t index = height - 1;
-    block_t *block = get_block_from_height_nolock(index);
-    assert(block != NULL);
-
-    assert(vec_push(&g_timestamps, block->timestamp) == 0);
-    assert(vec_push(&g_cumulative_difficulties, block->cumulative_difficulty) == 0);
-
-    free_block(block);
-
-    g_num_timestamps++;
-    g_num_cumulative_difficulties++;
-
-    while (g_num_timestamps > DIFFICULTY_BLOCKS_COUNT)
-    {
-      vec_splice(&g_timestamps, 0, 1);
-      g_num_timestamps--;
-    }
-
-    while (g_num_cumulative_difficulties > DIFFICULTY_BLOCKS_COUNT)
-    {
-      vec_splice(&g_cumulative_difficulties, 0, 1);
-      g_num_cumulative_difficulties--;
-    }
-
-    g_timestamps_and_difficulties_height = height;
-    difficulty_info.timestamps = g_timestamps;
-    difficulty_info.cumulative_difficulties = g_cumulative_difficulties;
-  }
-  else
-  {
-    vec_init(&difficulty_info.timestamps);
-    vec_init(&difficulty_info.cumulative_difficulties);
-
-    g_num_timestamps = 0;
-    g_num_cumulative_difficulties = 0;
-
-    uint32_t offset = height - (uint32_t)(MIN(height, (uint32_t)DIFFICULTY_BLOCKS_COUNT));
-    if (offset == 0)
-    {
-      offset++;
-    }
-
-    vec_clear(&g_timestamps);
-    vec_clear(&g_cumulative_difficulties);
-
-    vec_deinit(&g_timestamps);
-    vec_deinit(&g_cumulative_difficulties);
-
-    if (height > offset)
-    {
-      assert(vec_reserve(&difficulty_info.timestamps, height - offset) == 0);
-      assert(vec_reserve(&difficulty_info.cumulative_difficulties, height - offset) == 0);
-    }
-
-    for (; offset < height; offset++)
-    {
-      block_t *block = get_block_from_height_nolock(offset);
-      assert(block != NULL);
-
-      assert(vec_push(&difficulty_info.timestamps, block->timestamp) == 0);
-      assert(vec_push(&difficulty_info.cumulative_difficulties, block->cumulative_difficulty) == 0);
-
-      free_block(block);
-
-      g_num_timestamps++;
-      g_num_cumulative_difficulties++;
-    }
-
-    g_timestamps_and_difficulties_height = height;
-    g_timestamps = difficulty_info.timestamps;
-    g_cumulative_difficulties = difficulty_info.cumulative_difficulties;
-  }
-
-  if (g_num_timestamps > DIFFICULTY_WINDOW)
-  {
-    vec_truncate(&g_timestamps, DIFFICULTY_WINDOW);
-    vec_truncate(&g_cumulative_difficulties, DIFFICULTY_WINDOW);
-
-    g_num_timestamps = DIFFICULTY_WINDOW;
-    g_num_cumulative_difficulties = DIFFICULTY_WINDOW;
-  }
-
-  difficulty_info.num_timestamps = g_num_timestamps;
-  difficulty_info.num_cumulative_difficulties = g_num_cumulative_difficulties;
-  difficulty_info.target_seconds = parameters_get_difficulty_target();
-
-  uint64_t difficulty = get_next_difficulty(difficulty_info);
-  assert(difficulty > 0);
-  return difficulty;
-}
-
-uint64_t get_block_difficulty(uint32_t block_height)
+uint32_t get_block_difficulty(uint32_t block_height)
 {
   mtx_lock(&g_blockchain_lock);
-  uint64_t difficulty = get_block_difficulty_nolock(block_height);
+  uint32_t difficulty = get_block_difficulty_nolock(block_height);
   mtx_unlock(&g_blockchain_lock);
   return difficulty;
 }
 
-uint64_t get_next_block_difficulty_nolock(void)
+uint32_t get_next_block_difficulty_nolock(void)
 {
   uint32_t current_block_height = get_block_height_nolock();
-  uint8_t *current_block_hash = get_current_block_hash();
-
-  if (compare_block_hash(current_block_hash, (uint8_t*)&g_difficulty_for_next_block_top_hash))
-  {
-    return g_difficulty_for_next_block;
-  }
-
-  uint64_t difficulty = get_block_difficulty_nolock(current_block_height);
-
-  memcpy(g_difficulty_for_next_block_top_hash, current_block_hash, HASH_SIZE);
-  g_difficulty_for_next_block = difficulty;
-  return difficulty;
+  return get_block_difficulty_nolock(current_block_height);
 }
 
-uint64_t get_next_block_difficulty(void)
+uint32_t get_next_block_difficulty(void)
 {
   mtx_lock(&g_blockchain_lock);
   uint64_t difficulty = get_next_block_difficulty_nolock();
@@ -1381,28 +1277,21 @@ int validate_and_insert_block_nolock(block_t *block)
 
   // check the block's difficulty value, also check the block's
   // hash to see if it's difficulty is valid.
-  if (current_block_height > 0)
+  /*if (current_block_height > 0)
   {
-    uint64_t expected_cumulative_difficulty = get_block_cumulative_difficulty(current_block_height) + block->difficulty;
-    if (block->cumulative_difficulty != expected_cumulative_difficulty)
+    uint32_t expected_difficulty = get_next_block_difficulty_nolock();
+    if (block->bits != expected_difficulty)
     {
-      LOG_DEBUG("Could not insert block into blockchain, block has invalid cumulative difficulty: %" PRIu64 " expected: %" PRIu64 "!", block->cumulative_difficulty, expected_cumulative_difficulty);
+      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %u expected: %u!", block->bits, expected_difficulty);
       return 1;
     }
 
-    uint64_t expected_difficulty = get_next_block_difficulty_nolock();
-    if (block->difficulty != expected_difficulty)
+    if (check_proof_of_work(block->hash, expected_difficulty) == 0)
     {
-      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %" PRIu64 " expected: %" PRIu64 "!", block->difficulty, expected_difficulty);
+      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %u expected: %u!", block->bits, expected_difficulty);
       return 1;
     }
-
-    if (check_pow(block->hash, expected_difficulty) == 0)
-    {
-      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %" PRIu64 " expected: %" PRIu64 "!", block->difficulty, expected_difficulty);
-      return 1;
-    }
-  }
+  }*/
 
   return insert_block_nolock(block);
 }
@@ -1414,6 +1303,16 @@ int validate_and_insert_block(block_t *block)
   int result = validate_and_insert_block_nolock(block);
   mtx_unlock(&g_blockchain_lock);
   return result;
+}
+
+int is_genesis_block(uint8_t *block_hash)
+{
+  assert(block_hash != NULL);
+
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
+
+  return compare_block_hash(block_hash, genesis_block->hash);
 }
 
 block_t *get_block_from_hash_nolock(uint8_t *block_hash)
@@ -1444,13 +1343,33 @@ block_t *get_block_from_hash_nolock(uint8_t *block_hash)
   block_t *block = NULL;
   if (deserialize_block(buffer_iterator, &block))
   {
+    char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+    LOG_ERROR("Failed to deserialize block: %s", block_hash_str);
+    free(block_hash_str);
+
     buffer_iterator_free(buffer_iterator);
     buffer_free(buffer);
     goto block_retrieval_fail;
   }
 
   // deserialize the block's transactions
-  assert(deserialize_transactions_to_block(buffer_iterator, block) == 0);
+  if (deserialize_transactions_to_block(buffer_iterator, block))
+  {
+    // TODO: FIXME!
+    // if we cannot deserialize any transactions from this block and it's
+    // the genesis block, then just assume the genesis block has no transactions
+    // for the sake of testing and debugging purposes we can allow this...
+    if (is_genesis_block(block_hash) == 0)
+    {
+      char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+      LOG_ERROR("Failed to deserialize transactions for block: %s", block_hash_str);
+      free(block_hash_str);
+
+      buffer_iterator_free(buffer_iterator);
+      buffer_free(buffer);
+      goto block_retrieval_fail;
+    }
+  }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);

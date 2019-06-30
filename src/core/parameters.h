@@ -42,10 +42,12 @@
 #define TESTNET_ADDRESS_ID 0x02
 
 #define GENESIS_NONCE 10000
+#define GENESIS_BITS 0x1d00ffff
 #define GENESIS_TIMESTAMP 0
 #define GENESIS_REWARD ((uint64_t)0)
 
 #define TESTNET_GENESIS_NONCE 10001
+#define TESTNET_GENESIS_BITS 0x1d00ffff
 #define TESTNET_GENESIS_TIMESTAMP 0
 #define TESTNET_GENESIS_REWARD ((uint64_t)0)
 
@@ -58,6 +60,10 @@
 #define DIFFICULTY_LAG 15
 #define DIFFICULTY_CUT 60
 #define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
+
+#define POW_TARGET_TIMESPAN (14 * 24 * 60 * 60)
+#define POW_TARGET_SPACING (10 * 60)
+#define POW_INITIAL_DIFFICULTY_BITS 24
 
 #define BLOCK_REWARD_EMISSION_FACTOR 20
 
@@ -76,10 +82,16 @@ int parameters_get_use_testnet(void);
 uint8_t parameters_get_address_id(void);
 
 uint32_t parameters_get_genesis_nonce(void);
+uint32_t parameters_get_genesis_bits(void);
 uint32_t parameters_get_genesis_timestamp(void);
 uint64_t parameters_get_genesis_reward(void);
 
-uint64_t parameters_get_difficulty_target(void);
+uint64_t parameters_get_pow_target_timespan(void);
+uint64_t parameters_get_pow_target_spacing(void);
+uint64_t parameters_get_difficulty_adjustment_interval(void);
+uint32_t parameters_get_pow_initial_difficulty_bits(void);
 
 uint16_t parameters_get_p2p_port(void);
 uint16_t parameters_get_rpc_port(void);
+
+int parameters_get_allow_min_difficulty_blocks(void);

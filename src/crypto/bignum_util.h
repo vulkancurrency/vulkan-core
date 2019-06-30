@@ -25,60 +25,9 @@
 
 #pragma once
 
-#include <stdlib.h>
 #include <stdint.h>
 
-#include "common/task.h"
-#include "common/util.h"
+#include <openssl/bn.h>
 
-#include "core/block.h"
-
-#include "wallet/wallet.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#define MAX_NUM_WORKER_THREADS 1024
-#define WORKER_STATUS_TASK_DELAY 10
-
-typedef struct MinerWorker
-{
-  thrd_t thread;
-  uint16_t id;
-  int running;
-
-  uint32_t last_timestamp;
-  uint32_t last_hashrate;
-} miner_worker_t;
-
-int get_is_miner_initialized(void);
-
-void set_num_worker_threads(uint16_t num_worker_threads);
-uint16_t get_num_worker_threads(void);
-
-void set_current_wallet(wallet_t *current_wallet);
-wallet_t* get_current_wallet(void);
-
-void set_workers_paused(int workers_paused);
-int get_workers_paused(void);
-
-void set_miner_generate_genesis(int generate_genesis);
-int get_miner_generate_genesis(void);
-
-miner_worker_t* init_worker(void);
-void free_worker(miner_worker_t *worker);
-
-block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
-block_t* construct_computable_genesis_block(wallet_t *wallet);
-
-int compute_block(miner_worker_t *worker, block_t *block);
-task_result_t report_worker_mining_status(task_t *task, va_list args);
-
-int start_mining(void);
-int stop_mining(void);
-
-#ifdef __cplusplus
-}
-#endif
+void bignum_set_compact(BIGNUM *bn, uint32_t n_compact);
+uint32_t bignum_get_compact(BIGNUM *bn);

@@ -25,29 +25,58 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013, The CryptoNote Developers.
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include <openssl/bn.h>
+
 #include "pow.h"
 
+#include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"
 
-int check_pow(const uint8_t *hash, uint64_t difficulty)
+static const char *pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
+int get_pow_limit(BIGNUM *num)
 {
-  uint64_t low = 0, high = 0, top = 0, cur = 0;
-  mul(swap64le(((const uint64_t*)hash)[3]), difficulty, &top, &high);
-  if (high != 0)
+  return BN_dec2bn(&num, pow_limit_str);
+}
+
+int check_proof_of_work(const uint8_t *hash, uint32_t bits)
+{
+  BIGNUM bn_target;
+  BN_init(&bn_target);
+  bignum_set_compact(&bn_target, bits);
+
+  BIGNUM powlimit;
+  BN_init(&powlimit);
+  get_pow_limit(&powlimit);
+
+  BIGNUM *hash_target = BN_bin2bn(hash, HASH_SIZE, NULL);
+  assert(hash_target != NULL);
+
+  // check range
+  if (BN_is_zero(&bn_target) || BN_cmp(&bn_target, &powlimit) == 1)
   {
-    return 0;
+    goto pow_check_fail;
   }
 
-  mul(swap64le(((const uint64_t*)hash)[0]), difficulty, &low, &cur);
-  mul(swap64le(((const uint64_t*)hash)[1]), difficulty, &low, &high);
-  int carry = cadd(cur, low);
-  cur = high;
-  mul(swap64le(((const uint64_t*)hash)[2]), difficulty, &low, &high);
-  carry = cadc(cur, low, carry);
-  carry = cadc(high, top, carry);
-  return !carry;
+  // check proof of work
+  if (BN_cmp(hash_target, &bn_target) == 1)
+  {
+    goto pow_check_fail;
+  }
+
+  BN_clear_free(&bn_target);
+  BN_clear_free(&powlimit);
+  BN_clear_free(hash_target);
+  return 1;
+
+pow_check_fail:
+  BN_clear_free(&bn_target);
+  BN_clear_free(&powlimit);
+  BN_clear_free(hash_target);
+  return 0;
 }

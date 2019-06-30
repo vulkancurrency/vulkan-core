@@ -23,18 +23,23 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/bn.h>
+
 #include <sodium.h>
 
 #include "common/greatest.h"
 
+#include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"
 #include "crypto/sha256d.h"
 
 SUITE(crypto_suite);
 
-TEST can_hash_sha256d(void)
+TEST sha256_hash_tests(void)
 {
   const char *input = "Hello World!";
   uint8_t expected_output[] = {
@@ -87,7 +92,75 @@ TEST can_hash_sha256d(void)
   PASS();
 }
 
+TEST bignum_compact_tests()
+{
+  BIGNUM num;
+  BN_init(&num);
+  BN_clear(&num);
+
+  bignum_set_compact(&num, 0);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x00123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x01003456);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x02000056);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x03000000);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x04000000);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x00923456);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x01803456);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x02800056);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x03800000);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x04800000);
+  ASSERT_EQ(bignum_get_compact(&num), 0U);
+
+  bignum_set_compact(&num, 0x01123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x01120000U);
+
+  bignum_set_compact(&num, 0x01fedcba);
+  ASSERT_EQ(bignum_get_compact(&num), 0x01fe0000U);
+
+  bignum_set_compact(&num, 0x02123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x02123400U);
+
+  bignum_set_compact(&num, 0x03123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x03123456U);
+
+  bignum_set_compact(&num, 0x04123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x04123456U);
+
+  bignum_set_compact(&num, 0x04923456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x04923456U);
+
+  bignum_set_compact(&num, 0x05009234);
+  ASSERT_EQ(bignum_get_compact(&num), 0x05009234U);
+
+  bignum_set_compact(&num, 0x20123456);
+  ASSERT_EQ(bignum_get_compact(&num), 0x20123456U);
+
+  BN_clear_free(&num);
+  PASS();
+}
+
 GREATEST_SUITE(crypto_suite)
 {
-  RUN_TEST(can_hash_sha256d);
+  RUN_TEST(sha256_hash_tests);
+  RUN_TEST(bignum_compact_tests);
 }
