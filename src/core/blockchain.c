@@ -994,6 +994,10 @@ uint32_t get_next_work_required_nolock(uint8_t *previous_hash)
   assert(period_start_block != NULL);
 
   uint32_t actual_time_taken = previous_block->timestamp - period_start_block->timestamp;
+
+  free(previous_block);
+  free(period_start_block);
+
   if (actual_time_taken < parameters_get_pow_target_timespan())
   {
     return previous_block->bits + 1;
