@@ -32,7 +32,7 @@ option(WITH_ROCKSDB "Build with RocksDB support" ON)
 option(WITH_LEVELDB "Build with LevelDB support" OFF)
 option(WITH_LMDB "Build with LMDB support" OFF)
 option(WITH_NET_QUEUE "Enable the network send/receive queue, sends/receives data every XXX interval" OFF)
-option(BUILD_STATIC "Build a staticly linked binary" ON)
+option(BUILD_STATIC "Build a statically linked binary" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
