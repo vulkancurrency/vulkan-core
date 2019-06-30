@@ -969,72 +969,49 @@ uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission)
   return block_reward;
 }
 
-uint32_t get_block_difficulty_nolock(uint32_t block_height)
+uint32_t get_next_work_required_nolock(uint8_t *previous_hash)
 {
-  if (block_height == 0)
+  if (previous_hash == NULL)
   {
     return parameters_get_pow_initial_difficulty_bits();
   }
 
-  BIGNUM bn_powlimit;
-  BN_init(&bn_powlimit);
-  get_pow_limit(&bn_powlimit);
+  block_t *previous_block = get_block_from_hash(previous_hash);
+  assert(previous_block != NULL);
 
-  block_t *block = get_block_from_height(block_height);
-  assert(block != NULL);
+  int32_t previous_height = get_block_height_from_block(previous_block);
+  assert(previous_height >= 0);
 
-  int32_t height_first = block_height - (parameters_get_difficulty_adjustment_interval() - 1);
-  assert(height_first >= 0);
-  block_t *first_block = get_block_from_height(height_first);
-  assert(first_block != NULL);
-
-  // limit adjustment step
-  uint32_t actual_timespan = block->timestamp - first_block->timestamp;
-  if (actual_timespan < parameters_get_pow_target_timespan() / 4)
+  if ((previous_height + 1) % parameters_get_difficulty_adjustment_interval() != 0)
   {
-    actual_timespan = parameters_get_pow_target_timespan() / 4;
+    return previous_block->bits;
   }
 
-  if (actual_timespan > parameters_get_pow_target_timespan() * 4)
+  uint32_t period_start_block_height = previous_height - (parameters_get_difficulty_adjustment_interval() - 1);
+  period_start_block_height = MAX(period_start_block_height, 0);
+
+  block_t *period_start_block = get_block_from_height(period_start_block_height);
+  assert(period_start_block != NULL);
+
+  uint32_t actual_time_taken = previous_block->timestamp - period_start_block->timestamp;
+  if (actual_time_taken < parameters_get_pow_target_timespan())
   {
-    actual_timespan = parameters_get_pow_target_timespan() * 4;
+    return previous_block->bits + 1;
+  }
+  else if (actual_time_taken > parameters_get_pow_target_timespan())
+  {
+    return previous_block->bits - 1;
   }
 
-  // retarget
-  BIGNUM bn_new;
-  BN_init(&bn_new);
-  bignum_set_compact(&bn_new, first_block->bits);
-  BN_mul_word(&bn_new, actual_timespan);
-  BN_div_word(&bn_new, parameters_get_pow_target_timespan());
-
-  if (BN_cmp(&bn_new, &bn_powlimit) == 1)
-  {
-    return bignum_get_compact(&bn_powlimit);
-  }
-
-  return bignum_get_compact(&bn_new);
+  return previous_block->bits;
 }
 
-uint32_t get_block_difficulty(uint32_t block_height)
+uint32_t get_next_work_required(uint8_t *previous_hash)
 {
   mtx_lock(&g_blockchain_lock);
-  uint32_t difficulty = get_block_difficulty_nolock(block_height);
+  uint32_t next_work_required = get_next_work_required_nolock(previous_hash);
   mtx_unlock(&g_blockchain_lock);
-  return difficulty;
-}
-
-uint32_t get_next_block_difficulty_nolock(void)
-{
-  uint32_t current_block_height = get_block_height_nolock();
-  return get_block_difficulty_nolock(current_block_height);
-}
-
-uint32_t get_next_block_difficulty(void)
-{
-  mtx_lock(&g_blockchain_lock);
-  uint64_t difficulty = get_next_block_difficulty_nolock();
-  mtx_unlock(&g_blockchain_lock);
-  return difficulty;
+  return next_work_required;
 }
 
 int valid_block_median_timestamp(block_t *block)

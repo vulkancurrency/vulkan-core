@@ -105,11 +105,8 @@ uint32_t get_block_height(void);
 uint64_t get_cumulative_emission(void);
 uint64_t get_block_reward(uint32_t block_height, uint64_t cumulative_emission);
 
-uint32_t get_block_difficulty_nolock(uint32_t block_height);
-uint32_t get_block_difficulty(uint32_t block_height);
-
-uint32_t get_next_block_difficulty_nolock(void);
-uint32_t get_next_block_difficulty(void);
+uint32_t get_next_work_required_nolock(uint8_t *previous_hash);
+uint32_t get_next_work_required(uint8_t *previous_hash);
 
 int valid_block_median_timestamp(block_t *block);
 int valid_block_emission(block_t *block, uint32_t block_height);

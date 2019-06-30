@@ -155,7 +155,7 @@ block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, bl
 
   block->timestamp = current_time;
   block->nonce = nonce;
-  block->bits = get_next_block_difficulty();
+  block->bits = get_next_work_required(previous_block->hash);
   block->cumulative_emission = cumulative_emission + block_reward;
 
   transaction_t *tx = NULL;
@@ -176,7 +176,6 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
 
   block_t *genesis_block = make_block();
   genesis_block->timestamp = parameters_get_genesis_timestamp();
-  genesis_block->nonce = parameters_get_genesis_nonce();
   genesis_block->bits = parameters_get_genesis_bits();
 
   uint64_t block_reward = get_block_reward(0, 0);
