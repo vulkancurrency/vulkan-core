@@ -55,16 +55,16 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   BN_init(&bn_target);
   bignum_set_compact(&bn_target, bits);
 
-  BIGNUM powlimit;
-  BN_init(&powlimit);
-  get_pow_limit(&powlimit);
+  BIGNUM pow_limit;
+  BN_init(&pow_limit);
+  get_pow_limit(&pow_limit);
 
   BIGNUM hash_target;
   BN_init(&hash_target);
   BN_bin2bn(hash, HASH_SIZE, &hash_target);
 
   // check range
-  if (BN_is_zero(&bn_target) || BN_cmp(&bn_target, &powlimit) == 1)
+  if (BN_is_zero(&bn_target) || BN_cmp(&bn_target, &pow_limit) == 1)
   {
     goto pow_check_fail;
   }
@@ -76,13 +76,13 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   }
 
   BN_clear_free(&bn_target);
-  BN_clear_free(&powlimit);
+  BN_clear_free(&pow_limit);
   BN_clear_free(&hash_target);
   return 1;
 
 pow_check_fail:
   BN_clear_free(&bn_target);
-  BN_clear_free(&powlimit);
+  BN_clear_free(&pow_limit);
   BN_clear_free(&hash_target);
   return 0;
 }
