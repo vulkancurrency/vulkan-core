@@ -31,7 +31,7 @@
 void bignum_set_compact(BIGNUM *bn, uint32_t n_compact)
 {
   uint32_t n_size = n_compact >> 24;
-  unsigned char vch[4 + n_size];
+  uint8_t vch[4 + n_size];
   memset(&vch, 0, sizeof(vch));
   vch[3] = n_size;
   if (n_size >= 1)
@@ -55,7 +55,7 @@ void bignum_set_compact(BIGNUM *bn, uint32_t n_compact)
 uint32_t bignum_get_compact(BIGNUM *bn)
 {
   uint32_t n_size = BN_bn2mpi(bn, NULL);
-  unsigned char vch[n_size];
+  uint8_t vch[n_size];
   memset(&vch, 0, sizeof(vch));
   n_size -= 4;
   BN_bn2mpi(bn, &vch[0]);
