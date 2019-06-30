@@ -176,6 +176,7 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
 
   block_t *genesis_block = make_block();
   genesis_block->timestamp = parameters_get_genesis_timestamp();
+  genesis_block->nonce = randombytes_random();
   genesis_block->bits = parameters_get_genesis_bits();
 
   uint64_t block_reward = get_block_reward(0, 0);
