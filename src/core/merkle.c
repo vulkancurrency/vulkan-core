@@ -50,9 +50,11 @@ merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_o
   }
 
   merkle_tree_t *tree = malloc(sizeof(merkle_tree_t));
+  assert(tree != NULL);
   uint32_t num_of_nodes = 0;
 
   merkle_node_t **nodes = malloc(sizeof(merkle_node_t) * num_of_hashes);
+  assert(nodes != NULL);
   construct_merkle_leaves_from_hashes(nodes, &num_of_nodes, hashes, num_of_hashes);
 
   while (num_of_nodes > 1)
@@ -74,6 +76,7 @@ int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_
   for (uint32_t i = 0; i < num_of_hashes; i++)
   {
     merkle_node_t *node = malloc(sizeof(merkle_node_t));
+    assert(node != NULL);
     node->left = NULL;
     node->right = NULL;
     memcpy(node->hash, &hashes[i * HASH_SIZE], HASH_SIZE);
@@ -92,6 +95,7 @@ int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes)
   assert(nodes != NULL);
   uint32_t current_node_idx = 0;
   merkle_node_t **temp_nodes = malloc(sizeof(merkle_node_t) * (*num_of_nodes));
+  assert(temp_nodes != NULL);
 
   for (uint32_t i = 0; i < (*num_of_nodes - 1); i += 2)
   {
@@ -123,8 +127,9 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
   assert(left != NULL);
   assert(right != NULL);
 
-  uint8_t *combined_hash = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
-  uint8_t *node_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *combined_hash = malloc(HASH_SIZE * 2);
+  assert(combined_hash != NULL);
+  uint8_t *node_hash = malloc(HASH_SIZE);
 
   memcpy(combined_hash, left->hash, HASH_SIZE);
   memcpy(combined_hash + HASH_SIZE, right->hash, HASH_SIZE);
@@ -132,6 +137,7 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
   crypto_hash_sha256d(node_hash, combined_hash, HASH_SIZE * 2);
 
   merkle_node_t *node = malloc(sizeof(merkle_node_t));
+  assert(node != NULL);
   memcpy(node->hash, node_hash, HASH_SIZE);
   node->left = left;
   node->right = right;

@@ -83,6 +83,7 @@ int stop_mempool(void)
 mempool_entry_t* init_mempool_entry(void)
 {
   mempool_entry_t *mempool_entry = malloc(sizeof(mempool_entry_t));
+  assert(mempool_entry != NULL);
   mempool_entry->tx = NULL;
   mempool_entry->received_ts = 0;
   return mempool_entry;

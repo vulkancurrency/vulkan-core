@@ -47,6 +47,7 @@ peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
   peer_t *peer = malloc(sizeof(peer_t));
+  assert(peer != NULL);
   peer->id = peer_id;
   peer->net_connection = net_connection;
   return peer;

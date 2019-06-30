@@ -96,6 +96,7 @@ int get_workers_paused(void)
 miner_worker_t* init_worker(void)
 {
   miner_worker_t *worker = malloc(sizeof(miner_worker_t));
+  assert(worker != NULL);
   worker->id = 0;
   worker->last_timestamp = get_current_time();
   worker->last_hashrate = 0;

@@ -66,6 +66,7 @@ int get_force_version_check(void)
 packet_t* make_packet(void)
 {
   packet_t *packet = malloc(sizeof(packet_t));
+  assert(packet != NULL);
   packet->id = PKT_TYPE_UNKNOWN;
   packet->size = 0;
   packet->data = NULL;
@@ -111,6 +112,7 @@ int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator)
     }
 
     packet->data = malloc(packet->size);
+    assert(packet->data != NULL);
     memcpy(packet->data, data, packet->size);
     free(data);
   }
@@ -179,6 +181,7 @@ int deserialize_message(packet_t *packet, void **message)
         };
 
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
+        assert(packed_message != NULL);
         packed_message->host_port = host_port;
         packed_message->version_number = version_number;
         packed_message->version_name = version_name;
@@ -189,12 +192,14 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_CONNECT_RESP:
       {
         connection_resp_t *packed_message = malloc(sizeof(connection_resp_t));
+        assert(packed_message != NULL);
         *message = packed_message;
       }
       break;
     case PKT_TYPE_GET_PEERLIST_REQ:
       {
         get_peerlist_req_t *packed_message = malloc(sizeof(get_peerlist_req_t));
+        assert(packed_message != NULL);
         *message = packed_message;
       }
       break;
@@ -213,6 +218,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_peerlist_resp_t *packed_message = malloc(sizeof(get_peerlist_resp_t));
+        assert(packed_message != NULL);
         packed_message->peerlist_data_size = peerlist_data_size;
         packed_message->peerlist_data = peerlist_data;
         *message = packed_message;
@@ -221,6 +227,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
       {
         get_block_height_request_t *packed_message = malloc(sizeof(get_block_height_request_t));
+        assert(packed_message != NULL);
         *message = packed_message;
       }
       break;
@@ -239,6 +246,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_height_response_t *packed_message = malloc(sizeof(get_block_height_response_t));
+        assert(packed_message != NULL);
         packed_message->height = height;
         packed_message->hash = hash;
         *message = packed_message;
@@ -253,6 +261,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_by_hash_request_t *packed_message = malloc(sizeof(get_block_by_hash_request_t));
+        assert(packed_message != NULL);
         packed_message->hash = hash;
         *message = packed_message;
       }
@@ -272,6 +281,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_by_hash_response_t *packed_message = malloc(sizeof(get_block_by_hash_response_t));
+        assert(packed_message != NULL);
         packed_message->height = height;
         packed_message->block = block;
         *message = packed_message;
@@ -286,6 +296,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_by_height_request_t *packed_message = malloc(sizeof(get_block_by_height_request_t));
+        assert(packed_message != NULL);
         packed_message->height = height;
         *message = packed_message;
       }
@@ -306,6 +317,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_by_height_response_t *packed_message = malloc(sizeof(get_block_by_height_response_t));
+        assert(packed_message != NULL);
         packed_message->hash = hash;
         packed_message->block = block;
         *message = packed_message;
@@ -330,6 +342,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_grouped_blocks_from_height_request_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_request_t));
+        assert(packed_message != NULL);
         packed_message->height = height;
         *message = packed_message;
       }
@@ -349,6 +362,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_grouped_blocks_from_height_response_t *packed_message = malloc(sizeof(get_grouped_blocks_from_height_response_t));
+        assert(packed_message != NULL);
         packed_message->block_data_size = block_data_size;
         packed_message->block_data = block_data;
         *message = packed_message;
@@ -363,6 +377,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_num_transactions_request_t *packed_message = malloc(sizeof(get_block_num_transactions_request_t));
+        assert(packed_message != NULL);
         packed_message->hash = hash;
         *message = packed_message;
       }
@@ -383,6 +398,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_num_transactions_response_t *packed_message = malloc(sizeof(get_block_num_transactions_response_t));
+        assert(packed_message != NULL);
         packed_message->hash = hash;
         packed_message->num_transactions = num_transactions;
         *message = packed_message;
@@ -404,6 +420,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_transaction_by_hash_request_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_request_t));
+        assert(packed_message != NULL);
         packed_message->block_hash = block_hash;
         packed_message->tx_hash = tx_hash;
         *message = packed_message;
@@ -432,6 +449,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_transaction_by_hash_response_t *packed_message = malloc(sizeof(get_block_transaction_by_hash_response_t));
+        assert(packed_message != NULL);
         packed_message->block_hash = block_hash;
         packed_message->tx_index = tx_index;
         packed_message->transaction = transaction;
@@ -454,6 +472,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_transaction_by_index_request_t *packed_message = malloc(sizeof(get_block_transaction_by_index_request_t));
+        assert(packed_message != NULL);
         packed_message->block_hash = block_hash;
         packed_message->tx_index = tx_index;
         *message = packed_message;
@@ -482,6 +501,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         get_block_transaction_by_index_response_t *packed_message = malloc(sizeof(get_block_transaction_by_index_response_t));
+        assert(packed_message != NULL);
         packed_message->block_hash = block_hash;
         packed_message->tx_index = tx_index;
         packed_message->transaction = transaction;
@@ -497,6 +517,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         incoming_mempool_transaction_t *packed_message = malloc(sizeof(incoming_mempool_transaction_t));
+        assert(packed_message != NULL);
         packed_message->transaction = transaction;
         *message = packed_message;
       }
@@ -737,6 +758,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
   if (data_len > 0)
   {
     serialized_packet->data = malloc(data_len);
+    assert(serialized_packet->data != NULL);
     memcpy(serialized_packet->data, data, data_len);
   }
 
