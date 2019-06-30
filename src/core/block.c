@@ -303,7 +303,7 @@ int compute_block_hash(uint8_t *hash, block_t *block)
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
   buffer_free(buffer);
-  crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE);
+  assert(crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE) == 0);
   return 0;
 }
 
