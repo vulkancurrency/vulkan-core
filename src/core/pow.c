@@ -47,6 +47,7 @@ void get_pow_limit(BIGNUM *num)
   uint8_t *pow_limit_bin = hex2bin(pow_limit_str, &out_size);
   assert(out_size == 32);
   BN_bin2bn(pow_limit_bin, HASH_SIZE, num);
+  free(pow_limit_bin);
 }
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
