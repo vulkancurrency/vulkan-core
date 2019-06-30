@@ -30,5 +30,5 @@
 
 #include "crypto/bignum_util.h"
 
-int get_pow_limit(BIGNUM *num);
+void get_pow_limit(BIGNUM *num);
 int check_proof_of_work(const uint8_t *hash, uint32_t bits);

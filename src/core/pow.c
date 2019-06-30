@@ -32,6 +32,8 @@
 
 #include <openssl/bn.h>
 
+#include "common/util.h"
+
 #include "pow.h"
 
 #include "crypto/bignum_util.h"
@@ -39,9 +41,12 @@
 
 static const char *pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
-int get_pow_limit(BIGNUM *num)
+void get_pow_limit(BIGNUM *num)
 {
-  return BN_dec2bn(&num, pow_limit_str);
+  size_t out_size = 0;
+  uint8_t *pow_limit_bin = hex2bin(pow_limit_str, &out_size);
+  assert(out_size == 32);
+  BN_bin2bn(pow_limit_bin, HASH_SIZE, num);
 }
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
@@ -54,8 +59,9 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   BN_init(&powlimit);
   get_pow_limit(&powlimit);
 
-  BIGNUM *hash_target = BN_bin2bn(hash, HASH_SIZE, NULL);
-  assert(hash_target != NULL);
+  BIGNUM hash_target;
+  BN_init(&hash_target);
+  BN_bin2bn(hash, HASH_SIZE, &hash_target);
 
   // check range
   if (BN_is_zero(&bn_target) || BN_cmp(&bn_target, &powlimit) == 1)
@@ -64,19 +70,19 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   }
 
   // check proof of work
-  if (BN_cmp(hash_target, &bn_target) == 1)
+  if (BN_cmp(&hash_target, &bn_target) == 1)
   {
     goto pow_check_fail;
   }
 
   BN_clear_free(&bn_target);
   BN_clear_free(&powlimit);
-  BN_clear_free(hash_target);
+  BN_clear_free(&hash_target);
   return 1;
 
 pow_check_fail:
   BN_clear_free(&bn_target);
   BN_clear_free(&powlimit);
-  BN_clear_free(hash_target);
+  BN_clear_free(&hash_target);
   return 0;
 }
