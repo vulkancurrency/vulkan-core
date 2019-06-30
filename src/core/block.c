@@ -56,6 +56,7 @@
 block_t* make_block(void)
 {
   block_t *block = malloc(sizeof(block_t));
+  assert(block != NULL);
   block->version = BLOCK_VERSION;
 
   memset(block->previous_hash, 0, HASH_SIZE);
@@ -215,6 +216,7 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
   assert(block != NULL);
   uint8_t *hashes = malloc(HASH_SIZE * block->transaction_count);
+  assert(hashes != NULL);
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     assert(compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]) == 0);
@@ -475,7 +477,7 @@ int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block)
 
   *data_len = buffer_get_size(buffer);
   *data = malloc(*data_len);
-
+  assert(*data != NULL);
   memcpy(*data, buffer->data, *data_len);
   buffer_free(buffer);
   return 0;

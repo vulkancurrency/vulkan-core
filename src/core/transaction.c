@@ -60,6 +60,7 @@ static const uint8_t g_transaction_zero_hash[HASH_SIZE] = {
 transaction_t* make_transaction(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
+  assert(tx != NULL);
   tx->txin_count = 0;
   tx->txout_count = 0;
   tx->txins = NULL;
@@ -70,6 +71,7 @@ transaction_t* make_transaction(void)
 input_transaction_t* make_txin(void)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
+  assert(txin != NULL);
   txin->txout_index = 0;
   return txin;
 }
@@ -77,6 +79,7 @@ input_transaction_t* make_txin(void)
 output_transaction_t* make_txout(void)
 {
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
+  assert(txout != NULL);
   txout->amount = 0;
   return txout;
 }
@@ -84,6 +87,7 @@ output_transaction_t* make_txout(void)
 unspent_transaction_t* make_unspent_transaction(void)
 {
   unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+  assert(unspent_tx != NULL);
   unspent_tx->coinbase = 0;
   unspent_tx->unspent_txout_count = 0;
   unspent_tx->unspent_txouts = NULL;
@@ -93,6 +97,7 @@ unspent_transaction_t* make_unspent_transaction(void)
 unspent_output_transaction_t* make_unspent_txout(void)
 {
   unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
+  assert(unspent_txout != NULL);
   unspent_txout->amount = 0;
   unspent_txout->spent = 0;
   return unspent_txout;
@@ -688,6 +693,7 @@ int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t 
 
   uint32_t raw_data_len = buffer_get_size(buffer);
   uint8_t *raw_data = malloc(raw_data_len);
+  assert(raw_data != NULL);
   memcpy(raw_data, buffer->data, raw_data_len);
 
   *data_len = raw_data_len;
@@ -851,7 +857,9 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
 
   unspent_tx->coinbase = is_generation_tx(tx);
   unspent_tx->unspent_txout_count = tx->txout_count;
+
   unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * tx->txout_count);
+  assert(unspent_tx->unspent_txouts != NULL);
 
   for (uint32_t i = 0; i < unspent_tx->unspent_txout_count; i++)
   {
@@ -879,7 +887,7 @@ int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspen
 
   *data_len = buffer_get_size(buffer);
   *data = malloc(*data_len);
-
+  assert(*data != NULL);
   memcpy(*data, buffer->data, *data_len);
   buffer_free(buffer);
   return 0;
@@ -998,6 +1006,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
       assert(txin != NULL);
 
       input_transaction_t *other_txin = malloc(sizeof(input_transaction_t));
+      assert(other_txin != NULL);
       if (copy_txin(txin, other_txin))
       {
         return 1;
@@ -1020,6 +1029,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
       assert(txout != NULL);
 
       output_transaction_t *other_txout = malloc(sizeof(output_transaction_t));
+      assert(other_txout != NULL);
       if (copy_txout(txout, other_txout))
       {
         return 1;

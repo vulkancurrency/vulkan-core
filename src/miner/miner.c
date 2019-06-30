@@ -106,6 +106,7 @@ int get_miner_generate_genesis(void)
 miner_worker_t* init_worker(void)
 {
   miner_worker_t *worker = malloc(sizeof(miner_worker_t));
+  assert(worker != NULL);
   worker->id = 0;
   worker->running = 0;
   worker->last_timestamp = get_current_time();

@@ -108,6 +108,7 @@ net_connection_t* init_net_connection(struct mg_connection *connection)
 {
   assert(connection != NULL);
   net_connection_t *net_connection = malloc(sizeof(net_connection_t));
+  assert(net_connection != NULL);
   net_connection->connection = connection;
   vec_init(&net_connection->send_queue);
   net_connection->send_queue_size = 0;
@@ -446,6 +447,7 @@ void setup_net_port_mapping(uint16_t port)
 
   // get our external pv4 address
   char *external_address = malloc(40);
+  assert(external_address != NULL);
   int external_ip_result = UPNP_GetExternalIPAddress(urls.controlURL, igdData.first.servicetype, external_address);
   g_net_external_address = (const char*)external_address;
   if (external_ip_result != UPNPCOMMAND_SUCCESS)
@@ -458,6 +460,7 @@ void setup_net_port_mapping(uint16_t port)
     if (result == 1)
     {
       char *port_string = malloc(sizeof(port));
+      assert(port_string != NULL);
       sprintf(port_string, "%d", port);
 
       UPNP_DeletePortMapping(urls.controlURL, igdData.first.servicetype, port_string, "TCP", 0);

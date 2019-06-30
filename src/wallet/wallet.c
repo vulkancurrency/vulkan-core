@@ -53,6 +53,7 @@
 wallet_t* make_wallet(void)
 {
   wallet_t *wallet = malloc(sizeof(wallet_t));
+  assert(wallet != NULL);
   wallet->balance = 0;
   return wallet;
 }
