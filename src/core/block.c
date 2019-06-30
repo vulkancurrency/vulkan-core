@@ -213,7 +213,7 @@ int valid_merkle_root(block_t *block)
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
 {
   assert(block != NULL);
-  uint8_t *hashes = malloc(sizeof(uint8_t) * HASH_SIZE * block->transaction_count);
+  uint8_t *hashes = malloc(HASH_SIZE * block->transaction_count);
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     assert(compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]) == 0);

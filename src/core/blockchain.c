@@ -1588,7 +1588,7 @@ uint8_t *get_block_hash_from_height(uint32_t height)
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *block_hash = malloc(HASH_SIZE);
   memcpy(block_hash, block->hash, HASH_SIZE);
 
   free_block(block);
@@ -1867,7 +1867,7 @@ uint8_t *get_block_hash_from_tx_id_nolock(uint8_t *tx_id)
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *block_hash = malloc(HASH_SIZE);
   memcpy(block_hash, block_key + 1, HASH_SIZE);
 
 #ifdef USE_LEVELDB
