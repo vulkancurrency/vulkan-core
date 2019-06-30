@@ -35,77 +35,72 @@ void parameters_set_use_testnet(int use_testnet)
   g_parameters_use_testnet = use_testnet;
 }
 
-int parameters_get_use_testnet(void)
+const int parameters_get_use_testnet(void)
 {
   return g_parameters_use_testnet;
 }
 
-uint8_t parameters_get_address_id(void)
+const uint8_t parameters_get_address_id(void)
 {
   return g_parameters_use_testnet ? TESTNET_ADDRESS_ID : MAINNET_ADDRESS_ID;
 }
 
-uint32_t parameters_get_genesis_nonce(void)
+const uint32_t parameters_get_genesis_nonce(void)
 {
   return g_parameters_use_testnet ? TESTNET_GENESIS_NONCE : GENESIS_NONCE;
 }
 
-uint32_t parameters_get_genesis_bits(void)
+const uint32_t parameters_get_genesis_bits(void)
 {
   return g_parameters_use_testnet ? TESTNET_GENESIS_BITS : GENESIS_BITS;
 }
 
-uint32_t parameters_get_genesis_timestamp(void)
+const uint32_t parameters_get_genesis_timestamp(void)
 {
   return g_parameters_use_testnet ? TESTNET_GENESIS_TIMESTAMP : GENESIS_TIMESTAMP;
 }
 
-uint64_t parameters_get_genesis_reward(void)
+const uint64_t parameters_get_genesis_reward(void)
 {
   return g_parameters_use_testnet ? TESTNET_GENESIS_REWARD : GENESIS_REWARD;
 }
 
-uint64_t parameters_get_difficulty_target(void)
-{
-  return g_parameters_use_testnet ? TESTNET_DIFFICULTY_TARGET : DIFFICULTY_TARGET;
-}
-
-uint64_t parameters_get_pow_target_timespan(void)
+const uint64_t parameters_get_pow_target_timespan(void)
 {
   return POW_TARGET_TIMESPAN;
 }
 
-uint64_t parameters_get_pow_target_spacing(void)
+const uint64_t parameters_get_pow_target_spacing(void)
 {
   return POW_TARGET_SPACING;
 }
 
-uint64_t parameters_get_difficulty_adjustment_interval(void)
+const uint64_t parameters_get_difficulty_adjustment_interval(void)
 {
   return parameters_get_pow_target_timespan() / parameters_get_pow_target_spacing();
 }
 
-uint32_t parameters_get_pow_initial_difficulty_bits(void)
+const uint32_t parameters_get_pow_initial_difficulty_bits(void)
 {
   return POW_INITIAL_DIFFICULTY_BITS;
 }
 
-int parameters_get_pow_allow_min_difficulty_blocks(void)
+const int parameters_get_pow_allow_min_difficulty_blocks(void)
 {
   return g_parameters_use_testnet ? 1 : 0;
 }
 
-uint16_t parameters_get_p2p_port(void)
+const uint16_t parameters_get_p2p_port(void)
 {
   return g_parameters_use_testnet ? TESTNET_P2P_PORT : P2P_PORT;
 }
 
-uint16_t parameters_get_rpc_port(void)
+const uint16_t parameters_get_rpc_port(void)
 {
   return g_parameters_use_testnet ? TESTNET_RPC_PORT : RPC_PORT;
 }
 
-int parameters_get_allow_min_difficulty_blocks(void)
+const int parameters_get_allow_min_difficulty_blocks(void)
 {
   return g_parameters_use_testnet ? 1 : 0;
 }

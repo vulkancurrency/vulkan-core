@@ -42,24 +42,16 @@
 #define TESTNET_ADDRESS_ID 0x02
 
 #define GENESIS_NONCE 10000
-#define GENESIS_BITS 24
+#define GENESIS_BITS 4
 #define GENESIS_TIMESTAMP 0
 #define GENESIS_REWARD ((uint64_t)0)
 
 #define TESTNET_GENESIS_NONCE 10001
-#define TESTNET_GENESIS_BITS 24
+#define TESTNET_GENESIS_BITS 4
 #define TESTNET_GENESIS_TIMESTAMP 0
 #define TESTNET_GENESIS_REWARD ((uint64_t)0)
 
 #define MEMPOOL_TX_EXPIRE_TIME (60 * 60 * 24)
-
-#define DIFFICULTY_TARGET 120
-#define TESTNET_DIFFICULTY_TARGET 60
-
-#define DIFFICULTY_WINDOW 360
-#define DIFFICULTY_LAG 15
-#define DIFFICULTY_CUT 60
-#define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
 
 #define POW_TARGET_TIMESPAN (60 * 60 * 10)
 #define POW_TARGET_SPACING (1 * 60)
@@ -77,21 +69,21 @@
 #define MAX_GROUPED_BLOCKS_COUNT 6
 
 void parameters_set_use_testnet(int use_testnet);
-int parameters_get_use_testnet(void);
+const int parameters_get_use_testnet(void);
 
-uint8_t parameters_get_address_id(void);
+const uint8_t parameters_get_address_id(void);
 
-uint32_t parameters_get_genesis_nonce(void);
-uint32_t parameters_get_genesis_bits(void);
-uint32_t parameters_get_genesis_timestamp(void);
-uint64_t parameters_get_genesis_reward(void);
+const uint32_t parameters_get_genesis_nonce(void);
+const uint32_t parameters_get_genesis_bits(void);
+const uint32_t parameters_get_genesis_timestamp(void);
+const uint64_t parameters_get_genesis_reward(void);
 
-uint64_t parameters_get_pow_target_timespan(void);
-uint64_t parameters_get_pow_target_spacing(void);
-uint64_t parameters_get_difficulty_adjustment_interval(void);
-uint32_t parameters_get_pow_initial_difficulty_bits(void);
+const uint64_t parameters_get_pow_target_timespan(void);
+const uint64_t parameters_get_pow_target_spacing(void);
+const uint64_t parameters_get_difficulty_adjustment_interval(void);
+const uint32_t parameters_get_pow_initial_difficulty_bits(void);
 
-uint16_t parameters_get_p2p_port(void);
-uint16_t parameters_get_rpc_port(void);
+const uint16_t parameters_get_p2p_port(void);
+const uint16_t parameters_get_rpc_port(void);
 
-int parameters_get_allow_min_difficulty_blocks(void);
+const int parameters_get_allow_min_difficulty_blocks(void);

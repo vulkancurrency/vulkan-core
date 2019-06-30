@@ -48,8 +48,8 @@
 
 #include "block.h"
 #include "blockchain.h"
-#include "difficulty.h"
 #include "mempool.h"
+#include "pow.h"
 
 #include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"

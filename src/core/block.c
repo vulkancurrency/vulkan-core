@@ -41,7 +41,7 @@
 #include "block.h"
 #include "blockchain.h"
 #include "parameters.h"
-#include "difficulty.h"
+#include "pow.h"
 #include "merkle.h"
 
 #include "crypto/cryptoutil.h"

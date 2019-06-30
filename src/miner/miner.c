@@ -38,7 +38,6 @@
 
 #include "core/block.h"
 #include "core/blockchain.h"
-#include "core/difficulty.h"
 #include "core/mempool.h"
 #include "core/net.h"
 #include "core/protocol.h"
@@ -177,7 +176,7 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
   block_t *genesis_block = make_block();
   genesis_block->timestamp = parameters_get_genesis_timestamp();
   genesis_block->nonce = randombytes_random();
-  genesis_block->bits = parameters_get_genesis_bits();
+  genesis_block->bits = get_next_work_required(NULL);
 
   uint64_t block_reward = get_block_reward(0, 0);
   genesis_block->cumulative_emission = block_reward;
