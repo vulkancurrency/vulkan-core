@@ -239,9 +239,11 @@ static int worker_mining_thread(void *arg)
 
     print_block(genesis_block);
     print_block_transactions(genesis_block);
-
     free_block(genesis_block);
-    goto worker_thread_succeed;
+
+    // we're done, force the process to close
+    killall_threads();
+    exit(0);
   }
 
   block_t *previous_block = NULL;
@@ -279,15 +281,11 @@ static int worker_mining_thread(void *arg)
     free_block(block);
   }
 
-  goto worker_thread_succeed;
+  return 0;
 
 worker_thread_fail:
-  worker->running = 1;
+  killall_threads();
   return 1;
-
-worker_thread_succeed:
-  worker->running = 1;
-  return 0;
 }
 
 task_result_t report_worker_mining_status(task_t *task, va_list args)
@@ -308,6 +306,17 @@ task_result_t report_worker_mining_status(task_t *task, va_list args)
   }
 
   return TASK_RESULT_WAIT;
+}
+
+void killall_threads(void)
+{
+  for (int i = 0; i < g_num_worker_threads; i++)
+  {
+    miner_worker_t *worker = g_miner_workers[i];
+    assert(worker != NULL);
+
+    worker->running = 0;
+  }
 }
 
 void wait_for_threads_to_stop(void)

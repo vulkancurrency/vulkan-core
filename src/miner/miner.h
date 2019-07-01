@@ -76,6 +76,9 @@ block_t* construct_computable_genesis_block(wallet_t *wallet);
 int compute_block(miner_worker_t *worker, block_t *block);
 task_result_t report_worker_mining_status(task_t *task, va_list args);
 
+void killall_threads(void);
+void wait_for_threads_to_stop(void);
+
 int start_mining(void);
 int stop_mining(void);
 
