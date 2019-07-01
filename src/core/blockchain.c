@@ -322,7 +322,9 @@ int open_blockchain(const char *blockchain_dir)
   {
     if (validate_and_insert_block(genesis_block))
     {
-      LOG_ERROR("Could not insert genesis block into blockchain!");
+      char *genesis_block_hash = bin2hex(genesis_block->hash, HASH_SIZE);
+      LOG_ERROR("Could not insert genesis block into blockchain: %s", genesis_block_hash);
+      free(genesis_block_hash);
       return 1;
     }
   }
@@ -404,7 +406,11 @@ int close_blockchain(void)
 #endif
 
   mtx_destroy(&g_blockchain_lock);
-  close_backup_blockchain();
+  if (close_backup_blockchain())
+  {
+    return 1;
+  }
+
   g_blockchain_is_open = 0;
   return 0;
 }
@@ -493,8 +499,16 @@ int close_backup_blockchain(void)
 
 int init_blockchain(const char *blockchain_dir)
 {
-  open_blockchain(blockchain_dir);
-  open_backup_blockchain();
+  if (open_blockchain(blockchain_dir))
+  {
+    return 1;
+  }
+
+  if (open_backup_blockchain())
+  {
+    return 1;
+  }
+
   return 0;
 }
 
