@@ -1292,7 +1292,7 @@ int validate_and_insert_block_nolock(block_t *block)
     goto validate_block_fail;
   }
 
-  // as an extra measure, ensure that the block has is that of
+  // as an extra measure, ensure that the block hash is that of
   // what we were expecting provided it's contents...
   assert(valid_block_hash(block) == 1);
 
