@@ -1247,7 +1247,9 @@ int validate_and_insert_block_nolock(block_t *block)
   }
   else
   {
-    static_assert(current_block == NULL, "Failed to add genesis block to the blockchain; the blockchain already has blocks prior to this!");
+    // in this case we are validating a genesis block we are adding, if we have
+    // any blocks in the blockchain prior to this, then we fail to add the genesis block...
+    assert(current_block == NULL);
   }
 
   // check to see if this block's timestamp is greater than the
@@ -1267,7 +1269,17 @@ int validate_and_insert_block_nolock(block_t *block)
 
   // check the block's difficulty against it's expected value, also check the block's
   // hash to see if it's difficulty is valid...
-  uint32_t expected_difficulty = get_next_work_required(previous_block != NULL : previous_block->hash ? NULL);
+  uint32_t expected_difficulty = 0;
+  if (current_block != NULL)
+  {
+    expected_difficulty = get_next_work_required(current_block->hash);
+  }
+  else
+  {
+    expected_difficulty = get_next_work_required(NULL);
+  }
+
+  assert(expected_difficulty > 0);
   if (block->bits != expected_difficulty)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %u expected: %u!", block->bits, expected_difficulty);
@@ -1279,6 +1291,10 @@ int validate_and_insert_block_nolock(block_t *block)
     LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %u expected: %u!", block->bits, expected_difficulty);
     goto validate_block_fail;
   }
+
+  // as an extra measure, ensure that the block has is that of
+  // what we were expecting provided it's contents...
+  assert(valid_block_hash(block) == 1);
 
   free_block(current_block);
   return insert_block_nolock(block);
