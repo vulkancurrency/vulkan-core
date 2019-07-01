@@ -1336,20 +1336,13 @@ block_t *get_block_from_hash_nolock(uint8_t *block_hash)
   // deserialize the block's transactions
   if (deserialize_transactions_to_block(buffer_iterator, block))
   {
-    // TODO: FIXME!
-    // if we cannot deserialize any transactions from this block and it's
-    // the genesis block, then just assume the genesis block has no transactions
-    // for the sake of testing and debugging purposes we can allow this...
-    if (is_genesis_block(block_hash) == 0)
-    {
-      char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
-      LOG_ERROR("Failed to deserialize transactions for block: %s", block_hash_str);
-      free(block_hash_str);
+    char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+    LOG_ERROR("Failed to deserialize transactions for block: %s, block has no serialized transactions!", block_hash_str);
+    free(block_hash_str);
 
-      buffer_iterator_free(buffer_iterator);
-      buffer_free(buffer);
-      goto block_retrieval_fail;
-    }
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+    goto block_retrieval_fail;
   }
 
   buffer_iterator_free(buffer_iterator);
