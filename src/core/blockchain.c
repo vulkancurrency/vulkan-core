@@ -1220,10 +1220,10 @@ int insert_block(block_t *block)
 int validate_and_insert_block_nolock(block_t *block)
 {
   assert(block != NULL);
-  uint32_t current_block_height = get_block_height_nolock();
 
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
+  uint32_t current_block_height = get_block_height_nolock();
   if (valid_block(block) == 0 && current_block_height > 0)
   {
     return 1;
@@ -1236,9 +1236,18 @@ int validate_and_insert_block_nolock(block_t *block)
   }
 
   // check this blocks previous has against our current top block hash
-  if (compare_block_hash(block->previous_hash, get_current_block_hash()) == 0)
+  block_t *current_block = get_current_block();
+  if (current_block_height > 0)
   {
-    return 1;
+    assert(current_block != NULL);
+    if (compare_block_hash(block->previous_hash, current_block->hash) == 0)
+    {
+      goto validate_block_fail;
+    }
+  }
+  else
+  {
+    static_assert(current_block == NULL, "Failed to add genesis block to the blockchain; the blockchain already has blocks prior to this!");
   }
 
   // check to see if this block's timestamp is greater than the
@@ -1246,35 +1255,43 @@ int validate_and_insert_block_nolock(block_t *block)
   if (valid_block_median_timestamp(block) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %u!", block->timestamp);
-    return 1;
+    goto validate_block_fail;
   }
 
   // validate the block's generation transaction
   if (valid_block_emission(block, current_block_height) == 0)
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
-    return 1;
+    goto validate_block_fail;
   }
 
-  // check the block's difficulty value, also check the block's
-  // hash to see if it's difficulty is valid.
-  /*if (current_block_height > 0)
+  // check the block's difficulty against it's expected value, also check the block's
+  // hash to see if it's difficulty is valid...
+  uint32_t expected_difficulty = get_next_work_required(previous_block != NULL : previous_block->hash ? NULL);
+  if (block->bits != expected_difficulty)
   {
-    uint32_t expected_difficulty = get_next_block_difficulty_nolock();
-    if (block->bits != expected_difficulty)
-    {
-      LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %u expected: %u!", block->bits, expected_difficulty);
-      return 1;
-    }
+    LOG_DEBUG("Could not insert block into blockchain, block has invalid difficulty: %u expected: %u!", block->bits, expected_difficulty);
+    goto validate_block_fail;
+  }
 
-    if (check_proof_of_work(block->hash, expected_difficulty) == 0)
-    {
-      LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %u expected: %u!", block->bits, expected_difficulty);
-      return 1;
-    }
-  }*/
+  if (check_proof_of_work(block->hash, expected_difficulty) == 0)
+  {
+    LOG_ERROR("Could not insert block into blockchain, block does not have enough PoW: %u expected: %u!", block->bits, expected_difficulty);
+    goto validate_block_fail;
+  }
 
+  free_block(current_block);
   return insert_block_nolock(block);
+
+validate_block_fail:
+  // the current block can only be NULL if we're verifying the genesis block,
+  // as the genesis block will never have a previous block in the blockchain...
+  if (current_block != NULL)
+  {
+    free_block(current_block);
+  }
+
+  return 1;
 }
 
 int validate_and_insert_block(block_t *block)
