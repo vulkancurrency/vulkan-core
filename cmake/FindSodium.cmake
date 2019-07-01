@@ -36,9 +36,10 @@ find_path(SODIUM_INCLUDE_DIR
     /Library/Frameworks
     /usr/local/
     /usr/
-    /sw          # Fink
-    /opt/local/  # DarwinPorts
-    /opt/csw/    # Blastwave
+    /sw                # Fink
+    /opt/local/        # DarwinPorts
+    /usr/local/Cellar/ # Homebrew
+    /opt/csw/          # Blastwave
     /opt/
 )
 
@@ -50,9 +51,10 @@ set(FIND_SODIUM_LIB_PATHS
   /Library/Frameworks
   /usr/local
   /usr
-  /sw
-  /opt/local
-  /opt/csw
+  /sw                # Fink
+  /opt/local/        # DarwinPorts
+  /usr/local/Cellar/ # Homebrew
+  /opt/csw/          # Blastwave
   /opt
 )
 
