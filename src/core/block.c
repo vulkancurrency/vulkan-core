@@ -553,9 +553,6 @@ int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_inde
   assert(block != NULL);
   assert(tx != NULL);
 
-  input_transaction_t *txin = tx->txins[0];
-  assert(txin != NULL);
-
   block->transaction_count++;
   assert(tx_index == block->transaction_count - 1);
 
