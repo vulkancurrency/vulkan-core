@@ -39,6 +39,7 @@
 #include "common/util.h"
 
 #include "block.h"
+#include "genesis.h"
 #include "blockchain.h"
 #include "parameters.h"
 #include "pow.h"
@@ -339,11 +340,6 @@ int compare_block(block_t *block, block_t *other_block)
   assert(other_block != NULL);
   return (compare_block_hash(block->hash, other_block->hash) &&
     compare_merkle_hash(block->merkle_root, other_block->merkle_root));
-}
-
-block_t *get_genesis_block(void)
-{
-  return parameters_get_use_testnet() ? &testnet_genesis_block : &mainnet_genesis_block;
 }
 
 int compare_with_genesis_block(block_t *block)

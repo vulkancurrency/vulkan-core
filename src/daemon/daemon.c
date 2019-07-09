@@ -328,12 +328,12 @@ int main(int argc, char **argv)
     assert(repair_blockchain(g_blockchain_data_dir) == 0);
   }
 
-  if (init_blockchain(g_blockchain_data_dir))
+  if (start_mempool())
   {
     return 1;
   }
 
-  if (start_mempool())
+  if (init_blockchain(g_blockchain_data_dir))
   {
     return 1;
   }

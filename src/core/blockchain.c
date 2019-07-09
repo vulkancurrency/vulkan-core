@@ -47,6 +47,7 @@
 #include "common/vec.h"
 
 #include "block.h"
+#include "genesis.h"
 #include "blockchain.h"
 #include "mempool.h"
 #include "pow.h"
@@ -1309,8 +1310,11 @@ int validate_and_insert_block_nolock(block_t *block)
   // as an extra measure, ensure that the block hash is that of
   // what we were expecting provided it's contents...
   assert(valid_block_hash(block) == 1);
+  if (current_block != NULL)
+  {
+    free_block(current_block);
+  }
 
-  free_block(current_block);
   return insert_block_nolock(block);
 
 validate_block_fail:
