@@ -61,13 +61,13 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  remove_blockchain(g_blockchain_dir);
-  if (init_blockchain(g_blockchain_dir))
+  if (start_mempool())
   {
     return 1;
   }
 
-  if (start_mempool())
+  remove_blockchain(g_blockchain_dir);
+  if (init_blockchain(g_blockchain_dir))
   {
     return 1;
   }
