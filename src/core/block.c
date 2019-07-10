@@ -268,7 +268,6 @@ void print_block(block_t *block)
 void print_block_transactions(block_t *block)
 {
   assert(block != NULL);
-
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
@@ -382,7 +381,7 @@ int serialize_block(buffer_t *buffer, block_t *block)
 
   buffer_write_uint32(buffer, block->timestamp);
   buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint64(buffer, block->bits);
+  buffer_write_uint32(buffer, block->bits);
   buffer_write_uint64(buffer, block->cumulative_emission);
 
   buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
@@ -657,15 +656,15 @@ int copy_block(block_t *block, block_t *other_block)
 
   other_block->version = block->version;
 
-  memcpy(&other_block->previous_hash, &block->previous_hash, HASH_SIZE);
-  memcpy(&other_block->hash, &block->hash, HASH_SIZE);
+  memcpy(other_block->previous_hash, block->previous_hash, HASH_SIZE);
+  memcpy(other_block->hash, block->hash, HASH_SIZE);
 
   other_block->timestamp = block->timestamp;
   other_block->nonce = block->nonce;
   other_block->bits = block->bits;
   other_block->cumulative_emission = block->cumulative_emission;
 
-  memcpy(&other_block->merkle_root, &block->merkle_root, HASH_SIZE);
+  memcpy(other_block->merkle_root, block->merkle_root, HASH_SIZE);
   other_block->transaction_count = block->transaction_count;
   if (copy_block_transactions(block, other_block))
   {
