@@ -1260,12 +1260,6 @@ int validate_and_insert_block_nolock(block_t *block)
       goto validate_block_fail;
     }
   }
-  else
-  {
-    // in this case we are validating a genesis block we are adding, if we have
-    // any blocks in the blockchain prior to this, then we fail to add the genesis block...
-    assert(current_block == NULL);
-  }
 
   // check to see if this block's timestamp is greater than the
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
