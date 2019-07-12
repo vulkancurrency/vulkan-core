@@ -30,15 +30,13 @@
 
 #include "common/task.h"
 #include "common/util.h"
+#include "common/vulkan.h"
 
 #include "core/block.h"
 
 #include "wallet/wallet.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 #define MAX_NUM_WORKER_THREADS 1024
 #define WORKER_STATUS_TASK_DELAY 10
@@ -53,35 +51,33 @@ typedef struct MinerWorker
   uint32_t last_hashrate;
 } miner_worker_t;
 
-int get_is_miner_initialized(void);
+VULKAN_API int get_is_miner_initialized(void);
 
-void set_num_worker_threads(uint16_t num_worker_threads);
-uint16_t get_num_worker_threads(void);
+VULKAN_API void set_num_worker_threads(uint16_t num_worker_threads);
+VULKAN_API uint16_t get_num_worker_threads(void);
 
-void set_current_wallet(wallet_t *current_wallet);
-wallet_t* get_current_wallet(void);
+VULKAN_API void set_current_wallet(wallet_t *current_wallet);
+VULKAN_API wallet_t* get_current_wallet(void);
 
-void set_workers_paused(int workers_paused);
-int get_workers_paused(void);
+VULKAN_API void set_workers_paused(int workers_paused);
+VULKAN_API int get_workers_paused(void);
 
-void set_miner_generate_genesis(int generate_genesis);
-int get_miner_generate_genesis(void);
+VULKAN_API void set_miner_generate_genesis(int generate_genesis);
+VULKAN_API int get_miner_generate_genesis(void);
 
-miner_worker_t* init_worker(void);
-void free_worker(miner_worker_t *worker);
+VULKAN_API miner_worker_t* init_worker(void);
+VULKAN_API void free_worker(miner_worker_t *worker);
 
-block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
-block_t* construct_computable_genesis_block(wallet_t *wallet);
+VULKAN_API block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
+VULKAN_API block_t* construct_computable_genesis_block(wallet_t *wallet);
 
-int compute_block(miner_worker_t *worker, block_t *block);
-task_result_t report_worker_mining_status(task_t *task, va_list args);
+VULKAN_API int compute_block(miner_worker_t *worker, block_t *block);
+VULKAN_API task_result_t report_worker_mining_status(task_t *task, va_list args);
 
-void killall_threads(void);
-void wait_for_threads_to_stop(void);
+VULKAN_API void killall_threads(void);
+VULKAN_API void wait_for_threads_to_stop(void);
 
-int start_mining(void);
-int stop_mining(void);
+VULKAN_API int start_mining(void);
+VULKAN_API int stop_mining(void);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

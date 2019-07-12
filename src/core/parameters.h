@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "common/vulkan.h"
+
+VULKAN_BEGIN_DECL
+
 #define BLOCK_VERSION 0x01
 #define MAX_BLOCK_SIZE (1024 * 1024 * 500) // 500mb
 #define MAX_TX_SIZE (1024 * 500) // 500kb
@@ -68,22 +72,24 @@
 #define MAX_P2P_PEERS_COUNT 16
 #define MAX_GROUPED_BLOCKS_COUNT 6
 
-void parameters_set_use_testnet(int use_testnet);
-const int parameters_get_use_testnet(void);
+VULKAN_API void parameters_set_use_testnet(int use_testnet);
+VULKAN_API const int parameters_get_use_testnet(void);
 
-const uint8_t parameters_get_address_id(void);
+VULKAN_API const uint8_t parameters_get_address_id(void);
 
-const uint32_t parameters_get_genesis_nonce(void);
-const uint32_t parameters_get_genesis_bits(void);
-const uint32_t parameters_get_genesis_timestamp(void);
-const uint64_t parameters_get_genesis_reward(void);
+VULKAN_API const uint32_t parameters_get_genesis_nonce(void);
+VULKAN_API const uint32_t parameters_get_genesis_bits(void);
+VULKAN_API const uint32_t parameters_get_genesis_timestamp(void);
+VULKAN_API const uint64_t parameters_get_genesis_reward(void);
 
-const uint64_t parameters_get_pow_target_timespan(void);
-const uint64_t parameters_get_pow_target_spacing(void);
-const uint64_t parameters_get_difficulty_adjustment_interval(void);
-const uint32_t parameters_get_pow_initial_difficulty_bits(void);
+VULKAN_API const uint64_t parameters_get_pow_target_timespan(void);
+VULKAN_API const uint64_t parameters_get_pow_target_spacing(void);
+VULKAN_API const uint64_t parameters_get_difficulty_adjustment_interval(void);
+VULKAN_API const uint32_t parameters_get_pow_initial_difficulty_bits(void);
 
-const uint16_t parameters_get_p2p_port(void);
-const uint16_t parameters_get_rpc_port(void);
+VULKAN_API const uint16_t parameters_get_p2p_port(void);
+VULKAN_API const uint16_t parameters_get_rpc_port(void);
 
-const int parameters_get_allow_min_difficulty_blocks(void);
+VULKAN_API const int parameters_get_allow_min_difficulty_blocks(void);
+
+VULKAN_END_DECL

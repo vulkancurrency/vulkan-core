@@ -27,48 +27,35 @@
 
 #include <stdlib.h>
 
+#include "vulkan.h"
+
 #include "crypto/cryptoutil.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
-#ifndef MAX
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#endif
+VULKAN_API unsigned concatenate(unsigned x, unsigned y);
 
-#ifndef MIN
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#endif
+VULKAN_API uint16_t get_num_logical_cores(void);
 
-#define RANDOM_RANGE(min, max) MAX(rand() % max, min)
+VULKAN_API int string_equals(const char *string, const char *equals);
+VULKAN_API int string_startswith(const char *string, const char *prefix);
+VULKAN_API int string_endswith(const char *string, const char *ext);
+VULKAN_API int string_count(const char *string, const char *countstr, int countbreak);
+VULKAN_API const char* string_copy(const char *string, const char *other_string);
 
-unsigned concatenate(unsigned x, unsigned y);
+VULKAN_API int make_hash(char *digest, unsigned char *string);
+VULKAN_API char* bin2hex(uint8_t *bin, size_t bin_size);
+VULKAN_API uint8_t* hex2bin(const char *hexstr, size_t *size);
 
-uint16_t get_num_logical_cores(void);
+VULKAN_API uint32_t get_current_time(void);
+VULKAN_API int rmrf(const char *path);
 
-int string_equals(const char *string, const char *equals);
-int string_startswith(const char *string, const char *prefix);
-int string_endswith(const char *string, const char *ext);
-int string_count(const char *string, const char *countstr, int countbreak);
-const char* string_copy(const char *string, const char *other_string);
+VULKAN_API int cmp_least_greatest(const void *a, const void *b);
 
-int make_hash(char *digest, unsigned char *string);
-char* bin2hex(uint8_t *bin, size_t bin_size);
-uint8_t* hex2bin(const char *hexstr, size_t *size);
+VULKAN_API int is_private_address(uint32_t ip);
+VULKAN_API int is_local_address(uint32_t ip);
+VULKAN_API uint32_t convert_str_to_ip(const char* address);
+VULKAN_API char* convert_ip_to_str(uint32_t ip);
+VULKAN_API char* convert_to_addr_str(const char* address, uint32_t port);
 
-uint32_t get_current_time(void);
-int rmrf(const char *path);
-
-int cmp_least_greatest(const void *a, const void *b);
-
-int is_private_address(uint32_t ip);
-int is_local_address(uint32_t ip);
-uint32_t convert_str_to_ip(const char* address);
-char* convert_ip_to_str(uint32_t ip);
-char* convert_to_addr_str(const char* address, uint32_t port);
-
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

@@ -28,11 +28,9 @@
 #include <stdint.h>
 
 #include "common/util.h"
+#include "common/vulkan.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 typedef struct MerkleNode merkle_node_t;
 typedef struct MerkleNode
@@ -47,18 +45,16 @@ typedef struct MerkleTree
   merkle_node_t *root;
 } merkle_tree_t;
 
-merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_of_hashes);
-merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right);
+VULKAN_API merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_of_hashes);
+VULKAN_API merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right);
 
-int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
-int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
+VULKAN_API int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
+VULKAN_API int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
 
-int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash);
-int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node);
+VULKAN_API int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash);
+VULKAN_API int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node);
 
-void free_merkle_tree(merkle_tree_t *tree);
-void free_merkle_node(merkle_node_t *node);
+VULKAN_API void free_merkle_tree(merkle_tree_t *tree);
+VULKAN_API void free_merkle_node(merkle_node_t *node);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

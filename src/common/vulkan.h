@@ -25,36 +25,35 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
 
-#include <sodium.h>
+#ifdef __cplusplus
+#define VULKAN_BEGIN_DECL extern "C" {
+#define VULKAN_END_DECL	}
+#else
+#define VULKAN_BEGIN_DECL /* empty */
+#define VULKAN_END_DECL	/* empty */
+#endif
 
-#include "common/util.h"
-#include "common/vulkan.h"
+#ifndef VULKAN_API
+#if defined(_WIN32)
+#ifdef VULKAN_BUILD
+#define VULKAN_API __declspec(dllexport)
+#else
+#define VULKAN_API
+#endif
+#elif defined(__GNUC__) && defined(VULKAN_BUILD)
+#define VULKAN_API __attribute__((visibility("default")))
+#else
+#define VULKAN_API
+#endif
+#endif
 
-#include "transaction.h"
+#ifndef MAX
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
 
-#include "crypto/cryptoutil.h"
-
-#include "wallet/wallet.h"
-
-VULKAN_BEGIN_DECL
-
-typedef struct TransactionEntry
-{
-  uint8_t address[ADDRESS_SIZE];
-  uint64_t amount;
-} transaction_entry_t;
-
-typedef struct TransactionEntries
-{
-  uint16_t num_entries;
-  transaction_entry_t *entries[MAX_NUM_TX_ENTRIES];
-} transaction_entries_t;
-
-VULKAN_API uint64_t get_total_entries_amount(transaction_entries_t transaction_entries);
-
-VULKAN_API int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries);
-VULKAN_API int construct_generation_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t block_reward);
-
-VULKAN_END_DECL
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif

@@ -31,15 +31,13 @@
 
 #include "common/mongoose.h"
 #include "common/task.h"
+#include "common/vulkan.h"
 
 #include "block.h"
 #include "transaction.h"
 #include "net.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 #define RESYNC_CHAIN_TASK_DELAY 2
 #define RESYNC_BLOCK_REQUEST_DELAY 10
@@ -233,55 +231,53 @@ typedef struct SyncEntry
   uint8_t last_tx_sync_tries;
 } sync_entry_t;
 
-void set_force_version_check(int force_version_check);
-int get_force_version_check(void);
+VULKAN_API void set_force_version_check(int force_version_check);
+VULKAN_API int get_force_version_check(void);
 
-packet_t* make_packet(void);
-int serialize_packet(buffer_t *buffer, packet_t *packet);
-int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator);
-void free_packet(packet_t *packet);
+VULKAN_API packet_t* make_packet(void);
+VULKAN_API int serialize_packet(buffer_t *buffer, packet_t *packet);
+VULKAN_API int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator);
+VULKAN_API void free_packet(packet_t *packet);
 
-int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
-int deserialize_message(packet_t *packet, void **message);
-void free_message(uint32_t packet_id, int did_packet_fail, void *message_object);
+VULKAN_API int serialize_message(packet_t **packet, uint32_t packet_id, va_list args);
+VULKAN_API int deserialize_message(packet_t *packet, void **message);
+VULKAN_API void free_message(uint32_t packet_id, int did_packet_fail, void *message_object);
 
-net_connection_t* get_sync_net_connection(void);
-int get_sync_initiated(void);
+VULKAN_API net_connection_t* get_sync_net_connection(void);
+VULKAN_API int get_sync_initiated(void);
 
-int init_sync_request(int height, net_connection_t *net_connection);
-int clear_sync_request(int sync_success);
-int clear_tx_sync_request(void);
-int clear_grouped_sync_request(void);
+VULKAN_API int init_sync_request(int height, net_connection_t *net_connection);
+VULKAN_API int clear_sync_request(int sync_success);
+VULKAN_API int clear_tx_sync_request(void);
+VULKAN_API int clear_grouped_sync_request(void);
 
-void handle_sync_started(void);
-void handle_sync_added_block(void);
-void handle_sync_stopped(void);
-void handle_sync_completed(void);
+VULKAN_API void handle_sync_started(void);
+VULKAN_API void handle_sync_added_block(void);
+VULKAN_API void handle_sync_stopped(void);
+VULKAN_API void handle_sync_completed(void);
 
-int check_sync_status(int force_sync_complete);
-int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_t *hash);
-int request_sync_next_block(net_connection_t *net_connection);
-int request_sync_previous_block(net_connection_t *net_connection);
+VULKAN_API int check_sync_status(int force_sync_complete);
+VULKAN_API int request_sync_block(net_connection_t *net_connection, uint32_t height, uint8_t *hash);
+VULKAN_API int request_sync_next_block(net_connection_t *net_connection);
+VULKAN_API int request_sync_previous_block(net_connection_t *net_connection);
 
-int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
-int request_sync_next_transaction(net_connection_t *net_connection);
+VULKAN_API int request_sync_transaction(net_connection_t *net_connection, uint8_t *block_hash, uint32_t tx_index, uint8_t *tx_hash);
+VULKAN_API int request_sync_next_transaction(net_connection_t *net_connection);
 
-int block_header_received(net_connection_t *net_connection, block_t *block);
-int block_header_sync_complete(net_connection_t *net_connection, block_t *block);
-int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index);
-int backup_blockchain_and_rollback(void);
+VULKAN_API int block_header_received(net_connection_t *net_connection, block_t *block);
+VULKAN_API int block_header_sync_complete(net_connection_t *net_connection, block_t *block);
+VULKAN_API int transaction_received(net_connection_t *net_connection, transaction_t *transaction, uint32_t tx_index);
+VULKAN_API int backup_blockchain_and_rollback(void);
 
-int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id);
-int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
-int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
-int handle_receive_packet(net_connection_t *net_connection, packet_t *packet);
+VULKAN_API int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id);
+VULKAN_API int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
+VULKAN_API int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *message_object);
+VULKAN_API int handle_receive_packet(net_connection_t *net_connection, packet_t *packet);
 
-int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args);
-int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...);
-int handle_packet_broadcast(uint32_t packet_id, ...);
+VULKAN_API int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t packet_id, va_list args);
+VULKAN_API int handle_packet_sendto(net_connection_t *net_connection, uint32_t packet_id, ...);
+VULKAN_API int handle_packet_broadcast(uint32_t packet_id, ...);
 
 task_result_t resync_chain(task_t *task, va_list args);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

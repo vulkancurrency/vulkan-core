@@ -30,11 +30,6 @@
 
 #include "tinycthread.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #define MAX_QUEUE_SIZE 1000000
 
 typedef struct Queue
@@ -65,7 +60,3 @@ int queue_remove_object(queue_t *queue, void *queue_object);
 void* queue_pop(queue_t *queue, int index);
 void* queue_pop_left(queue_t *queue);
 void* queue_pop_right(queue_t *queue);
-
-#ifdef __cplusplus
-}
-#endif

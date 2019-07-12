@@ -33,10 +33,13 @@
 #include "common/buffer.h"
 #include "common/util.h"
 #include "common/vec.h"
+#include "common/vulkan.h"
 
 #include "crypto/cryptoutil.h"
 
 #include "wallet/wallet.h"
+
+VULKAN_BEGIN_DECL
 
 /*
  * Transactions can contain multiple InputTXs and multiple OutputTXs.
@@ -54,11 +57,6 @@
  * Once an OutputTX is used as an InputTX, it is considered spent. (All value is used from a OutputTX when being used as input)
  * - If you don't want to spend everything from an InputTX, you can create a new OutputTX to send back to yourself as leftover-change.
  */
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 #define TXIN_HEADER_SIZE (HASH_SIZE + 4)
 #define TXOUT_HEADER_SIZE (HASH_SIZE + 4)
@@ -106,76 +104,74 @@ typedef struct UnspentTransaction
   unspent_output_transaction_t **unspent_txouts;
 } unspent_transaction_t;
 
-transaction_t* make_transaction(void);
-input_transaction_t* make_txin(void);
-output_transaction_t* make_txout(void);
-unspent_transaction_t* make_unspent_transaction(void);
-unspent_output_transaction_t* make_unspent_txout(void);
+VULKAN_API transaction_t* make_transaction(void);
+VULKAN_API input_transaction_t* make_txin(void);
+VULKAN_API output_transaction_t* make_txout(void);
+VULKAN_API unspent_transaction_t* make_unspent_transaction(void);
+VULKAN_API unspent_output_transaction_t* make_unspent_txout(void);
 
-int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
-int validate_txin_signature(transaction_t *tx, input_transaction_t *txin);
-int validate_tx_signatures(transaction_t *tx);
-void get_txin_header(uint8_t *header, input_transaction_t *txin);
-void get_txout_header(uint8_t *header, output_transaction_t *txout);
-uint32_t get_tx_sign_header_size(transaction_t *tx);
-uint32_t get_tx_header_size(transaction_t *tx);
-void get_tx_sign_header(uint8_t *header, transaction_t *tx);
+VULKAN_API int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
+VULKAN_API int validate_txin_signature(transaction_t *tx, input_transaction_t *txin);
+VULKAN_API int validate_tx_signatures(transaction_t *tx);
+VULKAN_API void get_txin_header(uint8_t *header, input_transaction_t *txin);
+VULKAN_API void get_txout_header(uint8_t *header, output_transaction_t *txout);
+VULKAN_API uint32_t get_tx_sign_header_size(transaction_t *tx);
+VULKAN_API uint32_t get_tx_header_size(transaction_t *tx);
+VULKAN_API void get_tx_sign_header(uint8_t *header, transaction_t *tx);
 
-int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
-int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);
+VULKAN_API int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
+VULKAN_API int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);
 
-void print_txin(uint8_t txin_index, input_transaction_t *txin);
-void print_txout(uint8_t txout_index, output_transaction_t *txout);
-void print_transaction(transaction_t *tx);
+VULKAN_API void print_txin(uint8_t txin_index, input_transaction_t *txin);
+VULKAN_API void print_txout(uint8_t txout_index, output_transaction_t *txout);
+VULKAN_API void print_transaction(transaction_t *tx);
 
-int valid_transaction(transaction_t *tx);
-int is_generation_tx(transaction_t *tx);
-int do_txins_reference_unspent_txouts(transaction_t *tx);
+VULKAN_API int valid_transaction(transaction_t *tx);
+VULKAN_API int is_generation_tx(transaction_t *tx);
+VULKAN_API int do_txins_reference_unspent_txouts(transaction_t *tx);
 
-int compute_tx_id(uint8_t *tx_id, transaction_t *tx);
-int compute_self_tx_id(transaction_t *tx);
+VULKAN_API int compute_tx_id(uint8_t *tx_id, transaction_t *tx);
+VULKAN_API int compute_self_tx_id(transaction_t *tx);
 
-int serialize_txin_header(buffer_t *buffer, input_transaction_t *txin);
-int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
-int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out);
+VULKAN_API int serialize_txin_header(buffer_t *buffer, input_transaction_t *txin);
+VULKAN_API int serialize_txin(buffer_t *buffer, input_transaction_t *txin);
+VULKAN_API int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out);
 
-int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout);
-int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
-int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out);
+VULKAN_API int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout);
+VULKAN_API int serialize_txout(buffer_t *buffer, output_transaction_t *txout);
+VULKAN_API int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out);
 
-int serialize_transaction_header(buffer_t *buffer, transaction_t *tx);
-int serialize_transaction(buffer_t *buffer, transaction_t *tx);
-int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out);
+VULKAN_API int serialize_transaction_header(buffer_t *buffer, transaction_t *tx);
+VULKAN_API int serialize_transaction(buffer_t *buffer, transaction_t *tx);
+VULKAN_API int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out);
 
-int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx);
-transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len);
+VULKAN_API int transaction_to_serialized(uint8_t **data, uint32_t *data_len, transaction_t *tx);
+VULKAN_API transaction_t* transaction_from_serialized(uint8_t *data, uint32_t data_len);
 
-int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unspent_txout);
-int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output_transaction_t **unspent_txout_out);
+VULKAN_API int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unspent_txout);
+VULKAN_API int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output_transaction_t **unspent_txout_out);
 
-int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx);
-int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_transaction_t **unspent_tx_out);
+VULKAN_API int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx);
+VULKAN_API int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_transaction_t **unspent_tx_out);
 
-unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout);
-unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);
-int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx);
-unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);
-int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
+VULKAN_API unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout);
+VULKAN_API unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx);
+VULKAN_API int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspent_transaction_t *unspent_tx);
+VULKAN_API unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len);
+VULKAN_API int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_void_t *unspent_txouts, uint32_t *num_unspent_txouts);
 
-int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32_t txin_index);
-int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uint32_t txout_index);
+VULKAN_API int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32_t txin_index);
+VULKAN_API int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uint32_t txout_index);
 
-int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
-int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);
-int copy_transaction(transaction_t *tx, transaction_t *other_tx);
+VULKAN_API int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin);
+VULKAN_API int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout);
+VULKAN_API int copy_transaction(transaction_t *tx, transaction_t *other_tx);
 
-void free_txins(transaction_t *tx);
-void free_txouts(transaction_t *tx);
-void free_transaction(transaction_t *tx);
+VULKAN_API void free_txins(transaction_t *tx);
+VULKAN_API void free_txouts(transaction_t *tx);
+VULKAN_API void free_transaction(transaction_t *tx);
 
-void free_unspent_txouts(unspent_transaction_t *unspent_tx);
-void free_unspent_transaction(unspent_transaction_t *unspent_tx);
+VULKAN_API void free_unspent_txouts(unspent_transaction_t *unspent_tx);
+VULKAN_API void free_unspent_transaction(unspent_transaction_t *unspent_tx);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

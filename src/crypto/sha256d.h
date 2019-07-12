@@ -27,4 +27,10 @@
 
 #include <stdint.h>
 
-int crypto_hash_sha256d(unsigned char *out, const unsigned char *in, unsigned long long inlen);
+#include "common/vulkan.h"
+
+VULKAN_BEGIN_DECL
+
+VULKAN_API int crypto_hash_sha256d(unsigned char *out, const unsigned char *in, unsigned long long inlen);
+
+VULKAN_END_DECL

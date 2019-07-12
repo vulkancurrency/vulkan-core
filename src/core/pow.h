@@ -28,7 +28,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "common/vulkan.h"
+
 #include "crypto/bignum_util.h"
 
-void get_pow_limit(BIGNUM *num);
-int check_proof_of_work(const uint8_t *hash, uint32_t bits);
+VULKAN_BEGIN_DECL
+
+VULKAN_API void get_pow_limit(BIGNUM *num);
+VULKAN_API int check_proof_of_work(const uint8_t *hash, uint32_t bits);
+
+VULKAN_END_DECL

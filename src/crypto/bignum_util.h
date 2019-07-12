@@ -29,5 +29,11 @@
 
 #include <openssl/bn.h>
 
-void bignum_set_compact(BIGNUM *bn, uint32_t n_compact);
-uint32_t bignum_get_compact(BIGNUM *bn);
+#include "common/vulkan.h"
+
+VULKAN_BEGIN_DECL
+
+VULKAN_API void bignum_set_compact(BIGNUM *bn, uint32_t n_compact);
+VULKAN_API uint32_t bignum_get_compact(BIGNUM *bn);
+
+VULKAN_END_DECL

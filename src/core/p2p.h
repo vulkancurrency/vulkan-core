@@ -31,13 +31,11 @@
 
 #include "common/buffer.h"
 #include "common/buffer_iterator.h"
+#include "common/vulkan.h"
 
 #include "net.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 typedef struct Peer
 {
@@ -45,38 +43,36 @@ typedef struct Peer
   net_connection_t *net_connection;
 } peer_t;
 
-peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection);
-void free_peer(peer_t *peer);
+VULKAN_API peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection);
+VULKAN_API void free_peer(peer_t *peer);
 
-peer_t* get_peer_nolock(uint64_t peer_id);
-peer_t* get_peer(uint64_t peer_id);
+VULKAN_API peer_t* get_peer_nolock(uint64_t peer_id);
+VULKAN_API peer_t* get_peer(uint64_t peer_id);
 
-peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection);
-peer_t* get_peer_from_net_connection(net_connection_t *net_connection);
+VULKAN_API peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection);
+VULKAN_API peer_t* get_peer_from_net_connection(net_connection_t *net_connection);
 
-int has_peer_nolock(uint64_t peer_id);
-int has_peer(uint64_t peer_id);
+VULKAN_API int has_peer_nolock(uint64_t peer_id);
+VULKAN_API int has_peer(uint64_t peer_id);
 
-uint16_t get_num_peers(void);
+VULKAN_API uint16_t get_num_peers(void);
 
-int add_peer_nolock(peer_t *peer);
-int add_peer(peer_t *peer);
+VULKAN_API int add_peer_nolock(peer_t *peer);
+VULKAN_API int add_peer(peer_t *peer);
 
-int remove_peer_nolock(peer_t *peer);
-int remove_peer(peer_t *peer);
+VULKAN_API int remove_peer_nolock(peer_t *peer);
+VULKAN_API int remove_peer(peer_t *peer);
 
-int serialize_peerlist_nolock(buffer_t *buffer);
-int serialize_peerlist(buffer_t *buffer);
+VULKAN_API int serialize_peerlist_nolock(buffer_t *buffer);
+VULKAN_API int serialize_peerlist(buffer_t *buffer);
 
-int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator);
-int deserialize_peerlist(buffer_iterator_t *buffer_iterator);
+VULKAN_API int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator);
+VULKAN_API int deserialize_peerlist(buffer_iterator_t *buffer_iterator);
 
-int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
-int init_p2p(void);
-int deinit_p2p(void);
+VULKAN_API int init_p2p(void);
+VULKAN_API int deinit_p2p(void);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

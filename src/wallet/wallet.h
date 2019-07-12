@@ -37,13 +37,11 @@
 #endif
 
 #include "common/util.h"
+#include "common/vulkan.h"
 
 #include "core/parameters.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 typedef struct Wallet
 {
@@ -53,34 +51,32 @@ typedef struct Wallet
   uint64_t balance;
 } wallet_t;
 
-wallet_t* make_wallet(void);
-void free_wallet(wallet_t* wallet);
+VULKAN_API wallet_t* make_wallet(void);
+VULKAN_API void free_wallet(wallet_t* wallet);
 
-int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
-int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
+VULKAN_API int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
+VULKAN_API int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
 
 #ifdef USE_LEVELDB
-leveldb_t* open_wallet(const char *wallet_dir, char *err);
+VULKAN_API leveldb_t* open_wallet(const char *wallet_dir, char *err);
 #else
-rocksdb_t* open_wallet(const char *wallet_dir, char *err);
+VULKAN_API rocksdb_t* open_wallet(const char *wallet_dir, char *err);
 #endif
 
-int new_wallet(const char *wallet_dir, wallet_t **wallet_out);
-int get_wallet(const char *wallet_dir, wallet_t **wallet_out);
-int repair_wallet(const char *wallet_dir);
-int init_wallet(const char *wallet_dir, wallet_t **wallet_out);
-int remove_wallet(const char *wallet_dir);
+VULKAN_API int new_wallet(const char *wallet_dir, wallet_t **wallet_out);
+VULKAN_API int get_wallet(const char *wallet_dir, wallet_t **wallet_out);
+VULKAN_API int repair_wallet(const char *wallet_dir);
+VULKAN_API int init_wallet(const char *wallet_dir, wallet_t **wallet_out);
+VULKAN_API int remove_wallet(const char *wallet_dir);
 
-void print_wallet(wallet_t* wallet);
-void print_public_key(wallet_t *wallet);
-void print_secret_key(wallet_t *wallet);
+VULKAN_API void print_wallet(wallet_t* wallet);
+VULKAN_API void print_public_key(wallet_t *wallet);
+VULKAN_API void print_secret_key(wallet_t *wallet);
 
-int compare_addresses(uint8_t *address, uint8_t *other_address);
+VULKAN_API int compare_addresses(uint8_t *address, uint8_t *other_address);
 
-int public_key_to_address(unsigned char *address, unsigned char *pk);
-uint8_t get_address_id(uint8_t *address);
-int valid_address(uint8_t *address);
+VULKAN_API int public_key_to_address(unsigned char *address, unsigned char *pk);
+VULKAN_API uint8_t get_address_id(uint8_t *address);
+VULKAN_API int valid_address(uint8_t *address);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

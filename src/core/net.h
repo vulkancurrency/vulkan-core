@@ -33,18 +33,16 @@
 #include "common/mongoose.h"
 #include "common/task.h"
 #include "common/vec.h"
+#include "common/vulkan.h"
 
 #include "seed_nodes.h"
+
+VULKAN_BEGIN_DECL
 
 #define NET_MAX_NUM_CONNECTION_ENTRIES 1024
 #define NET_MGR_POLL_DELAY 1000
 #define NET_RECONNECT_SEEDS_TASK_DELAY 10
 #define NET_FLUSH_CONNECTIONS_TASK_DELAY 0.01
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 typedef struct NetConnection
 {
@@ -72,59 +70,57 @@ typedef struct ConnectionEntries
   connection_entry_t entries[NET_MAX_NUM_CONNECTION_ENTRIES];
 } connection_entries_t;
 
-void set_net_host_address(const char *host_address);
-const char* get_net_host_address(void);
+VULKAN_API void set_net_host_address(const char *host_address);
+VULKAN_API const char* get_net_host_address(void);
 
-void set_net_host_port(uint32_t host_port);
-uint32_t get_net_host_port(void);
+VULKAN_API void set_net_host_port(uint32_t host_port);
+VULKAN_API uint32_t get_net_host_port(void);
 
-const char* get_net_external_address(void);
+VULKAN_API const char* get_net_external_address(void);
 
-void set_net_disable_port_mapping(int disable_port_mapping);
-int get_net_disable_port_mapping(void);
+VULKAN_API void set_net_disable_port_mapping(int disable_port_mapping);
+VULKAN_API int get_net_disable_port_mapping(void);
 
-const char* get_net_bind_address(void);
+VULKAN_API const char* get_net_bind_address(void);
 
-net_connection_t* init_net_connection(struct mg_connection *connection);
-void free_net_connection(net_connection_t *net_connection);
+VULKAN_API net_connection_t* init_net_connection(struct mg_connection *connection);
+VULKAN_API void free_net_connection(net_connection_t *net_connection);
 
-net_connection_t* get_net_connection_nolock(struct mg_connection *connection);
-net_connection_t* get_net_connection(struct mg_connection *connection);
+VULKAN_API net_connection_t* get_net_connection_nolock(struct mg_connection *connection);
+VULKAN_API net_connection_t* get_net_connection(struct mg_connection *connection);
 
-int has_net_connection_nolock(struct mg_connection *connection);
-int has_net_connection(struct mg_connection *connection);
+VULKAN_API int has_net_connection_nolock(struct mg_connection *connection);
+VULKAN_API int has_net_connection(struct mg_connection *connection);
 
-int add_net_connection_nolock(net_connection_t *net_connection);
-int add_net_connection(net_connection_t *net_connection);
+VULKAN_API int add_net_connection_nolock(net_connection_t *net_connection);
+VULKAN_API int add_net_connection(net_connection_t *net_connection);
 
-int remove_net_connection_nolock(net_connection_t *net_connection);
-int remove_net_connection(net_connection_t *net_connection);
+VULKAN_API int remove_net_connection_nolock(net_connection_t *net_connection);
+VULKAN_API int remove_net_connection(net_connection_t *net_connection);
 
-int close_net_connection(net_connection_t *net_connection);
-int connect_net_to_seeds(void);
+VULKAN_API int close_net_connection(net_connection_t *net_connection);
+VULKAN_API int connect_net_to_seeds(void);
 
-int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 
-void setup_net_port_mapping(uint16_t port);
-int connect_net_to_peer(const char *address, uint16_t port);
+VULKAN_API void setup_net_port_mapping(uint16_t port);
+VULKAN_API int connect_net_to_peer(const char *address, uint16_t port);
 
-int connect_seed_node(seed_node_entry_t seed_node_entry);
-int connect_net_to_seeds(void);
+VULKAN_API int connect_seed_node(seed_node_entry_t seed_node_entry);
+VULKAN_API int connect_net_to_seeds(void);
 
-int flush_send_queue(net_connection_t *net_connection);
-int flush_all_connections_nolock(void);
-int flush_all_connections(void);
-int flush_all_connections_noblock(void);
+VULKAN_API int flush_send_queue(net_connection_t *net_connection);
+VULKAN_API int flush_all_connections_nolock(void);
+VULKAN_API int flush_all_connections(void);
+VULKAN_API int flush_all_connections_noblock(void);
 
 task_result_t reconnect_seeds(task_t *task, va_list args);
 task_result_t flush_connections(task_t *task, va_list args);
 
-int net_run(void);
-int init_net(connection_entries_t connection_entries);
-int deinit_net(void);
+VULKAN_API int net_run(void);
+VULKAN_API int init_net(connection_entries_t connection_entries);
+VULKAN_API int deinit_net(void);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

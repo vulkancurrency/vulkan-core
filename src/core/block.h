@@ -31,15 +31,13 @@
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/util.h"
+#include "common/vulkan.h"
 
 #include "parameters.h"
 #include "transaction_builder.h"
 #include "transaction.h"
 
-#ifdef __cplusplus
-extern "
-{
-#endif
+VULKAN_BEGIN_DECL
 
 #define BLOCK_HEADER_SIZE (HASH_SIZE + HASH_SIZE + 8 + 8 + 8 + 4 + 4 + 4)
 
@@ -60,49 +58,47 @@ typedef struct Block
   transaction_t **transactions;
 } block_t;
 
-block_t* make_block(void);
+VULKAN_API block_t* make_block(void);
 
-uint32_t get_block_header_size(block_t *block);
+VULKAN_API uint32_t get_block_header_size(block_t *block);
 
-int valid_block_hash(block_t *block);
-int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
-int compare_block(block_t *block, block_t *other_block);
-int compare_with_genesis_block(block_t *block);
+VULKAN_API int valid_block_hash(block_t *block);
+VULKAN_API int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
+VULKAN_API int compare_block(block_t *block, block_t *other_block);
+VULKAN_API int compare_with_genesis_block(block_t *block);
 
-int valid_block_timestamp(block_t *block);
-int valid_block(block_t *block);
-int valid_merkle_root(block_t *block);
+VULKAN_API int valid_block_timestamp(block_t *block);
+VULKAN_API int valid_block(block_t *block);
+VULKAN_API int valid_merkle_root(block_t *block);
 
-int compute_merkle_root(uint8_t *merkle_root, block_t *block);
-int compute_self_merkle_root(block_t *block);
+VULKAN_API int compute_merkle_root(uint8_t *merkle_root, block_t *block);
+VULKAN_API int compute_self_merkle_root(block_t *block);
 
-void print_block(block_t *block);
-void print_block_transactions(block_t *block);
+VULKAN_API void print_block(block_t *block);
+VULKAN_API void print_block_transactions(block_t *block);
 
-int compute_block_hash(uint8_t *hash, block_t *block);
-int compute_self_block_hash(block_t *block);
+VULKAN_API int compute_block_hash(uint8_t *hash, block_t *block);
+VULKAN_API int compute_self_block_hash(block_t *block);
 
-int serialize_block_header(buffer_t *buffer, block_t *block);
-int serialize_block(buffer_t *buffer, block_t *block);
-int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out);
+VULKAN_API int serialize_block_header(buffer_t *buffer, block_t *block);
+VULKAN_API int serialize_block(buffer_t *buffer, block_t *block);
+VULKAN_API int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out);
 
-int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
-block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
+VULKAN_API int block_to_serialized(uint8_t **data, uint32_t *data_len, block_t *block);
+VULKAN_API block_t* block_from_serialized(uint8_t *data, uint32_t data_len);
 
-int serialize_transactions_from_block(buffer_t *buffer, block_t *block);
-int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_t *block);
+VULKAN_API int serialize_transactions_from_block(buffer_t *buffer, block_t *block);
+VULKAN_API int deserialize_transactions_to_block(buffer_iterator_t *buffer_iterator, block_t *block);
 
-int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_index);
-int add_transactions_to_block(block_t *block, transaction_t **transactions, uint32_t num_transactions);
-transaction_t* get_tx_by_hash_from_block(block_t *block, uint8_t *tx_hash);
-int32_t get_tx_index_from_tx_in_block(block_t *block, transaction_t *tx);
+VULKAN_API int add_transaction_to_block(block_t *block, transaction_t *tx, uint32_t tx_index);
+VULKAN_API int add_transactions_to_block(block_t *block, transaction_t **transactions, uint32_t num_transactions);
+VULKAN_API transaction_t* get_tx_by_hash_from_block(block_t *block, uint8_t *tx_hash);
+VULKAN_API int32_t get_tx_index_from_tx_in_block(block_t *block, transaction_t *tx);
 
-int copy_block_transactions(block_t *block, block_t *other_block);
-int copy_block(block_t *block, block_t *other_block);
+VULKAN_API int copy_block_transactions(block_t *block, block_t *other_block);
+VULKAN_API int copy_block(block_t *block, block_t *other_block);
 
-void free_block_transactions(block_t *block);
-void free_block(block_t *block);
+VULKAN_API void free_block_transactions(block_t *block);
+VULKAN_API void free_block(block_t *block);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

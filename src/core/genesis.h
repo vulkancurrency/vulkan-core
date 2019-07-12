@@ -28,8 +28,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "common/vulkan.h"
+
 #include "block.h"
 #include "transaction.h"
+
+VULKAN_BEGIN_DECL
 
 static block_t mainnet_genesis_block = {
   .version = BLOCK_VERSION,
@@ -194,4 +198,6 @@ static block_t *testnet_genesis_block = NULL;
 #define NUM_TESTNET_GENESIS_TXINS (sizeof(input_transaction_t) / sizeof(testnet_genesis_input_txs))
 #define NUM_TESTNET_GENESIS_TXOUTS (sizeof(output_transaction_t) / sizeof(testnet_genesis_output_txs))
 
-block_t *get_genesis_block(void);
+VULKAN_API block_t *get_genesis_block(void);
+
+VULKAN_END_DECL

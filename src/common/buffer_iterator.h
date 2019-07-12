@@ -29,11 +29,9 @@
 #include <stdint.h>
 
 #include "buffer.h"
+#include "vulkan.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+VULKAN_BEGIN_DECL
 
 typedef struct BufferIterator
 {
@@ -41,38 +39,36 @@ typedef struct BufferIterator
   size_t offset;
 } buffer_iterator_t;
 
-buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer);
-void buffer_iterator_free(buffer_iterator_t *buffer_iterator);
+VULKAN_API buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer);
+VULKAN_API void buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 
-void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer);
-const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
+VULKAN_API void buffer_iterator_set_buffer(buffer_iterator_t *buffer_iterator, const buffer_t *buffer);
+VULKAN_API const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_iterator);
 
-void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
-size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
+VULKAN_API void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
+VULKAN_API size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
-void buffer_iterator_clear(buffer_iterator_t *buffer_iterator);
+VULKAN_API void buffer_iterator_clear(buffer_iterator_t *buffer_iterator);
 
-int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
-size_t buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
-uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
+VULKAN_API int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
+VULKAN_API size_t buffer_get_remaining_size(buffer_iterator_t *buffer_iterator);
+VULKAN_API uint8_t* buffer_get_remaining_data(buffer_iterator_t *buffer_iterator);
 
-int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value);
-int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value);
+VULKAN_API int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value);
+VULKAN_API int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value);
 
-int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value);
-int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value);
+VULKAN_API int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value);
+VULKAN_API int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value);
 
-int buffer_read_uint32(buffer_iterator_t *buffer_iterator, uint32_t *value);
-int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value);
+VULKAN_API int buffer_read_uint32(buffer_iterator_t *buffer_iterator, uint32_t *value);
+VULKAN_API int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value);
 
-uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value);
-int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value);
+VULKAN_API uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value);
+VULKAN_API int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value);
 
-int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
-int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string);
-int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
-int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string);
+VULKAN_API int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
+VULKAN_API int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string);
+VULKAN_API int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
+VULKAN_API int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string);
 
-#ifdef __cplusplus
-}
-#endif
+VULKAN_END_DECL

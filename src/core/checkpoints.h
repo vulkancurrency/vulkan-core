@@ -28,17 +28,23 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "common/vulkan.h"
+
+VULKAN_BEGIN_DECL
+
 typedef struct CheckpointEntry
 {
   uint32_t height;
   const char *block_hash;
 } checkpoint_entry_t;
 
-int get_checkpoint_hash_from_height(uint32_t height, uint8_t **hash_out);
-int has_checkpoint_hash_by_height(uint32_t height);
+VULKAN_API int get_checkpoint_hash_from_height(uint32_t height, uint8_t **hash_out);
+VULKAN_API int has_checkpoint_hash_by_height(uint32_t height);
 
-int add_checkpoint(uint32_t height, uint8_t *hash);
-int remove_checkpoint(uint32_t height);
+VULKAN_API int add_checkpoint(uint32_t height, uint8_t *hash);
+VULKAN_API int remove_checkpoint(uint32_t height);
 
-int init_checkpoints(void);
-int deinit_checkpoints(void);
+VULKAN_API int init_checkpoints(void);
+VULKAN_API int deinit_checkpoints(void);
+
+VULKAN_END_DECL

@@ -33,11 +33,6 @@
 #include "queue.h"
 #include "tinycthread.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 typedef enum TaskResult
 {
   TASK_RESULT_DONE = 0,
@@ -95,7 +90,3 @@ int remove_scheduler_by_id(int id);
 
 void free_scheduler(task_scheduler_t *task_scheduler);
 void free_scheduler_by_id(int id);
-
-#ifdef __cplusplus
-}
-#endif
