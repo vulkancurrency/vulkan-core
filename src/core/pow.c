@@ -52,38 +52,38 @@ void get_pow_limit(BIGNUM *num)
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
 {
-  BIGNUM bn_target;
-  BN_init(&bn_target);
-  bignum_set_compact(&bn_target, bits);
+  BIGNUM *bn_target = BN_new();
+  BN_init(bn_target);
+  bignum_set_compact(bn_target, bits);
 
-  BIGNUM pow_limit;
-  BN_init(&pow_limit);
-  get_pow_limit(&pow_limit);
+  BIGNUM *pow_limit = BN_new();
+  BN_init(pow_limit);
+  get_pow_limit(pow_limit);
 
-  BIGNUM hash_target;
-  BN_init(&hash_target);
-  BN_bin2bn(hash, HASH_SIZE, &hash_target);
+  BIGNUM *hash_target = BN_new();
+  BN_init(hash_target);
+  BN_bin2bn(hash, HASH_SIZE, hash_target);
 
   // check range
-  if (BN_is_zero(&bn_target) || BN_cmp(&bn_target, &pow_limit) == 1)
+  if (BN_is_zero(bn_target) || BN_cmp(bn_target, pow_limit) == 1)
   {
     goto pow_check_fail;
   }
 
   // check proof of work
-  if (BN_cmp(&hash_target, &bn_target) == 1)
+  if (BN_cmp(hash_target, bn_target) == 1)
   {
     goto pow_check_fail;
   }
 
-  BN_clear_free(&bn_target);
-  BN_clear_free(&pow_limit);
-  BN_clear_free(&hash_target);
+  BN_clear_free(bn_target);
+  BN_clear_free(pow_limit);
+  BN_clear_free(hash_target);
   return 1;
 
 pow_check_fail:
-  BN_clear_free(&bn_target);
-  BN_clear_free(&pow_limit);
-  BN_clear_free(&hash_target);
+  BN_clear_free(bn_target);
+  BN_clear_free(pow_limit);
+  BN_clear_free(hash_target);
   return 0;
 }
