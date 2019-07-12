@@ -23,6 +23,7 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
