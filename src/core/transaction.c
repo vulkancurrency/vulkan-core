@@ -314,32 +314,36 @@ void print_transaction(transaction_t *tx)
 int valid_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (tx->txin_count > 0 && tx->txout_count > 0)
+  if (tx->txout_count == 0 || tx->txouts == NULL)
   {
-    uint32_t tx_header_size = get_tx_header_size(tx);
-    if (tx_header_size > MAX_TX_SIZE)
-    {
-      LOG_DEBUG("Transaction has too big header blob size: %u!", tx_header_size);
-      return 0;
-    }
-
-    if (is_generation_tx(tx))
-    {
-      return 1;
-    }
-
-    if (do_txins_reference_unspent_txouts(tx))
-    {
-      return 1;
-    }
-
-    if (validate_tx_signatures(tx))
-    {
-      return 1;
-    }
+    return 0;
   }
 
-  return 0;
+  uint32_t tx_header_size = get_tx_header_size(tx);
+  if (tx_header_size > MAX_TX_SIZE)
+  {
+    LOG_DEBUG("Transaction has too big header blob size: %u!", tx_header_size);
+    return 0;
+  }
+
+  if (is_generation_tx(tx))
+  {
+    return 1;
+  }
+
+  // check txins and txouts
+  if (do_txins_reference_unspent_txouts(tx) == 0)
+  {
+    return 0;
+  }
+
+  // check signatures
+  if (validate_tx_signatures(tx))
+  {
+    return 0;
+  }
+
+  return 1;
 }
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)
