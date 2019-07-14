@@ -108,9 +108,13 @@ int valid_block(block_t *block)
   }
 
   // first TX must always be a generational TX.
-  if (is_generation_tx(block->transactions[0]) == 0)
+  transaction_t *generation_tx = block->transactions[0];
+  assert(generation_tx != NULL);
+
+  if (is_generation_tx(generation_tx) == 0)
   {
-    return 0;
+    // validate the generation tx
+    return valid_transaction(generation_tx);
   }
 
   // For each TX, compare to the other TXs that:

@@ -142,7 +142,7 @@ int validate_txin_signature(transaction_t *tx, input_transaction_t *txin)
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
 
-  if (crypto_sign_verify_detached(txin->signature, header, header_size, txin->public_key))
+  if (crypto_sign_verify_detached(txin->signature, header, header_size, txin->public_key) != 0)
   {
     char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
     char *public_key_str = bin2hex(txin->public_key, crypto_sign_PUBLICKEYBYTES);
@@ -325,21 +325,21 @@ int valid_transaction(transaction_t *tx)
 
     if (is_generation_tx(tx))
     {
-      return 1;
+      return 0;
     }
 
     if (do_txins_reference_unspent_txouts(tx))
     {
-      return 1;
+      return 0;
     }
 
     if (validate_tx_signatures(tx))
     {
-      return 1;
+      return 0;
     }
   }
 
-  return 0;
+  return 1;
 }
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)

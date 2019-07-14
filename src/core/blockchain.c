@@ -1239,7 +1239,7 @@ int validate_and_insert_block_nolock(block_t *block)
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
   uint32_t current_block_height = get_block_height_nolock();
-  if (valid_block(block) == 0 && current_block_height > 0)
+  if (valid_block(block) == 0)
   {
     return 1;
   }
