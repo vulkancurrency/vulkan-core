@@ -326,6 +326,9 @@ int open_blockchain(const char *blockchain_dir)
       char *genesis_block_hash = bin2hex(genesis_block->hash, HASH_SIZE);
       LOG_ERROR("Could not insert genesis block into blockchain: %s", genesis_block_hash);
       free(genesis_block_hash);
+      printf("\n");
+      print_block(genesis_block);
+      print_block_transactions(genesis_block);
       return 1;
     }
   }
