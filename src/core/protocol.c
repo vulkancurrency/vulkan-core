@@ -178,7 +178,7 @@ int deserialize_message(packet_t *packet, void **message)
           free(version_number);
           free(version_name);
           goto packet_deserialize_fail;
-        };
+        }
 
         connection_req_t *packed_message = malloc(sizeof(connection_req_t));
         assert(packed_message != NULL);
