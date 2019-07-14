@@ -366,7 +366,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
           (unspent_tx->unspent_txouts[txin->txout_index] == NULL))
       {
         char *tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
-        LOG_ERROR("Failed to validate txin referencing invalid unspent tx <%s> with txout at index: %u!", tx_hash_str, txin->txout_index);
+        LOG_ERROR("Failed to validate txin referencing invalid unspent tx: %s with txout at index: %u!", tx_hash_str, txin->txout_index);
         free(tx_hash_str);
         return 0;
       }
@@ -394,7 +394,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
     if (valid_address(txout->address) == 0)
     {
       char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
-      LOG_ERROR("Failed to validate txin <%s> invalid txout address at index <%u>!", tx_hash_str, i);
+      LOG_ERROR("Failed to validate txin: %s invalid txout address at index: %u", tx_hash_str, i);
       free(tx_hash_str);
       return 0;
     }
