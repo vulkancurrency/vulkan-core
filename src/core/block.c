@@ -116,12 +116,6 @@ int valid_block(block_t *block)
     return 0;
   }
 
-  // validate generation tx
-  if (valid_transaction(generation_tx) == 0)
-  {
-    return 0;
-  }
-
   // For each TX, compare to the other TXs that:
   // - No other TX shares the same hash id
   // - No other TX shares the same TXIN referencing the same txout + id
@@ -133,14 +127,14 @@ int valid_block(block_t *block)
       return 0;
     }
 
-    // check to see if we have more than one generational transaction
-    if (first_tx_index != 0 && is_generation_tx(first_tx))
+    // check to see if this is a valid transaction
+    if (valid_transaction(first_tx) == 0)
     {
       return 0;
     }
 
-    // check to see if this is a valid transaction
-    if (valid_transaction(first_tx) == 0)
+    // check to see if we have more than one generational transaction
+    if (first_tx_index != 0 && is_generation_tx(first_tx))
     {
       return 0;
     }
