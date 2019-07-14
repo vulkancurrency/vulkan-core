@@ -109,7 +109,10 @@ int valid_block(block_t *block)
 
   // first TX must always be a generational TX.
   transaction_t *generation_tx = block->transactions[0];
-  assert(generation_tx != NULL);
+  if (generation_tx == NULL)
+  {
+    return 0;
+  }
 
   if (is_generation_tx(generation_tx) == 0)
   {
