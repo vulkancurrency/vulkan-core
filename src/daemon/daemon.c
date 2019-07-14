@@ -58,7 +58,6 @@ static const char *g_logger_log_filename = "daemon.log";
 
 static int g_repair_blockchain = 0;
 static int g_repair_wallet = 0;
-static int g_generate_genesis = 0;
 
 enum
 {
@@ -274,8 +273,36 @@ static int parse_commandline_args(int argc, char **argv)
         assert(remove_wallet(g_wallet_dir) == 0);
         break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
-        g_generate_genesis = 1;
-        set_miner_generate_genesis(1);
+        {
+          logger_set_log_filename(g_logger_log_filename);
+          if (logger_open())
+          {
+            return 1;
+          }
+
+          taskmgr_init();
+          set_miner_generate_genesis(1);
+          wallet_t *wallet = NULL;
+          if (init_wallet(g_wallet_dir, &wallet))
+          {
+            return 1;
+          }
+
+          assert(wallet != NULL);
+          set_current_wallet(wallet);
+          if (start_mining())
+          {
+            return 1;
+          }
+
+          if (logger_close())
+          {
+            return 1;
+          }
+
+          taskmgr_shutdown();
+          return 0;
+        }
         break;
       case CMD_ARG_FORCE_VERSION_CHECK:
         set_force_version_check(1);
@@ -306,6 +333,11 @@ static int parse_commandline_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
   signal(SIGINT, perform_shutdown);
+  if (sodium_init() == -1)
+  {
+    return 1;
+  }
+
   if (parse_commandline_args(argc, argv))
   {
     return 1;
@@ -313,11 +345,6 @@ int main(int argc, char **argv)
 
   logger_set_log_filename(g_logger_log_filename);
   if (logger_open())
-  {
-    return 1;
-  }
-
-  if (sodium_init() == -1)
   {
     return 1;
   }
@@ -367,11 +394,6 @@ int main(int argc, char **argv)
     {
       return 1;
     }
-
-    if (g_generate_genesis)
-    {
-      return 0;
-    }
   }
 
   if (net_run())
@@ -411,6 +433,11 @@ int main(int argc, char **argv)
     {
       return 1;
     }
+  }
+
+  if (logger_close())
+  {
+    return 1;
   }
 
   return 0;
