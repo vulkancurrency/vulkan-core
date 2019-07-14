@@ -113,8 +113,13 @@ int valid_block(block_t *block)
 
   if (is_generation_tx(generation_tx) == 0)
   {
-    // validate the generation tx
-    return valid_transaction(generation_tx);
+    return 0;
+  }
+
+  // validate generation tx
+  if (valid_transaction(generation_tx) == 0)
+  {
+    return 0;
   }
 
   // For each TX, compare to the other TXs that:

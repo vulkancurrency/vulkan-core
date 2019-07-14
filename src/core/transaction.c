@@ -325,21 +325,21 @@ int valid_transaction(transaction_t *tx)
 
     if (is_generation_tx(tx))
     {
-      return 0;
+      return 1;
     }
 
     if (do_txins_reference_unspent_txouts(tx))
     {
-      return 0;
+      return 1;
     }
 
     if (validate_tx_signatures(tx))
     {
-      return 0;
+      return 1;
     }
   }
 
-  return 1;
+  return 0;
 }
 
 int do_txins_reference_unspent_txouts(transaction_t *tx)
