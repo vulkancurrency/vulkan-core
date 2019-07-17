@@ -977,8 +977,8 @@ int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)
   memcpy(other_txin->transaction, txin->transaction, HASH_SIZE);
   other_txin->txout_index = txin->txout_index;
 
-  memcpy(other_txin->signature, txin->signature, HASH_SIZE);
-  memcpy(other_txin->public_key, txin->public_key, HASH_SIZE);
+  memcpy(other_txin->signature, txin->signature, crypto_sign_BYTES);
+  memcpy(other_txin->public_key, txin->public_key, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 
