@@ -988,7 +988,7 @@ int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout)
   assert(other_txout != NULL);
 
   other_txout->amount = txout->amount;
-  memcpy(other_txout->address, txout->address, HASH_SIZE);
+  memcpy(other_txout->address, txout->address, ADDRESS_SIZE);
   return 0;
 }
 
