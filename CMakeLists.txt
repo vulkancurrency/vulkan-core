@@ -26,7 +26,7 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
-project(vulkan C ASM)
+project(vulkan LANGUAGES C ASM)
 
 option(WITH_ROCKSDB "Build with RocksDB support" ON)
 option(WITH_LEVELDB "Build with LevelDB support" OFF)
