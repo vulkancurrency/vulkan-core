@@ -326,6 +326,12 @@ int valid_transaction(transaction_t *tx)
     return 0;
   }
 
+  // check signatures
+  if (validate_tx_signatures(tx))
+  {
+    return 0;
+  }
+
   if (is_generation_tx(tx))
   {
     return 1;
@@ -333,12 +339,6 @@ int valid_transaction(transaction_t *tx)
 
   // check txins and txouts
   if (do_txins_reference_unspent_txouts(tx) == 0)
-  {
-    return 0;
-  }
-
-  // check signatures
-  if (validate_tx_signatures(tx))
   {
     return 0;
   }
