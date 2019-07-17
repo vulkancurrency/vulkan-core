@@ -1601,7 +1601,9 @@ int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not insert tx into blockchain: %s!", err);
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_ERROR("Could not insert tx: %s into blockchain: %s!", tx_hash_str, err);
+    free(tx_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -1660,7 +1662,9 @@ int insert_tx_into_unspent_index_nolock(transaction_t *tx)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not insert tx into blockchain: %s!", err);
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_ERROR("Could not insert tx: %s into blockchain: %s!", tx_hash_str, err);
+    free(tx_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -1715,7 +1719,9 @@ int insert_unspent_tx_into_index_nolock(unspent_transaction_t *unspent_tx)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not insert unspent tx into blockchain: %s!", err);
+    char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+    LOG_ERROR("Could not insert unspent tx: %s into blockchain: %s!", unspent_tx_hash_str, err);
+    free(unspent_tx_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -2123,7 +2129,9 @@ int set_top_block_hash_noblock(uint8_t *block_hash)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not set blockchain storage top block hash: %s!", err);
+    char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+    LOG_ERROR("Failed to set top block hash: %s, failed to save entry: %s", block_hash_str, err);
+    free(block_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
