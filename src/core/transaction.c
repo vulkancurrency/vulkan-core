@@ -127,7 +127,7 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
   crypto_hash_sha256d(hash, header, header_size);
   crypto_sign_detached(txin->signature, NULL, header, header_size, secret_key);
 
-  memcpy(&txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
+  memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 
@@ -177,7 +177,7 @@ void get_txin_header(uint8_t *header, input_transaction_t *txin)
   assert(header != NULL);
   assert(txin != NULL);
 
-  memcpy(header, &txin->transaction, HASH_SIZE);
+  memcpy(header, txin->transaction, HASH_SIZE);
   memcpy(header + HASH_SIZE, &txin->txout_index, 4);
 }
 
@@ -187,7 +187,7 @@ void get_txout_header(uint8_t *header, output_transaction_t *txout)
   assert(txout != NULL);
 
   memcpy(header, &txout->amount, 4);
-  memcpy(header, &txout->address, ADDRESS_SIZE);
+  memcpy(header, txout->address, ADDRESS_SIZE);
 }
 
 uint32_t get_tx_header_size(transaction_t *tx)
@@ -799,8 +799,7 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
   uint8_t *id = NULL;
   if (buffer_read_bytes(buffer_iterator, &id))
   {
-    free_unspent_transaction(unspent_tx);
-    return 1;
+    goto unspent_tx_deserialize_fail;
   }
 
   memcpy(unspent_tx->id, id, HASH_SIZE);
@@ -809,15 +808,13 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
   unspent_tx->coinbase = 0;
   if (buffer_read_uint8(buffer_iterator, &unspent_tx->coinbase))
   {
-    free_unspent_transaction(unspent_tx);
-    return 1;
+    goto unspent_tx_deserialize_fail;
   }
 
   uint32_t unspent_txout_count = 0;
   if (buffer_read_uint32(buffer_iterator, &unspent_txout_count))
   {
-    free_unspent_transaction(unspent_tx);
-    return 1;
+    goto unspent_tx_deserialize_fail;
   }
 
   // read unspent txouts
@@ -826,8 +823,7 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
     unspent_output_transaction_t *unspent_txout = NULL;
     if (deserialize_unspent_txout(buffer_iterator, &unspent_txout))
     {
-      free_unspent_transaction(unspent_tx);
-      return 1;
+      goto unspent_tx_deserialize_fail;
     }
 
     unspent_tx->unspent_txout_count++;
@@ -841,6 +837,10 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
 
   *unspent_tx_out = unspent_tx;
   return 0;
+
+unspent_tx_deserialize_fail:
+  free_unspent_transaction(unspent_tx);
+  return 1;
 }
 
 unspent_output_transaction_t* txout_to_unspent_txout(output_transaction_t *txout)
@@ -900,6 +900,7 @@ int unspent_transaction_to_serialized(uint8_t **data, uint32_t *data_len, unspen
 unspent_transaction_t* unspent_transaction_from_serialized(uint8_t *data, uint32_t data_len)
 {
   assert(data != NULL);
+  assert(data_len > 0);
   buffer_t *buffer = buffer_init_data(0, (const uint8_t*)data, data_len);
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
 
@@ -973,11 +974,11 @@ int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)
   assert(txin != NULL);
   assert(other_txin != NULL);
 
-  memcpy(&other_txin->transaction, &txin->transaction, HASH_SIZE);
+  memcpy(other_txin->transaction, txin->transaction, HASH_SIZE);
   other_txin->txout_index = txin->txout_index;
 
-  memcpy(&other_txin->signature, &txin->signature, HASH_SIZE);
-  memcpy(&other_txin->public_key, &txin->public_key, HASH_SIZE);
+  memcpy(other_txin->signature, txin->signature, HASH_SIZE);
+  memcpy(other_txin->public_key, txin->public_key, HASH_SIZE);
   return 0;
 }
 
@@ -987,7 +988,7 @@ int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout)
   assert(other_txout != NULL);
 
   other_txout->amount = txout->amount;
-  memcpy(&other_txout->address, txout->address, HASH_SIZE);
+  memcpy(other_txout->address, txout->address, HASH_SIZE);
   return 0;
 }
 
@@ -1000,7 +1001,7 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
   free_txins(other_tx);
   free_txouts(other_tx);
 
-  memcpy(&other_tx->id, &tx->id, HASH_SIZE);
+  memcpy(other_tx->id, tx->id, HASH_SIZE);
   if ((tx->txin_count > 0 && tx->txins != NULL) && (tx->txout_count > 0 && tx->txouts != NULL))
   {
     // copy the txins
