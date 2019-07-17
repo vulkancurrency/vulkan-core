@@ -269,7 +269,50 @@ int repair_blockchain(const char *blockchain_dir)
   return 0;
 }
 
-int open_blockchain(const char *blockchain_dir)
+int load_blockchain_top_block(void)
+{
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
+
+  if (has_block_by_hash(genesis_block->hash) == 0)
+  {
+    if (validate_and_insert_block(genesis_block))
+    {
+      char *genesis_block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
+      LOG_ERROR("Could not insert genesis block into blockchain: %s", genesis_block_hash_str);
+      free(genesis_block_hash_str);
+
+      printf("\n");
+      print_block(genesis_block);
+      print_block_transactions(genesis_block);
+      return 1;
+    }
+
+    char *genesis_block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
+    LOG_INFO("Loaded blockchain genesis block: %s", genesis_block_hash_str);
+    free(genesis_block_hash_str);
+  }
+  else
+  {
+    block_t *top_block = get_top_block();
+    if (top_block == NULL)
+    {
+      LOG_ERROR("Could not get unknown blockchain top block!");
+      return 1;
+    }
+
+    set_current_block(top_block);
+    free_block(top_block);
+
+    char *top_block_hash_str = bin2hex(top_block->hash, HASH_SIZE);
+    LOG_INFO("Loaded blockchain top block: %s", top_block_hash_str);
+    free(top_block_hash_str);
+  }
+
+  return 0;
+}
+
+int open_blockchain(const char *blockchain_dir, int load_top_block)
 {
   if (g_blockchain_is_open)
   {
@@ -316,33 +359,12 @@ int open_blockchain(const char *blockchain_dir)
   rocksdb_options_destroy(options);
 #endif
 
-  block_t *genesis_block = get_genesis_block();
-  assert(genesis_block != NULL);
-
-  if (has_block_by_hash(genesis_block->hash) == 0)
+  if (load_top_block)
   {
-    if (validate_and_insert_block(genesis_block))
+    if (load_blockchain_top_block())
     {
-      char *genesis_block_hash = bin2hex(genesis_block->hash, HASH_SIZE);
-      LOG_ERROR("Could not insert genesis block into blockchain: %s", genesis_block_hash);
-      free(genesis_block_hash);
-      printf("\n");
-      print_block(genesis_block);
-      print_block_transactions(genesis_block);
       return 1;
     }
-  }
-  else
-  {
-    block_t *top_block = get_top_block();
-    if (top_block == NULL)
-    {
-      LOG_ERROR("Could not get unknown blockchain top block!");
-      return 1;
-    }
-
-    set_current_block(top_block);
-    free_block(top_block);
   }
 
   LOG_INFO("Successfully initialized blockchain.");
@@ -501,9 +523,9 @@ int close_backup_blockchain(void)
   return 0;
 }
 
-int init_blockchain(const char *blockchain_dir)
+int init_blockchain(const char *blockchain_dir, int load_top_block)
 {
-  if (open_blockchain(blockchain_dir))
+  if (open_blockchain(blockchain_dir, load_top_block))
   {
     return 1;
   }
@@ -1916,9 +1938,9 @@ int delete_block_from_blockchain_nolock(uint8_t *block_hash)
 
   if (compare_block_hash(block_hash, genesis_block->hash))
   {
-    char *genesis_block_hash = bin2hex(genesis_block->hash, HASH_SIZE);
-    LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash);
-    free(genesis_block_hash);
+    char *genesis_block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
+    LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash_str);
+    free(genesis_block_hash_str);
     return 1;
   }
 

@@ -67,13 +67,14 @@ VULKAN_API const char* get_blockchain_dir(void);
 VULKAN_API const char* get_blockchain_backup_dir(const char *blockchain_dir);
 
 VULKAN_API int repair_blockchain(const char *blockchain_dir);
-VULKAN_API int open_blockchain(const char *blockchain_dir);
+VULKAN_API int load_blockchain_top_block(void);
+VULKAN_API int open_blockchain(const char *blockchain_dir, int load_top_block);
 VULKAN_API int close_blockchain(void);
 
 VULKAN_API int open_backup_blockchain(void);
 VULKAN_API int close_backup_blockchain(void);
 
-VULKAN_API int init_blockchain(const char *blockchain_dir);
+VULKAN_API int init_blockchain(const char *blockchain_dir, int load_top_block);
 VULKAN_API int remove_blockchain(const char *blockchain_dir);
 
 #ifdef USE_LEVELDB

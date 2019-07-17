@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if (init_blockchain(g_blockchain_data_dir))
+  if (init_blockchain(g_blockchain_data_dir, 1))
   {
     return 1;
   }

@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   }
 
   remove_blockchain(g_blockchain_dir);
-  if (init_blockchain(g_blockchain_dir))
+  if (init_blockchain(g_blockchain_dir, 0))
   {
     return 1;
   }
