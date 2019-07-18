@@ -588,7 +588,7 @@ int purge_all_entries_from_database(rocksdb_t *db)
 #endif
   if (err != NULL)
   {
-    LOG_ERROR("Failed to purge all entries from database!");
+    LOG_ERROR("Failed to purge all entries from database: %s", err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -673,7 +673,7 @@ int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db)
   #endif
     if (err != NULL || value == NULL)
     {
-      LOG_ERROR("Failed to retrieve value from key: %s in database!", key);
+      LOG_ERROR("Failed to retrieve value from key: %s in database: %s", key, err);
 
     #ifdef USE_LEVELDB
       leveldb_free(key);
@@ -699,7 +699,7 @@ int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db)
 #endif
   if (err != NULL)
   {
-    LOG_ERROR("Failed to copy entries to database!");
+    LOG_ERROR("Failed to copy entries to database: %s", err);
     goto copy_entries_fail;
   }
 
