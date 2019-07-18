@@ -465,8 +465,7 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   uint8_t *prev_tx_id = NULL;
   if (buffer_read_bytes(buffer_iterator, &prev_tx_id))
   {
-    free(txin);
-    return 1;
+    goto txin_deserialize_fail;
   }
 
   memcpy(txin->transaction, prev_tx_id, HASH_SIZE);
@@ -475,15 +474,13 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   txin->txout_index = 0;
   if (buffer_read_uint32(buffer_iterator, &txin->txout_index))
   {
-    free(txin);
-    return 1;
+    goto txin_deserialize_fail;
   }
 
   uint8_t *signature = NULL;
   if (buffer_read_bytes(buffer_iterator, &signature))
   {
-    free(txin);
-    return 1;
+    goto txin_deserialize_fail;
   }
 
   memcpy(txin->signature, signature, crypto_sign_BYTES);
@@ -492,8 +489,7 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   uint8_t *public_key = NULL;
   if (buffer_read_bytes(buffer_iterator, &public_key))
   {
-    free(txin);
-    return 1;
+    goto txin_deserialize_fail;
   }
 
   memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
@@ -501,6 +497,10 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
 
   *txin_out = txin;
   return 0;
+
+txin_deserialize_fail:
+  free(txin);
+  return 1;
 }
 
 int serialize_txout_header(buffer_t *buffer, output_transaction_t *txout)
@@ -530,15 +530,13 @@ int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t *
   txout->amount = 0;
   if (buffer_read_uint64(buffer_iterator, &txout->amount))
   {
-    free(txout);
-    return 1;
+    goto deserialize_txout_fail;
   }
 
   uint8_t *address = NULL;
   if (buffer_read_bytes(buffer_iterator, &address))
   {
-    free(txout);
-    return 1;
+    goto deserialize_txout_fail;
   }
 
   memcpy(txout->address, address, ADDRESS_SIZE);
@@ -546,6 +544,10 @@ int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t *
 
   *txout_out = txout;
   return 0;
+
+deserialize_txout_fail:
+  free(txout);
+  return 1;
 }
 
 int serialize_transaction_header(buffer_t *buffer, transaction_t *tx)
@@ -743,15 +745,13 @@ int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output
   unspent_output_transaction_t *unspent_txout = make_unspent_txout();
   if (buffer_read_uint64(buffer_iterator, &unspent_txout->amount))
   {
-    free(unspent_txout);
-    return 1;
+    goto deserialize_unspent_txout_fail;
   }
 
   uint8_t *address = NULL;
   if (buffer_read_bytes(buffer_iterator, &address))
   {
-    free(unspent_txout);
-    return 1;
+    goto deserialize_unspent_txout_fail;
   }
 
   memcpy(unspent_txout->address, address, ADDRESS_SIZE);
@@ -760,12 +760,15 @@ int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output
   unspent_txout->spent = 0;
   if (buffer_read_uint8(buffer_iterator, &unspent_txout->spent))
   {
-    free(unspent_txout);
-    return 1;
+    goto deserialize_unspent_txout_fail;
   }
 
   *unspent_txout_out = unspent_txout;
   return 0;
+
+deserialize_unspent_txout_fail:
+  free(unspent_txout);
+  return 1;
 }
 
 int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspent_tx)
