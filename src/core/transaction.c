@@ -314,6 +314,14 @@ void print_transaction(transaction_t *tx)
 int valid_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
+  if (tx->txin_count == 0 || tx->txins == NULL)
+  {
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_DEBUG("Failed to validate transaction: %s, transaction has no txins!", tx_hash_str);
+    free(tx_hash_str);
+    return 0;
+  }
+
   if (tx->txout_count == 0 || tx->txouts == NULL)
   {
     char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
@@ -416,11 +424,6 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 int is_generation_tx(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (tx->txins == NULL || tx->txouts == NULL)
-  {
-    return 0;
-  }
-
   return (tx->txin_count == 1 && tx->txout_count == 1 && compare_transaction_hash(tx->txins[0]->transaction, (uint8_t*)g_transaction_zero_hash));
 }
 
