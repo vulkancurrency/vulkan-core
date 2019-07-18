@@ -119,6 +119,49 @@ TEST can_serialize_block(void)
   PASS();
 }
 
+TEST can_copy_block(void)
+{
+  block_t *block = make_block();
+  block->version = 1;
+
+  char *previous_hash_str = "a027c3999b9ad6d40e5e810ff6889937c1e84cc0f2fe9101330029f0f17f29f4";
+  size_t out_size = 0;
+  uint8_t *previous_hash = hex2bin(previous_hash_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->previous_hash, previous_hash, HASH_SIZE);
+
+  char *hash_str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  uint8_t *hash = hex2bin(hash_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->hash, hash, HASH_SIZE);
+
+  block->timestamp = 1563488568;
+  block->nonce = 1033119846;
+  block->bits = 0x1d00ffff;
+  block->cumulative_emission = 6103515625;
+
+  char *merkle_root_str = "163174b3729c593f3b6e7d4ea119a4c5b13008c6fce3794a27af75cf3b56e6f6";
+  uint8_t *merkle_root = hex2bin(merkle_root_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->merkle_root, merkle_root, HASH_SIZE);
+
+  // copy to the new block
+  block_t *new_block = make_block();
+  ASSERT(copy_block(block, new_block) == 0);
+
+  // compare the new and old block
+  ASSERT_EQ(new_block->version, block->version);
+  ASSERT_MEM_EQ(new_block->previous_hash, block->previous_hash, HASH_SIZE);
+  ASSERT_MEM_EQ(new_block->hash, block->hash, HASH_SIZE);
+  ASSERT_EQ(new_block->timestamp, block->timestamp);
+  ASSERT_EQ(new_block->nonce, block->nonce);
+  ASSERT_EQ(new_block->bits, block->bits);
+  ASSERT_EQ(new_block->cumulative_emission, block->cumulative_emission);
+  ASSERT_MEM_EQ(new_block->merkle_root, block->merkle_root, HASH_SIZE);
+  ASSERT_EQ(new_block->transaction_count, block->transaction_count);
+  PASS();
+}
+
 TEST invalid_block_by_timestamp(void)
 {
   block_t *block = make_block();
@@ -364,6 +407,7 @@ TEST invalid_block_by_merkle_hash(void)
 GREATEST_SUITE(block_suite)
 {
   RUN_TEST(can_serialize_block);
+  RUN_TEST(can_copy_block);
   RUN_TEST(invalid_block_by_timestamp);
   RUN_TEST(invalid_block_by_same_tx_hashes);
   RUN_TEST(invalid_block_by_reused_txout);
