@@ -43,6 +43,9 @@
 
 VULKAN_BEGIN_DECL
 
+#define DB_KEY_PREFIX_DATA "d"
+#define DB_KEY_PREFIX_SIZE_DATA 1
+
 typedef struct Wallet
 {
   uint8_t secret_key[crypto_sign_SECRETKEYBYTES];
@@ -56,6 +59,8 @@ VULKAN_API void free_wallet(wallet_t* wallet);
 
 VULKAN_API int serialize_wallet(buffer_t *buffer, wallet_t* wallet);
 VULKAN_API int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out);
+
+VULKAN_API void get_data_key(uint8_t *buffer);
 
 #ifdef USE_LEVELDB
 VULKAN_API leveldb_t* open_wallet(const char *wallet_dir, char *err);

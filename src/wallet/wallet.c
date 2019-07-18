@@ -73,7 +73,6 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   buffer_write_bytes(buffer, wallet->public_key, crypto_sign_PUBLICKEYBYTES);
   buffer_write_bytes(buffer, wallet->address, ADDRESS_SIZE);
   buffer_write_uint64(buffer, wallet->balance);
-
   return 0;
 }
 
@@ -81,11 +80,10 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
 {
   assert(buffer_iterator != NULL);
   wallet_t *wallet = make_wallet();
-
   uint8_t *secret_key = NULL;
   if (buffer_read_bytes(buffer_iterator, &secret_key))
   {
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(&wallet->secret_key, secret_key, crypto_sign_SECRETKEYBYTES);
@@ -94,7 +92,7 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   uint8_t *public_key = NULL;
   if (buffer_read_bytes(buffer_iterator, &public_key))
   {
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(&wallet->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
@@ -103,7 +101,7 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   uint8_t *address = NULL;
   if (buffer_read_bytes(buffer_iterator, &address))
   {
-    return 1;
+    goto deserialize_fail;
   }
 
   memcpy(&wallet->address, address, ADDRESS_SIZE);
@@ -112,11 +110,21 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   wallet->balance = 0;
   if (buffer_read_uint64(buffer_iterator, &wallet->balance))
   {
-    return 1;
+    goto deserialize_fail;
   }
 
   *wallet_out = wallet;
   return 0;
+
+deserialize_fail:
+  free_wallet(wallet);
+  return 1;
+}
+
+void get_data_key(uint8_t *buffer)
+{
+  assert(buffer != NULL);
+  memcpy(buffer, DB_KEY_PREFIX_DATA, DB_KEY_PREFIX_SIZE_DATA);
 }
 
 /*
@@ -158,7 +166,7 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not open wallet: %s!", wallet_dir);
+    LOG_ERROR("Could not open wallet: %s: %s", wallet_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -170,13 +178,16 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
     return 1;
   }
 
+  uint8_t key[DB_KEY_PREFIX_SIZE_DATA];
+  get_data_key(key);
+
   size_t read_len;
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
-  uint8_t *initialized = (uint8_t*)leveldb_get(db, roptions, "0", 1, &read_len, &err);
+  uint8_t *initialized = (uint8_t*)leveldb_get(db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *initialized = (uint8_t*)rocksdb_get(db, roptions, "0", 1, &read_len, &err);
+  uint8_t *initialized = (uint8_t*)rocksdb_get(db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #endif
 
   if (initialized != NULL)
@@ -216,16 +227,16 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
 #ifdef USE_LEVELDB
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
-  leveldb_put(db, woptions, "0", 1, (char*)data, data_len, &err);
+  leveldb_put(db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
 #else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(db, woptions, "0", 1, (char*)data, data_len, &err);
+  rocksdb_put(db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
 #endif
   buffer_free(buffer);
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not write to wallet: %s database: %s", wallet_dir, err);
+    LOG_ERROR("Could not write to wallet database: %s: %s", wallet_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -281,13 +292,16 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
     return 1;
   }
 
+  uint8_t key[DB_KEY_PREFIX_SIZE_DATA];
+  get_data_key(key);
+
   size_t read_len;
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
-  uint8_t *wallet_data = (uint8_t*)leveldb_get(db, roptions, "0", 1, &read_len, &err);
+  uint8_t *wallet_data = (uint8_t*)leveldb_get(db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *wallet_data = (uint8_t*)rocksdb_get(db, roptions, "0", 1, &read_len, &err);
+  uint8_t *wallet_data = (uint8_t*)rocksdb_get(db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #endif
 
   if (err != NULL || wallet_data == NULL)
