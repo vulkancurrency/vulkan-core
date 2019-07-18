@@ -203,9 +203,9 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
   public_key_to_address(address, pk);
 
   wallet_t *wallet = make_wallet();
-  memcpy(&wallet->secret_key, &sk, crypto_sign_SECRETKEYBYTES);
-  memcpy(&wallet->public_key, &pk, crypto_sign_PUBLICKEYBYTES);
-  memcpy(&wallet->address, &address, ADDRESS_SIZE);
+  memcpy(wallet->secret_key, sk, crypto_sign_SECRETKEYBYTES);
+  memcpy(wallet->public_key, pk, crypto_sign_PUBLICKEYBYTES);
+  memcpy(wallet->address, address, ADDRESS_SIZE);
   wallet->balance = 0;
 
   buffer_t *buffer = buffer_init();
@@ -225,7 +225,7 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not write to wallet: %s database!", wallet_dir);
+    LOG_ERROR("Could not write to wallet: %s database: %s", wallet_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -241,8 +241,6 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
     return 1;
   }
 
-  LOG_INFO("Successfully created new wallet: %s", wallet_dir);
-
 #ifdef USE_LEVELDB
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
@@ -256,6 +254,7 @@ int new_wallet(const char *wallet_dir, wallet_t **wallet_out)
 #endif
 
   *wallet_out = wallet;
+  LOG_INFO("Successfully created new wallet: %s", wallet_dir);
   return 0;
 }
 
@@ -270,7 +269,7 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not open wallet database: %s!", wallet_dir);
+    LOG_ERROR("Could not open wallet database: %s: %s", wallet_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -293,18 +292,8 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
 
   if (err != NULL || wallet_data == NULL)
   {
-    LOG_ERROR("Could not open wallet database: %s!", wallet_dir);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-    leveldb_close(db);
-  #else
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-    rocksdb_close(db);
-  #endif
-    return 1;
+    LOG_ERROR("Could not open wallet database: %s: %s", wallet_dir, err);
+    goto deserialize_wallet_fail;
   }
 
   buffer_t *buffer = buffer_init_data(0, wallet_data, read_len);
@@ -315,25 +304,11 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
   {
     buffer_iterator_free(buffer_iterator);
     buffer_free(buffer);
-
-  #ifdef USE_LEVELDB
-    leveldb_free(wallet_data);
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-    leveldb_close(db);
-  #else
-    rocksdb_free(wallet_data);
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-    rocksdb_close(db);
-  #endif
-    return 1;
+    goto deserialize_wallet_fail;
   }
 
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
-
-  LOG_INFO("Successfully opened wallet: %s", wallet_dir);
 
 #ifdef USE_LEVELDB
   leveldb_free(wallet_data);
@@ -348,7 +323,22 @@ int get_wallet(const char *wallet_dir, wallet_t **wallet_out)
 #endif
 
   *wallet_out = wallet;
+  LOG_INFO("Successfully opened wallet: %s", wallet_dir);
   return 0;
+
+deserialize_wallet_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(wallet_data);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+  leveldb_close(db);
+#else
+  rocksdb_free(wallet_data);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+  rocksdb_close(db);
+#endif
+  return 1;
 }
 
 int repair_wallet(const char *wallet_dir)
@@ -370,7 +360,7 @@ int repair_wallet(const char *wallet_dir)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not repair wallet database: %s, error occurred: %s!", wallet_dir, err);
+    LOG_ERROR("Could not repair wallet database: %s: %s!", wallet_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -390,7 +380,7 @@ int repair_wallet(const char *wallet_dir)
   rocksdb_options_destroy(options);
 #endif
 
-  LOG_INFO("Successfully repaired wallet database: %s!", wallet_dir);
+  LOG_INFO("Successfully repaired wallet database: %s", wallet_dir);
   return 0;
 }
 
@@ -427,7 +417,8 @@ int remove_wallet(const char *wallet_dir)
 
   if (err != NULL)
   {
-    LOG_ERROR("Failed to remove wallet database: %s!", err);
+    LOG_ERROR("Failed to remove wallet database: %s: %s", wallet_dir, err);
+
   #ifdef USE_LEVELDB
     leveldb_options_destroy(options);
   #else
