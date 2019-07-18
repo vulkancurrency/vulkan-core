@@ -33,6 +33,8 @@
 
 #include "crypto/cryptoutil.h"
 
+#include "wallet/wallet.h"
+
 SUITE(transaction_suite);
 
 TEST can_sign_txin(void)
@@ -70,17 +72,20 @@ TEST can_sign_txin(void)
     .txouts = &txout_p
   };
 
+  transaction_t *tx_p = &tx;
+
   unsigned char pk[crypto_sign_PUBLICKEYBYTES];
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
 
+  // create txin signature
   crypto_sign_keypair(pk, sk);
-  sign_txin(&txin, &tx, pk, sk);
+  ASSERT(sign_txin(txin_p, tx_p, pk, sk) == 0);
 
-  ASSERT_MEM_EQ(pk, txin.public_key, crypto_sign_PUBLICKEYBYTES);
+  ASSERT_MEM_EQ(pk, txin_p->public_key, crypto_sign_PUBLICKEYBYTES);
 
   // verify the txin signature
-  ASSERT(validate_txin_signature(&tx, &txin) == 0);
-  ASSERT(validate_tx_signatures(&tx) == 0);
+  ASSERT(validate_txin_signature(tx_p, txin_p) == 0);
+  ASSERT(validate_tx_signatures(tx_p) == 0);
   PASS();
 }
 
