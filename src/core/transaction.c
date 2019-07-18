@@ -316,13 +316,18 @@ int valid_transaction(transaction_t *tx)
   assert(tx != NULL);
   if (tx->txout_count == 0 || tx->txouts == NULL)
   {
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_DEBUG("Failed to validate transaction: %s, transaction has no txouts!", tx_hash_str);
+    free(tx_hash_str);
     return 0;
   }
 
   uint32_t tx_header_size = get_tx_header_size(tx);
   if (tx_header_size > MAX_TX_SIZE)
   {
-    LOG_DEBUG("Transaction has too big header blob size: %u!", tx_header_size);
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_DEBUG("Failed to validate transaction: %s, transaction has too big header blob size: %u!", tx_hash_str, tx_header_size);
+    free(tx_hash_str);
     return 0;
   }
 
@@ -340,6 +345,9 @@ int valid_transaction(transaction_t *tx)
   // check txins and txouts
   if (do_txins_reference_unspent_txouts(tx) == 0)
   {
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_DEBUG("Failed to validate transaction: %s, transaction does not have the appropriate corresponding txins and unspent txouts!", tx_hash_str);
+    free(tx_hash_str);
     return 0;
   }
 
