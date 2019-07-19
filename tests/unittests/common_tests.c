@@ -27,6 +27,7 @@
 
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
+#include "common/buffer_database.h"
 #include "common/greatest.h"
 #include "common/queue.h"
 #include "common/task.h"
@@ -40,6 +41,8 @@ typedef struct TestQueueObject
   int b;
   int c;
 } test_queue_object_t;
+
+static const char *g_buffer_database_dir = "buffer_database_tests.dat";
 
 static task_result_t task1_func(task_t *task)
 {
@@ -298,6 +301,95 @@ TEST pack_and_unpack_buffer(void)
   PASS();
 }
 
+TEST can_read_and_write_to_buffer_database(void)
+{
+  char *err = NULL;
+  buffer_database_t *buffer_database = buffer_database_open(g_buffer_database_dir, &err);
+  if (err != NULL)
+  {
+    fprintf(stderr, "%s\n", err);
+    FAIL();
+  }
+
+  buffer_t *buffer = buffer_init();
+  ASSERT(buffer != NULL);
+
+  const char *data = "\x00\x01\x12Hello World!";
+  ASSERT_EQ(buffer_write_string(buffer, data, 16), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data, 16), 0);
+
+  const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
+  ASSERT_EQ(buffer_write_string(buffer, data1, 64), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data1, 64), 0);
+
+  const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
+  ASSERT_EQ(buffer_write_string(buffer, data2, 128), 0);
+  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data2, 128), 0);
+
+  // write the buffer
+  if (buffer_database_write_buffer(buffer_database, buffer, &err))
+  {
+    ASSERT(err != NULL);
+    fprintf(stderr, "%s\n", err);
+    FAIL();
+  }
+
+  // read buffer from the database
+  buffer_t *buffer1 = NULL;
+  if (buffer_database_read_buffer(buffer_database, &buffer1, &err))
+  {
+    ASSERT(err != NULL);
+    fprintf(stderr, "%s\n", err);
+    FAIL();
+  }
+
+  ASSERT(buffer1 != NULL);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer1);
+  ASSERT(buffer_iterator != NULL);
+
+  // compare the contents of the buffer
+  char *str = NULL;
+  uint8_t *bytes = NULL;
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data, strlen(data));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data, strlen(data));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data1, strlen(data1));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data1, strlen(data1));
+
+  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT_MEM_EQ(str, data2, strlen(data2));
+
+  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT_MEM_EQ(bytes, data2, strlen(data2));
+
+  ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
+  buffer_free(buffer1);
+
+  if (buffer_database_close(buffer_database))
+  {
+    fprintf(stderr, "Failed to close buffer database!\n");
+    FAIL();
+  }
+
+  buffer_database_free(buffer_database);
+  if (buffer_database_remove(g_buffer_database_dir, &err))
+  {
+    fprintf(stderr, "Failed to remove buffer database: %s\n", err);
+    FAIL();
+  }
+
+  PASS();
+}
+
 GREATEST_SUITE(common_suite)
 {
   RUN_TEST(init_and_free_queue);
@@ -305,4 +397,5 @@ GREATEST_SUITE(common_suite)
   RUN_TEST(insert_object_into_queue_and_pop);
   RUN_TEST(add_remove_and_update_tasks);
   RUN_TEST(pack_and_unpack_buffer);
+  RUN_TEST(can_read_and_write_to_buffer_database);
 }
