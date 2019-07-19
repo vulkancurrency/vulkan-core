@@ -108,6 +108,7 @@ int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *b
   assert(data_len > 0);
 
   // write the data to the file
+  fseek(buffer_database->fp, 0L, SEEK_SET);
   size_t bytes_written = fread(data, data_len, 1, buffer_database->fp);
   if (bytes_written != data_len)
   {
@@ -115,6 +116,7 @@ int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *b
     return 1;
   }
 
+  fseek(buffer_database->fp, 0L, SEEK_SET);
   return 0;
 }
 
@@ -142,6 +144,7 @@ int buffer_database_read_buffer(buffer_database_t *buffer_database, buffer_t **b
     return 1;
   }
 
+  fseek(buffer_database->fp, 0L, SEEK_SET);
   *buffer_out = buffer_init_data(0, data, data_len);
   return 0;
 }
