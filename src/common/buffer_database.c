@@ -39,6 +39,7 @@ buffer_database_t* buffer_database_make(void)
     return NULL;
   }
 
+  buffer_database->open = 0;
   buffer_database->fp = NULL;
   return buffer_database;
 }
@@ -59,6 +60,7 @@ buffer_database_t* buffer_database_open(const char *filepath, char **err)
     return NULL;
   }
 
+  // open the file for reading and writing bytes
   buffer_database->fp = fopen(filepath, "r+b");
   if (buffer_database->fp == NULL)
   {
