@@ -71,7 +71,7 @@ VULKAN_API int load_blockchain_top_block(void);
 VULKAN_API int open_blockchain(const char *blockchain_dir, int load_top_block);
 VULKAN_API int close_blockchain(void);
 
-VULKAN_API int open_backup_blockchain(void);
+VULKAN_API int open_backup_blockchain(const char *blockchain_backup_dir);
 VULKAN_API int close_backup_blockchain(void);
 
 VULKAN_API int init_blockchain(const char *blockchain_dir, int load_top_block);
@@ -88,6 +88,9 @@ VULKAN_API int copy_all_entries_to_database(leveldb_t *from_db, leveldb_t *to_db
 #else
 VULKAN_API int copy_all_entries_to_database(rocksdb_t *from_db, rocksdb_t *to_db);
 #endif
+
+VULKAN_API int reset_blockchain_nolock(void);
+VULKAN_API int reset_blockchain(void);
 
 VULKAN_API int backup_blockchain_nolock(void);
 VULKAN_API int backup_blockchain(void);

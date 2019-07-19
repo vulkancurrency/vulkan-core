@@ -314,14 +314,6 @@ int load_blockchain_top_block(void)
 
 int open_blockchain(const char *blockchain_dir, int load_top_block)
 {
-  if (g_blockchain_is_open)
-  {
-    return 0;
-  }
-
-  mtx_init(&g_blockchain_lock, mtx_recursive);
-  g_blockchain_dir = blockchain_dir;
-
   char *err = NULL;
 #ifdef USE_LEVELDB
   leveldb_options_t *options = leveldb_options_create();
@@ -339,7 +331,7 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not open blockchain database: %s!", err);
+    LOG_ERROR("Could not open blockchain database: %s: %s", blockchain_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -358,17 +350,6 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
   rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
-
-  if (load_top_block)
-  {
-    if (load_blockchain_top_block())
-    {
-      return 1;
-    }
-  }
-
-  LOG_INFO("Successfully initialized blockchain.");
-  g_blockchain_is_open = 1;
   return 0;
 }
 
@@ -441,13 +422,8 @@ int close_blockchain(void)
   return 0;
 }
 
-int open_backup_blockchain(void)
+int open_backup_blockchain(const char *blockchain_backup_dir)
 {
-  if (g_blockchain_backup_is_open)
-  {
-    return 1;
-  }
-
   char *err = NULL;
 #ifdef USE_LEVELDB
   leveldb_options_t *options = leveldb_options_create();
@@ -473,7 +449,6 @@ int open_backup_blockchain(void)
     LOG_INFO("Blockchain storage compression is disabled!");
   }
 
-  const char *blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
 #ifdef USE_LEVELDB
   g_blockchain_backup_db = leveldb_open(options, blockchain_backup_dir, &err);
 #else
@@ -482,7 +457,7 @@ int open_backup_blockchain(void)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not open backup blockchain database: %s!", err);
+    LOG_ERROR("Could not open backup blockchain database: %s: %s", blockchain_backup_dir, err);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -501,8 +476,6 @@ int open_backup_blockchain(void)
   rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
-
-  g_blockchain_backup_is_open = 1;
   return 0;
 }
 
@@ -525,16 +498,42 @@ int close_backup_blockchain(void)
 
 int init_blockchain(const char *blockchain_dir, int load_top_block)
 {
-  if (open_blockchain(blockchain_dir, load_top_block))
+  g_blockchain_dir = blockchain_dir;
+  g_blockchain_backup_dir = get_blockchain_backup_dir(g_blockchain_dir);
+  if (g_blockchain_is_open)
+  {
+    LOG_ERROR("Cannot initialize blockchain: %s, blockchain is already open!", g_blockchain_dir);
+    return 1;
+  }
+
+  if (g_blockchain_backup_is_open)
+  {
+    LOG_ERROR("Cannot initialize backup blockchain: %s, backup blockchain is already open!", g_blockchain_backup_dir);
+    return 1;
+  }
+
+  mtx_init(&g_blockchain_lock, mtx_recursive);
+  if (open_blockchain(g_blockchain_dir, load_top_block))
   {
     return 1;
   }
 
-  if (open_backup_blockchain())
+  if (open_backup_blockchain(g_blockchain_backup_dir))
   {
     return 1;
   }
 
+  if (load_top_block)
+  {
+    if (load_blockchain_top_block())
+    {
+      return 1;
+    }
+  }
+
+  LOG_INFO("Successfully initialized blockchain.");
+  g_blockchain_is_open = 1;
+  g_blockchain_backup_is_open = 1;
   return 0;
 }
 
@@ -739,6 +738,26 @@ copy_entries_fail:
   return 1;
 }
 
+int reset_blockchain_nolock(void)
+{
+  if (g_blockchain_is_open == 0)
+  {
+    LOG_ERROR("Cannot reset blockchain: %s, blockchain is not open!", g_blockchain_dir);
+    return 1;
+  }
+
+  assert(g_blockchain_db != NULL);
+  return purge_all_entries_from_database(g_blockchain_db);
+}
+
+int reset_blockchain(void)
+{
+  mtx_lock(&g_blockchain_lock);
+  int result = reset_blockchain_nolock();
+  mtx_unlock(&g_blockchain_lock);
+  return result;
+}
+
 int backup_blockchain_nolock(void)
 {
   if (g_blockchain_backup_is_open == 0)
@@ -811,6 +830,9 @@ int restore_blockchain_nolock(void)
     return 1;
   }
 #else
+  // close the main blockchain so we can restore the backup to it
+  rocksdb_close(g_blockchain_db);
+
   char *err = NULL;
   rocksdb_restore_options_t *restore_options = rocksdb_restore_options_create();
   rocksdb_backup_engine_restore_db_from_latest_backup(g_blockchain_backup_db, g_blockchain_dir,
@@ -823,6 +845,15 @@ int restore_blockchain_nolock(void)
     rocksdb_restore_options_destroy(restore_options);
     return 1;
   }
+
+  // now that we've successfully restored the backup, reload the main blockchain db
+  if (open_blockchain(g_blockchain_dir, 1))
+  {
+    return 1;
+  }
+
+  assert(g_blockchain_db != NULL);
+  assert(g_blockchain_backup_db != NULL);
 
   rocksdb_free(err);
   rocksdb_restore_options_destroy(restore_options);
