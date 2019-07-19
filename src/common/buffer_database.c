@@ -61,7 +61,7 @@ buffer_database_t* buffer_database_open(const char *filepath, char **err)
   }
 
   // open the file for reading and writing bytes
-  buffer_database->fp = fopen(filepath, "r+b");
+  buffer_database->fp = fopen(filepath, "rb+");
   if (buffer_database->fp == NULL)
   {
     *err = "Failed to open buffer database!";
@@ -109,7 +109,7 @@ int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *b
 
   // write the data to the file
   fseek(buffer_database->fp, 0L, SEEK_SET);
-  size_t bytes_written = fwrite(data, data_len, 1, buffer_database->fp);
+  size_t bytes_written = fwrite(data, 1, data_len, buffer_database->fp);
   if (bytes_written != data_len)
   {
     *err = "Failed to write buffer database, left over bytes remain!";
@@ -137,7 +137,7 @@ int buffer_database_read_buffer(buffer_database_t *buffer_database, buffer_t **b
 
   // read the bytes from disk and place them into a buffer
   uint8_t data[data_len];
-  size_t bytes_read = fread(data, data_len, 1, buffer_database->fp);
+  size_t bytes_read = fread(data, 1, data_len, buffer_database->fp);
   if (bytes_read != data_len)
   {
     *err = "Failed to read buffer database, did not read all bytes!";
