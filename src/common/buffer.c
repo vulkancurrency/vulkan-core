@@ -43,7 +43,11 @@ buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size)
   if (size > 0)
   {
     buffer->data = malloc(size);
-    assert(buffer->data != NULL);
+    if (buffer->data == NULL)
+    {
+      return NULL;
+    }
+
     if (data != NULL)
     {
       memcpy(buffer->data, data, size);
