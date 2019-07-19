@@ -323,6 +323,15 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
   rocksdb_options_set_create_if_missing(options, 1);
 #endif
 
+  if (g_blockchain_want_compression)
+  {
+  #ifdef USE_LEVELDB
+    leveldb_options_set_compression(options, g_blockchain_compression_type);
+  #else
+    rocksdb_options_set_compression(options, g_blockchain_compression_type);
+  #endif
+  }
+
 #ifdef USE_LEVELDB
   g_blockchain_db = leveldb_open(options, blockchain_dir, &err);
 #else
@@ -440,13 +449,6 @@ int open_backup_blockchain(const char *blockchain_backup_dir)
   #else
     rocksdb_options_set_compression(options, g_blockchain_compression_type);
   #endif
-
-    LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm!",
-      get_compression_type_str(g_blockchain_compression_type));
-  }
-  else
-  {
-    LOG_INFO("Blockchain storage compression is disabled!");
   }
 
 #ifdef USE_LEVELDB
@@ -513,6 +515,16 @@ int init_blockchain(const char *blockchain_dir, int load_top_block)
   }
 
   mtx_init(&g_blockchain_lock, mtx_recursive);
+  if (g_blockchain_want_compression)
+  {
+    LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm!",
+      get_compression_type_str(g_blockchain_compression_type));
+  }
+  else
+  {
+    LOG_INFO("Blockchain storage compression is disabled!");
+  }
+
   if (open_blockchain(g_blockchain_dir, load_top_block))
   {
     return 1;
