@@ -817,6 +817,9 @@ int restore_blockchain_nolock(void)
     return 1;
   }
 
+  assert(g_blockchain_db != NULL);
+  assert(g_blockchain_backup_db != NULL);
+
 #ifdef USE_LEVELDB
   if (purge_all_entries_from_database(g_blockchain_db))
   {
@@ -829,6 +832,8 @@ int restore_blockchain_nolock(void)
     LOG_ERROR("Could not backup blockchain database, failed to copy entires from backup database!");
     return 1;
   }
+
+  return 0;
 #else
   // close the main blockchain so we can restore the backup to it
   rocksdb_close(g_blockchain_db);
@@ -840,16 +845,14 @@ int restore_blockchain_nolock(void)
 
   if (err != NULL)
   {
-    LOG_ERROR("Could not restore blockchain database from backup: %s!", err);
-    rocksdb_free(err);
-    rocksdb_restore_options_destroy(restore_options);
-    return 1;
+    LOG_ERROR("Could not restore blockchain database from backup: %s", err);
+    goto restore_blockchain_fail;
   }
 
   // now that we've successfully restored the backup, reload the main blockchain db
   if (open_blockchain(g_blockchain_dir, 1))
   {
-    return 1;
+    goto restore_blockchain_fail;
   }
 
   assert(g_blockchain_db != NULL);
@@ -857,8 +860,13 @@ int restore_blockchain_nolock(void)
 
   rocksdb_free(err);
   rocksdb_restore_options_destroy(restore_options);
-#endif
   return 0;
+
+restore_blockchain_fail:
+  rocksdb_free(err);
+  rocksdb_restore_options_destroy(restore_options);
+  return 1;
+#endif
 }
 
 int restore_blockchain(void)
