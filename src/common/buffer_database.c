@@ -99,6 +99,7 @@ int buffer_database_close(buffer_database_t *buffer_database)
     return 1;
   }
 
+  buffer_database->mode = NULL;
   buffer_database->open = 0;
   buffer_database->fp = NULL;
   return 0;
