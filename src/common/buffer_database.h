@@ -37,6 +37,7 @@ VULKAN_BEGIN_DECL
 
 typedef struct BufferDatabase
 {
+  const char *mode;
   int open;
   FILE *fp;
 } buffer_database_t;
@@ -44,8 +45,12 @@ typedef struct BufferDatabase
 VULKAN_API buffer_database_t* buffer_database_make(void);
 VULKAN_API void buffer_database_free(buffer_database_t *buffer_database);
 
+VULKAN_API void buffer_set_mode(buffer_database_t *buffer_database, const char *mode);
+VULKAN_API const char* buffer_get_mode(buffer_database_t *buffer_database);
+
 VULKAN_API buffer_database_t* buffer_database_open(const char *filepath, char **err);
 VULKAN_API int buffer_database_close(buffer_database_t *buffer_database);
+VULKAN_API int buffer_database_remove(const char *filepath, char **err);
 
 VULKAN_API int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *buffer, char **err);
 VULKAN_API int buffer_database_read_buffer(buffer_database_t *buffer_database, buffer_t **buffer_out, char **err);

@@ -39,6 +39,7 @@ buffer_database_t* buffer_database_make(void)
     return NULL;
   }
 
+  buffer_database->mode = "ab+";
   buffer_database->open = 0;
   buffer_database->fp = NULL;
   return buffer_database;
@@ -51,6 +52,18 @@ void buffer_database_free(buffer_database_t *buffer_database)
   free(buffer_database);
 }
 
+void buffer_set_mode(buffer_database_t *buffer_database, const char *mode)
+{
+  assert(buffer_database != NULL);
+  buffer_database->mode = mode;
+}
+
+const char* buffer_get_mode(buffer_database_t *buffer_database)
+{
+  assert(buffer_database != NULL);
+  return buffer_database->mode;
+}
+
 buffer_database_t* buffer_database_open(const char *filepath, char **err)
 {
   buffer_database_t *buffer_database = buffer_database_make();
@@ -61,7 +74,7 @@ buffer_database_t* buffer_database_open(const char *filepath, char **err)
   }
 
   // open the file for reading and writing bytes
-  buffer_database->fp = fopen(filepath, "rb+");
+  buffer_database->fp = fopen(filepath, buffer_database->mode);
   if (buffer_database->fp == NULL)
   {
     *err = "Failed to open buffer database!";
@@ -88,6 +101,17 @@ int buffer_database_close(buffer_database_t *buffer_database)
 
   buffer_database->open = 0;
   buffer_database->fp = NULL;
+  return 0;
+}
+
+VULKAN_API int buffer_database_remove(const char *filepath, char **err)
+{
+  if (remove(filepath) != 0)
+  {
+    *err = "Failed to remove buffer database, file does not exist!";
+    return 1;
+  }
+
   return 0;
 }
 
