@@ -144,19 +144,18 @@ TEST can_delete_block_from_blockchain(void)
   block_t *block = make_block();
   memcpy(block->hash, block_hash, HASH_SIZE);
 
-  insert_block(block);
+  ASSERT(insert_block(block) == 0);
+  ASSERT(has_block_by_hash(block_hash) == 1);
   block_t *block_from_db = get_block_from_hash(block_hash);
-
   ASSERT(block_from_db != NULL);
 
   delete_block_from_blockchain(block_hash);
   block_t *deleted_block = get_block_from_hash(block_hash);
-
   ASSERT(deleted_block == NULL);
+  ASSERT(has_block_by_hash(block_hash) == 0);
 
   free_block(block);
   free_block(block_from_db);
-
   return 0;
 }
 
