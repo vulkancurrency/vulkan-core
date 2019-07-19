@@ -109,7 +109,7 @@ int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *b
 
   // write the data to the file
   fseek(buffer_database->fp, 0L, SEEK_SET);
-  size_t bytes_written = fread(data, data_len, 1, buffer_database->fp);
+  size_t bytes_written = fwrite(data, data_len, 1, buffer_database->fp);
   if (bytes_written != data_len)
   {
     *err = "Failed to write buffer database, left over bytes remain!";
