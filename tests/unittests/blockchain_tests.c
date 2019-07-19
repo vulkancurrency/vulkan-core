@@ -460,8 +460,56 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
 
 TEST can_backup_and_restore_blockchain(void)
 {
+  // construct a block to add
+  block_t *block = make_block();
+  block->version = 1;
+
+  char *previous_hash_str = "a027c3999b9ad6d40e5e810ff6889937c1e84cc0f2fe9101330029f0f17f29f4";
+  size_t out_size = 0;
+  uint8_t *previous_hash = hex2bin(previous_hash_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->previous_hash, previous_hash, HASH_SIZE);
+
+  char *hash_str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  uint8_t *hash = hex2bin(hash_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->hash, hash, HASH_SIZE);
+
+  block->timestamp = 1563488568;
+  block->nonce = 1033119846;
+  block->bits = 0x1d00ffff;
+  block->cumulative_emission = 6103515625;
+
+  char *merkle_root_str = "163174b3729c593f3b6e7d4ea119a4c5b13008c6fce3794a27af75cf3b56e6f6";
+  uint8_t *merkle_root = hex2bin(merkle_root_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  memcpy(block->merkle_root, merkle_root, HASH_SIZE);
+
+  // clear our blockchains
+  ASSERT(reset_blockchain() == 0);
+
+  // add a block to the main blockchain
+  ASSERT(insert_block(block) == 0);
+  ASSERT(get_block_height() == 0);
+  ASSERT(has_block_by_hash(block->hash) == 1);
+
+  // backup our blockchain
   ASSERT(backup_blockchain() == 0);
+
+  // clear the blockchain
+  ASSERT(reset_blockchain() == 0);
+
+  // check to see if our main blockchain is empty
+  ASSERT(get_block_height() == 0);
+  ASSERT(has_block_by_hash(block->hash) == 0);
+
+  // restore our blockchain
   ASSERT(restore_blockchain() == 0);
+
+  // check to see if our main blockchain has been restored
+  ASSERT(get_block_height() == 0);
+  ASSERT(has_block_by_hash(block->hash) == 1);
+
   PASS();
 }
 
