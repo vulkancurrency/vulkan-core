@@ -230,10 +230,10 @@ int compare_txin(input_transaction_t *txin, input_transaction_t *other_txin)
   assert(txin != NULL);
   assert(other_txin != NULL);
   return (
-    memcmp(txin->transaction, other_txin->transaction, HASH_SIZE) &&
+    memcmp(txin->transaction, other_txin->transaction, HASH_SIZE) == 0 &&
     txin->txout_index == other_txin->txout_index &&
-    memcmp(txin->signature, other_txin->signature, crypto_sign_BYTES) &&
-    memcmp(txin->public_key, other_txin->public_key, crypto_sign_PUBLICKEYBYTES));
+    memcmp(txin->signature, other_txin->signature, crypto_sign_BYTES) == 0 &&
+    memcmp(txin->public_key, other_txin->public_key, crypto_sign_PUBLICKEYBYTES) == 0);
 }
 
 int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout)
