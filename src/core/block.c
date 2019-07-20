@@ -300,7 +300,10 @@ int valid_block_hash(block_t *block)
 
   // find the expected block hash for this block
   uint8_t expected_block_hash[HASH_SIZE];
-  compute_block_hash(expected_block_hash, block);
+  if (compute_block_hash(expected_block_hash, block))
+  {
+    return 0;
+  }
 
   // check the expected hash against the block's hash
   // to see if the block has the correct corresponding hash;
@@ -418,8 +421,15 @@ int compare_with_genesis_block(block_t *block)
   block_t *genesis_block = get_genesis_block();
   assert(genesis_block != NULL);
 
-  compute_self_block_hash(block);
-  compute_self_block_hash(genesis_block);
+  if (compute_self_block_hash(block))
+  {
+    return 0;
+  }
+
+  if (compute_self_block_hash(genesis_block))
+  {
+    return 0;
+  }
 
   return compare_block(block, genesis_block);
 }
