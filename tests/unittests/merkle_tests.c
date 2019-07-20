@@ -46,7 +46,7 @@ TEST can_construct_merkle_tree(void)
 {
   uint8_t hash_size = HASH_SIZE;
   uint32_t number_of_hashes = 3;
-  uint8_t *hash_region = malloc(sizeof(uint8_t) * hash_size * number_of_hashes);
+  uint8_t *hash_region = malloc(hash_size * number_of_hashes);
 
   uint8_t hash_a[HASH_SIZE] = {
     0x06, 0xf9, 0x61, 0xb8,
@@ -99,11 +99,11 @@ TEST can_construct_merkle_tree(void)
 
   merkle_tree_t *tree = construct_merkle_tree_from_leaves(hash_region, 3);
 
-  uint8_t *hash_ab = malloc(sizeof(uint8_t) * HASH_SIZE);
-  uint8_t *hash_cc = malloc(sizeof(uint8_t) * HASH_SIZE);
-  uint8_t *hash_abcc = malloc(sizeof(uint8_t) * HASH_SIZE);
+  uint8_t *hash_ab = malloc(HASH_SIZE);
+  uint8_t *hash_cc = malloc(HASH_SIZE);
+  uint8_t *hash_abcc = malloc(HASH_SIZE);
 
-  uint8_t *hash_buffer = malloc(sizeof(uint8_t) * HASH_SIZE * 2);
+  uint8_t *hash_buffer = malloc(HASH_SIZE * 2);
 
   memcpy(hash_buffer, hash_a, HASH_SIZE);
   memcpy(hash_buffer + HASH_SIZE, hash_b, HASH_SIZE);
