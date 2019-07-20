@@ -178,7 +178,10 @@ int remove_peer(peer_t *peer)
 int serialize_peerlist_nolock(buffer_t *buffer)
 {
   assert(buffer != NULL);
-  buffer_write_uint16(buffer, g_num_peers);
+  if (buffer_write_uint16(buffer, g_num_peers))
+  {
+    return 1;
+  }
 
   void *val = NULL;
   HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
@@ -193,8 +196,15 @@ int serialize_peerlist_nolock(buffer_t *buffer)
     assert(connection != NULL);
 
     uint32_t remote_ip = ntohl(*(uint32_t*)&connection->sa.sin.sin_addr);
-    buffer_write_uint32(buffer, remote_ip);
-    buffer_write_uint16(buffer, net_connection->host_port);
+    if (buffer_write_uint32(buffer, remote_ip))
+    {
+      return 1;
+    }
+
+    if (buffer_write_uint16(buffer, net_connection->host_port))
+    {
+      return 1;
+    }
   })
 
   return 0;

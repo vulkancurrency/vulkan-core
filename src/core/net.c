@@ -309,7 +309,11 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
     buffer_t *receiving_buffer = net_connection->receiving_buffer;
     assert(receiving_buffer != NULL);
 
-    buffer_write(receiving_buffer, data, data_len);
+    if (buffer_write(receiving_buffer, data, data_len))
+    {
+      goto data_receive_fail;
+    }
+
     if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
     {
       buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
@@ -354,6 +358,10 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
     free_packet(packet);
   }
 
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
+
+data_receive_fail:
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 }
@@ -613,7 +621,12 @@ int flush_send_queue(net_connection_t *net_connection)
       uint8_t *data = buffer_get_data(queued_buffer);
       size_t data_len = buffer_get_size(queued_buffer);
 
-      buffer_write(buffer, data, data_len);
+      if (buffer_write(buffer, data, data_len))
+      {
+        buffer_free(buffer);
+        return 1;
+      }
+
       buffer_free(queued_buffer);
     }
 

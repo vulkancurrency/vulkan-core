@@ -414,14 +414,41 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   assert(block != NULL);
   assert(buffer != NULL);
 
-  buffer_write_uint32(buffer, block->version);
-  buffer_write_uint32(buffer, block->timestamp);
-  buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint32(buffer, block->bits);
-  buffer_write_uint64(buffer, block->cumulative_emission);
+  if (buffer_write_uint32(buffer, block->version))
+  {
+    return 1;
+  }
 
-  buffer_write(buffer, block->previous_hash, HASH_SIZE);
-  buffer_write(buffer, block->merkle_root, HASH_SIZE);
+  if (buffer_write_uint32(buffer, block->timestamp))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, block->nonce))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, block->bits))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint64(buffer, block->cumulative_emission))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, block->previous_hash, HASH_SIZE))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, block->merkle_root, HASH_SIZE))
+  {
+    return 1;
+  }
+
   return 0;
 }
 
@@ -430,18 +457,51 @@ int serialize_block(buffer_t *buffer, block_t *block)
   assert(block != NULL);
   assert(buffer != NULL);
 
-  buffer_write_uint32(buffer, block->version);
+  if (buffer_write_uint32(buffer, block->version))
+  {
+    return 1;
+  }
 
-  buffer_write_bytes(buffer, block->previous_hash, HASH_SIZE);
-  buffer_write_bytes(buffer, block->hash, HASH_SIZE);
+  if (buffer_write_bytes(buffer, block->previous_hash, HASH_SIZE))
+  {
+    return 1;
+  }
 
-  buffer_write_uint32(buffer, block->timestamp);
-  buffer_write_uint32(buffer, block->nonce);
-  buffer_write_uint32(buffer, block->bits);
-  buffer_write_uint64(buffer, block->cumulative_emission);
+  if (buffer_write_bytes(buffer, block->hash, HASH_SIZE))
+  {
+    return 1;
+  }
 
-  buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE);
-  buffer_write_uint32(buffer, block->transaction_count);
+  if (buffer_write_uint32(buffer, block->timestamp))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, block->nonce))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, block->bits))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint64(buffer, block->cumulative_emission))
+  {
+    return 1;
+  }
+
+  if (buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, block->transaction_count))
+  {
+    return 1;
+  }
+
   return 0;
 }
 

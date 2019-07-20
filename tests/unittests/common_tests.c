@@ -162,16 +162,16 @@ TEST pack_and_unpack_buffer(void)
 
   // write bytes
   const char *data = "\x00\x01\x12Hello World!";
-  ASSERT_EQ(buffer_write_string(buffer, data, 16), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data, 16), 0);
+  ASSERT(buffer_write_string(buffer, data, 16) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data, 16) == 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  ASSERT_EQ(buffer_write_string(buffer, data1, 64), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data1, 64), 0);
+  ASSERT(buffer_write_string(buffer, data1, 64) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data1, 64) == 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  ASSERT_EQ(buffer_write_string(buffer, data2, 128), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data2, 128), 0);
+  ASSERT(buffer_write_string(buffer, data2, 128) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data2, 128) ==0);
 
   // unpack
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
@@ -219,21 +219,21 @@ TEST pack_and_unpack_buffer(void)
   // write
 
   // unsigned
-  ASSERT_EQ(buffer_write_uint8(buffer1, 0xFF), 0);
-  ASSERT_EQ(buffer_write_uint16(buffer1, 0xFFFF), 0);
-  ASSERT_EQ(buffer_write_uint32(buffer1, 0xFFFFFFFF), 0);
-  ASSERT_EQ(buffer_write_uint64(buffer1, 0xFFFFFFFFFFFFFFFF), 0);
+  ASSERT(buffer_write_uint8(buffer1, 0xFF) == 0);
+  ASSERT(buffer_write_uint16(buffer1, 0xFFFF) == 0);
+  ASSERT(buffer_write_uint32(buffer1, 0xFFFFFFFF) == 0);
+  ASSERT(buffer_write_uint64(buffer1, 0xFFFFFFFFFFFFFFFF) == 0);
 
   // signed
-  ASSERT_EQ(buffer_write_int8(buffer1, 0x7F), 0);
-  ASSERT_EQ(buffer_write_int16(buffer1, 0x7FFF), 0);
-  ASSERT_EQ(buffer_write_int32(buffer1, 0x7FFFFFFF), 0);
-  ASSERT_EQ(buffer_write_int64(buffer1, 0x7FFFFFFFFFFFFFFF), 0);
+  ASSERT(buffer_write_int8(buffer1, 0x7F) == 0);
+  ASSERT(buffer_write_int16(buffer1, 0x7FFF) == 0);
+  ASSERT(buffer_write_int32(buffer1, 0x7FFFFFFF) == 0);
+  ASSERT(buffer_write_int64(buffer1, 0x7FFFFFFFFFFFFFFF) == 0);
 
-  ASSERT_EQ(buffer_write_int8(buffer1, -0x7F), 0);
-  ASSERT_EQ(buffer_write_int16(buffer1, -0x7FFF), 0);
-  ASSERT_EQ(buffer_write_int32(buffer1, -0x7FFFFFFF), 0);
-  ASSERT_EQ(buffer_write_int64(buffer1, -0x7FFFFFFFFFFFFFFF), 0);
+  ASSERT(buffer_write_int8(buffer1, -0x7F) == 0);
+  ASSERT(buffer_write_int16(buffer1, -0x7FFF) == 0);
+  ASSERT(buffer_write_int32(buffer1, -0x7FFFFFFF) == 0);
+  ASSERT(buffer_write_int64(buffer1, -0x7FFFFFFFFFFFFFFF) == 0);
 
   // copy the contents of buffer1 to buffer2
   buffer_t *buffer2 = buffer_init();
@@ -329,16 +329,16 @@ TEST can_read_and_write_to_buffer_database(void)
   ASSERT(buffer != NULL);
 
   const char *data = "\x00\x01\x12Hello World!";
-  ASSERT_EQ(buffer_write_string(buffer, data, 16), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data, 16), 0);
+  ASSERT(buffer_write_string(buffer, data, 16) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data, 16) == 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  ASSERT_EQ(buffer_write_string(buffer, data1, 64), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data1, 64), 0);
+  ASSERT(buffer_write_string(buffer, data1, 64) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data1, 64) == 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  ASSERT_EQ(buffer_write_string(buffer, data2, 128), 0);
-  ASSERT_EQ(buffer_write_bytes(buffer, (uint8_t*)data2, 128), 0);
+  ASSERT(buffer_write_string(buffer, data2, 128) == 0);
+  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data2, 128) == 0);
 
   // write the buffer
   if (buffer_database_write_buffer(buffer_database, buffer, &err))

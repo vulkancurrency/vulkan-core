@@ -78,11 +78,22 @@ int serialize_packet(buffer_t *buffer, packet_t *packet)
   assert(buffer != NULL);
   assert(packet != NULL);
 
-  buffer_write_uint32(buffer, packet->id);
-  buffer_write_uint32(buffer, packet->size);
+  if (buffer_write_uint32(buffer, packet->id))
+  {
+    return 1;
+  }
+
+  if (buffer_write_uint32(buffer, packet->size))
+  {
+    return 1;
+  }
+
   if (packet->size > 0)
   {
-    buffer_write_bytes(buffer, packet->data, packet->size);
+    if (buffer_write_bytes(buffer, packet->data, packet->size))
+    {
+      return 1;
+    }
   }
 
   return 0;
@@ -555,10 +566,25 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       {
         uint32_t host_port = va_arg(args, uint32_t);
         uint8_t use_testnet = va_arg(args, int);
-        buffer_write_uint32(buffer, host_port);
-        buffer_write_string(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION));
-        buffer_write_string(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME));
-        buffer_write_uint8(buffer, use_testnet);
+        if (buffer_write_uint32(buffer, host_port))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_string(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION)))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_string(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME)))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_uint8(buffer, use_testnet))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_CONNECT_RESP:
@@ -582,8 +608,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *peerlist_data = buffer_get_data(peerlist_buffer);
         assert(peerlist_data != NULL);
 
-        buffer_write_uint32(buffer, peerlist_data_size);
-        buffer_write_bytes(buffer, peerlist_data, peerlist_data_size);
+        if (buffer_write_uint32(buffer, peerlist_data_size))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_bytes(buffer, peerlist_data, peerlist_data_size))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -597,8 +630,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *hash = va_arg(args, uint8_t*);
         assert(hash != NULL);
 
-        buffer_write_uint32(buffer, height);
-        buffer_write_bytes(buffer, hash, HASH_SIZE);
+        if (buffer_write_uint32(buffer, height))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
@@ -606,7 +646,10 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *hash = va_arg(args, uint8_t*);
         assert(hash != NULL);
 
-        buffer_write_bytes(buffer, hash, HASH_SIZE);
+        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HASH_RESP:
@@ -615,14 +658,24 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         block_t *block = va_arg(args, block_t*);
         assert(block != NULL);
 
-        buffer_write_uint32(buffer, height);
-        serialize_block(buffer, block);
+        if (buffer_write_uint32(buffer, height))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (serialize_block(buffer, block))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_REQ:
       {
         uint32_t height = va_arg(args, uint32_t);
-        buffer_write_uint32(buffer, height);
+        if (buffer_write_uint32(buffer, height))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
@@ -633,8 +686,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(hash != NULL);
         assert(block != NULL);
 
-        buffer_write_bytes(buffer, hash, HASH_SIZE);
-        serialize_block(buffer, block);
+        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (serialize_block(buffer, block))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     /*case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HASH_REQ:
@@ -650,7 +710,10 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_REQ:
       {
         uint32_t height = va_arg(args, uint32_t);
-        buffer_write_uint32(buffer, height);
+        if (buffer_write_uint32(buffer, height))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP:
@@ -664,8 +727,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *block_data = buffer_get_data(block_data_buffer);
         assert(block_data != NULL);
 
-        buffer_write_uint32(buffer, block_data_size);
-        buffer_write_bytes(buffer, block_data, block_data_size);
+        if (buffer_write_uint32(buffer, block_data_size))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_bytes(buffer, block_data, block_data_size))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
@@ -673,7 +743,10 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *hash = va_arg(args, uint8_t*);
         assert(hash != NULL);
 
-        buffer_write_bytes(buffer, hash, HASH_SIZE);
+        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
@@ -682,8 +755,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint64_t num_transactions = va_arg(args, uint64_t);
         assert(hash != NULL);
 
-        buffer_write_bytes(buffer, hash, HASH_SIZE);
-        buffer_write_uint64(buffer, num_transactions);
+        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_uint64(buffer, num_transactions))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
@@ -694,8 +774,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(tx_hash != NULL);
 
-        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
-        buffer_write_bytes(buffer, tx_hash, HASH_SIZE);
+        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_bytes(buffer, tx_hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
@@ -707,9 +794,20 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(transaction != NULL);
 
-        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
-        buffer_write_uint32(buffer, tx_index);
-        serialize_transaction(buffer, transaction);
+        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_uint32(buffer, tx_index))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (serialize_transaction(buffer, transaction))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
@@ -718,8 +816,15 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint32_t tx_index = va_arg(args, uint32_t);
         assert(block_hash != NULL);
 
-        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
-        buffer_write_uint32(buffer, tx_index);
+        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_uint32(buffer, tx_index))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
@@ -731,9 +836,20 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(transaction != NULL);
 
-        buffer_write_bytes(buffer, block_hash, HASH_SIZE);
-        buffer_write_uint32(buffer, tx_index);
-        serialize_transaction(buffer, transaction);
+        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (buffer_write_uint32(buffer, tx_index))
+        {
+          goto serialize_message_fail;
+        }
+
+        if (serialize_transaction(buffer, transaction))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     case PKT_TYPE_INCOMING_MEMPOOL_TRANSACTION:
@@ -741,7 +857,10 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         transaction_t *transaction = va_arg(args, transaction_t*);
         assert(transaction != NULL);
 
-        serialize_transaction(buffer, transaction);
+        if (serialize_transaction(buffer, transaction))
+        {
+          goto serialize_message_fail;
+        }
       }
       break;
     default:
@@ -765,6 +884,10 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
   *packet = serialized_packet;
   buffer_free(buffer);
   return 0;
+
+serialize_message_fail:
+  buffer_free(buffer);
+  return 1;
 }
 
 void free_message(uint32_t packet_id, int did_packet_fail, void *message_object)
@@ -1821,8 +1944,19 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           size_t block_data_size = buffer_get_size(block_data_buffer);
 
           buffer_t *buffer = buffer_init();
-          buffer_write_uint32(buffer, blocks_count);
-          buffer_write(buffer, block_data, block_data_size);
+          if (buffer_write_uint32(buffer, blocks_count))
+          {
+            buffer_free(block_data_buffer);
+            buffer_free(buffer);
+            return 1;
+          }
+
+          if (buffer_write(buffer, block_data, block_data_size))
+          {
+            buffer_free(block_data_buffer);
+            buffer_free(buffer);
+            return 1;
+          }
 
           if (handle_packet_sendto(net_connection, PKT_TYPE_GET_GROUPED_BLOCKS_FROM_HEIGHT_RESP, buffer))
           {
