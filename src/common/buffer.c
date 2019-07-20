@@ -131,6 +131,16 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
   return 0;
 }
 
+int buffer_compare(buffer_t *buffer, buffer_t *other_buffer)
+{
+  assert(buffer != NULL);
+  assert(other_buffer != NULL);
+  return (
+    memcmp(buffer->data, other_buffer->data, buffer->size) == 0 &&
+    buffer->size == other_buffer->size &&
+    buffer->offset == other_buffer->offset);
+}
+
 void buffer_clear(buffer_t *buffer)
 {
   assert(buffer != NULL);

@@ -56,6 +56,7 @@ VULKAN_API void buffer_set_offset(buffer_t *buffer, size_t offset);
 VULKAN_API size_t buffer_get_offset(buffer_t *buffer);
 
 VULKAN_API int buffer_copy(buffer_t *buffer, buffer_t *other_buffer);
+VULKAN_API int buffer_compare(buffer_t *buffer, buffer_t *other_buffer);
 VULKAN_API void buffer_clear(buffer_t *buffer);
 VULKAN_API void buffer_free(buffer_t *buffer);
 
