@@ -60,7 +60,7 @@ TEST can_sign_txin(void)
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
 
   crypto_sign_keypair(pk, sk);
-  sign_txin(txin, tx, pk, sk);
+  ASSERT(sign_txin(txin, tx, pk, sk) == 0);
 
   // verify the txin signature
   ASSERT_MEM_EQ(pk, txin->public_key, crypto_sign_PUBLICKEYBYTES);
@@ -94,7 +94,7 @@ TEST can_serialize_and_deserialize_tx(void)
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
 
   crypto_sign_keypair(pk, sk);
-  sign_txin(txin, tx, pk, sk);
+  ASSERT(sign_txin(txin, tx, pk, sk) == 0);
 
   // serialize and deserialize the tx
   buffer_t *buffer = buffer_init();
@@ -138,7 +138,7 @@ TEST can_copy_tx(void)
   unsigned char sk[crypto_sign_SECRETKEYBYTES];
 
   crypto_sign_keypair(pk, sk);
-  sign_txin(txin, tx, pk, sk);
+  ASSERT(sign_txin(txin, tx, pk, sk) == 0);
 
   // copy the transaction and test it
   transaction_t *new_tx = make_transaction();
