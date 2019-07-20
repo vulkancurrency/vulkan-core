@@ -63,6 +63,8 @@ VULKAN_API block_t* make_block(void);
 VULKAN_API uint32_t get_block_header_size(block_t *block);
 
 VULKAN_API int valid_block_hash(block_t *block);
+VULKAN_API int validate_block_signatures(block_t *block);
+
 VULKAN_API int compare_block_hash(uint8_t *hash, uint8_t *other_hash);
 VULKAN_API int compare_block(block_t *block, block_t *other_block);
 VULKAN_API int compare_with_genesis_block(block_t *block);

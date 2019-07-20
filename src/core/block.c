@@ -299,6 +299,24 @@ int valid_block_hash(block_t *block)
     check_proof_of_work(block->hash, block->bits));
 }
 
+int validate_block_signatures(block_t *block)
+{
+  assert(block != NULL);
+  for (uint32_t tx_index = 0; tx_index < block->transaction_count; tx_index++)
+  {
+    transaction_t *tx = block->transactions[tx_index];
+    assert(tx != NULL);
+
+    if (validate_tx_signatures(tx))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+
 int compute_block_hash(uint8_t *hash, block_t *block)
 {
   assert(block != NULL);
