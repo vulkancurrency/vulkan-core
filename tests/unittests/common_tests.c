@@ -300,6 +300,18 @@ TEST pack_and_unpack_buffer(void)
   buffer_iterator_free(buffer_iterator1);
   buffer_free(buffer1);
 
+  // try and compare a buffer to another buffer
+  buffer_t *buffer_cmp1 = buffer_init();
+  buffer_t *buffer_cmp2 = buffer_init();
+
+  const char *some_string_str = "Hello World from buffer cmp test!";
+  ASSERT(buffer_write_string(buffer_cmp1, some_string_str, strlen(some_string_str)) == 0);
+  ASSERT(buffer_write_string(buffer_cmp2, some_string_str, strlen(some_string_str)) == 0);
+  ASSERT(buffer_compare(buffer_cmp1, buffer_cmp1) == 1);
+
+  buffer_free(buffer_cmp1);
+  buffer_free(buffer_cmp2);
+
   PASS();
 }
 
