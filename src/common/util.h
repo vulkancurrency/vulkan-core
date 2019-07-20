@@ -48,8 +48,6 @@ VULKAN_API char* bin2hex(uint8_t *bin, size_t bin_size);
 VULKAN_API uint8_t* hex2bin(const char *hexstr, size_t *size);
 
 VULKAN_API uint32_t get_current_time(void);
-VULKAN_API int rmrf(const char *path);
-
 VULKAN_API int cmp_least_greatest(const void *a, const void *b);
 
 VULKAN_API int is_private_address(uint32_t ip);
