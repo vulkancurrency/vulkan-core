@@ -23,6 +23,8 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "common/buffer_iterator.h"
