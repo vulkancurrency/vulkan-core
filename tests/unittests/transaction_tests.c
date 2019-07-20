@@ -131,15 +131,19 @@ TEST can_serialize_tx(void)
   tx.txin_count = 1;
   tx.txins = &txin_p;
 
-  uint8_t *buffer = NULL;
-  uint32_t buffer_len;
-
-  transaction_to_serialized(&buffer, &buffer_len, &tx);
-
+  buffer_t *buffer = buffer_init();
   ASSERT(buffer != NULL);
-  ASSERT(buffer_len > 0);
+  ASSERT(serialize_transaction(buffer, &tx) == 0);
 
-  free(buffer);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+  ASSERT(buffer_iterator != NULL);
+
+  transaction_t *deserialized_tx = NULL;
+  ASSERT(deserialize_transaction(buffer_iterator, &deserialized_tx) == 0);
+  ASSERT(compare_transaction(&tx, deserialized_tx) == 1);
+
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
   PASS();
 }
 
