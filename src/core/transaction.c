@@ -1242,10 +1242,12 @@ void free_txins(transaction_t *tx)
     {
       input_transaction_t *txin = tx->txins[i];
       assert(txin != NULL);
+
       free(txin);
     }
 
     free(tx->txins);
+    tx->txin_count = 0;
     tx->txins = NULL;
   }
 }
@@ -1259,10 +1261,12 @@ void free_txouts(transaction_t *tx)
     {
       output_transaction_t *txout = tx->txouts[i];
       assert(txout != NULL);
+
       free(txout);
     }
 
     free(tx->txouts);
+    tx->txout_count = 0;
     tx->txouts = NULL;
   }
 }
@@ -1284,10 +1288,12 @@ void free_unspent_txouts(unspent_transaction_t *unspent_tx)
     {
       unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
       assert(unspent_txout != NULL);
+
       free(unspent_txout);
     }
 
     free(unspent_tx->unspent_txouts);
+    unspent_tx->unspent_txout_count = 0;
     unspent_tx->unspent_txouts = NULL;
   }
 }
