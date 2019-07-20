@@ -92,7 +92,7 @@ TEST sha256_hash_tests(void)
   PASS();
 }
 
-TEST bignum_compact_tests()
+TEST bignum_compact_tests(void)
 {
   BIGNUM *num = BN_new();
   bignum_set_compact(num, 0);
