@@ -215,7 +215,11 @@ int valid_merkle_root(block_t *block)
 {
   assert(block != NULL);
   uint8_t merkle_root[HASH_SIZE];
-  compute_merkle_root(merkle_root, block);
+  if (compute_merkle_root(merkle_root, block))
+  {
+    return 0;
+  }
+
   return compare_merkle_hash(merkle_root, block->merkle_root);
 }
 
@@ -226,7 +230,14 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
   assert(hashes != NULL);
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
-    assert(compute_tx_id(&hashes[HASH_SIZE * i], block->transactions[i]) == 0);
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    if (compute_tx_id(&hashes[HASH_SIZE * i], tx))
+    {
+      free(hashes);
+      return 1;
+    }
   }
 
   merkle_tree_t *tree = construct_merkle_tree_from_leaves(hashes, block->transaction_count);
@@ -321,7 +332,11 @@ int compute_block_hash(uint8_t *hash, block_t *block)
 {
   assert(block != NULL);
   buffer_t *buffer = buffer_init_size(0, BLOCK_HEADER_SIZE);
-  serialize_block_header(buffer, block);
+  if (serialize_block_header(buffer, block))
+  {
+    buffer_free(buffer);
+    return 1;
+  }
 
   uint8_t header[BLOCK_HEADER_SIZE];
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
