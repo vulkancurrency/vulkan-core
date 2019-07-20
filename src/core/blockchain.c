@@ -1254,11 +1254,11 @@ int insert_block_nolock(block_t *block)
 
         if (spent_txs == unspent_tx->unspent_txout_count)
         {
-          assert(delete_unspent_tx_from_index_nolock(unspent_tx->id) == 0);
+          delete_unspent_tx_from_index_nolock(unspent_tx->id);
         }
         else
         {
-          assert(insert_unspent_tx_into_index_nolock(unspent_tx) == 0);
+          insert_unspent_tx_into_index_nolock(unspent_tx);
         }
 
         free_unspent_transaction(unspent_tx);
