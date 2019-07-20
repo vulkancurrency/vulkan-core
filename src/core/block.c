@@ -787,6 +787,12 @@ int copy_block(block_t *block, block_t *other_block)
     return 1;
   }
 
+  // compare the block with the other block that we copied from
+  if (compare_block(block, other_block) == 0)
+  {
+    return 1;
+  }
+
   return 0;
 }
 

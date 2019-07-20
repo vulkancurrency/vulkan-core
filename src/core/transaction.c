@@ -1058,6 +1058,13 @@ int copy_txin(input_transaction_t *txin, input_transaction_t *other_txin)
 
   memcpy(other_txin->signature, txin->signature, crypto_sign_BYTES);
   memcpy(other_txin->public_key, txin->public_key, crypto_sign_PUBLICKEYBYTES);
+
+  // compare the txin with the other txin that we copied from
+  if (compare_txin(txin, other_txin) == 0)
+  {
+    return 1;
+  }
+
   return 0;
 }
 
@@ -1068,6 +1075,13 @@ int copy_txout(output_transaction_t *txout, output_transaction_t *other_txout)
 
   other_txout->amount = txout->amount;
   memcpy(other_txout->address, txout->address, ADDRESS_SIZE);
+
+  // compare the txout with the other txout that we copied from
+  if (compare_txout(txout, other_txout) == 0)
+  {
+    return 1;
+  }
+
   return 0;
 }
 
@@ -1128,6 +1142,12 @@ int copy_transaction(transaction_t *tx, transaction_t *other_tx)
 
       other_tx->txouts[i] = other_txout;
     }
+  }
+
+  // compare the transaction with the other transaction that we copied from
+  if (compare_transaction(tx, other_tx) == 0)
+  {
+    return 1;
   }
 
   return 0;
