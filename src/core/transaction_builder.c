@@ -202,7 +202,6 @@ int construct_generation_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t b
   // construct the txin
   input_transaction_t *txin = make_txin();
   memset(txin->transaction, 0, HASH_SIZE);
-  assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
   assert(add_txin_to_transaction(tx, txin, 0) == 0);
 
   // construct the txout
@@ -210,6 +209,10 @@ int construct_generation_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t b
   memcpy(txout->address, wallet->address, ADDRESS_SIZE);
   txout->amount = block_reward;
   assert(add_txout_to_transaction(tx, txout, 0) == 0);
+
+  // sign the txin after we've added all of the inputs and outputs,
+  // so we get a consistent result...
+  assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
 
   compute_self_tx_id(tx);
   *out_tx = tx;
