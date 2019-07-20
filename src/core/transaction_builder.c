@@ -201,7 +201,6 @@ int construct_generation_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t b
 
   // construct the txin
   input_transaction_t *txin = make_txin();
-  memset(txin->transaction, 0, HASH_SIZE);
   assert(add_txin_to_transaction(tx, txin, 0) == 0);
 
   // construct the txout

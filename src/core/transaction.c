@@ -61,6 +61,7 @@ transaction_t* make_transaction(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
   assert(tx != NULL);
+  memset(tx->id, 0, HASH_SIZE);
   tx->txin_count = 0;
   tx->txout_count = 0;
   tx->txins = NULL;
@@ -72,7 +73,10 @@ input_transaction_t* make_txin(void)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   assert(txin != NULL);
+  memset(txin->transaction, 0, HASH_SIZE);
   txin->txout_index = 0;
+  memset(txin->signature, 0, crypto_sign_BYTES);
+  memset(txin->public_key, 0, crypto_sign_PUBLICKEYBYTES);
   return txin;
 }
 
@@ -81,17 +85,8 @@ output_transaction_t* make_txout(void)
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   assert(txout != NULL);
   txout->amount = 0;
+  memset(txout->address, 0, ADDRESS_SIZE);
   return txout;
-}
-
-unspent_transaction_t* make_unspent_transaction(void)
-{
-  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
-  assert(unspent_tx != NULL);
-  unspent_tx->coinbase = 0;
-  unspent_tx->unspent_txout_count = 0;
-  unspent_tx->unspent_txouts = NULL;
-  return unspent_tx;
 }
 
 unspent_output_transaction_t* make_unspent_txout(void)
@@ -99,8 +94,20 @@ unspent_output_transaction_t* make_unspent_txout(void)
   unspent_output_transaction_t *unspent_txout = malloc(sizeof(unspent_output_transaction_t));
   assert(unspent_txout != NULL);
   unspent_txout->amount = 0;
+  memset(unspent_txout->address, 0, ADDRESS_SIZE);
   unspent_txout->spent = 0;
   return unspent_txout;
+}
+
+unspent_transaction_t* make_unspent_transaction(void)
+{
+  unspent_transaction_t *unspent_tx = malloc(sizeof(unspent_transaction_t));
+  assert(unspent_tx != NULL);
+  memset(unspent_tx->id, 0, HASH_SIZE);
+  unspent_tx->coinbase = 0;
+  unspent_tx->unspent_txout_count = 0;
+  unspent_tx->unspent_txouts = NULL;
+  return unspent_tx;
 }
 
 /*

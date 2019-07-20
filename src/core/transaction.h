@@ -107,8 +107,8 @@ typedef struct UnspentTransaction
 VULKAN_API transaction_t* make_transaction(void);
 VULKAN_API input_transaction_t* make_txin(void);
 VULKAN_API output_transaction_t* make_txout(void);
-VULKAN_API unspent_transaction_t* make_unspent_transaction(void);
 VULKAN_API unspent_output_transaction_t* make_unspent_txout(void);
+VULKAN_API unspent_transaction_t* make_unspent_transaction(void);
 
 VULKAN_API int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key, uint8_t *secret_key);
 VULKAN_API int validate_txin_signature(transaction_t *tx, input_transaction_t *txin);
