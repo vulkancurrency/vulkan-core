@@ -32,6 +32,7 @@
 #include <sodium.h>
 
 #include "common/greatest.h"
+#include "common/util.h"
 
 #include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"
@@ -41,53 +42,40 @@ SUITE(crypto_suite);
 
 TEST sha256_hash_tests(void)
 {
-  const char *input = "Hello World!";
-  uint8_t expected_output[] = {
-    0x61, 0xf4, 0x17, 0x37,
-    0x4f, 0x44, 0x00, 0xb4,
-    0x7d, 0xca, 0xe1, 0xa8,
-    0xf4, 0x02, 0xd4, 0xf4,
-    0xda, 0xcf, 0x45, 0x5a,
-    0x04, 0x42, 0xa0, 0x6a,
-    0xa4, 0x55, 0xa4, 0x47,
-    0xb0, 0xd4, 0xe1, 0x70
-  };
+  const char *input_str = "Hello World!";
+  const char *expected_output_str = "61f417374f4400b47dcae1a8f402d4f4dacf455a0442a06aa455a447b0d4e170";
 
-  const char *input2 = "The quick brown fox jumps over the lazy dog";
-  uint8_t expected_output2[] = {
-    0x6d, 0x37, 0x79, 0x50,
-    0x21, 0xe5, 0x44, 0xd8,
-    0x2b, 0x41, 0x85, 0x0e,
-    0xdf, 0x7a, 0xab, 0xab,
-    0x9a, 0x0e, 0xbe, 0x27,
-    0x4e, 0x54, 0xa5, 0x19,
-    0x84, 0x0c, 0x46, 0x66,
-    0xf3, 0x5b, 0x39, 0x37
-  };
+  size_t out_size = 0;
+  uint8_t *expected_output = hex2bin(expected_output_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
 
-  const char *input3 = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890";
-  uint8_t expected_output3[] = {
-    0x2b, 0x71, 0xe6, 0x97,
-    0x57, 0x91, 0x38, 0xf7,
-    0xa5, 0x87, 0x6b, 0xaa,
-    0x1c, 0xbb, 0x6b, 0x6d,
-    0x51, 0x1c, 0xa2, 0xf7,
-    0x80, 0x18, 0xcf, 0x99,
-    0x72, 0x7c, 0xf7, 0xd4,
-    0x44, 0xd9, 0x53, 0xcb
-  };
+  const char *input2_str = "The quick brown fox jumps over the lazy dog";
+  const char *expected_output2_str = "6d37795021e544d82b41850edf7aabab9a0ebe274e54a519840c4666f35b3937";
+
+  uint8_t *expected_output2 = hex2bin(expected_output2_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
+
+  const char *input3_str = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890";
+  const char *expected_output3_str = "2b71e697579138f7a5876baa1cbb6b6d511ca2f78018cf99727cf7d444d953cb";
+
+  uint8_t *expected_output3 = hex2bin(expected_output3_str, &out_size);
+  ASSERT(out_size == HASH_SIZE);
 
   unsigned char output[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256d(output, (const unsigned char*)input, strlen(input));
+  crypto_hash_sha256d(output, (const unsigned char*)input_str, strlen(input_str));
   ASSERT_MEM_EQ(output, expected_output, crypto_hash_sha256_BYTES);
 
   unsigned char output2[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256d(output2, (const unsigned char*)input2, strlen(input2));
+  crypto_hash_sha256d(output2, (const unsigned char*)input2_str, strlen(input2_str));
   ASSERT_MEM_EQ(output2, expected_output2, crypto_hash_sha256_BYTES);
 
   unsigned char output3[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256d(output3, (const unsigned char*)input3, strlen(input3));
+  crypto_hash_sha256d(output3, (const unsigned char*)input3_str, strlen(input3_str));
   ASSERT_MEM_EQ(output3, expected_output3, crypto_hash_sha256_BYTES);
+
+  free(expected_output);
+  free(expected_output2);
+  free(expected_output3);
 
   PASS();
 }
