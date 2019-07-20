@@ -110,7 +110,7 @@ static block_t mainnet_genesis_block = {
   .transactions = NULL
 };
 
-static input_transaction_genesis_entry_t testnet_genesis_input_txs[] = {
+static const input_transaction_genesis_entry_t testnet_genesis_input_txs[] = {
   {
     .transaction_str = "0000000000000000000000000000000000000000000000000000000000000000",
     .txout_index = 0,
@@ -119,18 +119,18 @@ static input_transaction_genesis_entry_t testnet_genesis_input_txs[] = {
   }
 };
 
-static output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
+static const output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
   {
     .amount = 6103515625,
     .address_str = "02bb3d97634bd6a3973cfd1d88450f2cff26a80a76fd18d58afd10a3dca18a85fa"
   }
 };
 
-static transaction_genesis_entry_t testnet_genesis_tx = {
+static const transaction_genesis_entry_t testnet_genesis_tx = {
   .id_str = "88bdcdd586bb2a91b627dda8cf2414cdaf0190936a0ba088157096b5bfddbe52"
 };
 
-static block_genesis_entry_t testnet_genesis_block_template = {
+static const block_genesis_entry_t testnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
   .hash_str = "00000000ff3f568143293e8a701ca6e94ab7c2c686165d685ceb0f918803da45",

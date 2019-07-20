@@ -77,7 +77,9 @@ block_t *get_genesis_block(void)
     // add txins
     for (uint32_t txin_index = 0; txin_index < NUM_TESTNET_GENESIS_TXINS; txin_index++)
     {
-      input_transaction_genesis_entry_t *txin_genesis_entry = &testnet_genesis_input_txs[txin_index];
+      const input_transaction_genesis_entry_t *txin_genesis_entry = &testnet_genesis_input_txs[txin_index];
+      assert(txin_genesis_entry != NULL);
+
       input_transaction_t *generation_txin = make_txin();
 
       uint8_t *transaction = hex2bin(txin_genesis_entry->transaction_str, &out_size);
@@ -103,7 +105,9 @@ block_t *get_genesis_block(void)
     // add txouts
     for (uint32_t txout_index = 0; txout_index < NUM_TESTNET_GENESIS_TXINS; txout_index++)
     {
-      output_transaction_genesis_entry_t *txout_genesis_entry = &testnet_genesis_output_txs[txout_index];
+      const output_transaction_genesis_entry_t *txout_genesis_entry = &testnet_genesis_output_txs[txout_index];
+      assert(txout_genesis_entry != NULL);
+
       output_transaction_t *generation_txout = make_txout();
 
       generation_txout->amount = txout_genesis_entry->amount;
