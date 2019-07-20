@@ -225,6 +225,26 @@ void get_tx_sign_header(uint8_t *header, transaction_t *tx)
   }
 }
 
+int compare_txin(input_transaction_t *txin, input_transaction_t *other_txin)
+{
+  assert(txin != NULL);
+  assert(other_txin != NULL);
+  return (
+    memcmp(txin->transaction, other_txin->transaction, HASH_SIZE) &&
+    txin->txout_index == other_txin->txout_index &&
+    memcmp(txin->signature, other_txin->signature, crypto_sign_BYTES) &&
+    memcmp(txin->public_key, other_txin->public_key, crypto_sign_PUBLICKEYBYTES));
+}
+
+int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout)
+{
+  assert(txout != NULL);
+  assert(other_txout != NULL);
+  return (
+    txout->amount == other_txout->amount &&
+    compare_addresses(txout->address, other_txout->address));
+}
+
 int compare_transaction_hash(uint8_t *id, uint8_t *other_id)
 {
   assert(id != NULL);
@@ -236,7 +256,47 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
 {
   assert(transaction != NULL);
   assert(other_transaction != NULL);
-  return compare_transaction_hash(transaction->id, other_transaction->id);
+  int result = (
+    compare_transaction_hash(transaction->id, other_transaction->id) &&
+    transaction->txin_count == other_transaction->txin_count &&
+    transaction->txout_count == other_transaction->txout_count);
+
+  if (result == 0)
+  {
+    return 0;
+  }
+
+  // compare tx inputs
+  for (uint32_t txin_index = 0; txin_index < transaction->txin_count; txin_index++)
+  {
+    input_transaction_t *txin = transaction->txins[txin_index];
+    assert(txin != NULL);
+
+    input_transaction_t *other_txin = other_transaction->txins[txin_index];
+    assert(other_txin != NULL);
+
+    if (compare_txin(txin, other_txin) == 0)
+    {
+      return 0;
+    }
+  }
+
+  // compare tx outputs
+  for (uint32_t txout_index = 0; txout_index < transaction->txout_count; txout_index++)
+  {
+    output_transaction_t *txout = transaction->txouts[txout_index];
+    assert(txout != NULL);
+
+    output_transaction_t *other_txout = other_transaction->txouts[txout_index];
+    assert(other_txout != NULL);
+
+    if (compare_txout(txout, other_txout) == 0)
+    {
+      return 0;
+    }
+  }
+
+  return 1;
 }
 
 void print_txin(uint8_t txin_index, input_transaction_t *txin)

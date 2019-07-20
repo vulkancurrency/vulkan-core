@@ -343,8 +343,40 @@ int compare_block(block_t *block, block_t *other_block)
 {
   assert(block != NULL);
   assert(other_block != NULL);
-  return (compare_block_hash(block->hash, other_block->hash) &&
-    compare_merkle_hash(block->merkle_root, other_block->merkle_root));
+
+  // compare the block structs
+  int result = (
+    block->version == other_block->version &&
+    compare_block_hash(block->previous_hash, other_block->previous_hash) &&
+    compare_block_hash(block->hash, other_block->hash) &&
+    block->timestamp == other_block->timestamp &&
+    block->nonce == other_block->nonce &&
+    block->bits == other_block->bits &&
+    block->cumulative_emission == other_block->cumulative_emission &&
+    compare_merkle_hash(block->merkle_root, other_block->merkle_root) &&
+    block->transaction_count == other_block->transaction_count);
+
+  if (result == 0)
+  {
+    return 0;
+  }
+
+  // compare transactions
+  for (uint32_t tx_index = 0; tx_index < block->transaction_count; tx_index++)
+  {
+    transaction_t *transaction = block->transactions[tx_index];
+    assert(transaction != NULL);
+
+    transaction_t *other_transaction = other_block->transactions[tx_index];
+    assert(other_transaction != NULL);
+
+    if (compare_transaction(transaction, other_transaction) == 0)
+    {
+      return 0;
+    }
+  }
+
+  return 1;
 }
 
 int compare_with_genesis_block(block_t *block)
