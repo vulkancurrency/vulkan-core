@@ -510,6 +510,10 @@ TEST can_backup_and_restore_blockchain(void)
   ASSERT(get_block_height() == 0);
   ASSERT(has_block_by_hash(block->hash) == 1);
 
+  block_t *block1 = get_block_from_hash(block->hash);
+  ASSERT(block1 != NULL);
+  ASSERT(compare_block(block, block1) == 1);
+
   PASS();
 }
 
