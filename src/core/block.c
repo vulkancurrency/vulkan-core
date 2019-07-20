@@ -830,10 +830,12 @@ void free_block_transactions(block_t *block)
     {
       transaction_t *tx = block->transactions[i];
       assert(tx != NULL);
+
       free_transaction(tx);
     }
 
     free(block->transactions);
+    block->transaction_count = 0;
     block->transactions = NULL;
   }
 }
