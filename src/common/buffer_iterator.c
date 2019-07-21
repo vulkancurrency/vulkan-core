@@ -138,8 +138,10 @@ int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value)
     return 1;
   }
 
-  *value = *(uint8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 1;
+  *value = (uint8_t)buffer->data[offset];
   return 0;
 }
 
@@ -152,8 +154,10 @@ int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value)
     return 1;
   }
 
-  *value = *(int8_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 1;
+  *value = (int8_t)buffer->data[offset];
   return 0;
 }
 
@@ -166,8 +170,12 @@ int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value)
     return 1;
   }
 
-  *value = *(uint16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
+  *value = (uint16_t)buffer->data[offset + 1] <<  8 |
+           (uint16_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
@@ -180,8 +188,12 @@ int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value)
     return 1;
   }
 
-  *value = *(int16_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
+  *value = (int16_t)buffer->data[offset + 1] <<  8 |
+           (int16_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
@@ -194,8 +206,14 @@ int buffer_read_uint32(buffer_iterator_t *buffer_iterator, uint32_t *value)
     return 1;
   }
 
-  *value = *(uint32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 4;
+  *value = (uint32_t)buffer->data[offset + 3] << 24 |
+           (uint32_t)buffer->data[offset + 2] << 16 |
+           (uint32_t)buffer->data[offset + 1] <<  8 |
+           (uint32_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
@@ -208,8 +226,14 @@ int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value)
     return 1;
   }
 
-  *value = *(int32_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 4;
+  *value = (int32_t)buffer->data[offset + 3] << 24 |
+           (int32_t)buffer->data[offset + 2] << 16 |
+           (int32_t)buffer->data[offset + 1] <<  8 |
+           (int32_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
@@ -222,8 +246,18 @@ uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value)
     return 1;
   }
 
-  *value = *(uint64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 8;
+  *value = (uint64_t)buffer->data[offset + 7] << 56 |
+           (uint64_t)buffer->data[offset + 6] << 48 |
+           (uint64_t)buffer->data[offset + 5] << 40 |
+           (uint64_t)buffer->data[offset + 4] << 32 |
+           (uint64_t)buffer->data[offset + 3] << 24 |
+           (uint64_t)buffer->data[offset + 2] << 16 |
+           (uint64_t)buffer->data[offset + 1] <<  8 |
+           (uint64_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
@@ -236,8 +270,18 @@ int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
     return 1;
   }
 
-  *value = *(int64_t*)(buffer_iterator->buffer->data + buffer_iterator->offset);
+  const buffer_t *buffer = buffer_iterator->buffer;
+  size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 8;
+  *value = (int64_t)buffer->data[offset + 7] << 56 |
+           (int64_t)buffer->data[offset + 6] << 48 |
+           (int64_t)buffer->data[offset + 5] << 40 |
+           (int64_t)buffer->data[offset + 4] << 32 |
+           (int64_t)buffer->data[offset + 3] << 24 |
+           (int64_t)buffer->data[offset + 2] << 16 |
+           (int64_t)buffer->data[offset + 1] <<  8 |
+           (int64_t)buffer->data[offset + 0] <<  0;
+
   return 0;
 }
 
