@@ -1346,7 +1346,7 @@ int validate_and_insert_block_nolock(block_t *block)
   if (current_block_height > 0)
   {
     assert(current_block != NULL);
-    if (compare_block_hash(block->previous_hash, current_block->hash) == 0)
+    if (compare_hash(block->previous_hash, current_block->hash) == 0)
     {
       goto validate_block_fail;
     }
@@ -1429,7 +1429,7 @@ int is_genesis_block(uint8_t *block_hash)
   block_t *genesis_block = get_genesis_block();
   assert(genesis_block != NULL);
 
-  return compare_block_hash(block_hash, genesis_block->hash);
+  return compare_hash(block_hash, genesis_block->hash);
 }
 
 block_t *get_block_from_hash_nolock(uint8_t *block_hash)
@@ -1581,7 +1581,7 @@ int32_t get_block_height_from_hash_nolock(uint8_t *block_hash)
       break;
     }
 
-    if (compare_block_hash(block->hash, block_hash))
+    if (compare_hash(block->hash, block_hash))
     {
       block_height = i;
       free_block(block);
@@ -2023,7 +2023,7 @@ int delete_block_from_blockchain_nolock(uint8_t *block_hash)
   block_t *genesis_block = get_genesis_block();
   assert(genesis_block != NULL);
 
-  if (compare_block_hash(block_hash, genesis_block->hash))
+  if (compare_hash(block_hash, genesis_block->hash))
   {
     char *genesis_block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);
     LOG_ERROR("Cannot delete genesis block with hash: %s from blockchain!", genesis_block_hash_str);

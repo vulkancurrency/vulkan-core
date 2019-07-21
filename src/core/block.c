@@ -309,7 +309,8 @@ int valid_block_hash(block_t *block)
   // to see if the block has the correct corresponding hash;
   // also check to see if the block's hash target matches
   // it's corresponding proof-of-work difficulty...
-  return (compare_block_hash(expected_block_hash, block->hash) &&
+  return (
+    compare_hash(expected_block_hash, block->hash) &&
     check_proof_of_work(block->hash, block->bits));
 }
 
@@ -370,11 +371,6 @@ uint32_t get_block_header_size(block_t *block)
   return block_header_size;
 }
 
-int compare_block_hash(uint8_t *hash, uint8_t *other_hash)
-{
-  return memcmp(hash, other_hash, HASH_SIZE) == 0;
-}
-
 int compare_block(block_t *block, block_t *other_block)
 {
   assert(block != NULL);
@@ -383,8 +379,8 @@ int compare_block(block_t *block, block_t *other_block)
   // compare the block structs
   int result = (
     block->version == other_block->version &&
-    compare_block_hash(block->previous_hash, other_block->previous_hash) &&
-    compare_block_hash(block->hash, other_block->hash) &&
+    compare_hash(block->previous_hash, other_block->previous_hash) &&
+    compare_hash(block->hash, other_block->hash) &&
     block->timestamp == other_block->timestamp &&
     block->nonce == other_block->nonce &&
     block->bits == other_block->bits &&

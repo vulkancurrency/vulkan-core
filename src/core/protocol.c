@@ -1380,7 +1380,7 @@ int block_header_received(net_connection_t *net_connection, block_t *block)
       assert(get_checkpoint_hash_from_height(g_protocol_sync_entry.last_sync_height, &checkpoint_hash) == 0);
       assert(checkpoint_hash != NULL);
 
-      if (compare_block_hash(block->hash, checkpoint_hash) == 0)
+      if (compare_hash(block->hash, checkpoint_hash) == 0)
       {
         char *checkpoint_hash_str = bin2hex(checkpoint_hash, HASH_SIZE);
         char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
@@ -2070,7 +2070,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          if (compare_block_hash(message->hash, pending_block->hash))
+          if (compare_hash(message->hash, pending_block->hash))
           {
             if (g_protocol_sync_entry.sync_initiated)
             {
@@ -2134,7 +2134,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          if (compare_block_hash(message->block_hash, pending_block->hash) == 0)
+          if (compare_hash(message->block_hash, pending_block->hash) == 0)
           {
             return 1;
           }
@@ -2186,7 +2186,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             return 1;
           }
 
-          if (compare_block_hash(message->block_hash, pending_block->hash) == 0)
+          if (compare_hash(message->block_hash, pending_block->hash) == 0)
           {
             return 1;
           }
