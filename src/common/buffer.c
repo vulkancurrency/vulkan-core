@@ -315,8 +315,16 @@ int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  buffer_write_uint32(buffer, size);
-  buffer_write(buffer, bytes, size);
+  if (buffer_write_uint32(buffer, size))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, bytes, size))
+  {
+    return 1;
+  }
+
   return 0;
 }
 
@@ -333,8 +341,16 @@ int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t siz
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  buffer_write_uint64(buffer, size);
-  buffer_write(buffer, bytes, size);
+  if (buffer_write_uint64(buffer, size))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, bytes, size))
+  {
+    return 1;
+  }
+
   return 0;
 }
 
