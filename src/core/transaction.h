@@ -121,7 +121,6 @@ VULKAN_API void get_tx_sign_header(uint8_t *header, transaction_t *tx);
 
 VULKAN_API int compare_txin(input_transaction_t *txin, input_transaction_t *other_txin);
 VULKAN_API int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout);
-VULKAN_API int compare_transaction_hash(uint8_t *id, uint8_t *other_id);
 VULKAN_API int compare_transaction(transaction_t *transaction, transaction_t *other_transaction);
 
 VULKAN_API void print_txin(uint8_t txin_index, input_transaction_t *txin);

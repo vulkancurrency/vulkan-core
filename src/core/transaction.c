@@ -237,10 +237,10 @@ int compare_txin(input_transaction_t *txin, input_transaction_t *other_txin)
   assert(txin != NULL);
   assert(other_txin != NULL);
   return (
-    memcmp(txin->transaction, other_txin->transaction, HASH_SIZE) == 0 &&
+    compare_hash(txin->transaction, other_txin->transaction) &&
     txin->txout_index == other_txin->txout_index &&
-    memcmp(txin->signature, other_txin->signature, crypto_sign_BYTES) == 0 &&
-    memcmp(txin->public_key, other_txin->public_key, crypto_sign_PUBLICKEYBYTES) == 0);
+    compare_signature(txin->signature, other_txin->signature) &&
+    compare_public_key(txin->public_key, other_txin->public_key));
 }
 
 int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout)
@@ -249,14 +249,7 @@ int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout
   assert(other_txout != NULL);
   return (
     txout->amount == other_txout->amount &&
-    compare_addresses(txout->address, other_txout->address));
-}
-
-int compare_transaction_hash(uint8_t *id, uint8_t *other_id)
-{
-  assert(id != NULL);
-  assert(other_id != NULL);
-  return memcmp(id, other_id, HASH_SIZE) == 0;
+    compare_address(txout->address, other_txout->address));
 }
 
 int compare_transaction(transaction_t *transaction, transaction_t *other_transaction)
@@ -264,7 +257,7 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
   assert(transaction != NULL);
   assert(other_transaction != NULL);
   int result = (
-    compare_transaction_hash(transaction->id, other_transaction->id) &&
+    compare_hash(transaction->id, other_transaction->id) &&
     transaction->txin_count == other_transaction->txin_count &&
     transaction->txout_count == other_transaction->txout_count);
 
@@ -491,7 +484,7 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
 int is_generation_tx(transaction_t *tx)
 {
   assert(tx != NULL);
-  return (tx->txin_count == 1 && tx->txout_count == 1 && compare_transaction_hash(tx->txins[0]->transaction, (uint8_t*)g_transaction_zero_hash));
+  return (tx->txin_count == 1 && tx->txout_count == 1 && compare_hash(tx->txins[0]->transaction, (uint8_t*)g_transaction_zero_hash));
 }
 
 int compute_tx_id(uint8_t *tx_id, transaction_t *tx)

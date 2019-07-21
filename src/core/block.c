@@ -156,7 +156,7 @@ int valid_block(block_t *block)
       }
 
       // check to see if any transactions have duplicate transaction hash ids
-      if (compare_transaction_hash(first_tx->id, second_tx->id))
+      if (compare_hash(first_tx->id, second_tx->id))
       {
         return 0;
       }
@@ -178,7 +178,7 @@ int valid_block(block_t *block)
             return 0;
           }
 
-          if (compare_transaction_hash(txin_first->transaction, txin_second->transaction) && txin_first->txout_index == txin_second->txout_index)
+          if (compare_hash(txin_first->transaction, txin_second->transaction) && txin_first->txout_index == txin_second->txout_index)
           {
             return 0;
           }
@@ -729,7 +729,7 @@ transaction_t* get_tx_by_hash_from_block(block_t *block, uint8_t *tx_hash)
     transaction_t *tx = block->transactions[i];
     assert(tx != NULL);
 
-    if (compare_transaction_hash(tx->id, tx_hash))
+    if (compare_hash(tx->id, tx_hash))
     {
       return tx;
     }

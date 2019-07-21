@@ -23,23 +23,39 @@
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-#pragma once
-
+#include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <sodium.h>
 
-#include "common/vulkan.h"
+#include "cryptoutil.h"
 
-VULKAN_BEGIN_DECL
+int compare_hash(const uint8_t *hash, const uint8_t *other_hash)
+{
+  assert(hash != NULL);
+  assert(other_hash != NULL);
+  return memcmp(hash, other_hash, HASH_SIZE) == 0;
+}
 
-#define HASH_SIZE 32
-#define ADDRESS_SIZE (crypto_hash_sha256_BYTES + 1)
+int compare_address(const uint8_t *address, const uint8_t *other_address)
+{
+  assert(address != NULL);
+  assert(other_address != NULL);
+  return memcmp(address, other_address, ADDRESS_SIZE) == 0;
+}
 
-VULKAN_API int compare_hash(const uint8_t *hash, const uint8_t *other_hash);
-VULKAN_API int compare_address(const uint8_t *address, const uint8_t *other_address);
-VULKAN_API int compare_signature(const uint8_t *signature, const uint8_t *other_signature);
-VULKAN_API int compare_public_key(const uint8_t *public_key, const uint8_t *other_public_key);
+int compare_signature(const uint8_t *signature, const uint8_t *other_signature)
+{
+  assert(signature != NULL);
+  assert(other_signature != NULL);
+  return memcmp(signature, other_signature, crypto_sign_BYTES) == 0;
+}
 
-VULKAN_END_DECL
+int compare_public_key(const uint8_t *public_key, const uint8_t *other_public_key)
+{
+  assert(public_key != NULL);
+  assert(other_public_key != NULL);
+  return memcmp(public_key, public_key, crypto_sign_PUBLICKEYBYTES) == 0;
+}

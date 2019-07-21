@@ -73,7 +73,7 @@ mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)
     transaction_t *tx = mempool_entry->tx;
     assert(tx != NULL);
 
-    if (compare_transaction_hash(tx->id, tx_hash))
+    if (compare_hash(tx->id, tx_hash))
     {
       return mempool_entry;
     }

@@ -493,13 +493,6 @@ void print_secret_key(wallet_t *wallet)
   free(secret_key_str);
 }
 
-int compare_addresses(uint8_t *address, uint8_t *other_address)
-{
-  assert(address != NULL);
-  assert(other_address != NULL);
-  return memcmp(address, other_address, ADDRESS_SIZE) == 0;
-}
-
 int public_key_to_address(uint8_t *address, uint8_t *pk)
 {
   assert(address != NULL);

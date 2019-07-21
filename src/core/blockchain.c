@@ -2435,7 +2435,7 @@ int get_unspent_transactions_for_address_nolock(uint8_t *address, vec_void_t *un
         unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
         assert(unspent_txout != NULL);
 
-        if (compare_addresses(unspent_txout->address, address) == 0)
+        if (compare_address(unspent_txout->address, address) == 0)
         {
           continue;
         }
@@ -2506,7 +2506,7 @@ uint64_t get_balance_for_address_nolock(uint8_t *address)
       unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[i];
       assert(unspent_txout != NULL);
 
-      if (compare_addresses(unspent_txout->address, address) == 0)
+      if (compare_address(unspent_txout->address, address) == 0)
       {
         continue;
       }
