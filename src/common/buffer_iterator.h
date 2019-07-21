@@ -48,6 +48,7 @@ VULKAN_API const buffer_t *buffer_iterator_get_buffer(buffer_iterator_t *buffer_
 VULKAN_API void buffer_iterator_set_offset(buffer_iterator_t *buffer_iterator, size_t offset);
 VULKAN_API size_t buffer_iterator_get_offset(buffer_iterator_t *buffer_iterator);
 
+VULKAN_API int buffer_iterator_compare(buffer_iterator_t *buffer_iterator, buffer_iterator_t *other_buffer_iterator);
 VULKAN_API void buffer_iterator_clear(buffer_iterator_t *buffer_iterator);
 
 VULKAN_API int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes);
