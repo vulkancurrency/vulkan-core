@@ -318,9 +318,9 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
     if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
     {
-      buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
-      process_incoming_packet(net_connection, buffer_iterator);
-      buffer_iterator_free(buffer_iterator);
+      buffer_iterator_t *receiving_buffer_iterator = buffer_iterator_init(receiving_buffer);
+      process_incoming_packet(net_connection, receiving_buffer_iterator);
+      buffer_iterator_free(receiving_buffer_iterator);
 
       net_connection->is_receiving_data = 0;
       net_connection->expected_receiving_len = 0;
