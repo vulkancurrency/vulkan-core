@@ -407,10 +407,10 @@ int valid_transaction(transaction_t *tx)
   }
 
   // check signatures
-  if (validate_tx_signatures(tx))
-  {
-    return 0;
-  }
+  //if (validate_tx_signatures(tx))
+  //{
+  //  return 0;
+  //}
 
   if (is_generation_tx(tx))
   {

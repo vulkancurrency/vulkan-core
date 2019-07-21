@@ -681,14 +681,14 @@ int flush_all_connections_noblock(void)
   return result;
 }
 
-task_result_t reconnect_seeds(task_t *task, va_list args)
+static task_result_t reconnect_seeds(task_t *task, va_list args)
 {
   assert(task != NULL);
   assert(connect_net_to_seeds() == 0);
   return TASK_RESULT_WAIT;
 }
 
-task_result_t flush_connections(task_t *task, va_list args)
+static task_result_t flush_connections(task_t *task, va_list args)
 {
   assert(task != NULL);
   assert(flush_all_connections_noblock() == 0);

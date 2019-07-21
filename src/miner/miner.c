@@ -288,7 +288,7 @@ worker_thread_fail:
   return 1;
 }
 
-task_result_t report_worker_mining_status(task_t *task, va_list args)
+static task_result_t report_worker_mining_status(task_t *task, va_list args)
 {
   for (int i = 0; i < g_num_worker_threads; i++)
   {

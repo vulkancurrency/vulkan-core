@@ -45,9 +45,6 @@ typedef struct MempoolEntry
   uint32_t received_ts;
 } mempool_entry_t;
 
-VULKAN_API int start_mempool(void);
-VULKAN_API int stop_mempool(void);
-
 VULKAN_API mempool_entry_t* init_mempool_entry(void);
 VULKAN_API void free_mempool_entry(mempool_entry_t *mempool_entry);
 
@@ -81,6 +78,7 @@ VULKAN_API int clear_expired_txs_in_mempool_nolock(void);
 VULKAN_API int clear_expired_txs_in_mempool_noblock(void);
 VULKAN_API int clear_expired_txs_in_mempool(void);
 
-task_result_t flush_mempool(task_t *task, va_list args);
+VULKAN_API int start_mempool(void);
+VULKAN_API int stop_mempool(void);
 
 VULKAN_END_DECL

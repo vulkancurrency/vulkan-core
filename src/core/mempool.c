@@ -47,39 +47,6 @@ static int g_mempool_num_transactions = 0;
 
 static task_t *g_mempool_flush_task = NULL;
 
-int start_mempool(void)
-{
-  if (g_mempool_initialized)
-  {
-    return 1;
-  }
-
-  mtx_init(&g_mempool_lock, mtx_recursive);
-  assert(array_new(&g_mempool_transactions) == CC_OK);
-
-  g_mempool_num_transactions = 0;
-  g_mempool_flush_task = add_task(flush_mempool, FLUSH_MEMPOOL_TASK_DELAY);
-  g_mempool_initialized = 1;
-  return 0;
-}
-
-int stop_mempool(void)
-{
-  if (g_mempool_initialized == 0)
-  {
-    return 1;
-  }
-
-  remove_task(g_mempool_flush_task);
-  mtx_destroy(&g_mempool_lock);
-  array_destroy(g_mempool_transactions);
-
-  g_mempool_num_transactions = 0;
-  g_mempool_flush_task = NULL;
-  g_mempool_initialized = 0;
-  return 0;
-}
-
 mempool_entry_t* init_mempool_entry(void)
 {
   mempool_entry_t *mempool_entry = malloc(sizeof(mempool_entry_t));
@@ -382,8 +349,41 @@ int clear_expired_txs_in_mempool(void)
   return result;
 }
 
-task_result_t flush_mempool(task_t *task, va_list args)
+static task_result_t flush_mempool(task_t *task, va_list args)
 {
   assert(clear_expired_txs_in_mempool_noblock() == 0);
   return TASK_RESULT_WAIT;
+}
+
+int start_mempool(void)
+{
+  if (g_mempool_initialized)
+  {
+    return 1;
+  }
+
+  mtx_init(&g_mempool_lock, mtx_recursive);
+  assert(array_new(&g_mempool_transactions) == CC_OK);
+
+  g_mempool_num_transactions = 0;
+  g_mempool_flush_task = add_task(flush_mempool, FLUSH_MEMPOOL_TASK_DELAY);
+  g_mempool_initialized = 1;
+  return 0;
+}
+
+int stop_mempool(void)
+{
+  if (g_mempool_initialized == 0)
+  {
+    return 1;
+  }
+
+  remove_task(g_mempool_flush_task);
+  mtx_destroy(&g_mempool_lock);
+  array_destroy(g_mempool_transactions);
+
+  g_mempool_num_transactions = 0;
+  g_mempool_flush_task = NULL;
+  g_mempool_initialized = 0;
+  return 0;
 }

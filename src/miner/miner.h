@@ -70,9 +70,7 @@ VULKAN_API void free_worker(miner_worker_t *worker);
 
 VULKAN_API block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, block_t *previous_block);
 VULKAN_API block_t* construct_computable_genesis_block(wallet_t *wallet);
-
 VULKAN_API int compute_block(miner_worker_t *worker, block_t *block);
-VULKAN_API task_result_t report_worker_mining_status(task_t *task, va_list args);
 
 VULKAN_API void killall_threads(void);
 VULKAN_API void wait_for_threads_to_stop(void);

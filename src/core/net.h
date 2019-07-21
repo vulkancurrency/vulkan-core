@@ -116,9 +116,6 @@ VULKAN_API int flush_all_connections_nolock(void);
 VULKAN_API int flush_all_connections(void);
 VULKAN_API int flush_all_connections_noblock(void);
 
-task_result_t reconnect_seeds(task_t *task, va_list args);
-task_result_t flush_connections(task_t *task, va_list args);
-
 VULKAN_API int net_run(void);
 VULKAN_API int init_net(connection_entries_t connection_entries);
 VULKAN_API int deinit_net(void);
