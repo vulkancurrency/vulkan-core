@@ -1929,7 +1929,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             block_t *block = get_block_from_height(i);
             assert(block != NULL);
 
-            serialize_block(block_data_buffer, block);
+            if (serialize_block(block_data_buffer, block))
+            {
+              buffer_free(block_data_buffer);
+              return 1;
+            }
+
             blocks_count++;
             free_block(block);
           }
@@ -2258,9 +2263,14 @@ int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t
 
   assert(packet != NULL);
   buffer_t *buffer = buffer_init();
-  serialize_packet(buffer, packet);
-  free_packet(packet);
+  if (serialize_packet(buffer, packet))
+  {
+    free_packet(packet);
+    buffer_free(buffer);
+    return 1;
+  }
 
+  free_packet(packet);
   uint8_t *data = buffer_get_data(buffer);
   size_t data_len = buffer_get_size(buffer);
 
