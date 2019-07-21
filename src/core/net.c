@@ -311,7 +311,9 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
 
     if (buffer_write(receiving_buffer, data, data_len))
     {
-      goto data_receive_fail;
+      buffer_iterator_free(buffer_iterator);
+      buffer_free(buffer);
+      return;
     }
 
     if (buffer_get_size(receiving_buffer) >= net_connection->expected_receiving_len)
@@ -347,21 +349,14 @@ void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_
       }
       else
       {
-        buffer_t *receiving_buffer = buffer_init_data(0, data, data_len);
-        buffer_iterator_t *buffer_iterator = buffer_iterator_init(receiving_buffer);
+        buffer_iterator_set_offset(buffer_iterator, 0);
         process_incoming_packet(net_connection, buffer_iterator);
-        buffer_iterator_free(buffer_iterator);
-        buffer_free(receiving_buffer);
       }
     }
 
     free_packet(packet);
   }
 
-  buffer_iterator_free(buffer_iterator);
-  buffer_free(buffer);
-
-data_receive_fail:
   buffer_iterator_free(buffer_iterator);
   buffer_free(buffer);
 }
