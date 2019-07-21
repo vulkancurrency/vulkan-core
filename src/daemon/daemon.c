@@ -73,6 +73,7 @@ enum
   CMD_ARG_CLEAR_BLOCKCHAIN,
   CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION,
   CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE,
+  CMD_ARG_P2P_STORAGE_FILENAME,
   CMD_ARG_WALLET_DIR,
   CMD_ARG_REPAIR_WALLET,
   CMD_ARG_CLEAR_WALLET,
@@ -97,6 +98,7 @@ static argument_map_t g_arguments_map[] = {
   {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
   {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
   {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use.", "<compression_method>", 1},
+  {"p2p-storage-filename", CMD_ARG_P2P_STORAGE_FILENAME, "Sets the p2p peerlist storage database filename.", "<db_storage_filename>", 1},
   {"wallet-dir", CMD_ARG_WALLET_DIR, "Change the wallet database output directory.", "<wallet_dir>", 1},
   {"repair-wallet", CMD_ARG_REPAIR_WALLET, "Repair the wallet database directory in attempt to recover the data...", "", 0},
   {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
@@ -262,6 +264,10 @@ static int parse_commandline_args(int argc, char **argv)
 
         set_blockchain_compression_type(compression_type);
         break;
+      case CMD_ARG_P2P_STORAGE_FILENAME:
+        i++;
+        const char *p2p_storage_filename = (const char*)argv[i];
+        set_p2p_storage_filename(p2p_storage_filename);
       case CMD_ARG_WALLET_DIR:
         i++;
         g_wallet_dir = (const char*)argv[i];

@@ -30,9 +30,12 @@
 
 #include <hashtable.h>
 
+#include "common/task.h"
 #include "common/buffer.h"
 #include "common/buffer_iterator.h"
+#include "common/buffer_database.h"
 #include "common/util.h"
+#include "common/logger.h"
 
 #include "net.h"
 #include "p2p.h"
@@ -40,8 +43,23 @@
 
 static int g_p2p_initialized = 0;
 static mtx_t g_p2p_lock;
+
+static const char *g_p2p_storage_filename = "p2p_peerlist_storage.dat";
+static buffer_database_t *g_p2p_storage_db = NULL;
+
 static HashTable* g_p2p_peerlist_table = NULL;
 static int g_num_peers = 0;
+static task_t *g_p2p_storage_save_task = NULL;
+
+void set_p2p_storage_filename(const char *storage_filename)
+{
+  g_p2p_storage_filename = storage_filename;
+}
+
+const char *get_p2p_storage_filename(void)
+{
+  return g_p2p_storage_filename;
+}
 
 peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
 {
@@ -287,6 +305,27 @@ int deserialize_peerlist(buffer_iterator_t *buffer_iterator)
   return result;
 }
 
+int deserialize_peerlist_from_storage(buffer_t *buffer)
+{
+  assert(buffer != NULL);
+  if (buffer_get_size(buffer) == 0)
+  {
+    return 1;
+  }
+
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+  assert(buffer_iterator != NULL);
+
+  if (deserialize_peerlist(buffer_iterator))
+  {
+    buffer_iterator_free(buffer_iterator);
+    return 1;
+  }
+
+  buffer_iterator_free(buffer_iterator);
+  return 0;
+}
+
 int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
@@ -319,6 +358,26 @@ int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, siz
   return result;
 }
 
+static task_result_t save_peerlist_storage(task_t *task)
+{
+  LOG_INFO("Saving peerlist data...");
+  buffer_t *buffer = buffer_init();
+  if (serialize_peerlist(buffer))
+  {
+    perror("Failed to save P2P peerlist data, could not serialize peerlist to buffer!");
+  }
+
+  // write the serialized peer list data to the storage db
+  char *err = NULL;
+  if (buffer_database_write_buffer(g_p2p_storage_db, buffer, &err))
+  {
+    perror(err);
+  }
+
+  LOG_INFO("Successfully saved peerlist data.");
+  return TASK_RESULT_WAIT;
+}
+
 int init_p2p(void)
 {
   if (g_p2p_initialized)
@@ -328,6 +387,29 @@ int init_p2p(void)
 
   mtx_init(&g_p2p_lock, mtx_recursive);
   assert(hashtable_new(&g_p2p_peerlist_table) == CC_OK);
+
+  char *err = NULL;
+  g_p2p_storage_db = buffer_database_open(g_p2p_storage_filename, &err);
+  if (err != NULL)
+  {
+    LOG_ERROR("Failed to initialize P2P storage db: %s", err);
+    return 1;
+  }
+
+  buffer_t *buffer = NULL;
+  if (buffer_database_read_buffer(g_p2p_storage_db, &buffer, &err))
+  {
+    LOG_ERROR("Failed to deserialize initialize P2P storage db: %s", err);
+    return 1;
+  }
+
+  // attempt to load the peer list data
+  deserialize_peerlist_from_storage(buffer);
+  buffer_free(buffer);
+  LOG_INFO("Successfully opened p2p storage db: %s", g_p2p_storage_filename);
+
+  // setup a new task for saving the peer list data on an interval
+  g_p2p_storage_save_task = add_task(save_peerlist_storage, SAVE_PEER_LIST_STORAGE_DELAY);
   g_p2p_initialized = 1;
   return 0;
 }
@@ -339,8 +421,16 @@ int deinit_p2p(void)
     return 1;
   }
 
+  remove_task(g_p2p_storage_save_task);
   hashtable_destroy(g_p2p_peerlist_table);
   mtx_destroy(&g_p2p_lock);
+
+  if (buffer_database_close(g_p2p_storage_db))
+  {
+    LOG_ERROR("Failed to close P2P storage db!");
+    return 1;
+  }
+
   g_num_peers = 0;
   g_p2p_initialized = 0;
   return 0;

@@ -43,6 +43,11 @@ typedef struct Peer
   net_connection_t *net_connection;
 } peer_t;
 
+#define SAVE_PEER_LIST_STORAGE_DELAY 60
+
+VULKAN_API void set_p2p_storage_filename(const char *storage_filename);
+VULKAN_API const char *get_p2p_storage_filename(void);
+
 VULKAN_API peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection);
 VULKAN_API void free_peer(peer_t *peer);
 
@@ -68,6 +73,8 @@ VULKAN_API int serialize_peerlist(buffer_t *buffer);
 
 VULKAN_API int deserialize_peerlist_noblock(buffer_iterator_t *buffer_iterator);
 VULKAN_API int deserialize_peerlist(buffer_iterator_t *buffer_iterator);
+
+VULKAN_API int deserialize_peerlist_from_storage(buffer_t *buffer);
 
 VULKAN_API int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len);
 VULKAN_API int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len);
