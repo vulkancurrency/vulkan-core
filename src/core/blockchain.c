@@ -1181,8 +1181,23 @@ int insert_block_nolock(block_t *block)
   get_block_key(key, block->hash);
 
   buffer_t *buffer = buffer_init();
-  serialize_block(buffer, block);
-  serialize_transactions_from_block(buffer, block);
+  if (serialize_block(buffer, block))
+  {
+    char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
+    LOG_ERROR("Failed to insert block: %s into blockchain, could not serialize block!", block_hash_str);
+    free(block_hash_str);
+    buffer_free(buffer);
+    return 1;
+  }
+
+  if (serialize_transactions_from_block(buffer, block))
+  {
+    char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
+    LOG_ERROR("Failed to insert block: %s into blockchain, could not serialize block transactions!", block_hash_str);
+    free(block_hash_str);
+    buffer_free(buffer);
+    return 1;
+  }
 
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
@@ -1696,7 +1711,15 @@ int insert_tx_into_unspent_index_nolock(transaction_t *tx)
 
   buffer_t *buffer = buffer_init();
   unspent_transaction_t *unspent_tx = transaction_to_unspent_transaction(tx);
-  serialize_unspent_transaction(buffer, unspent_tx);
+  if (serialize_unspent_transaction(buffer, unspent_tx))
+  {
+    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+    LOG_ERROR("Could not insert tx: %s into blockchain: %s, failed to serialize tx!", tx_hash_str, err);
+    free(tx_hash_str);
+    buffer_free(buffer);
+    return 1;
+  }
+
   free_unspent_transaction(unspent_tx);
 
   uint8_t *data = buffer_get_data(buffer);
@@ -1754,7 +1777,14 @@ int insert_unspent_tx_into_index_nolock(unspent_transaction_t *unspent_tx)
   get_unspent_tx_key(key, unspent_tx->id);
 
   buffer_t *buffer = buffer_init();
-  serialize_unspent_transaction(buffer, unspent_tx);
+  if (serialize_unspent_transaction(buffer, unspent_tx))
+  {
+    char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+    LOG_ERROR("Could not insert unspent tx: %s into blockchain: %s, could not serialize unspent tx!", unspent_tx_hash_str, err);
+    free(unspent_tx_hash_str);
+    buffer_free(buffer);
+    return 1;
+  }
 
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
