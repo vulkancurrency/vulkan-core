@@ -105,7 +105,7 @@ int buffer_database_close(buffer_database_t *buffer_database)
   return 0;
 }
 
-VULKAN_API int buffer_database_remove(const char *filepath, char **err)
+int buffer_database_remove(const char *filepath, char **err)
 {
   if (remove(filepath) != 0)
   {
