@@ -23,7 +23,7 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project(vulkan LANGUAGES C ASM)
