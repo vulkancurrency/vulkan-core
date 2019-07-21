@@ -93,7 +93,11 @@ int buffer_read(buffer_iterator_t *buffer_iterator, size_t size, uint8_t **bytes
   }
 
   uint8_t *data = malloc(size);
-  assert(data != NULL);
+  if (data == NULL)
+  {
+    return 1;
+  }
+
   memcpy(data, buffer_iterator->buffer->data + buffer_iterator->offset, size);
   *bytes = data;
   buffer_iterator->offset += size;
