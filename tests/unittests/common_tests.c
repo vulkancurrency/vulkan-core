@@ -309,6 +309,14 @@ TEST pack_and_unpack_buffer(void)
   ASSERT(buffer_write_string(buffer_cmp2, some_string_str, strlen(some_string_str)) == 0);
   ASSERT(buffer_compare(buffer_cmp1, buffer_cmp1) == 1);
 
+  // compare buffer iterators
+  buffer_iterator_t *buffer_iterator_cmp1 = buffer_iterator_init(buffer_cmp1);
+  buffer_iterator_t *buffer_iterator_cmp2 = buffer_iterator_init(buffer_cmp2);
+  ASSERT(buffer_iterator_compare(buffer_iterator_cmp1, buffer_iterator_cmp2) == 1);
+
+  buffer_iterator_free(buffer_iterator_cmp1);
+  buffer_iterator_free(buffer_iterator_cmp2);
+
   buffer_free(buffer_cmp1);
   buffer_free(buffer_cmp2);
 
