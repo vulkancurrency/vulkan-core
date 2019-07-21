@@ -173,8 +173,8 @@ int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value)
   const buffer_t *buffer = buffer_iterator->buffer;
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
-  *value = (uint16_t)buffer->data[offset + 1] <<  8 |
-           (uint16_t)buffer->data[offset + 0] <<  0;
+  *value = (uint16_t)buffer->data[offset + 1] << 8 |
+           (uint16_t)buffer->data[offset + 0] << 0;
 
   return 0;
 }
@@ -191,8 +191,8 @@ int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value)
   const buffer_t *buffer = buffer_iterator->buffer;
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
-  *value = (int16_t)buffer->data[offset + 1] <<  8 |
-           (int16_t)buffer->data[offset + 0] <<  0;
+  *value = (int16_t)buffer->data[offset + 1] << 8 |
+           (int16_t)buffer->data[offset + 0] << 0;
 
   return 0;
 }
