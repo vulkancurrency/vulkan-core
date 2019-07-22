@@ -22,8 +22,6 @@
 //
 // You should have received a copy of the MIT License
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
-//
-// Parts of this file are originally copyright (c) 2012-2013, The CryptoNote Developers.
 
 #include <assert.h>
 #include <stdlib.h>
