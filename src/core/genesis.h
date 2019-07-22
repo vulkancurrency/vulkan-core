@@ -70,46 +70,39 @@ typedef struct BlockGenesisEntry
   char *merkle_root_str;
 } block_genesis_entry_t;
 
-static block_t mainnet_genesis_block = {
+// mainnnet genesis block info
+static const input_transaction_genesis_entry_t mainnet_genesis_input_txs[] = {
+  {
+    .transaction_str = "0000000000000000000000000000000000000000000000000000000000000000",
+    .txout_index = 0,
+    .signature_str = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    .public_key_str = "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+};
+
+static const output_transaction_genesis_entry_t mainnet_genesis_output_txs[] = {
+  {
+    .amount = 0,
+    .address_str = "000000000000000000000000000000000000000000000000000000000000000000"
+  }
+};
+
+static const transaction_genesis_entry_t mainnet_genesis_tx = {
+  .id_str = "0000000000000000000000000000000000000000000000000000000000000000"
+};
+
+static const block_genesis_entry_t mainnet_genesis_block_template = {
   .version = BLOCK_VERSION,
-  .previous_hash = {
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-  },
-  .hash = {
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-  },
+  .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
+  .hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
   .bits = GENESIS_BITS,
   .cumulative_emission = 0,
-  .merkle_root = {
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-  },
-  .transaction_count = 0,
-  .transactions = NULL
+  .merkle_root_str = "0000000000000000000000000000000000000000000000000000000000000000",
 };
 
+// testnet genesis block info
 static const input_transaction_genesis_entry_t testnet_genesis_input_txs[] = {
   {
     .transaction_str = "0000000000000000000000000000000000000000000000000000000000000000",
@@ -141,7 +134,8 @@ static const block_genesis_entry_t testnet_genesis_block_template = {
   .merkle_root_str = "88bdcdd586bb2a91b627dda8cf2414cdaf0190936a0ba088157096b5bfddbe52",
 };
 
-static block_t *testnet_genesis_block = NULL;
+#define NUM_MAINNET_GENESIS_TXINS (sizeof(input_transaction_genesis_entry_t) / sizeof(mainnet_genesis_input_txs))
+#define NUM_MAINNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(mainnet_genesis_output_txs))
 
 #define NUM_TESTNET_GENESIS_TXINS (sizeof(input_transaction_genesis_entry_t) / sizeof(testnet_genesis_input_txs))
 #define NUM_TESTNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(testnet_genesis_output_txs))

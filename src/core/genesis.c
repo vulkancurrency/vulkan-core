@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 
 #include "common/util.h"
@@ -35,91 +36,131 @@
 
 #include "crypto/cryptoutil.h"
 
+static block_t *g_testnet_genesis_block = NULL;
+static block_t *g_mainnet_genesis_block = NULL;
+
+static int copy_genesis_block_template(const block_genesis_entry_t block_template,
+  const transaction_genesis_entry_t tx_template,
+  size_t num_txins, size_t num_txouts,
+  const input_transaction_genesis_entry_t input_txs_template[],
+  const output_transaction_genesis_entry_t output_txs_template[],
+  block_t **block_out)
+{
+  block_t *block = make_block();
+  block->version = block_template.version;
+
+  size_t out_size = 0;
+  uint8_t *previous_hash = hex2bin(block_template.previous_hash_str, &out_size);
+  assert(out_size == HASH_SIZE);
+  memcpy(block->previous_hash, previous_hash, HASH_SIZE);
+  free(previous_hash);
+
+  uint8_t *hash = hex2bin(block_template.hash_str, &out_size);
+  assert(out_size == HASH_SIZE);
+  memcpy(block->hash, hash, HASH_SIZE);
+  free(hash);
+
+  block->timestamp = block_template.timestamp;
+  block->nonce = block_template.nonce;
+  block->bits = block_template.bits;
+  block->cumulative_emission = block_template.cumulative_emission;
+
+  uint8_t *merkle_root = hex2bin(block_template.merkle_root_str, &out_size);
+  assert(out_size == HASH_SIZE);
+  memcpy(block->merkle_root, merkle_root, HASH_SIZE);
+  free(merkle_root);
+
+  // add the tx
+  transaction_t *generation_tx = make_transaction();
+  uint8_t *id = hex2bin(tx_template.id_str, &out_size);
+  assert(out_size == HASH_SIZE);
+  memcpy(generation_tx->id, id, HASH_SIZE);
+  free(id);
+
+  if (add_transaction_to_block(block, generation_tx, 0))
+  {
+    return 1;
+  }
+
+  // add txins
+  for (uint32_t txin_index = 0; txin_index < num_txins; txin_index++)
+  {
+    const input_transaction_genesis_entry_t *txin_genesis_entry = &input_txs_template[txin_index];
+    assert(txin_genesis_entry != NULL);
+
+    input_transaction_t *generation_txin = make_txin();
+
+    uint8_t *transaction = hex2bin(txin_genesis_entry->transaction_str, &out_size);
+    assert(out_size == HASH_SIZE);
+    memcpy(generation_txin->transaction, transaction, HASH_SIZE);
+    free(transaction);
+
+    generation_txin->txout_index = txin_genesis_entry->txout_index;
+
+    uint8_t *signature = hex2bin(txin_genesis_entry->signature_str, &out_size);
+    assert(out_size == crypto_sign_BYTES);
+    memcpy(generation_txin->signature, signature, crypto_sign_BYTES);
+    free(signature);
+
+    uint8_t *public_key = hex2bin(txin_genesis_entry->public_key_str, &out_size);
+    assert(out_size == crypto_sign_PUBLICKEYBYTES);
+    memcpy(generation_txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
+    free(public_key);
+
+    if (add_txin_to_transaction(generation_tx, generation_txin, txin_index))
+    {
+      return 1;
+    }
+  }
+
+  // add txouts
+  for (uint32_t txout_index = 0; txout_index < num_txouts; txout_index++)
+  {
+    const output_transaction_genesis_entry_t *txout_genesis_entry = &output_txs_template[txout_index];
+    assert(txout_genesis_entry != NULL);
+
+    output_transaction_t *generation_txout = make_txout();
+
+    generation_txout->amount = txout_genesis_entry->amount;
+
+    uint8_t *address = hex2bin(txout_genesis_entry->address_str, &out_size);
+    assert(out_size == ADDRESS_SIZE);
+    memcpy(generation_txout->address, address, ADDRESS_SIZE);
+    free(address);
+
+    if (add_txout_to_transaction(generation_tx, generation_txout, txout_index))
+    {
+      return 1;
+    }
+  }
+
+  *block_out = block;
+  return 0;
+}
+
 block_t *get_genesis_block(void)
 {
   // construct the new genesis block and copy all of the contents
   // from the genesis block template to the new genesis block
-  if (testnet_genesis_block == NULL)
+  if (g_testnet_genesis_block == NULL)
   {
-    testnet_genesis_block = make_block();
-    testnet_genesis_block->version = testnet_genesis_block_template.version;
-
-    size_t out_size = 0;
-    uint8_t *previous_hash = hex2bin(testnet_genesis_block_template.previous_hash_str, &out_size);
-    assert(out_size == HASH_SIZE);
-    memcpy(testnet_genesis_block->previous_hash, previous_hash, HASH_SIZE);
-    free(previous_hash);
-
-    uint8_t *hash = hex2bin(testnet_genesis_block_template.hash_str, &out_size);
-    assert(out_size == HASH_SIZE);
-    memcpy(testnet_genesis_block->hash, hash, HASH_SIZE);
-    free(hash);
-
-    testnet_genesis_block->timestamp = testnet_genesis_block_template.timestamp;
-    testnet_genesis_block->nonce = testnet_genesis_block_template.nonce;
-    testnet_genesis_block->bits = testnet_genesis_block_template.bits;
-    testnet_genesis_block->cumulative_emission = testnet_genesis_block_template.cumulative_emission;
-
-    uint8_t *merkle_root = hex2bin(testnet_genesis_block_template.merkle_root_str, &out_size);
-    assert(out_size == HASH_SIZE);
-    memcpy(testnet_genesis_block->merkle_root, merkle_root, HASH_SIZE);
-    free(merkle_root);
-
-    // add the tx
-    transaction_t *generation_tx = make_transaction();
-    uint8_t *id = hex2bin(testnet_genesis_tx.id_str, &out_size);
-    assert(out_size == HASH_SIZE);
-    memcpy(generation_tx->id, id, HASH_SIZE);
-    free(id);
-
-    assert(add_transaction_to_block(testnet_genesis_block, generation_tx, 0) == 0);
-
-    // add txins
-    for (uint32_t txin_index = 0; txin_index < NUM_TESTNET_GENESIS_TXINS; txin_index++)
+    if (copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
+      NUM_TESTNET_GENESIS_TXINS, NUM_TESTNET_GENESIS_TXOUTS,
+      testnet_genesis_input_txs, testnet_genesis_output_txs, &g_testnet_genesis_block))
     {
-      const input_transaction_genesis_entry_t *txin_genesis_entry = &testnet_genesis_input_txs[txin_index];
-      assert(txin_genesis_entry != NULL);
-
-      input_transaction_t *generation_txin = make_txin();
-
-      uint8_t *transaction = hex2bin(txin_genesis_entry->transaction_str, &out_size);
-      assert(out_size == HASH_SIZE);
-      memcpy(generation_txin->transaction, transaction, HASH_SIZE);
-      free(transaction);
-
-      generation_txin->txout_index = txin_genesis_entry->txout_index;
-
-      uint8_t *signature = hex2bin(txin_genesis_entry->signature_str, &out_size);
-      assert(out_size == crypto_sign_BYTES);
-      memcpy(generation_txin->signature, signature, crypto_sign_BYTES);
-      free(signature);
-
-      uint8_t *public_key = hex2bin(txin_genesis_entry->public_key_str, &out_size);
-      assert(out_size == crypto_sign_PUBLICKEYBYTES);
-      memcpy(generation_txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
-      free(public_key);
-
-      assert(add_txin_to_transaction(generation_tx, generation_txin, txin_index) == 0);
-    }
-
-    // add txouts
-    for (uint32_t txout_index = 0; txout_index < NUM_TESTNET_GENESIS_TXINS; txout_index++)
-    {
-      const output_transaction_genesis_entry_t *txout_genesis_entry = &testnet_genesis_output_txs[txout_index];
-      assert(txout_genesis_entry != NULL);
-
-      output_transaction_t *generation_txout = make_txout();
-
-      generation_txout->amount = txout_genesis_entry->amount;
-
-      uint8_t *address = hex2bin(txout_genesis_entry->address_str, &out_size);
-      assert(out_size == ADDRESS_SIZE);
-      memcpy(generation_txout->address, address, ADDRESS_SIZE);
-      free(address);
-
-      assert(add_txout_to_transaction(generation_tx, generation_txout, txout_index) == 0);
+      perror("Failed to copy testnet genesis block template!");
     }
   }
 
-  return parameters_get_use_testnet() ? testnet_genesis_block : &mainnet_genesis_block;
+  if (g_mainnet_genesis_block == NULL)
+  {
+    if (copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
+      NUM_MAINNET_GENESIS_TXINS, NUM_MAINNET_GENESIS_TXOUTS,
+      mainnet_genesis_input_txs, mainnet_genesis_output_txs, &g_mainnet_genesis_block))
+    {
+      perror("Failed to copy mainnet genesis block template!");
+    }
+  }
+
+  return parameters_get_use_testnet() ? g_testnet_genesis_block : g_mainnet_genesis_block;
 }
