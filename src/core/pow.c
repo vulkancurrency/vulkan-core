@@ -39,15 +39,35 @@
 #include "crypto/bignum_util.h"
 #include "crypto/cryptoutil.h"
 
-static const char *pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+static const char *g_pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+BIGNUM *g_pow_limit = NULL;
 
-void get_pow_limit(BIGNUM *num)
+BIGNUM* get_pow_limit_bn(void)
 {
+  if (g_pow_limit != NULL)
+  {
+    return g_pow_limit;
+  }
+
   size_t out_size = 0;
-  uint8_t *pow_limit_bin = hex2bin(pow_limit_str, &out_size);
+  uint8_t *pow_limit_bin = hex2bin(g_pow_limit_str, &out_size);
   assert(out_size == HASH_SIZE);
-  BN_bin2bn(pow_limit_bin, HASH_SIZE, num);
+
+  g_pow_limit = BN_new();
+  BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit);
   free(pow_limit_bin);
+  return g_pow_limit;
+}
+
+void free_pow_limit_bn(void)
+{
+  if (g_pow_limit == NULL)
+  {
+    return;
+  }
+
+  BN_clear_free(g_pow_limit);
+  g_pow_limit = NULL;
 }
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
@@ -55,8 +75,7 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   BIGNUM *bn_target = BN_new();
   bignum_set_compact(bn_target, bits);
 
-  BIGNUM *pow_limit = BN_new();
-  get_pow_limit(pow_limit);
+  BIGNUM *pow_limit = get_pow_limit_bn();
 
   BIGNUM *hash_target = BN_new();
   BN_bin2bn(hash, HASH_SIZE, hash_target);
@@ -74,13 +93,11 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   }
 
   BN_clear_free(bn_target);
-  BN_clear_free(pow_limit);
   BN_clear_free(hash_target);
   return 1;
 
 pow_check_fail:
   BN_clear_free(bn_target);
-  BN_clear_free(pow_limit);
   BN_clear_free(hash_target);
   return 0;
 }

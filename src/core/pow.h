@@ -34,7 +34,8 @@
 
 VULKAN_BEGIN_DECL
 
-VULKAN_API void get_pow_limit(BIGNUM *num);
+VULKAN_API BIGNUM* get_pow_limit_bn(void);
+VULKAN_API void free_pow_limit_bn(void);
 VULKAN_API int check_proof_of_work(const uint8_t *hash, uint32_t bits);
 
 VULKAN_END_DECL
