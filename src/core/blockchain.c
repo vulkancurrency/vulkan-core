@@ -284,6 +284,7 @@ int load_blockchain_top_block(void)
 
       printf("\n");
       print_block(genesis_block);
+      printf("\n");
       print_block_transactions(genesis_block);
       return 1;
     }
