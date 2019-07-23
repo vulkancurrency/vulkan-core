@@ -128,7 +128,7 @@ VULKAN_API void print_txout(uint8_t txout_index, output_transaction_t *txout);
 VULKAN_API void print_transaction(transaction_t *tx);
 
 VULKAN_API int valid_transaction(transaction_t *tx);
-VULKAN_API int is_generation_tx(transaction_t *tx);
+VULKAN_API int is_coinbase_tx(transaction_t *tx);
 VULKAN_API int do_txins_reference_unspent_txouts(transaction_t *tx);
 
 VULKAN_API int compute_tx_id(uint8_t *tx_id, transaction_t *tx);

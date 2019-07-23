@@ -159,7 +159,7 @@ block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, bl
   block->cumulative_emission = cumulative_emission + block_reward;
 
   transaction_t *tx = NULL;
-  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
+  assert(construct_coinbase_tx(&tx, wallet, block_reward) == 0);
   assert(tx != NULL);
 
   assert(add_transaction_to_block(block, tx, 0) == 0);
@@ -184,7 +184,7 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
 
   // add genesis transactions
   transaction_t *tx = NULL;
-  assert(construct_generation_tx(&tx, wallet, block_reward) == 0);
+  assert(construct_coinbase_tx(&tx, wallet, block_reward) == 0);
   assert(tx != NULL);
   assert(add_transaction_to_block(genesis_block, tx, 0) == 0);
 

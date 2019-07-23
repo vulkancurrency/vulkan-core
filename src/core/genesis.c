@@ -40,9 +40,7 @@ static block_t *g_testnet_genesis_block = NULL;
 static block_t *g_mainnet_genesis_block = NULL;
 
 static int copy_genesis_block_template(const block_genesis_entry_t block_template,
-  const transaction_genesis_entry_t tx_template,
-  size_t num_txins, size_t num_txouts,
-  const input_transaction_genesis_entry_t input_txs_template[],
+  const transaction_genesis_entry_t tx_template, size_t num_txouts,
   const output_transaction_genesis_entry_t output_txs_template[],
   block_t **block_out)
 {
@@ -82,37 +80,6 @@ static int copy_genesis_block_template(const block_genesis_entry_t block_templat
     return 1;
   }
 
-  // add txins
-  for (uint32_t txin_index = 0; txin_index < num_txins; txin_index++)
-  {
-    const input_transaction_genesis_entry_t *txin_genesis_entry = &input_txs_template[txin_index];
-    assert(txin_genesis_entry != NULL);
-
-    input_transaction_t *generation_txin = make_txin();
-
-    uint8_t *transaction = hex2bin(txin_genesis_entry->transaction_str, &out_size);
-    assert(out_size == HASH_SIZE);
-    memcpy(generation_txin->transaction, transaction, HASH_SIZE);
-    free(transaction);
-
-    generation_txin->txout_index = txin_genesis_entry->txout_index;
-
-    uint8_t *signature = hex2bin(txin_genesis_entry->signature_str, &out_size);
-    assert(out_size == crypto_sign_BYTES);
-    memcpy(generation_txin->signature, signature, crypto_sign_BYTES);
-    free(signature);
-
-    uint8_t *public_key = hex2bin(txin_genesis_entry->public_key_str, &out_size);
-    assert(out_size == crypto_sign_PUBLICKEYBYTES);
-    memcpy(generation_txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
-    free(public_key);
-
-    if (add_txin_to_transaction(generation_tx, generation_txin, txin_index))
-    {
-      return 1;
-    }
-  }
-
   // add txouts
   for (uint32_t txout_index = 0; txout_index < num_txouts; txout_index++)
   {
@@ -145,8 +112,7 @@ block_t *get_genesis_block(void)
   if (g_testnet_genesis_block == NULL)
   {
     if (copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
-      NUM_TESTNET_GENESIS_TXINS, NUM_TESTNET_GENESIS_TXOUTS,
-      testnet_genesis_input_txs, testnet_genesis_output_txs, &g_testnet_genesis_block))
+      NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block))
     {
       perror("Failed to copy testnet genesis block template!");
     }
@@ -155,8 +121,7 @@ block_t *get_genesis_block(void)
   if (g_mainnet_genesis_block == NULL)
   {
     if (copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
-      NUM_MAINNET_GENESIS_TXINS, NUM_MAINNET_GENESIS_TXOUTS,
-      mainnet_genesis_input_txs, mainnet_genesis_output_txs, &g_mainnet_genesis_block))
+      NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block))
     {
       perror("Failed to copy mainnet genesis block template!");
     }

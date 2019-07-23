@@ -374,14 +374,9 @@ void print_transaction(transaction_t *tx)
 int valid_transaction(transaction_t *tx)
 {
   assert(tx != NULL);
-  if (tx->txin_count == 0 || tx->txins == NULL)
-  {
-    char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
-    LOG_DEBUG("Failed to validate transaction: %s, transaction has no txins!", tx_hash_str);
-    free(tx_hash_str);
-    return 0;
-  }
 
+  // we only check the txout count because if this transaction is a coinbase
+  // transaction, we can expect it to have zero tx inputs
   if (tx->txout_count == 0 || tx->txouts == NULL)
   {
     char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
@@ -405,11 +400,6 @@ int valid_transaction(transaction_t *tx)
     return 0;
   }
 
-  if (is_generation_tx(tx))
-  {
-    return 1;
-  }
-
   // check txins and txouts
   if (do_txins_reference_unspent_txouts(tx) == 0)
   {
@@ -425,6 +415,16 @@ int valid_transaction(transaction_t *tx)
 int do_txins_reference_unspent_txouts(transaction_t *tx)
 {
   assert(tx != NULL);
+  if (is_coinbase_tx(tx))
+  {
+    // coinbase transactions should never have any tx inputs
+    if (tx->txin_count > 0)
+    {
+      return 0;
+    }
+
+    return 1;
+  }
 
   uint32_t valid_txins = 0;
   uint64_t input_money = 0;
@@ -481,10 +481,10 @@ int do_txins_reference_unspent_txouts(transaction_t *tx)
   return (valid_txins == tx->txin_count) && (input_money == required_money);
 }
 
-int is_generation_tx(transaction_t *tx)
+int is_coinbase_tx(transaction_t *tx)
 {
   assert(tx != NULL);
-  return (tx->txin_count == 1 && tx->txout_count == 1 && compare_hash(tx->txins[0]->transaction, (uint8_t*)g_transaction_zero_hash));
+  return (tx->txin_count == 0 && tx->txout_count == 1 && tx->txins == NULL && tx->txouts != NULL);
 }
 
 int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
@@ -1011,7 +1011,7 @@ unspent_transaction_t* transaction_to_unspent_transaction(transaction_t *tx)
   unspent_transaction_t *unspent_tx = make_unspent_transaction();
   memcpy(unspent_tx->id, tx->id, HASH_SIZE);
 
-  unspent_tx->coinbase = is_generation_tx(tx);
+  unspent_tx->coinbase = is_coinbase_tx(tx);
   unspent_tx->unspent_txout_count = tx->txout_count;
 
   unspent_tx->unspent_txouts = malloc(sizeof(unspent_output_transaction_t) * tx->txout_count);

@@ -71,15 +71,6 @@ typedef struct BlockGenesisEntry
 } block_genesis_entry_t;
 
 // mainnnet genesis block info
-static const input_transaction_genesis_entry_t mainnet_genesis_input_txs[] = {
-  {
-    .transaction_str = "0000000000000000000000000000000000000000000000000000000000000000",
-    .txout_index = 0,
-    .signature_str = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    .public_key_str = "0000000000000000000000000000000000000000000000000000000000000000"
-  }
-};
-
 static const output_transaction_genesis_entry_t mainnet_genesis_output_txs[] = {
   {
     .amount = 0,
@@ -103,15 +94,6 @@ static const block_genesis_entry_t mainnet_genesis_block_template = {
 };
 
 // testnet genesis block info
-static const input_transaction_genesis_entry_t testnet_genesis_input_txs[] = {
-  {
-    .transaction_str = "0000000000000000000000000000000000000000000000000000000000000000",
-    .txout_index = 0,
-    .signature_str = "bc7378e8a8209ad68aa8ed04d731c383e7a21bbce45dd4cc62c734df38a1851e60e68e64456f7186f6fb168bf015b1b8a8aa5395faa1edc070bce9b5ecc1070f",
-    .public_key_str = "2ac12229b9d7255306b0ba77528fcc10ede74befd529c674dd5bb7d7c1358d73"
-  }
-};
-
 static const output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
   {
     .amount = 6103515625,
@@ -134,10 +116,7 @@ static const block_genesis_entry_t testnet_genesis_block_template = {
   .merkle_root_str = "88bdcdd586bb2a91b627dda8cf2414cdaf0190936a0ba088157096b5bfddbe52",
 };
 
-#define NUM_MAINNET_GENESIS_TXINS (sizeof(input_transaction_genesis_entry_t) / sizeof(mainnet_genesis_input_txs))
 #define NUM_MAINNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(mainnet_genesis_output_txs))
-
-#define NUM_TESTNET_GENESIS_TXINS (sizeof(input_transaction_genesis_entry_t) / sizeof(testnet_genesis_input_txs))
 #define NUM_TESTNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(testnet_genesis_output_txs))
 
 VULKAN_API block_t *get_genesis_block(void);

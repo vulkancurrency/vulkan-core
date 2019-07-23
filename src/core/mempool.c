@@ -140,7 +140,7 @@ int validate_and_add_tx_to_mempool_nolock(transaction_t *tx)
     return 1;
   }
 
-  if (is_generation_tx(tx))
+  if (is_coinbase_tx(tx))
   {
     return 1;
   }

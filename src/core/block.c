@@ -108,13 +108,13 @@ int valid_block(block_t *block)
   }
 
   // first TX must always be a generational TX.
-  transaction_t *generation_tx = block->transactions[0];
-  if (generation_tx == NULL)
+  transaction_t *coinbase_tx = block->transactions[0];
+  if (coinbase_tx == NULL)
   {
     return 0;
   }
 
-  if (is_generation_tx(generation_tx) == 0)
+  if (is_coinbase_tx(coinbase_tx) == 0)
   {
     return 0;
   }
@@ -137,7 +137,7 @@ int valid_block(block_t *block)
     }
 
     // check to see if we have more than one generational transaction
-    if (first_tx_index != 0 && is_generation_tx(first_tx))
+    if (first_tx_index != 0 && is_coinbase_tx(first_tx))
     {
       return 0;
     }

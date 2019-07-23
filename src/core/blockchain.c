@@ -1220,7 +1220,7 @@ int insert_block_nolock(block_t *block)
     assert(insert_tx_into_index_nolock(key, tx) == 0);
     assert(insert_tx_into_unspent_index_nolock(tx) == 0);
 
-    if (is_generation_tx(tx))
+    if (is_coinbase_tx(tx))
     {
       continue;
     }
