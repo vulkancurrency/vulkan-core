@@ -64,7 +64,7 @@ TEST can_insert_block(void)
   block->nonce = 123456;
   block->transaction_count = 0;
 
-  insert_block(block);
+  insert_block(block, 0);
   block_t *block_from_db = get_block_from_hash(block->hash);
 
   ASSERT_MEM_EQ(block->hash, block_hash, HASH_SIZE);
@@ -90,7 +90,7 @@ TEST inserting_block_into_blockchain_also_inserts_tx(void)
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block(block);
+  insert_block(block, 0);
   uint8_t *block_hash_from_tx = get_block_hash_from_tx_id(tx_id);
 
   if (block_hash_from_tx != NULL)
@@ -122,7 +122,7 @@ TEST can_get_block_from_tx_id(void)
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block(block);
+  insert_block(block, 0);
   block_t *block_from_db = get_block_from_tx_id(tx_id);
 
   if (block_from_db != NULL)
@@ -144,7 +144,7 @@ TEST can_delete_block_from_blockchain(void)
   block_t *block = make_block();
   memcpy(block->hash, block_hash, HASH_SIZE);
 
-  ASSERT(insert_block(block) == 0);
+  ASSERT(insert_block(block, 0) == 0);
   ASSERT(has_block_by_hash(block_hash) == 1);
   block_t *block_from_db = get_block_from_hash(block_hash);
   ASSERT(block_from_db != NULL);
@@ -174,7 +174,7 @@ TEST can_delete_tx_from_index(void)
   block->transactions = malloc(sizeof(transaction_t) * 1);
   block->transactions[0] = tx;
 
-  insert_block(block);
+  insert_block(block, 0);
   block_t *block_from_db = get_block_from_tx_id(tx_id);
 
   if (block_from_db != NULL)
@@ -310,7 +310,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block(block);
+  insert_block(block, 0);
   unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
@@ -345,7 +345,7 @@ TEST inserting_block_into_blockchain_marks_txouts_as_spent(void)
     block_2->transactions = malloc(sizeof(transaction_t) * 1);
     block_2->transactions[0] = tx_2;
 
-    insert_block(block_2);
+    insert_block(block_2, 0);
 
     unspent_transaction_t *unspent_tx_2 = get_unspent_tx_from_index(unspent_tx->id);
 
@@ -416,7 +416,7 @@ TEST tx_is_valid_only_if_it_has_money_unspent(void)
   block->transactions = malloc(sizeof(transaction_t) * block->transaction_count);
   block->transactions[0] = tx;
 
-  insert_block(block);
+  insert_block(block, 0);
   unspent_transaction_t *unspent_tx = get_unspent_tx_from_index(tx->id);
   free_block(block);
 
@@ -489,7 +489,7 @@ TEST can_backup_and_restore_blockchain(void)
   ASSERT(reset_blockchain() == 0);
 
   // add a block to the main blockchain
-  ASSERT(insert_block(block) == 0);
+  ASSERT(insert_block(block, 0) == 0);
   ASSERT(get_block_height() == 0);
   ASSERT(has_block_by_hash(block->hash) == 1);
 

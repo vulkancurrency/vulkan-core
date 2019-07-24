@@ -113,8 +113,11 @@ VULKAN_API uint32_t get_next_work_required(uint8_t *previous_hash);
 VULKAN_API int valid_block_median_timestamp(block_t *block);
 VULKAN_API int valid_block_emission(block_t *block, uint32_t block_height);
 
-VULKAN_API int insert_block_nolock(block_t *block);
-VULKAN_API int insert_block(block_t *block);
+VULKAN_API int update_unspent_transaction(uint8_t *block_hash, transaction_t *tx);
+VULKAN_API int update_unspent_transactions(block_t *block);
+
+VULKAN_API int insert_block_nolock(block_t *block, int update_unspent_txs);
+VULKAN_API int insert_block(block_t *block, int update_unspent_txs);
 
 VULKAN_API int validate_and_insert_block_nolock(block_t *block);
 VULKAN_API int validate_and_insert_block(block_t *block);
@@ -136,8 +139,8 @@ VULKAN_API uint8_t *get_block_hash_from_height(uint32_t height);
 VULKAN_API int has_block_by_hash(uint8_t *block_hash);
 VULKAN_API int has_block_by_height(uint32_t height);
 
-VULKAN_API int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx);
-VULKAN_API int insert_tx_into_index(uint8_t *block_key, transaction_t *tx);
+VULKAN_API int insert_tx_into_index_nolock(uint8_t *block_hash, transaction_t *tx);
+VULKAN_API int insert_tx_into_index(uint8_t *block_hash, transaction_t *tx);
 
 VULKAN_API int insert_tx_into_unspent_index_nolock(transaction_t *tx);
 VULKAN_API int insert_tx_into_unspent_index(transaction_t *tx);

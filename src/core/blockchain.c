@@ -1170,11 +1170,118 @@ int valid_block_emission(block_t *block, uint32_t block_height)
   return (txout->amount == expected_block_reward && block->cumulative_emission == expected_cumulative_emission);
 }
 
+int update_unspent_transaction(uint8_t *block_hash, transaction_t *tx)
+{
+  assert(tx != NULL);
+  if (insert_tx_into_index_nolock(block_hash, tx))
+  {
+    return 1;
+  }
+
+  if (insert_tx_into_unspent_index_nolock(tx))
+  {
+    assert(delete_tx_from_index_nolock(tx->id) == 0);
+    return 1;
+  }
+
+  if (is_coinbase_tx(tx))
+  {
+    return 0;
+  }
+
+  // mark unspent txouts as spent for current txins
+  for (uint32_t txin_index = 0; txin_index < tx->txin_count; txin_index++)
+  {
+    input_transaction_t *txin = tx->txins[txin_index];
+    assert(txin != NULL);
+
+    unspent_transaction_t *unspent_tx = get_unspent_tx_from_index_nolock(txin->transaction);
+    assert(unspent_tx != NULL);
+
+    if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
+      unspent_tx->unspent_txouts[txin->txout_index] == NULL)
+    {
+      char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+      LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was not found!", unspent_tx_hash_str);
+      free(unspent_tx_hash_str);
+      free_unspent_transaction(unspent_tx);
+      continue;
+    }
+    else
+    {
+      unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
+      assert(unspent_txout != NULL);
+
+      if (unspent_txout->spent == 1)
+      {
+        char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
+        LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was already spent!", unspent_tx_hash_str);
+        free(unspent_tx_hash_str);
+        free_unspent_transaction(unspent_tx);
+        continue;
+      }
+
+      unspent_txout->spent = 1;
+
+      // update the unspent txs
+      uint32_t spent_txs = 0;
+      for (uint32_t unspent_txout_index = 0; unspent_txout_index < unspent_tx->unspent_txout_count; unspent_txout_index++)
+      {
+        if (unspent_txout->spent == 1)
+        {
+          spent_txs++;
+        }
+      }
+
+      if (spent_txs == unspent_tx->unspent_txout_count)
+      {
+        if (delete_unspent_tx_from_index_nolock(unspent_tx->id))
+        {
+          goto update_unspent_tx_fail;
+        }
+      }
+      else
+      {
+        if (insert_unspent_tx_into_index_nolock(unspent_tx))
+        {
+          goto update_unspent_tx_fail;
+        }
+      }
+
+      free_unspent_transaction(unspent_tx);
+    }
+  }
+
+  return 0;
+
+update_unspent_tx_fail:
+  assert(delete_tx_from_index_nolock(tx->id) == 0);
+  assert(delete_unspent_tx_from_index_nolock(tx->id) == 0);
+  return 1;
+}
+
+int update_unspent_transactions(block_t *block)
+{
+  assert(block != NULL);
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *transaction = block->transactions[i];
+    assert(transaction != NULL);
+
+    if (update_unspent_transaction(block->hash, transaction))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 /* After we insert block into blockchain
  * Mark unspent txouts as spent for current txins
  * Add current TX w/ unspent txouts to unspent index
  */
-int insert_block_nolock(block_t *block)
+int insert_block_nolock(block_t *block, int update_unspent_txs)
 {
   assert(block != NULL);
   char *err = NULL;
@@ -1203,6 +1310,19 @@ int insert_block_nolock(block_t *block)
   uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
+  // attempt to update the unspent and spent txs
+  if (update_unspent_txs)
+  {
+    if (update_unspent_transactions(block))
+    {
+      char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
+      LOG_ERROR("Failed to insert block: %s into blockchain, could not update unspent transactions!", block_hash_str);
+      free(block_hash_str);
+      buffer_free(buffer);
+      return 1;
+    }
+  }
+
 #ifdef USE_LEVELDB
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
   leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)data, data_len, &err);
@@ -1212,80 +1332,11 @@ int insert_block_nolock(block_t *block)
 #endif
   buffer_free(buffer);
 
-  for (uint32_t i = 0; i < block->transaction_count; i++)
-  {
-    transaction_t *tx = block->transactions[i];
-    assert(tx != NULL);
-
-    assert(insert_tx_into_index_nolock(key, tx) == 0);
-    assert(insert_tx_into_unspent_index_nolock(tx) == 0);
-
-    if (is_coinbase_tx(tx))
-    {
-      continue;
-    }
-
-    // mark unspent txouts as spent for current txins
-    for (uint32_t txin_index = 0; txin_index < tx->txin_count; txin_index++)
-    {
-      input_transaction_t *txin = tx->txins[txin_index];
-      assert(txin != NULL);
-
-      unspent_transaction_t *unspent_tx = get_unspent_tx_from_index_nolock(txin->transaction);
-      assert(unspent_tx != NULL);
-
-      if (((unspent_tx->unspent_txout_count - 1) < txin->txout_index) ||
-        unspent_tx->unspent_txouts[txin->txout_index] == NULL)
-      {
-        char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
-        LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was not found!", unspent_tx_hash_str);
-        free(unspent_tx_hash_str);
-        free_unspent_transaction(unspent_tx);
-        continue;
-      }
-      else
-      {
-        unspent_output_transaction_t *unspent_txout = unspent_tx->unspent_txouts[txin->txout_index];
-        assert(unspent_txout != NULL);
-
-        if (unspent_txout->spent == 1)
-        {
-          char *unspent_tx_hash_str = bin2hex(unspent_tx->id, HASH_SIZE);
-          LOG_DEBUG("A txin tried to mark a unspent txout: %s as spent, but it was already spent!", unspent_tx_hash_str);
-          free(unspent_tx_hash_str);
-          free_unspent_transaction(unspent_tx);
-          continue;
-        }
-
-        unspent_txout->spent = 1;
-
-        uint32_t spent_txs = 0;
-        for (uint32_t j = 0; j < unspent_tx->unspent_txout_count; j++)
-        {
-          if (unspent_txout->spent == 1)
-          {
-            spent_txs++;
-          }
-        }
-
-        if (spent_txs == unspent_tx->unspent_txout_count)
-        {
-          delete_unspent_tx_from_index_nolock(unspent_tx->id);
-        }
-        else
-        {
-          insert_unspent_tx_into_index_nolock(unspent_tx);
-        }
-
-        free_unspent_transaction(unspent_tx);
-      }
-    }
-
-  }
-
   if (err != NULL)
   {
-    LOG_ERROR("Could not insert block into blockchain storage: %s!", err);
+    char *block_hash_str = bin2hex(block->hash, HASH_SIZE);
+    LOG_ERROR("Could not insert block: %s into blockchain storage: %s!", block_hash_str, err);
+    free(block_hash_str);
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
@@ -1315,11 +1366,11 @@ int insert_block_nolock(block_t *block)
   return 0;
 }
 
-int insert_block(block_t *block)
+int insert_block(block_t *block, int update_unspent_txs)
 {
   assert(block != NULL);
   mtx_lock(&g_blockchain_lock);
-  int result = insert_block_nolock(block);
+  int result = insert_block_nolock(block, update_unspent_txs);
   mtx_unlock(&g_blockchain_lock);
   return result;
 }
@@ -1401,7 +1452,7 @@ int validate_and_insert_block_nolock(block_t *block)
     free_block(current_block);
   }
 
-  return insert_block_nolock(block);
+  return insert_block_nolock(block, 1);
 
 validate_block_fail:
   // the current block can only be NULL if we're verifying the genesis block,
@@ -1649,9 +1700,9 @@ int has_block_by_height(uint32_t height)
   return 1;
 }
 
-int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx)
+int insert_tx_into_index_nolock(uint8_t *block_hash, transaction_t *tx)
 {
-  assert(block_key != NULL);
+  assert(block_hash != NULL);
   assert(tx != NULL);
 
   char *err = NULL;
@@ -1660,16 +1711,18 @@ int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx)
 
 #ifdef USE_LEVELDB
   leveldb_writeoptions_t *woptions = leveldb_writeoptions_create();
-  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
+  leveldb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_hash, HASH_SIZE, &err);
 #else
   rocksdb_writeoptions_t *woptions = rocksdb_writeoptions_create();
-  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_key, sizeof(key), &err);
+  rocksdb_put(g_blockchain_db, woptions, (char*)key, sizeof(key), (char*)block_hash, HASH_SIZE, &err);
 #endif
 
   if (err != NULL)
   {
+    char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
     char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
-    LOG_ERROR("Could not insert tx: %s into blockchain: %s!", tx_hash_str, err);
+    LOG_ERROR("Could not insert tx: %s into blockchain with block hash: %s: %s", tx_hash_str, block_hash_str, err);
+    free(block_hash_str);
     free(tx_hash_str);
 
   #ifdef USE_LEVELDB
@@ -1692,13 +1745,12 @@ int insert_tx_into_index_nolock(uint8_t *block_key, transaction_t *tx)
   return 0;
 }
 
-int insert_tx_into_index(uint8_t *block_key, transaction_t *tx)
+int insert_tx_into_index(uint8_t *block_hash, transaction_t *tx)
 {
-  assert(block_key != NULL);
+  assert(block_hash != NULL);
   assert(tx != NULL);
-
   mtx_lock(&g_blockchain_lock);
-  int result = insert_tx_into_index(block_key, tx);
+  int result = insert_tx_into_index(block_hash, tx);
   mtx_unlock(&g_blockchain_lock);
   return result;
 }
@@ -1844,39 +1896,59 @@ unspent_transaction_t *get_unspent_tx_from_index_nolock(uint8_t *tx_id)
   size_t read_len;
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
-  uint8_t *serialized_tx = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *serialized_unspent_tx = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *serialized_tx = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *serialized_unspent_tx = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #endif
 
-  if (err != NULL || serialized_tx == NULL)
+  if (err != NULL || serialized_unspent_tx == NULL)
   {
-  #ifdef USE_LEVELDB
-    leveldb_free(serialized_tx);
-    leveldb_free(err);
-    leveldb_readoptions_destroy(roptions);
-  #else
-    rocksdb_free(serialized_tx);
-    rocksdb_free(err);
-    rocksdb_readoptions_destroy(roptions);
-  #endif
-    return NULL;
+    goto deserialize_unspent_tx_fail;
   }
 
-  unspent_transaction_t *unspent_tx = unspent_transaction_from_serialized(serialized_tx, read_len);
-  assert(unspent_tx != NULL);
+  assert(read_len > 0);
+  buffer_t *buffer = buffer_init_data(0, serialized_unspent_tx, read_len);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
+
+  // deserialize the unspent tx
+  unspent_transaction_t *unspent_tx = NULL;
+  if (deserialize_unspent_transaction(buffer_iterator, &unspent_tx))
+  {
+    char *tx_id_str = bin2hex(tx_id, HASH_SIZE);
+    LOG_ERROR("Failed to deserialize unspent tx when trying to retrieve unspent tx from index with tx id: %s", tx_id_str);
+    free(tx_id_str);
+
+    buffer_iterator_free(buffer_iterator);
+    buffer_free(buffer);
+    goto deserialize_unspent_tx_fail;
+  }
+
+  buffer_iterator_free(buffer_iterator);
+  buffer_free(buffer);
 
 #ifdef USE_LEVELDB
-  leveldb_free(serialized_tx);
+  leveldb_free(serialized_unspent_tx);
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
 #else
-  rocksdb_free(serialized_tx);
+  rocksdb_free(serialized_unspent_tx);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 #endif
   return unspent_tx;
+
+deserialize_unspent_tx_fail:
+#ifdef USE_LEVELDB
+  leveldb_free(serialized_unspent_tx);
+  leveldb_free(err);
+  leveldb_readoptions_destroy(roptions);
+#else
+  rocksdb_free(serialized_unspent_tx);
+  rocksdb_free(err);
+  rocksdb_readoptions_destroy(roptions);
+#endif
+  return NULL;
 }
 
 unspent_transaction_t *get_unspent_tx_from_index(uint8_t *tx_id)
@@ -1898,36 +1970,32 @@ uint8_t *get_block_hash_from_tx_id_nolock(uint8_t *tx_id)
   size_t read_len;
 #ifdef USE_LEVELDB
   leveldb_readoptions_t *roptions = leveldb_readoptions_create();
-  uint8_t *block_key = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *block_hash = (uint8_t*)leveldb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #else
   rocksdb_readoptions_t *roptions = rocksdb_readoptions_create();
-  uint8_t *block_key = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
+  uint8_t *block_hash = (uint8_t*)rocksdb_get(g_blockchain_db, roptions, (char*)key, sizeof(key), &read_len, &err);
 #endif
 
-  if (err != NULL || block_key == NULL)
+  if (err != NULL || block_hash == NULL)
   {
   #ifdef USE_LEVELDB
-    leveldb_free(block_key);
+    leveldb_free(block_hash);
     leveldb_free(err);
     leveldb_readoptions_destroy(roptions);
   #else
-    rocksdb_free(block_key);
+    rocksdb_free(block_hash);
     rocksdb_free(err);
     rocksdb_readoptions_destroy(roptions);
   #endif
     return NULL;
   }
 
-  uint8_t *block_hash = malloc(HASH_SIZE);
-  assert(block_hash != NULL);
-  memcpy(block_hash, block_key + 1, HASH_SIZE);
-
 #ifdef USE_LEVELDB
-  leveldb_free(block_key);
+  leveldb_free(block_hash);
   leveldb_free(err);
   leveldb_readoptions_destroy(roptions);
 #else
-  rocksdb_free(block_key);
+  rocksdb_free(block_hash);
   rocksdb_free(err);
   rocksdb_readoptions_destroy(roptions);
 #endif
