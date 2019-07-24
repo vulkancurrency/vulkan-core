@@ -2103,6 +2103,33 @@ int delete_block_from_blockchain_nolock(uint8_t *block_hash)
   block_t *block = get_block_from_hash(block_hash);
   assert(block != NULL);
 
+  // delete the block's transactions including the unspent transactions
+  for (uint32_t i = 0; i < block->transaction_count; i++)
+  {
+    transaction_t *tx = block->transactions[i];
+    assert(tx != NULL);
+
+    if (delete_tx_from_index_nolock(tx->id))
+    {
+      char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+      char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+      LOG_ERROR("Could not delete block: %s from blockchain storage, could not remove unknown tx: %s from index!", block_hash_str, tx_hash_str);
+      free(block_hash_str);
+      free(tx_hash_str);
+      return 1;
+    }
+
+    if (delete_unspent_tx_from_index_nolock(tx->id))
+    {
+      char *block_hash_str = bin2hex(block_hash, HASH_SIZE);
+      char *tx_hash_str = bin2hex(tx->id, HASH_SIZE);
+      LOG_ERROR("Could not delete block: %s from blockchain storage, could not remove unknown tx: %s from unspent index!", block_hash_str, tx_hash_str);
+      free(block_hash_str);
+      free(tx_hash_str);
+      return 1;
+    }
+  }
+
   char *err = NULL;
   uint8_t key[HASH_SIZE + DB_KEY_PREFIX_SIZE_BLOCK];
   get_block_key(key, block_hash);
@@ -2130,16 +2157,6 @@ int delete_block_from_blockchain_nolock(uint8_t *block_hash)
     rocksdb_writeoptions_destroy(woptions);
   #endif
     return 0;
-  }
-
-  // now delete the block's transactions including the unspent transactions...
-  for (uint32_t i = 0; i < block->transaction_count; i++)
-  {
-    transaction_t *tx = block->transactions[i];
-    assert(tx != NULL);
-
-    assert(delete_tx_from_index_nolock(tx->id) == 0);
-    assert(delete_unspent_tx_from_index_nolock(tx->id) == 0);
   }
 
   free_block(block);
