@@ -249,7 +249,7 @@ int repair_blockchain(const char *blockchain_dir)
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
-    leveldb_free(options);
+    leveldb_options_destroy(options);
   #else
     rocksdb_free(err);
     rocksdb_options_destroy(options);
@@ -259,12 +259,11 @@ int repair_blockchain(const char *blockchain_dir)
 
 #ifdef USE_LEVELDB
   leveldb_free(err);
-  leveldb_free(options);
+  leveldb_options_destroy(options);
 #else
   rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
-
   LOG_INFO("Successfully repaired blockchain database: %s!", blockchain_dir);
   return 0;
 }
@@ -345,7 +344,7 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
-    leveldb_free(options);
+    leveldb_options_destroy(options);
   #else
     rocksdb_free(err);
     rocksdb_options_destroy(options);
@@ -355,7 +354,7 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
 
 #ifdef USE_LEVELDB
   leveldb_free(err);
-  leveldb_free(options);
+  leveldb_options_destroy(options);
 #else
   rocksdb_free(err);
   rocksdb_options_destroy(options);
@@ -382,8 +381,10 @@ int remove_blockchain(const char *blockchain_dir)
 
   const char *blockchain_backup_dir = get_blockchain_backup_dir(blockchain_dir);
 #ifdef USE_LEVELDB
+  leveldb_free(err);
   leveldb_destroy_db(options, blockchain_backup_dir, &err);
 #else
+  rocksdb_free(err);
   rocksdb_destroy_db(options, blockchain_backup_dir, &err);
 #endif
 
@@ -394,16 +395,20 @@ int remove_blockchain(const char *blockchain_dir)
   }
 
 #ifdef USE_LEVELDB
+  leveldb_free(err);
   leveldb_options_destroy(options);
 #else
+  rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
   return 0;
 
 remove_db_fail:
 #ifdef USE_LEVELDB
+  leveldb_free(err);
   leveldb_options_destroy(options);
 #else
+  rocksdb_free(err);
   rocksdb_options_destroy(options);
 #endif
   return 1;
@@ -464,7 +469,7 @@ int open_backup_blockchain(const char *blockchain_backup_dir)
 
   #ifdef USE_LEVELDB
     leveldb_free(err);
-    leveldb_free(options);
+    leveldb_options_destroy(options);
   #else
     rocksdb_free(err);
     rocksdb_options_destroy(options);
@@ -474,7 +479,7 @@ int open_backup_blockchain(const char *blockchain_backup_dir)
 
 #ifdef USE_LEVELDB
   leveldb_free(err);
-  leveldb_free(options);
+  leveldb_options_destroy(options);
 #else
   rocksdb_free(err);
   rocksdb_options_destroy(options);
