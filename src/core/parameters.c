@@ -85,7 +85,7 @@ const uint32_t parameters_get_pow_initial_difficulty_bits(void)
   return POW_INITIAL_DIFFICULTY_BITS;
 }
 
-const int parameters_get_pow_allow_min_difficulty_blocks(void)
+const int parameters_get_allow_min_difficulty_blocks(void)
 {
   return g_parameters_use_testnet ? 1 : 0;
 }
@@ -98,9 +98,4 @@ const uint16_t parameters_get_p2p_port(void)
 const uint16_t parameters_get_rpc_port(void)
 {
   return g_parameters_use_testnet ? TESTNET_RPC_PORT : RPC_PORT;
-}
-
-const int parameters_get_allow_min_difficulty_blocks(void)
-{
-  return g_parameters_use_testnet ? 1 : 0;
 }
