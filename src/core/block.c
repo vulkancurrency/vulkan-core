@@ -538,7 +538,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
   }
 
   uint8_t *previous_hash = NULL;
-  if (buffer_read_bytes(buffer_iterator, &previous_hash))
+  if (buffer_read_bytes32(buffer_iterator, &previous_hash))
   {
     goto deserialize_fail;
   }
@@ -547,7 +547,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
   free(previous_hash);
 
   uint8_t *hash = NULL;
-  if (buffer_read_bytes(buffer_iterator, &hash))
+  if (buffer_read_bytes32(buffer_iterator, &hash))
   {
     goto deserialize_fail;
   }
@@ -576,7 +576,7 @@ int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
   }
 
   uint8_t *merkle_root = NULL;
-  if (buffer_read_bytes(buffer_iterator, &merkle_root))
+  if (buffer_read_bytes32(buffer_iterator, &merkle_root))
   {
     goto deserialize_fail;
   }

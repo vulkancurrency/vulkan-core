@@ -117,7 +117,7 @@ int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator)
   if (packet->size > 0)
   {
     uint8_t *data = NULL;
-    if (buffer_read_bytes(buffer_iterator, &data))
+    if (buffer_read_bytes32(buffer_iterator, &data))
     {
       return 1;
     }
@@ -171,13 +171,13 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         char *version_number = NULL;
-        if (buffer_read_string(buffer_iterator, &version_number))
+        if (buffer_read_string32(buffer_iterator, &version_number))
         {
           goto packet_deserialize_fail;
         }
 
         char* version_name = NULL;
-        if (buffer_read_string(buffer_iterator, &version_name))
+        if (buffer_read_string32(buffer_iterator, &version_name))
         {
           free(version_number);
           goto packet_deserialize_fail;
@@ -223,7 +223,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         uint8_t *peerlist_data = NULL;
-        if (buffer_read_bytes(buffer_iterator, &peerlist_data))
+        if (buffer_read_bytes32(buffer_iterator, &peerlist_data))
         {
           goto packet_deserialize_fail;
         }
@@ -251,7 +251,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         uint8_t *hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &hash))
+        if (buffer_read_bytes32(buffer_iterator, &hash))
         {
           goto packet_deserialize_fail;
         }
@@ -266,7 +266,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_BY_HASH_REQ:
       {
         uint8_t *hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &hash))
+        if (buffer_read_bytes32(buffer_iterator, &hash))
         {
           goto packet_deserialize_fail;
         }
@@ -315,7 +315,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_BY_HEIGHT_RESP:
       {
         uint8_t *hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &hash))
+        if (buffer_read_bytes32(buffer_iterator, &hash))
         {
           goto packet_deserialize_fail;
         }
@@ -367,7 +367,7 @@ int deserialize_message(packet_t *packet, void **message)
         }
 
         uint8_t *block_data = NULL;
-        if (buffer_read_bytes(buffer_iterator, &block_data))
+        if (buffer_read_bytes32(buffer_iterator, &block_data))
         {
           goto packet_deserialize_fail;
         }
@@ -382,7 +382,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_REQ:
       {
         uint8_t *hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &hash))
+        if (buffer_read_bytes32(buffer_iterator, &hash))
         {
           goto packet_deserialize_fail;
         }
@@ -396,7 +396,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_NUM_TRANSACTIONS_RESP:
       {
         uint8_t *hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &hash))
+        if (buffer_read_bytes32(buffer_iterator, &hash))
         {
           goto packet_deserialize_fail;
         }
@@ -418,13 +418,13 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_REQ:
       {
         uint8_t *block_hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &block_hash))
+        if (buffer_read_bytes32(buffer_iterator, &block_hash))
         {
           goto packet_deserialize_fail;
         }
 
         uint8_t *tx_hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &tx_hash))
+        if (buffer_read_bytes32(buffer_iterator, &tx_hash))
         {
           free(block_hash);
           goto packet_deserialize_fail;
@@ -440,7 +440,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_HASH_RESP:
       {
         uint8_t *block_hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &block_hash))
+        if (buffer_read_bytes32(buffer_iterator, &block_hash))
         {
           goto packet_deserialize_fail;
         }
@@ -470,7 +470,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_REQ:
       {
         uint8_t *block_hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &block_hash))
+        if (buffer_read_bytes32(buffer_iterator, &block_hash))
         {
           goto packet_deserialize_fail;
         }
@@ -492,7 +492,7 @@ int deserialize_message(packet_t *packet, void **message)
     case PKT_TYPE_GET_BLOCK_TRANSACTION_BY_INDEX_RESP:
       {
         uint8_t *block_hash = NULL;
-        if (buffer_read_bytes(buffer_iterator, &block_hash))
+        if (buffer_read_bytes32(buffer_iterator, &block_hash))
         {
           goto packet_deserialize_fail;
         }

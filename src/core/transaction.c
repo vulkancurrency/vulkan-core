@@ -562,7 +562,7 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   assert(buffer_iterator != NULL);
   input_transaction_t *txin = make_txin();
   uint8_t *prev_tx_id = NULL;
-  if (buffer_read_bytes(buffer_iterator, &prev_tx_id))
+  if (buffer_read_bytes32(buffer_iterator, &prev_tx_id))
   {
     goto txin_deserialize_fail;
   }
@@ -577,7 +577,7 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   }
 
   uint8_t *signature = NULL;
-  if (buffer_read_bytes(buffer_iterator, &signature))
+  if (buffer_read_bytes32(buffer_iterator, &signature))
   {
     goto txin_deserialize_fail;
   }
@@ -586,7 +586,7 @@ int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **t
   free(signature);
 
   uint8_t *public_key = NULL;
-  if (buffer_read_bytes(buffer_iterator, &public_key))
+  if (buffer_read_bytes32(buffer_iterator, &public_key))
   {
     goto txin_deserialize_fail;
   }
@@ -649,7 +649,7 @@ int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t *
   }
 
   uint8_t *address = NULL;
-  if (buffer_read_bytes(buffer_iterator, &address))
+  if (buffer_read_bytes32(buffer_iterator, &address))
   {
     goto deserialize_txout_fail;
   }
@@ -749,7 +749,7 @@ int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **
   assert(buffer_iterator != NULL);
   transaction_t *tx = make_transaction();
   uint8_t *id = NULL;
-  if (buffer_read_bytes(buffer_iterator, &id))
+  if (buffer_read_bytes32(buffer_iterator, &id))
   {
     goto deserialize_fail;
   }
@@ -887,7 +887,7 @@ int deserialize_unspent_txout(buffer_iterator_t *buffer_iterator, unspent_output
   }
 
   uint8_t *address = NULL;
-  if (buffer_read_bytes(buffer_iterator, &address))
+  if (buffer_read_bytes32(buffer_iterator, &address))
   {
     goto deserialize_unspent_txout_fail;
   }
@@ -949,7 +949,7 @@ int deserialize_unspent_transaction(buffer_iterator_t *buffer_iterator, unspent_
   assert(buffer_iterator != NULL);
   unspent_transaction_t *unspent_tx = make_unspent_transaction();
   uint8_t *id = NULL;
-  if (buffer_read_bytes(buffer_iterator, &id))
+  if (buffer_read_bytes32(buffer_iterator, &id))
   {
     goto unspent_tx_deserialize_fail;
   }

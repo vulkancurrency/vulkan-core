@@ -285,7 +285,7 @@ int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
   return 0;
 }
 
-int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+int buffer_read_bytes32(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
@@ -298,14 +298,14 @@ int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
   return buffer_read(buffer_iterator, size, bytes);
 }
 
-int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string)
+int buffer_read_string32(buffer_iterator_t *buffer_iterator, char **string)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  return buffer_read_bytes(buffer_iterator, (uint8_t**)string);
+  return buffer_read_bytes32(buffer_iterator, (uint8_t**)string);
 }
 
-int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+int buffer_read_bytes64(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
@@ -318,9 +318,9 @@ int buffer_read_bytes_long(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
   return buffer_read(buffer_iterator, size, bytes);
 }
 
-int buffer_read_string_long(buffer_iterator_t *buffer_iterator, char **string)
+int buffer_read_string64(buffer_iterator_t *buffer_iterator, char **string)
 {
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
-  return buffer_read_bytes_long(buffer_iterator, (uint8_t**)string);
+  return buffer_read_bytes64(buffer_iterator, (uint8_t**)string);
 }

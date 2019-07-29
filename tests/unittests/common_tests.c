@@ -180,32 +180,32 @@ TEST pack_and_unpack_buffer(void)
   char *str = NULL;
   uint8_t *bytes = NULL;
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, msg, strlen(msg));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, msg1, strlen(msg1));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, msg2, strlen(msg2));
 
   // read bytes
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data, strlen(data));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data, strlen(data));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data1, strlen(data1));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data1, strlen(data1));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data2, strlen(data2));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data2, strlen(data2));
 
   ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);
@@ -373,22 +373,22 @@ TEST can_read_and_write_to_buffer_database(void)
   char *str = NULL;
   uint8_t *bytes = NULL;
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data, strlen(data));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data, strlen(data));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data1, strlen(data1));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data1, strlen(data1));
 
-  ASSERT(buffer_read_string(buffer_iterator, &str) == 0);
+  ASSERT(buffer_read_string32(buffer_iterator, &str) == 0);
   ASSERT_MEM_EQ(str, data2, strlen(data2));
 
-  ASSERT(buffer_read_bytes(buffer_iterator, &bytes) == 0);
+  ASSERT(buffer_read_bytes32(buffer_iterator, &bytes) == 0);
   ASSERT_MEM_EQ(bytes, data2, strlen(data2));
 
   ASSERT(buffer_get_remaining_size(buffer_iterator) == 0);

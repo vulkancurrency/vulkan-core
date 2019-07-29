@@ -97,7 +97,7 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   assert(buffer_iterator != NULL);
   wallet_t *wallet = make_wallet();
   uint8_t *secret_key = NULL;
-  if (buffer_read_bytes(buffer_iterator, &secret_key))
+  if (buffer_read_bytes32(buffer_iterator, &secret_key))
   {
     goto deserialize_fail;
   }
@@ -106,7 +106,7 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   free(secret_key);
 
   uint8_t *public_key = NULL;
-  if (buffer_read_bytes(buffer_iterator, &public_key))
+  if (buffer_read_bytes32(buffer_iterator, &public_key))
   {
     goto deserialize_fail;
   }
@@ -115,7 +115,7 @@ int deserialize_wallet(buffer_iterator_t *buffer_iterator, wallet_t **wallet_out
   free(public_key);
 
   uint8_t *address = NULL;
-  if (buffer_read_bytes(buffer_iterator, &address))
+  if (buffer_read_bytes32(buffer_iterator, &address))
   {
     goto deserialize_fail;
   }
