@@ -124,7 +124,7 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
   assert(buffer != NULL);
   assert(other_buffer != NULL);
   buffer_clear(buffer);
-  if (buffer_realloc(buffer, other_buffer->size))
+  if (buffer_resize(buffer, other_buffer->size))
   {
     return 1;
   }
@@ -172,7 +172,7 @@ void buffer_free(buffer_t *buffer)
   free(buffer);
 }
 
-int buffer_realloc(buffer_t *buffer, size_t size)
+int buffer_resize(buffer_t *buffer, size_t size)
 {
   assert(buffer != NULL);
   assert(size > 0);
@@ -196,7 +196,7 @@ int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
 {
   assert(buffer != NULL);
   assert(size > 0);
-  if (buffer_realloc(buffer, size))
+  if (buffer_resize(buffer, size))
   {
     return 1;
   }
@@ -209,7 +209,7 @@ int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
 int buffer_write_uint8(buffer_t *buffer, uint8_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 1))
+  if (buffer_resize(buffer, 1))
   {
     return 1;
   }
@@ -222,7 +222,7 @@ int buffer_write_uint8(buffer_t *buffer, uint8_t value)
 int buffer_write_int8(buffer_t *buffer, int8_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 1))
+  if (buffer_resize(buffer, 1))
   {
     return 1;
   }
@@ -235,7 +235,7 @@ int buffer_write_int8(buffer_t *buffer, int8_t value)
 int buffer_write_uint16(buffer_t *buffer, uint16_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 2))
+  if (buffer_resize(buffer, 2))
   {
     return 1;
   }
@@ -248,7 +248,7 @@ int buffer_write_uint16(buffer_t *buffer, uint16_t value)
 int buffer_write_int16(buffer_t *buffer, int16_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 2))
+  if (buffer_resize(buffer, 2))
   {
     return 1;
   }
@@ -261,7 +261,7 @@ int buffer_write_int16(buffer_t *buffer, int16_t value)
 int buffer_write_uint32(buffer_t *buffer, uint32_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 4))
+  if (buffer_resize(buffer, 4))
   {
     return 1;
   }
@@ -274,7 +274,7 @@ int buffer_write_uint32(buffer_t *buffer, uint32_t value)
 int buffer_write_int32(buffer_t *buffer, int32_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 4))
+  if (buffer_resize(buffer, 4))
   {
     return 1;
   }
@@ -287,7 +287,7 @@ int buffer_write_int32(buffer_t *buffer, int32_t value)
 int buffer_write_uint64(buffer_t *buffer, uint64_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 8))
+  if (buffer_resize(buffer, 8))
   {
     return 1;
   }
@@ -300,7 +300,7 @@ int buffer_write_uint64(buffer_t *buffer, uint64_t value)
 int buffer_write_int64(buffer_t *buffer, int64_t value)
 {
   assert(buffer != NULL);
-  if (buffer_realloc(buffer, 8))
+  if (buffer_resize(buffer, 8))
   {
     return 1;
   }

@@ -60,7 +60,7 @@ VULKAN_API int buffer_compare(buffer_t *buffer, buffer_t *other_buffer);
 VULKAN_API void buffer_clear(buffer_t *buffer);
 VULKAN_API void buffer_free(buffer_t *buffer);
 
-VULKAN_API int buffer_realloc(buffer_t *buffer, size_t size);
+VULKAN_API int buffer_resize(buffer_t *buffer, size_t size);
 VULKAN_API int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);
 
 VULKAN_API int buffer_write_uint8(buffer_t *buffer, uint8_t value);
