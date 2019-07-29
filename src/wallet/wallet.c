@@ -69,17 +69,17 @@ int serialize_wallet(buffer_t *buffer, wallet_t *wallet)
   assert(buffer != NULL);
   assert(wallet != NULL);
 
-  if (buffer_write_bytes(buffer, wallet->secret_key, crypto_sign_SECRETKEYBYTES))
+  if (buffer_write_bytes32(buffer, wallet->secret_key, crypto_sign_SECRETKEYBYTES))
   {
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, wallet->public_key, crypto_sign_PUBLICKEYBYTES))
+  if (buffer_write_bytes32(buffer, wallet->public_key, crypto_sign_PUBLICKEYBYTES))
   {
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, wallet->address, ADDRESS_SIZE))
+  if (buffer_write_bytes32(buffer, wallet->address, ADDRESS_SIZE))
   {
     return 1;
   }

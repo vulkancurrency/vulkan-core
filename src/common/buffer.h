@@ -75,9 +75,9 @@ VULKAN_API int buffer_write_int32(buffer_t *buffer, int32_t value);
 VULKAN_API int buffer_write_uint64(buffer_t *buffer, uint64_t value);
 VULKAN_API int buffer_write_int64(buffer_t *buffer, int64_t value);
 
-VULKAN_API int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size);
-VULKAN_API int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size);
-VULKAN_API int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t size);
-VULKAN_API int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size);
+VULKAN_API int buffer_write_bytes32(buffer_t *buffer, const uint8_t *bytes, uint32_t size);
+VULKAN_API int buffer_write_string32(buffer_t *buffer, const char *string, uint32_t size);
+VULKAN_API int buffer_write_bytes64(buffer_t *buffer, const uint8_t *bytes, uint64_t size);
+VULKAN_API int buffer_write_string64(buffer_t *buffer, const char *string, uint64_t size);
 
 VULKAN_END_DECL

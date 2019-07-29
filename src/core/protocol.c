@@ -90,7 +90,7 @@ int serialize_packet(buffer_t *buffer, packet_t *packet)
 
   if (packet->size > 0)
   {
-    if (buffer_write_bytes(buffer, packet->data, packet->size))
+    if (buffer_write_bytes32(buffer, packet->data, packet->size))
     {
       return 1;
     }
@@ -571,12 +571,12 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
           goto serialize_message_fail;
         }
 
-        if (buffer_write_string(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION)))
+        if (buffer_write_string32(buffer, APPLICATION_VERSION, strlen(APPLICATION_VERSION)))
         {
           goto serialize_message_fail;
         }
 
-        if (buffer_write_string(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME)))
+        if (buffer_write_string32(buffer, APPLICATION_RELEASE_NAME, strlen(APPLICATION_RELEASE_NAME)))
         {
           goto serialize_message_fail;
         }
@@ -613,7 +613,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
           goto serialize_message_fail;
         }
 
-        if (buffer_write_bytes(buffer, peerlist_data, peerlist_data_size))
+        if (buffer_write_bytes32(buffer, peerlist_data, peerlist_data_size))
         {
           goto serialize_message_fail;
         }
@@ -635,7 +635,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
           goto serialize_message_fail;
         }
 
-        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -646,7 +646,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *hash = va_arg(args, uint8_t*);
         assert(hash != NULL);
 
-        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -686,7 +686,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(hash != NULL);
         assert(block != NULL);
 
-        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -732,7 +732,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
           goto serialize_message_fail;
         }
 
-        if (buffer_write_bytes(buffer, block_data, block_data_size))
+        if (buffer_write_bytes32(buffer, block_data, block_data_size))
         {
           goto serialize_message_fail;
         }
@@ -743,7 +743,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint8_t *hash = va_arg(args, uint8_t*);
         assert(hash != NULL);
 
-        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -755,7 +755,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint64_t num_transactions = va_arg(args, uint64_t);
         assert(hash != NULL);
 
-        if (buffer_write_bytes(buffer, hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -774,12 +774,12 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(tx_hash != NULL);
 
-        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, block_hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
 
-        if (buffer_write_bytes(buffer, tx_hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, tx_hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -794,7 +794,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(transaction != NULL);
 
-        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, block_hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -816,7 +816,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         uint32_t tx_index = va_arg(args, uint32_t);
         assert(block_hash != NULL);
 
-        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, block_hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }
@@ -836,7 +836,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         assert(block_hash != NULL);
         assert(transaction != NULL);
 
-        if (buffer_write_bytes(buffer, block_hash, HASH_SIZE))
+        if (buffer_write_bytes32(buffer, block_hash, HASH_SIZE))
         {
           goto serialize_message_fail;
         }

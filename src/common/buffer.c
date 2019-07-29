@@ -310,7 +310,7 @@ int buffer_write_int64(buffer_t *buffer, int64_t value)
   return 0;
 }
 
-int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
+int buffer_write_bytes32(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
 {
   assert(buffer != NULL);
   assert(bytes != NULL);
@@ -328,15 +328,15 @@ int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
   return 0;
 }
 
-int buffer_write_string(buffer_t *buffer, const char *string, uint32_t size)
+int buffer_write_string32(buffer_t *buffer, const char *string, uint32_t size)
 {
   assert(buffer != NULL);
   assert(string != NULL);
   assert(size > 0);
-  return buffer_write_bytes(buffer, (const uint8_t*)string, size);
+  return buffer_write_bytes32(buffer, (const uint8_t*)string, size);
 }
 
-int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t size)
+int buffer_write_bytes64(buffer_t *buffer, const uint8_t *bytes, uint64_t size)
 {
   assert(buffer != NULL);
   assert(bytes != NULL);
@@ -354,10 +354,10 @@ int buffer_write_bytes_long(buffer_t *buffer, const uint8_t *bytes, uint64_t siz
   return 0;
 }
 
-int buffer_write_string_long(buffer_t *buffer, const char *string, uint64_t size)
+int buffer_write_string64(buffer_t *buffer, const char *string, uint64_t size)
 {
   assert(buffer != NULL);
   assert(string != NULL);
   assert(size > 0);
-  return buffer_write_bytes_long(buffer, (const uint8_t*)string, size);
+  return buffer_write_bytes64(buffer, (const uint8_t*)string, size);
 }

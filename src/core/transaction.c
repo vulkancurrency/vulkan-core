@@ -534,7 +534,7 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
   assert(buffer != NULL);
   assert(txin != NULL);
 
-  if (buffer_write_bytes(buffer, txin->transaction, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, txin->transaction, HASH_SIZE))
   {
     return 1;
   }
@@ -544,12 +544,12 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, txin->signature, crypto_sign_BYTES))
+  if (buffer_write_bytes32(buffer, txin->signature, crypto_sign_BYTES))
   {
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, txin->public_key, crypto_sign_PUBLICKEYBYTES))
+  if (buffer_write_bytes32(buffer, txin->public_key, crypto_sign_PUBLICKEYBYTES))
   {
     return 1;
   }
@@ -630,7 +630,7 @@ int serialize_txout(buffer_t *buffer, output_transaction_t *txout)
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, txout->address, ADDRESS_SIZE))
+  if (buffer_write_bytes32(buffer, txout->address, ADDRESS_SIZE))
   {
     return 1;
   }
@@ -702,7 +702,7 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
   assert(buffer != NULL);
   assert(tx != NULL);
 
-  if (buffer_write_bytes(buffer, tx->id, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, tx->id, HASH_SIZE))
   {
     return 1;
   }
@@ -864,7 +864,7 @@ int serialize_unspent_txout(buffer_t *buffer, unspent_output_transaction_t *unsp
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, unspent_txout->address, ADDRESS_SIZE))
+  if (buffer_write_bytes32(buffer, unspent_txout->address, ADDRESS_SIZE))
   {
     return 1;
   }
@@ -914,7 +914,7 @@ int serialize_unspent_transaction(buffer_t *buffer, unspent_transaction_t *unspe
   assert(buffer != NULL);
   assert(unspent_tx != NULL);
 
-  if (buffer_write_bytes(buffer, unspent_tx->id, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, unspent_tx->id, HASH_SIZE))
   {
     return 1;
   }

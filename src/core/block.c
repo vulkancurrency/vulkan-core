@@ -483,12 +483,12 @@ int serialize_block(buffer_t *buffer, block_t *block)
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, block->previous_hash, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, block->previous_hash, HASH_SIZE))
   {
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, block->hash, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, block->hash, HASH_SIZE))
   {
     return 1;
   }
@@ -513,7 +513,7 @@ int serialize_block(buffer_t *buffer, block_t *block)
     return 1;
   }
 
-  if (buffer_write_bytes(buffer, block->merkle_root, HASH_SIZE))
+  if (buffer_write_bytes32(buffer, block->merkle_root, HASH_SIZE))
   {
     return 1;
   }

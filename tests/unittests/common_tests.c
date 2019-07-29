@@ -152,26 +152,26 @@ TEST pack_and_unpack_buffer(void)
 
   // write messages
   const char *msg = "Hello World!";
-  ASSERT(buffer_write_string(buffer, msg, strlen(msg)) == 0);
+  ASSERT(buffer_write_string32(buffer, msg, strlen(msg)) == 0);
 
   const char *msg1 = "The quick brown fox jumps over the lazy dog.";
-  ASSERT(buffer_write_string(buffer, msg1, strlen(msg1)) == 0);
+  ASSERT(buffer_write_string32(buffer, msg1, strlen(msg1)) == 0);
 
   const char *msg2 = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890";
-  ASSERT(buffer_write_string(buffer, msg2, strlen(msg2)) == 0);
+  ASSERT(buffer_write_string32(buffer, msg2, strlen(msg2)) == 0);
 
   // write bytes
   const char *data = "\x00\x01\x12Hello World!";
-  ASSERT(buffer_write_string(buffer, data, 16) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data, 16) == 0);
+  ASSERT(buffer_write_string32(buffer, data, 16) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data, 16) == 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  ASSERT(buffer_write_string(buffer, data1, 64) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data1, 64) == 0);
+  ASSERT(buffer_write_string32(buffer, data1, 64) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data1, 64) == 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  ASSERT(buffer_write_string(buffer, data2, 128) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data2, 128) ==0);
+  ASSERT(buffer_write_string32(buffer, data2, 128) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data2, 128) ==0);
 
   // unpack
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
@@ -305,8 +305,8 @@ TEST pack_and_unpack_buffer(void)
   buffer_t *buffer_cmp2 = buffer_init();
 
   const char *some_string_str = "Hello World from buffer cmp test!";
-  ASSERT(buffer_write_string(buffer_cmp1, some_string_str, strlen(some_string_str)) == 0);
-  ASSERT(buffer_write_string(buffer_cmp2, some_string_str, strlen(some_string_str)) == 0);
+  ASSERT(buffer_write_string32(buffer_cmp1, some_string_str, strlen(some_string_str)) == 0);
+  ASSERT(buffer_write_string32(buffer_cmp2, some_string_str, strlen(some_string_str)) == 0);
   ASSERT(buffer_compare(buffer_cmp1, buffer_cmp1) == 1);
 
   // compare buffer iterators
@@ -337,16 +337,16 @@ TEST can_read_and_write_to_buffer_database(void)
   ASSERT(buffer != NULL);
 
   const char *data = "\x00\x01\x12Hello World!";
-  ASSERT(buffer_write_string(buffer, data, 16) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data, 16) == 0);
+  ASSERT(buffer_write_string32(buffer, data, 16) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data, 16) == 0);
 
   const char *data1 = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x44The quick brown fox jumps over the lazy dog.\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab";
-  ASSERT(buffer_write_string(buffer, data1, 64) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data1, 64) == 0);
+  ASSERT(buffer_write_string32(buffer, data1, 64) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data1, 64) == 0);
 
   const char *data2 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0fe\xff\x0cb\x02\x003\x00\x01\x02\x03\x04\x05\x06\x07\x08\x62THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890\x00\x00\x01\x00\x00\x00\x00\xfe\x00\xab\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf4";
-  ASSERT(buffer_write_string(buffer, data2, 128) == 0);
-  ASSERT(buffer_write_bytes(buffer, (uint8_t*)data2, 128) == 0);
+  ASSERT(buffer_write_string32(buffer, data2, 128) == 0);
+  ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data2, 128) == 0);
 
   // write the buffer
   if (buffer_database_write_buffer(buffer_database, buffer, &err))
