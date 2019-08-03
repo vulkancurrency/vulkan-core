@@ -67,9 +67,18 @@ VULKAN_API int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *va
 VULKAN_API uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value);
 VULKAN_API int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value);
 
+VULKAN_API int buffer_read_bytes8(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
+VULKAN_API int buffer_read_string8(buffer_iterator_t *buffer_iterator, char **string);
+
+VULKAN_API int buffer_read_bytes16(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
+VULKAN_API int buffer_read_string16(buffer_iterator_t *buffer_iterator, char **string);
+
 VULKAN_API int buffer_read_bytes32(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
 VULKAN_API int buffer_read_string32(buffer_iterator_t *buffer_iterator, char **string);
+
 VULKAN_API int buffer_read_bytes64(buffer_iterator_t *buffer_iterator, uint8_t **bytes);
 VULKAN_API int buffer_read_string64(buffer_iterator_t *buffer_iterator, char **string);
+
+VULKAN_API int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string);
 
 VULKAN_END_DECL

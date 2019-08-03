@@ -34,6 +34,14 @@
 
 VULKAN_BEGIN_DECL
 
+typedef enum BufferStringTypes
+{
+  BUFFER_STRING8 = 0,
+  BUFFER_STRING16,
+  BUFFER_STRING32,
+  BUFFER_STRING64
+} buffer_string_type_t;
+
 typedef struct Buffer
 {
   uint8_t *data;
@@ -75,9 +83,19 @@ VULKAN_API int buffer_write_int32(buffer_t *buffer, int32_t value);
 VULKAN_API int buffer_write_uint64(buffer_t *buffer, uint64_t value);
 VULKAN_API int buffer_write_int64(buffer_t *buffer, int64_t value);
 
+VULKAN_API int buffer_write_bytes8(buffer_t *buffer, const uint8_t *bytes, uint8_t size);
+VULKAN_API int buffer_write_string8(buffer_t *buffer, const char *string, uint8_t size);
+
+VULKAN_API int buffer_write_bytes16(buffer_t *buffer, const uint8_t *bytes, uint16_t size);
+VULKAN_API int buffer_write_string16(buffer_t *buffer, const char *string, uint16_t size);
+
 VULKAN_API int buffer_write_bytes32(buffer_t *buffer, const uint8_t *bytes, uint32_t size);
 VULKAN_API int buffer_write_string32(buffer_t *buffer, const char *string, uint32_t size);
+
 VULKAN_API int buffer_write_bytes64(buffer_t *buffer, const uint8_t *bytes, uint64_t size);
 VULKAN_API int buffer_write_string64(buffer_t *buffer, const char *string, uint64_t size);
+
+VULKAN_API int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, size_t size);
+VULKAN_API int buffer_write_string(buffer_t *buffer, const char *string, size_t size);
 
 VULKAN_END_DECL

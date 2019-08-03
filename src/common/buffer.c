@@ -310,6 +310,58 @@ int buffer_write_int64(buffer_t *buffer, int64_t value)
   return 0;
 }
 
+int buffer_write_bytes8(buffer_t *buffer, const uint8_t *bytes, uint8_t size)
+{
+  assert(buffer != NULL);
+  assert(bytes != NULL);
+  assert(size > 0);
+  if (buffer_write_uint8(buffer, size))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, bytes, size))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+int buffer_write_string8(buffer_t *buffer, const char *string, uint8_t size)
+{
+  assert(buffer != NULL);
+  assert(string != NULL);
+  assert(size > 0);
+  return buffer_write_bytes8(buffer, (const uint8_t*)string, size);
+}
+
+int buffer_write_bytes16(buffer_t *buffer, const uint8_t *bytes, uint16_t size)
+{
+  assert(buffer != NULL);
+  assert(bytes != NULL);
+  assert(size > 0);
+  if (buffer_write_uint16(buffer, size))
+  {
+    return 1;
+  }
+
+  if (buffer_write(buffer, bytes, size))
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+int buffer_write_string16(buffer_t *buffer, const char *string, uint16_t size)
+{
+  assert(buffer != NULL);
+  assert(string != NULL);
+  assert(size > 0);
+  return buffer_write_bytes16(buffer, (const uint8_t*)string, size);
+}
+
 int buffer_write_bytes32(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
 {
   assert(buffer != NULL);
@@ -360,4 +412,45 @@ int buffer_write_string64(buffer_t *buffer, const char *string, uint64_t size)
   assert(string != NULL);
   assert(size > 0);
   return buffer_write_bytes64(buffer, (const uint8_t*)string, size);
+}
+
+int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, size_t size)
+{
+  assert(buffer != NULL);
+  assert(bytes != NULL);
+  assert(size > 0);
+  if (size <= UINT8_MAX)
+  {
+    buffer_write_uint8(buffer, BUFFER_STRING8);
+    buffer_write_bytes8(buffer, bytes, size);
+    return 0;
+  }
+  else if (size > UINT8_MAX && size <= UINT16_MAX)
+  {
+    buffer_write_uint8(buffer, BUFFER_STRING16);
+    buffer_write_bytes16(buffer, bytes, size);
+    return 0;
+  }
+  else if (size > UINT16_MAX && size <= UINT32_MAX)
+  {
+    buffer_write_uint8(buffer, BUFFER_STRING32);
+    buffer_write_bytes32(buffer, bytes, size);
+    return 0;
+  }
+  else if (size > UINT32_MAX && size <= UINT64_MAX)
+  {
+    buffer_write_uint8(buffer, BUFFER_STRING64);
+    buffer_write_bytes64(buffer, bytes, size);
+    return 0;
+  }
+
+  return 1;
+}
+
+int buffer_write_string(buffer_t *buffer, const char *string, size_t size)
+{
+  assert(buffer != NULL);
+  assert(string != NULL);
+  assert(size > 0);
+  return buffer_write_bytes(buffer, (const uint8_t*)string, size);
 }

@@ -285,6 +285,46 @@ int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
   return 0;
 }
 
+int buffer_read_bytes8(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  uint8_t size = 0;
+  if (buffer_read_uint8(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, bytes);
+}
+
+int buffer_read_string8(buffer_iterator_t *buffer_iterator, char **string)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  return buffer_read_bytes8(buffer_iterator, (uint8_t**)string);
+}
+
+int buffer_read_bytes16(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  uint16_t size = 0;
+  if (buffer_read_uint16(buffer_iterator, &size))
+  {
+    return 1;
+  }
+
+  return buffer_read(buffer_iterator, size, bytes);
+}
+
+int buffer_read_string16(buffer_iterator_t *buffer_iterator, char **string)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  return buffer_read_bytes16(buffer_iterator, (uint8_t**)string);
+}
+
 int buffer_read_bytes32(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
 {
   assert(buffer_iterator != NULL);
@@ -323,4 +363,38 @@ int buffer_read_string64(buffer_iterator_t *buffer_iterator, char **string)
   assert(buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
   return buffer_read_bytes64(buffer_iterator, (uint8_t**)string);
+}
+
+int buffer_read_bytes(buffer_iterator_t *buffer_iterator, uint8_t **bytes)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  uint8_t string_type = 0;
+  if (buffer_read_uint8(buffer_iterator, &string_type))
+  {
+    return 1;
+  }
+
+  switch (string_type)
+  {
+    case BUFFER_STRING8:
+      return buffer_read_bytes8(buffer_iterator, bytes);
+    case BUFFER_STRING16:
+      return buffer_read_bytes16(buffer_iterator, bytes);
+    case BUFFER_STRING32:
+      return buffer_read_bytes32(buffer_iterator, bytes);
+    case BUFFER_STRING64:
+      return buffer_read_bytes64(buffer_iterator, bytes);
+    default:
+      return 1;
+  }
+
+  return 0;
+}
+
+int buffer_read_string(buffer_iterator_t *buffer_iterator, char **string)
+{
+  assert(buffer_iterator != NULL);
+  assert(buffer_iterator->buffer != NULL);
+  return buffer_read_bytes(buffer_iterator, (uint8_t**)string);
 }
