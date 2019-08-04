@@ -139,6 +139,8 @@ int buffer_read_uint8(buffer_iterator_t *buffer_iterator, uint8_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 1;
   *value = (uint8_t)buffer->data[offset];
@@ -155,6 +157,8 @@ int buffer_read_int8(buffer_iterator_t *buffer_iterator, int8_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 1;
   *value = (int8_t)buffer->data[offset];
@@ -171,6 +175,8 @@ int buffer_read_uint16(buffer_iterator_t *buffer_iterator, uint16_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
   *value = (uint16_t)buffer->data[offset + 1] << 8 |
@@ -189,6 +195,8 @@ int buffer_read_int16(buffer_iterator_t *buffer_iterator, int16_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 2;
   *value = (int16_t)buffer->data[offset + 1] << 8 |
@@ -207,6 +215,8 @@ int buffer_read_uint32(buffer_iterator_t *buffer_iterator, uint32_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 4;
   *value = (uint32_t)buffer->data[offset + 3] << 24 |
@@ -227,6 +237,8 @@ int buffer_read_int32(buffer_iterator_t *buffer_iterator, int32_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 4;
   *value = (int32_t)buffer->data[offset + 3] << 24 |
@@ -247,6 +259,8 @@ uint64_t buffer_read_uint64(buffer_iterator_t *buffer_iterator, uint64_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 8;
   *value = (uint64_t)buffer->data[offset + 7] << 56 |
@@ -271,6 +285,8 @@ int buffer_read_int64(buffer_iterator_t *buffer_iterator, int64_t *value)
   }
 
   const buffer_t *buffer = buffer_iterator->buffer;
+  assert(buffer != NULL);
+
   size_t offset = buffer_iterator->offset;
   buffer_iterator->offset += 8;
   *value = (int64_t)buffer->data[offset + 7] << 56 |
