@@ -52,13 +52,13 @@ void buffer_database_free(buffer_database_t *buffer_database)
   free(buffer_database);
 }
 
-void buffer_set_mode(buffer_database_t *buffer_database, const char *mode)
+void buffer_database_set_mode(buffer_database_t *buffer_database, const char *mode)
 {
   assert(buffer_database != NULL);
   buffer_database->mode = mode;
 }
 
-const char* buffer_get_mode(buffer_database_t *buffer_database)
+const char* buffer_database_get_mode(buffer_database_t *buffer_database)
 {
   assert(buffer_database != NULL);
   return buffer_database->mode;
