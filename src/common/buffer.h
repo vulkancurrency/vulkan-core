@@ -49,12 +49,14 @@ typedef struct Buffer
   size_t offset;
 } buffer_t;
 
+VULKAN_API buffer_t* buffer_make(void);
+
 VULKAN_API buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size);
 VULKAN_API buffer_t* buffer_init_size(size_t offset, size_t size);
 VULKAN_API buffer_t* buffer_init_offset(size_t offset);
 VULKAN_API buffer_t* buffer_init(void);
 
-VULKAN_API void buffer_set_data(buffer_t *buffer, const uint8_t *data, size_t size);
+VULKAN_API int buffer_set_data(buffer_t *buffer, const uint8_t *data, size_t size);
 VULKAN_API uint8_t* buffer_get_data(buffer_t *buffer);
 
 VULKAN_API void buffer_set_size(buffer_t *buffer, size_t size);
@@ -70,6 +72,7 @@ VULKAN_API void buffer_free(buffer_t *buffer);
 
 VULKAN_API int buffer_resize(buffer_t *buffer, size_t size);
 VULKAN_API int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size);
+VULKAN_API int buffer_pad_data(buffer_t *buffer, size_t size);
 
 VULKAN_API int buffer_write_uint8(buffer_t *buffer, uint8_t value);
 VULKAN_API int buffer_write_int8(buffer_t *buffer, int8_t value);

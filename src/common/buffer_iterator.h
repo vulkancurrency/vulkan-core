@@ -39,6 +39,8 @@ typedef struct BufferIterator
   size_t offset;
 } buffer_iterator_t;
 
+VULKAN_API buffer_iterator_t* buffer_iterator_make(void);
+
 VULKAN_API buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer);
 VULKAN_API void buffer_iterator_free(buffer_iterator_t *buffer_iterator);
 

@@ -30,17 +30,29 @@
 #include "buffer_iterator.h"
 #include "buffer.h"
 
-buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer)
+buffer_iterator_t* buffer_iterator_make(void)
 {
-  assert(buffer != NULL);
   buffer_iterator_t *buffer_iterator = malloc(sizeof(buffer_iterator_t));
   if (buffer_iterator == NULL)
   {
     return NULL;
   }
 
-  buffer_iterator->buffer = buffer;
+  buffer_iterator->buffer = NULL;
   buffer_iterator->offset = 0;
+  return buffer_iterator;
+}
+
+buffer_iterator_t* buffer_iterator_init(const buffer_t *buffer)
+{
+  assert(buffer != NULL);
+  buffer_iterator_t *buffer_iterator = buffer_iterator_make();
+  if (buffer_iterator == NULL)
+  {
+    return NULL;
+  }
+
+  buffer_iterator->buffer = buffer;
   return buffer_iterator;
 }
 

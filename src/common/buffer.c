@@ -31,7 +31,7 @@
 
 #include "buffer.h"
 
-buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size)
+buffer_t* buffer_make(void)
 {
   buffer_t *buffer = malloc(sizeof(buffer_t));
   if (buffer == NULL)
@@ -40,25 +40,31 @@ buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size)
   }
 
   buffer->data = NULL;
+  buffer->size = 0;
+  buffer->offset = 0;
+  return buffer;
+}
+
+buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size)
+{
+  buffer_t *buffer = buffer_make();
+  if (buffer == NULL)
+  {
+    return NULL;
+  }
+
   if (size > 0)
   {
-    buffer->data = malloc(size);
-    if (buffer->data == NULL)
-    {
-      return NULL;
-    }
-
     if (data != NULL)
     {
-      memcpy(buffer->data, data, size);
+      buffer_set_data(buffer, data, size);
     }
     else
     {
-      memset(buffer->data, 0, size);
+      buffer_pad_data(buffer, size);
     }
   }
 
-  buffer->size = size;
   buffer->offset = offset;
   return buffer;
 }
@@ -79,14 +85,13 @@ buffer_t* buffer_init(void)
   return buffer_init_offset(0);
 }
 
-void buffer_set_data(buffer_t *buffer, const uint8_t *data, size_t size)
+int buffer_set_data(buffer_t *buffer, const uint8_t *data, size_t size)
 {
   assert(buffer != NULL);
   assert(data != NULL);
   assert(size > 0);
-  memcpy(buffer->data, data, size);
-  buffer->size = size;
-  buffer->offset = 0;
+  buffer_clear(buffer);
+  return buffer_write(buffer, data, size);
 }
 
 uint8_t* buffer_get_data(buffer_t *buffer)
@@ -123,14 +128,11 @@ int buffer_copy(buffer_t *buffer, buffer_t *other_buffer)
 {
   assert(buffer != NULL);
   assert(other_buffer != NULL);
-  buffer_clear(buffer);
-  if (buffer_resize(buffer, other_buffer->size))
+  if (buffer_set_data(buffer, other_buffer->data, other_buffer->size))
   {
     return 1;
   }
 
-  memcpy(buffer->data, other_buffer->data, other_buffer->size);
-  buffer->size = other_buffer->size;
   buffer->offset = other_buffer->offset;
   return 0;
 }
@@ -161,14 +163,7 @@ void buffer_clear(buffer_t *buffer)
 void buffer_free(buffer_t *buffer)
 {
   assert(buffer != NULL);
-  if (buffer->data != NULL)
-  {
-    free(buffer->data);
-    buffer->data = NULL;
-  }
-
-  buffer->size = 0;
-  buffer->offset = 0;
+  buffer_clear(buffer);
   free(buffer);
 }
 
@@ -204,6 +199,17 @@ int buffer_write(buffer_t *buffer, const uint8_t *data, size_t size)
   memcpy(buffer->data + buffer->offset, data, size);
   buffer->offset += size;
   return 0;
+}
+
+int buffer_pad_data(buffer_t *buffer, size_t size)
+{
+  assert(buffer != NULL);
+  assert(size > 0);
+
+  // create a NULL byte array of specified size
+  uint8_t padded_data[size];
+  memset(padded_data, 0, size);
+  return buffer_write(buffer, padded_data, size);
 }
 
 int buffer_write_uint8(buffer_t *buffer, uint8_t value)
