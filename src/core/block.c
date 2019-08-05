@@ -220,7 +220,7 @@ int valid_merkle_root(block_t *block)
     return 0;
   }
 
-  return compare_merkle_hash(merkle_root, block->merkle_root);
+  return compare_hash(merkle_root, block->merkle_root);
 }
 
 int compute_merkle_root(uint8_t *merkle_root, block_t *block)
@@ -385,7 +385,7 @@ int compare_block(block_t *block, block_t *other_block)
     block->nonce == other_block->nonce &&
     block->bits == other_block->bits &&
     block->cumulative_emission == other_block->cumulative_emission &&
-    compare_merkle_hash(block->merkle_root, other_block->merkle_root) &&
+    compare_hash(block->merkle_root, other_block->merkle_root) &&
     block->transaction_count == other_block->transaction_count);
 
   if (result == 0)

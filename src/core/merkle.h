@@ -51,7 +51,6 @@ VULKAN_API merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node
 VULKAN_API int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes);
 VULKAN_API int collapse_merkle_nodes(merkle_node_t **nodes, uint32_t *num_of_nodes);
 
-VULKAN_API int compare_merkle_hash(uint8_t *merkle_hash, uint8_t *other_merkle_hash);
 VULKAN_API int compare_merkle_node(merkle_node_t *merkle_node, merkle_node_t *other_merkle_node);
 
 VULKAN_API void free_merkle_tree(merkle_tree_t *tree);
