@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "common/util.h"
+#include "common/vulkan.h"
 
 #include "block.h"
 #include "transaction.h"
@@ -111,20 +112,18 @@ block_t *get_genesis_block(void)
   // from the genesis block template to the new genesis block
   if (g_testnet_genesis_block == NULL)
   {
-    if (copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
-      NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block))
-    {
-      perror("Failed to copy testnet genesis block template!");
-    }
+    int result = copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
+      NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block);
+
+    ASSERT_WITH_MESS(result == 0, "Failed to copy testnet genesis block template!");
   }
 
   if (g_mainnet_genesis_block == NULL)
   {
-    if (copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
-      NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block))
-    {
-      perror("Failed to copy mainnet genesis block template!");
-    }
+    int result = copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
+      NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block);
+
+    ASSERT_WITH_MESS(result == 0, "Failed to copy mainnet genesis block template!");
   }
 
   return parameters_get_use_testnet() ? g_testnet_genesis_block : g_mainnet_genesis_block;

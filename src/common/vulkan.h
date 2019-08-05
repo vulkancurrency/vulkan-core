@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -57,3 +58,5 @@
 #ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
+
+#define ASSERT_WITH_MESS(condition, message) { assert(condition && message); }
