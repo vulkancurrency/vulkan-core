@@ -326,7 +326,7 @@ int deserialize_peerlist_from_storage(buffer_t *buffer)
   return 0;
 }
 
-int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+int broadcast_data_to_peers_nolock(net_connection_t *net_connection, const uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
   assert(data != NULL);
@@ -350,7 +350,7 @@ int broadcast_data_to_peers_nolock(net_connection_t *net_connection, uint8_t *da
   return 0;
 }
 
-int broadcast_data_to_peers(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+int broadcast_data_to_peers(net_connection_t *net_connection, const uint8_t *data, size_t data_len)
 {
   mtx_lock(&g_p2p_lock);
   int result = broadcast_data_to_peers_nolock(net_connection, data, data_len);

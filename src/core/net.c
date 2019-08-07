@@ -229,13 +229,13 @@ int close_net_connection(net_connection_t *net_connection)
   return 0;
 }
 
-int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+int broadcast_data(net_connection_t *net_connection, const uint8_t *data, size_t data_len)
 {
   assert(g_net_connection != NULL);
   return broadcast_data_to_peers(g_net_connection, data, data_len);
 }
 
-int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+int send_data(net_connection_t *net_connection, const uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
   mtx_lock(&g_net_lock);
@@ -291,12 +291,12 @@ static void process_incoming_packet(net_connection_t *net_connection, buffer_ite
   size_t remaining_data_len = buffer_get_remaining_size(buffer_iterator);
   if (remaining_data_len > 0)
   {
-    uint8_t *remaining_data = buffer_get_remaining_data(buffer_iterator);
+    const uint8_t *remaining_data = buffer_get_remaining_data(buffer_iterator);
     data_received(net_connection, remaining_data, remaining_data_len);
   }
 }
 
-void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len)
+void data_received(net_connection_t *net_connection, const uint8_t *data, size_t data_len)
 {
   assert(net_connection != NULL);
   assert(data != NULL);

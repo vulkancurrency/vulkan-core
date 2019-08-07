@@ -101,9 +101,9 @@ VULKAN_API int remove_net_connection(net_connection_t *net_connection);
 VULKAN_API int close_net_connection(net_connection_t *net_connection);
 VULKAN_API int connect_net_to_seeds(void);
 
-VULKAN_API int broadcast_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-VULKAN_API int send_data(net_connection_t *net_connection, uint8_t *data, size_t data_len);
-VULKAN_API void data_received(net_connection_t *net_connection, uint8_t *data, size_t data_len);
+VULKAN_API int broadcast_data(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
+VULKAN_API int send_data(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
+VULKAN_API void data_received(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
 
 VULKAN_API void setup_net_port_mapping(uint16_t port);
 VULKAN_API int connect_net_to_peer(const char *address, uint16_t port);
