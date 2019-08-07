@@ -101,4 +101,7 @@ VULKAN_API int buffer_write_string64(buffer_t *buffer, const char *string, uint6
 VULKAN_API int buffer_write_bytes(buffer_t *buffer, const uint8_t *bytes, size_t size);
 VULKAN_API int buffer_write_string(buffer_t *buffer, const char *string, size_t size);
 
+VULKAN_API int buffer_write_padded_bytes(buffer_t *buffer, const uint8_t *bytes, size_t size, size_t padded_size);
+VULKAN_API int buffer_write_padded_string(buffer_t *buffer, const char *string, size_t size, size_t padded_size);
+
 VULKAN_END_DECL
