@@ -57,11 +57,17 @@ buffer_t* buffer_init_data(size_t offset, const uint8_t *data, size_t size)
   {
     if (data != NULL)
     {
-      buffer_set_data(buffer, data, size);
+      if (buffer_set_data(buffer, data, size))
+      {
+        return NULL;
+      }
     }
     else
     {
-      buffer_pad_data(buffer, size);
+      if (buffer_pad_data(buffer, size))
+      {
+        return NULL;
+      }
     }
   }
 
@@ -459,4 +465,37 @@ int buffer_write_string(buffer_t *buffer, const char *string, size_t size)
   assert(string != NULL);
   assert(size > 0);
   return buffer_write_bytes(buffer, (const uint8_t*)string, size);
+}
+
+int buffer_write_padded_bytes(buffer_t *buffer, const uint8_t *bytes, size_t size, size_t padded_size)
+{
+  assert(buffer != NULL);
+  assert(bytes != NULL);
+  assert(size > 0);
+  assert(padded_size > 0);
+  if (size > padded_size)
+  {
+    return 1;
+  }
+
+  buffer_write(buffer, bytes, size);
+  size_t remaining_padded_size = padded_size - size;
+  if (remaining_padded_size > 0)
+  {
+    if (buffer_pad_data(buffer, remaining_padded_size))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+int buffer_write_padded_string(buffer_t *buffer, const char *string, size_t size, size_t padded_size)
+{
+  assert(buffer != NULL);
+  assert(string != NULL);
+  assert(size > 0);
+  assert(padded_size > 0);
+  return buffer_write_padded_bytes(buffer, (const uint8_t*)string, size, padded_size);
 }
