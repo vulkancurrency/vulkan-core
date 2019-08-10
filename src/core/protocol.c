@@ -868,7 +868,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
       return 1;
   }
 
-  uint8_t *data = buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   packet_t *serialized_packet = make_packet();
@@ -2271,7 +2271,7 @@ int handle_send_packet(net_connection_t *net_connection, int broadcast, uint32_t
   }
 
   free_packet(packet);
-  uint8_t *data = buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   size_t data_len = buffer_get_size(buffer);
 
   int result = 0;

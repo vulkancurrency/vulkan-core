@@ -1312,7 +1312,7 @@ int insert_block_nolock(block_t *block, int update_unspent_txs)
     return 1;
   }
 
-  uint8_t *data = buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
   // attempt to update the unspent and spent txs
@@ -1780,7 +1780,7 @@ int insert_tx_into_unspent_index_nolock(transaction_t *tx)
 
   free_unspent_transaction(unspent_tx);
 
-  uint8_t *data = buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
 #ifdef USE_LEVELDB
@@ -1844,7 +1844,7 @@ int insert_unspent_tx_into_index_nolock(unspent_transaction_t *unspent_tx)
     return 1;
   }
 
-  uint8_t *data = buffer_get_data(buffer);
+  const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
 #ifdef USE_LEVELDB
