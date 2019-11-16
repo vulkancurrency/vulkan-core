@@ -23,33 +23,41 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-set(UNITTEST_SOURCE_FILES
-  block_tests.c
-  blockchain_tests.c
-  common_tests.c
-  crypto_tests.c
-  main.c
-  mempool_tests.c
-  merkle_tests.c
-  protocol_tests.c
-  transaction_tests.c
+set(VULKAN_COMMON_SOURCE_FILES
+  argparse.c
+  buffer_database.c
+  buffer_iterator.c
+  buffer.c
+  logger.c
+  mongoose.c
+  queue.c
+  task.c
+  tinycthread.c
+  util.c
+  vec.c
 )
 
-set(UNITTEST_HEADER_FILES
-
+set(VULKAN_COMMON_HEADER_FILES
+  argparse.h
+  buffer_database.h
+  buffer_iterator.h
+  buffer.h
+  greatest.h
+  int_util.h
+  logger.h
+  mongoose.h
+  queue.h
+  task.h
+  tinycthread.h
+  util.h
+  vulkan.h
 )
 
-add_executable(tests ${UNITTEST_SOURCE_FILES}
-                     ${UNITTEST_HEADER_FILES})
+add_library(common ${VULKAN_COMMON_SOURCE_FILES}
+                   ${VULKAN_COMMON_HEADER_FILES})
 
-if (SODIUM_FOUND)
- if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-   target_link_libraries(tests ${SODIUM_LIBRARY_DEBUG})
- else()
-   target_link_libraries(tests ${SODIUM_LIBRARY_RELEASE})
- endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-else()
- target_link_libraries(tests libsodium_Cmake)
+if (UNIX)
+ target_link_libraries(common ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-target_link_libraries(tests common core crypto miner wallet)
+target_link_libraries(common collectc)

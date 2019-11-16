@@ -23,33 +23,72 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-set(UNITTEST_SOURCE_FILES
-  block_tests.c
-  blockchain_tests.c
-  common_tests.c
-  crypto_tests.c
-  main.c
-  mempool_tests.c
-  merkle_tests.c
-  protocol_tests.c
-  transaction_tests.c
+set(VULKAN_CORE_SOURCE_FILES
+  block.c
+  blockchain.c
+  checkpoints.c
+  genesis.c
+  mempool.c
+  merkle.c
+  net.c
+  p2p.c
+  parameters.c
+  pow.c
+  protocol.c
+  transaction_builder.c
+  transaction.c
 )
 
-set(UNITTEST_HEADER_FILES
-
+set(VULKAN_CORE_HEADER_FILES
+  block.h
+  blockchain.h
+  checkpoint_data.h
+  checkpoints.h
+  genesis.h
+  mempool.h
+  merkle.h
+  net.h
+  p2p.h
+  parameters.h
+  pow.h
+  protocol.h
+  seed_nodes.h
+  transaction_builder.h
+  transaction.h
+  version.h
 )
 
-add_executable(tests ${UNITTEST_SOURCE_FILES}
-                     ${UNITTEST_HEADER_FILES})
+add_library(core ${VULKAN_CORE_SOURCE_FILES}
+                 ${VULKAN_CORE_HEADER_FILES})
 
 if (SODIUM_FOUND)
  if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-   target_link_libraries(tests ${SODIUM_LIBRARY_DEBUG})
+   target_link_libraries(core ${SODIUM_LIBRARY_DEBUG})
  else()
-   target_link_libraries(tests ${SODIUM_LIBRARY_RELEASE})
+   target_link_libraries(core ${SODIUM_LIBRARY_RELEASE})
  endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 else()
- target_link_libraries(tests libsodium_Cmake)
+ target_link_libraries(core libsodium_Cmake)
 endif()
 
-target_link_libraries(tests common core crypto miner wallet)
+if (WITH_LEVELDB)
+ if (LEVELDB_FOUND)
+   target_link_libraries(core ${LEVELDB_LIBRARIES})
+ else()
+   target_link_libraries(core leveldb)
+ endif()
+elseif (WITH_LMDB)
+ target_link_libraries(core lmdb)
+elseif (WITH_ROCKSDB)
+ if (ROCKSDB_FOUND)
+   target_link_libraries(core ${ROCKSDB_LIBRARIES})
+ else()
+   target_link_libraries(core rocksdb)
+ endif()
+endif()
+
+if (BUILD_STATIC)
+  target_link_libraries(core libminiupnpc-static)
+else()
+  target_link_libraries(core libminiupnpc)
+endif()

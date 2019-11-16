@@ -23,33 +23,39 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-set(UNITTEST_SOURCE_FILES
-  block_tests.c
-  blockchain_tests.c
-  common_tests.c
-  crypto_tests.c
-  main.c
-  mempool_tests.c
-  merkle_tests.c
-  protocol_tests.c
-  transaction_tests.c
+set(VULKAN_WALLET_SOURCE_FILES
+  wallet.c
 )
 
-set(UNITTEST_HEADER_FILES
-
+set(VULKAN_WALLET_HEADER_FILES
+  wallet.h
 )
 
-add_executable(tests ${UNITTEST_SOURCE_FILES}
-                     ${UNITTEST_HEADER_FILES})
+add_library(wallet ${VULKAN_WALLET_SOURCE_FILES}
+                   ${VULKAN_WALLET_HEADER_FILES})
 
 if (SODIUM_FOUND)
  if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-   target_link_libraries(tests ${SODIUM_LIBRARY_DEBUG})
+   target_link_libraries(wallet ${SODIUM_LIBRARY_DEBUG})
  else()
-   target_link_libraries(tests ${SODIUM_LIBRARY_RELEASE})
+   target_link_libraries(wallet ${SODIUM_LIBRARY_RELEASE})
  endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 else()
- target_link_libraries(tests libsodium_Cmake)
+ target_link_libraries(wallet libsodium_Cmake)
 endif()
 
-target_link_libraries(tests common core crypto miner wallet)
+if (WITH_LEVELDB)
+ if (LEVELDB_FOUND)
+   target_link_libraries(wallet ${LEVELDB_LIBRARIES})
+ else()
+   target_link_libraries(wallet leveldb)
+ endif()
+elseif (WITH_LMDB)
+ target_link_libraries(wallet lmdb)
+elseif (WITH_ROCKSDB)
+ if (ROCKSDB_FOUND)
+   target_link_libraries(wallet ${ROCKSDB_LIBRARIES})
+ else()
+   target_link_libraries(wallet rocksdb)
+ endif()
+endif()
