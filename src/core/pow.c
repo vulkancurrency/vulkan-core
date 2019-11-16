@@ -53,6 +53,7 @@ BIGNUM* get_pow_limit_bn(void)
 
   g_pow_limit = BN_new();
   BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit);
+  assert(!BN_is_zero(g_pow_limit));
   free(pow_limit_bin);
   return g_pow_limit;
 }
@@ -85,7 +86,7 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
   }
 
   // check proof of work
-  if (BN_cmp(hash_target, bn_target) == 1)
+  if (BN_cmp(hash_target, bn_target) == -1)
   {
     goto pow_check_fail;
   }
