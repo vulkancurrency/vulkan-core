@@ -237,6 +237,7 @@ static int worker_mining_thread(void *arg)
     LOG_INFO("Found genesis block: %s", block_hash_str);
     free(block_hash_str);
 
+    printf("\n");
     print_block(genesis_block);
     print_block_transactions(genesis_block);
     free_block(genesis_block);
