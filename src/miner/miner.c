@@ -351,6 +351,11 @@ int start_mining(void)
   g_miner_initialized = 1;
   g_miner_worker_status_task = add_task(report_worker_mining_status, WORKER_STATUS_TASK_DELAY);
 
+  if (g_miner_generate_genesis)
+  {
+    LOG_INFO("Creating new genesis block, this make take a while...");
+  }
+
   for (uint16_t i = 0; i < g_num_worker_threads; i++)
   {
     miner_worker_t *worker = init_worker();
