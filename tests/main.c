@@ -35,6 +35,7 @@
 #include "core/blockchain.h"
 #include "core/mempool.h"
 #include "core/p2p.h"
+#include "core/pow.h"
 
 static const char *g_blockchain_dir = "blockchain_tests";
 
