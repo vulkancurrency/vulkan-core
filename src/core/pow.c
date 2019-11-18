@@ -38,50 +38,51 @@
 #include "crypto/cryptoutil.h"
 
 static const char *g_pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-BIGNUM *g_pow_limit = NULL;
+BIGNUM *g_pow_limit_bn = NULL;
 
-BIGNUM* get_pow_limit_bn(void)
+int init_pow(void)
 {
-  if (g_pow_limit != NULL)
+  if (g_pow_limit_bn != NULL)
   {
-    return g_pow_limit;
+    return 1;
   }
 
   size_t out_size = 0;
   uint8_t *pow_limit_bin = hex2bin(g_pow_limit_str, &out_size);
   assert(out_size == HASH_SIZE);
 
-  g_pow_limit = BN_new();
-  BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit);
-  assert(!BN_is_zero(g_pow_limit));
+  g_pow_limit_bn = BN_new();
+  BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit_bn);
+  assert(!BN_is_zero(g_pow_limit_bn));
   free(pow_limit_bin);
-  return g_pow_limit;
+  return 0;
 }
 
-void free_pow_limit_bn(void)
+int deinit_pow(void)
 {
-  if (g_pow_limit == NULL)
+  if (g_pow_limit_bn == NULL)
   {
-    return;
+    return 1;
   }
 
-  BN_clear_free(g_pow_limit);
-  g_pow_limit = NULL;
+  BN_clear_free(g_pow_limit_bn);
+  g_pow_limit_bn = NULL;
+  return 0;
 }
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
 {
+  assert(!BN_is_zero(g_pow_limit_bn));
+
   BIGNUM *bn_target = BN_new();
   bignum_set_compact(bn_target, bits);
-
-  BIGNUM *pow_limit = get_pow_limit_bn();
 
   BIGNUM *hash_target = BN_new();
   BN_bin2bn(hash, HASH_SIZE, hash_target);
   assert(!BN_is_zero(hash_target));
 
   // check range
-  if (BN_is_zero(bn_target) || BN_cmp(bn_target, pow_limit) == 1)
+  if (BN_is_zero(bn_target) || BN_cmp(bn_target, g_pow_limit_bn) == 1)
   {
     goto pow_check_fail;
   }

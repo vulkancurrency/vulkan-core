@@ -148,6 +148,9 @@ TEST bignum_compact_tests(void)
 
 TEST pow_validation_tests(void)
 {
+  // initialize the proof of work limit bignum
+  ASSERT(init_pow() == 0);
+
   size_t out_size = 0;
   uint8_t *hash = hex2bin("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f", &out_size);
   ASSERT(out_size == HASH_SIZE);
@@ -184,7 +187,7 @@ TEST pow_validation_tests(void)
   ASSERT(check_proof_of_work(hash, 0x1715a35c));
   free(hash);
 
-  free_pow_limit_bn();
+  ASSERT(deinit_pow() == 0);
   PASS();
 }
 

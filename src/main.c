@@ -39,6 +39,7 @@
 #include "core/block.h"
 #include "core/blockchain.h"
 #include "core/parameters.h"
+#include "core/pow.h"
 #include "core/mempool.h"
 #include "core/net.h"
 #include "core/p2p.h"
@@ -344,6 +345,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (init_pow())
+  {
+    return 1;
+  }
+
   if (parse_commandline_args(argc, argv))
   {
     return 1;
@@ -442,6 +448,11 @@ int main(int argc, char **argv)
   }
 
   if (logger_close())
+  {
+    return 1;
+  }
+
+  if (deinit_pow())
   {
     return 1;
   }
