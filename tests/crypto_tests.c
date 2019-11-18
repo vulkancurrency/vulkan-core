@@ -148,13 +148,42 @@ TEST bignum_compact_tests(void)
 
 TEST pow_validation_tests(void)
 {
-  ASSERT(check_proof_of_work("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f", 0x1d00ffff));
-  ASSERT(check_proof_of_work("000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506", 0x1b04864c));
-  ASSERT(check_proof_of_work("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf", 0x1a05db8b));
-  ASSERT(check_proof_of_work("000000000000000082ccf8f1557c5d40b21edabb18d2d691cfbf87118bac7254", 0x1900896c));
-  ASSERT(check_proof_of_work("000000000000000004ec466ce4732fe6f1ed1cddc2ed4b328fff5224276e3f6f", 0x1806b99f));
-  ASSERT(check_proof_of_work("00000000000000000024fb37364cbf81fd49cc2d51c09c75c35433c3a1945d04", 0x18009645));
-  ASSERT(check_proof_of_work("00000000000000000007316856900e76b4f7a9139cfbfba89842c8d196cd5f91", 0x1715a35c));
+  size_t out_size = 0;
+  uint8_t *hash = hex2bin("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1d00ffff));
+  free(hash);
+
+  hash = hex2bin("000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1b04864c));
+  free(hash);
+
+  hash = hex2bin("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1a05db8b));
+  free(hash);
+
+  hash = hex2bin("000000000000000082ccf8f1557c5d40b21edabb18d2d691cfbf87118bac7254", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1900896c));
+  free(hash);
+
+  hash = hex2bin("000000000000000004ec466ce4732fe6f1ed1cddc2ed4b328fff5224276e3f6f", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1806b99f));
+  free(hash);
+
+  hash = hex2bin("00000000000000000024fb37364cbf81fd49cc2d51c09c75c35433c3a1945d04", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x18009645));
+  free(hash);
+
+  hash = hex2bin("00000000000000000007316856900e76b4f7a9139cfbfba89842c8d196cd5f91", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(check_proof_of_work(hash, 0x1715a35c));
+  free(hash);
+
   free_pow_limit_bn();
   PASS();
 }
