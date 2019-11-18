@@ -56,6 +56,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if (init_pow())
+  {
+    return 1;
+  }
+
   if (taskmgr_init())
   {
     return 1;
@@ -106,6 +111,11 @@ int main(int argc, char **argv)
   }
 
   if (taskmgr_shutdown())
+  {
+    return 1;
+  }
+
+  if (deinit_pow())
   {
     return 1;
   }
