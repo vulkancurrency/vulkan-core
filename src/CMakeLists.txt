@@ -33,6 +33,7 @@ add_executable(${PROJECT_NAME} main.c)
 
 # link all of the vulkan libraries:
 target_link_libraries(core common crypto miner wallet)
+target_link_libraries(miner common core wallet)
 target_link_libraries(wallet common core crypto)
 
 # link the vulkan executable:
