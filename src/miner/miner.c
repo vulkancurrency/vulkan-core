@@ -353,7 +353,7 @@ int start_mining(void)
 
   if (g_miner_generate_genesis)
   {
-    LOG_INFO("Creating new genesis block, this make take a while...");
+    LOG_INFO("Creating new genesis block, this may take a while...");
   }
 
   for (uint16_t i = 0; i < g_num_worker_threads; i++)
