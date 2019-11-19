@@ -1136,15 +1136,6 @@ int valid_block_median_timestamp(block_t *block)
 int valid_block_emission(block_t *block, uint32_t block_height)
 {
   assert(block != NULL);
-
-  // if the genesis block has no transactions, there's no need to
-  // check it; but if it does indeed have transactions
-  // then we can check it as we would normally...
-  if (block_height == 0 && block->transaction_count == 0)
-  {
-    return 1;
-  }
-
   transaction_t *tx = block->transactions[0];
   assert(tx != NULL);
 
@@ -1460,8 +1451,8 @@ int validate_and_insert_block_nolock(block_t *block)
   return insert_block_nolock(block, 1);
 
 validate_block_fail:
-  // the current block can only be NULL if we're verifying the genesis block,
-  // as the genesis block will never have a previous block in the blockchain...
+  print_block(current_block);
+  printf("\n");
   if (current_block != NULL)
   {
     free_block(current_block);
