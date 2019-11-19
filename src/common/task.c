@@ -70,8 +70,13 @@ int taskmgr_tick(void)
     void *val = NULL;
     int r = deque_get_first(g_taskmgr_tasks, &val);
     assert(r == CC_OK);
+
     task_t *task = (task_t*)val;
     assert(task != NULL);
+
+    // remove the task from it's current place in the deque
+    r = deque_remove(g_taskmgr_tasks, task, NULL);
+    assert(r == CC_OK);
 
     if (task->delayable)
     {
@@ -120,6 +125,7 @@ int taskmgr_tick(void)
 
 int taskmgr_run(void)
 {
+  printf("taskmgr_run\n");
   if (g_taskmgr_running)
   {
     return 1;
@@ -218,6 +224,22 @@ task_t* get_task_by_id(int id)
   })
 
   return NULL;
+}
+
+void print_task(task_t *task)
+{
+  printf("Task: id=%u, delayable=%u, delay=%.6f, timestamp=%u\n", task->id, task->delayable, task->delay, task->timestamp);
+}
+
+void print_tasks(void)
+{
+  void *val = NULL;
+  DEQUE_FOREACH(val, g_taskmgr_tasks,
+  {
+    task_t *task = (task_t*)val;
+    assert(task != NULL);
+    print_task(task);
+  })
 }
 
 int remove_task(task_t *task)

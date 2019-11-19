@@ -72,6 +72,9 @@ task_t* add_task(callable_func_t func, double delay, ...);
 
 task_t* get_task_by_id(int id);
 
+void print_task(task_t *task);
+void print_tasks(void);
+
 int remove_task(task_t *task);
 int remove_task_by_id(int id);
 
