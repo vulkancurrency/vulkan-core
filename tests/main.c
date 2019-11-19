@@ -84,7 +84,6 @@ int main(int argc, char **argv)
   }
 
   GREATEST_MAIN_BEGIN();
-
   RUN_SUITE(common_suite);
   RUN_SUITE(crypto_suite);
   RUN_SUITE(block_suite);
@@ -93,7 +92,6 @@ int main(int argc, char **argv)
   RUN_SUITE(mempool_suite);
   RUN_SUITE(merkle_suite);
   RUN_SUITE(protocol_suite);
-
   GREATEST_MAIN_END();
 
   if (close_blockchain())

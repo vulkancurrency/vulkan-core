@@ -30,7 +30,6 @@ set(VULKAN_COMMON_SOURCE_FILES
   buffer.c
   logger.c
   mongoose.c
-  queue.c
   task.c
   tinycthread.c
   util.c
@@ -46,7 +45,6 @@ set(VULKAN_COMMON_HEADER_FILES
   int_util.h
   logger.h
   mongoose.h
-  queue.h
   task.h
   tinycthread.h
   util.h

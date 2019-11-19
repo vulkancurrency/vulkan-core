@@ -36,61 +36,7 @@
 
 SUITE(mempool_suite);
 
-TEST can_add_to_mempool(void)
-{
-  uint8_t transaction[HASH_SIZE] = {
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-  };
-
-  uint8_t address[HASH_SIZE] = {
-    0x01, 0x3e, 0x46, 0xa5,
-    0xc6, 0x99, 0x4e, 0x35,
-    0x55, 0x50, 0x1c, 0xba,
-    0xc0, 0x7c, 0x06, 0x77
-  };
-
-  input_transaction_t *txin = malloc(sizeof(input_transaction_t));
-  output_transaction_t *txout = malloc(sizeof(output_transaction_t));
-
-  txin->txout_index = 0;
-  txout->amount = 50;
-  memcpy(txin->transaction, transaction, HASH_SIZE);
-  memcpy(txout->address, address, HASH_SIZE);
-
-  transaction_t *tx = malloc(sizeof(transaction_t));
-  tx->txout_count = 1;
-  tx->txouts = malloc(sizeof(output_transaction_t) * tx->txout_count);
-  tx->txouts[0] = txout;
-
-  unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-  unsigned char sk[crypto_sign_SECRETKEYBYTES];
-
-  crypto_sign_keypair(pk, sk);
-  sign_txin(txin, tx, pk, sk);
-
-  tx->txin_count = 1;
-  tx->txins = malloc(sizeof(input_transaction_t) * tx->txin_count);
-  tx->txins[0] = txin;
-
-  ASSERT_EQ(get_num_txs_in_mempool(), 0);
-  add_tx_to_mempool(tx);
-  ASSERT_EQ(get_num_txs_in_mempool(), 1);
-  transaction_t *mempool_tx = pop_tx_from_mempool();
-  ASSERT(mempool_tx != NULL);
-  ASSERT_EQ(get_num_txs_in_mempool(), 0);
-
-  ASSERT_MEM_EQ(mempool_tx->txouts[0]->address, txout->address, HASH_SIZE);
-  PASS();
-}
-
 GREATEST_SUITE(mempool_suite)
 {
-  RUN_TEST(can_add_to_mempool);
+
 }

@@ -31,18 +31,10 @@
 #include "common/buffer.h"
 #include "common/buffer_database.h"
 #include "common/greatest.h"
-#include "common/queue.h"
 #include "common/task.h"
 #include "common/util.h"
 
 SUITE(common_suite);
-
-typedef struct TestQueueObject
-{
-  int a;
-  int b;
-  int c;
-} test_queue_object_t;
 
 static const char *g_buffer_database_dir = "buffer_database_tests.dat";
 
@@ -56,93 +48,7 @@ static task_result_t task2_func(task_t *task)
   return TASK_RESULT_CONT;
 }
 
-TEST init_and_free_queue(void)
-{
-  queue_t *queue = queue_init();
-  ASSERT(queue != NULL);
-  queue_free(queue);
-  PASS();
-}
-
-TEST init_and_free_buffer(void)
-{
-  buffer_t *buffer1 = buffer_init();
-  ASSERT(buffer1 != NULL);
-  buffer_free(buffer1);
-  PASS();
-}
-
-TEST insert_object_into_queue_and_pop(void)
-{
-  queue_t *queue = queue_init();
-  ASSERT(queue != NULL);
-  ASSERT(queue_get_size(queue) == 0);
-
-  uint16_t a = 0xFF;
-  queue_push_left(queue, &a);
-  ASSERT(queue_pop_right(queue) == &a);
-  ASSERT(queue_get_size(queue) == 0);
-
-  uint64_t b = 0xFFFFFFFE;
-  queue_push_right(queue, &b);
-  ASSERT(queue_pop_left(queue) == &b);
-  ASSERT(queue_get_size(queue) == 0);
-
-  test_queue_object_t *test_queue_object = malloc(sizeof(test_queue_object_t));
-  test_queue_object->a = 0;
-  test_queue_object->b = 1;
-  test_queue_object->c = 2;
-
-  queue_push_left(queue, test_queue_object);
-  ASSERT(queue_pop_left(queue) == test_queue_object);
-  ASSERT(queue_get_size(queue) == 0);
-
-  queue_push_right(queue, test_queue_object);
-  ASSERT(queue_pop_right(queue) == test_queue_object);
-  ASSERT(queue_get_size(queue) == 0);
-  ASSERT(queue_get_max_index(queue) == -1);
-
-  free(test_queue_object);
-  queue_free(queue);
-  PASS();
-}
-
-TEST add_remove_and_update_tasks(void)
-{
-  task_t *task1 = add_task(task1_func, 0);
-  task_t *task2 = add_task(task2_func, 0);
-
-  ASSERT(task1 != NULL);
-  ASSERT(task2 != NULL);
-
-  ASSERT(get_task_by_id(task1->id) != NULL);
-  ASSERT(get_task_by_id(task2->id) != NULL);
-
-  ASSERT(has_task(task1) == 1);
-  ASSERT(has_task_by_id(task2->id) == 1);
-
-  int tick_result1 = taskmgr_tick();
-  int tick_result2 = taskmgr_tick();
-  int tick_result3 = taskmgr_tick();
-
-  ASSERT(has_task(task1) == 1);
-  ASSERT(has_task_by_id(task2->id) == 1);
-
-  ASSERT_EQ(tick_result1, 0);
-  ASSERT_EQ(tick_result2, 0);
-  ASSERT_EQ(tick_result3, 0);
-
-  ASSERT(remove_task(task1) == 0);
-  ASSERT(remove_task_by_id(task2->id) == 0);
-  PASS();
-}
-
-typedef struct Test
-{
-
-} test_t;
-
-TEST pack_and_unpack_buffer(void)
+TEST buffer_common_tests(void)
 {
   buffer_t *buffer = buffer_init();
   ASSERT(buffer != NULL);
@@ -323,7 +229,7 @@ TEST pack_and_unpack_buffer(void)
   PASS();
 }
 
-TEST can_read_and_write_to_buffer_database(void)
+TEST buffer_database_common_tests(void)
 {
   char *err = NULL;
   buffer_database_t *buffer_database = buffer_database_open(g_buffer_database_dir, &err);
@@ -412,12 +318,39 @@ TEST can_read_and_write_to_buffer_database(void)
   PASS();
 }
 
+TEST task_common_tests(void)
+{
+  task_t *task1 = add_task(task1_func, 0);
+  task_t *task2 = add_task(task2_func, 0);
+
+  ASSERT(task1 != NULL);
+  ASSERT(task2 != NULL);
+
+  ASSERT(get_task_by_id(task1->id) != NULL);
+  ASSERT(get_task_by_id(task2->id) != NULL);
+
+  ASSERT(has_task(task1) == 1);
+  ASSERT(has_task_by_id(task2->id) == 1);
+
+  int tick_result1 = taskmgr_tick();
+  int tick_result2 = taskmgr_tick();
+  int tick_result3 = taskmgr_tick();
+
+  ASSERT(has_task(task1) == 1);
+  ASSERT(has_task_by_id(task2->id) == 1);
+
+  ASSERT_EQ(tick_result1, 0);
+  ASSERT_EQ(tick_result2, 0);
+  ASSERT_EQ(tick_result3, 0);
+
+  ASSERT(remove_task(task1));
+  ASSERT(remove_task_by_id(task2->id));
+  PASS();
+}
+
 GREATEST_SUITE(common_suite)
 {
-  RUN_TEST(init_and_free_queue);
-  RUN_TEST(init_and_free_buffer);
-  RUN_TEST(insert_object_into_queue_and_pop);
-  RUN_TEST(add_remove_and_update_tasks);
-  RUN_TEST(pack_and_unpack_buffer);
-  RUN_TEST(can_read_and_write_to_buffer_database);
+  RUN_TEST(buffer_common_tests);
+  RUN_TEST(buffer_database_common_tests);
+  RUN_TEST(task_common_tests);
 }

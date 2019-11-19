@@ -28,7 +28,8 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "queue.h"
+#include <deque.h>
+
 #include "task.h"
 #include "tinycthread.h"
 #include "util.h"
@@ -36,8 +37,8 @@
 static int g_taskmgr_next_task_id = -1;
 static int g_taskmgr_next_scheduler_id = -1;
 
-static queue_t *g_taskmgr_task_queue = NULL;
-static queue_t *g_taskmgr_scheduler_queue = NULL;
+static Deque *g_taskmgr_tasks = NULL;
+static Deque *g_taskmgr_schedulers = NULL;
 
 static int g_taskmgr_running = 0;
 
@@ -48,31 +49,36 @@ int taskmgr_init(void)
     return 1;
   }
 
+  if (deque_new(&g_taskmgr_tasks) != CC_OK)
+  {
+    return 1;
+  }
+
+  if (deque_new(&g_taskmgr_schedulers) != CC_OK)
+  {
+    return 1;
+  }
+
   g_taskmgr_running = 1;
-
-  g_taskmgr_task_queue = queue_init();
-  g_taskmgr_scheduler_queue = queue_init();
-
   return 0;
 }
 
 int taskmgr_tick(void)
 {
-  if (queue_get_empty(g_taskmgr_task_queue) == 0)
+  if (deque_size(g_taskmgr_tasks) > 0)
   {
-    task_t *task = queue_pop_left(g_taskmgr_task_queue);
-    if (task == NULL)
-    {
-      return 1;
-    }
+    void *val = NULL;
+    int r = deque_get_first(g_taskmgr_tasks, &val);
+    assert(r == CC_OK);
+    task_t *task = (task_t*)val;
+    assert(task != NULL);
 
     if (task->delayable)
     {
       if (get_current_time() - task->timestamp < task->delay)
       {
-        // put the task back into the queue since it's not
-        // time yet to call it...
-        queue_push_right(g_taskmgr_task_queue, task);
+        r = deque_add_last(g_taskmgr_tasks, task);
+        assert(r == CC_OK);
         return 0;
       }
     }
@@ -89,13 +95,18 @@ int taskmgr_tick(void)
     switch (result)
     {
       case TASK_RESULT_CONT:
-        task->delayable = 0;
-        queue_push_right(g_taskmgr_task_queue, task);
+        {
+          task->delayable = 0;
+          r = deque_add_last(g_taskmgr_tasks, task);
+          assert(r == CC_OK);
+        }
         break;
       case TASK_RESULT_WAIT:
-        task->delayable = 1;
-        task->timestamp = get_current_time();
-        queue_push_right(g_taskmgr_task_queue, task);
+        {
+          task->delayable = 1;
+          r = deque_add_last(g_taskmgr_tasks, task);
+          assert(r == CC_OK);
+        }
         break;
       case TASK_RESULT_DONE:
       default:
@@ -154,17 +165,16 @@ int taskmgr_shutdown(void)
     return 1;
   }
 
+  deque_destroy(g_taskmgr_tasks);
+  deque_destroy(g_taskmgr_schedulers);
+
   g_taskmgr_running = 0;
-
-  queue_free(g_taskmgr_task_queue);
-  queue_free(g_taskmgr_scheduler_queue);
-
   return 0;
 }
 
 int has_task(task_t *task)
 {
-  return queue_get_index(g_taskmgr_task_queue, task) != -1;
+  return deque_contains(g_taskmgr_tasks, task) > 0;
 }
 
 int has_task_by_id(int id)
@@ -186,40 +196,35 @@ task_t* add_task(callable_func_t func, double delay, ...)
   task->delayable = 1;
   task->delay = delay;
   task->timestamp = get_current_time();
-
   mtx_init(&task->lock, mtx_recursive);
-  queue_push_right(g_taskmgr_task_queue, task);
+
+  int r = deque_add_last(g_taskmgr_tasks, task);
+  assert(r == CC_OK);
   return task;
 }
 
 task_t* get_task_by_id(int id)
 {
-  for (int i = 0; i <= g_taskmgr_task_queue->max_index; i++)
+  void *val = NULL;
+  DEQUE_FOREACH(val, g_taskmgr_tasks,
   {
-    task_t *task = queue_get(g_taskmgr_task_queue, i);
-    if (task == NULL)
-    {
-      continue;
-    }
+    task_t *task = (task_t*)val;
+    assert(task != NULL);
 
     if (task->id == id)
     {
       return task;
     }
-  }
+  })
 
   return NULL;
 }
 
 int remove_task(task_t *task)
 {
-  if (queue_remove_object(g_taskmgr_task_queue, task))
-  {
-    return 1;
-  }
-
+  int r = deque_remove(g_taskmgr_tasks, task, NULL);
   free_task(task);
-  return 0;
+  return r == CC_OK;
 }
 
 int remove_task_by_id(int id)
@@ -227,7 +232,7 @@ int remove_task_by_id(int id)
   task_t *task = get_task_by_id(id);
   if (task == NULL)
   {
-    return 1;
+    return 0;
   }
 
   return remove_task(task);
@@ -256,7 +261,7 @@ void free_task_by_id(int id)
 
 int has_scheduler(task_scheduler_t *task_scheduler)
 {
-  return queue_get_index(g_taskmgr_scheduler_queue, task_scheduler) != -1;
+  return deque_contains(g_taskmgr_schedulers, task_scheduler) > 0;
 }
 
 int has_scheduler_by_id(int id)
@@ -277,33 +282,34 @@ task_scheduler_t* add_scheduler(void)
     return NULL;
   }
 
-  queue_push_right(g_taskmgr_scheduler_queue, task_scheduler);
+  int r = deque_add_last(g_taskmgr_schedulers, task_scheduler);
+  assert(r == CC_OK);
   return task_scheduler;
 }
 
 task_scheduler_t* get_scheduler_by_id(int id)
 {
-  for (int i = 0; i <= g_taskmgr_scheduler_queue->max_index; i++)
+
+  void *val = NULL;
+  DEQUE_FOREACH(val, g_taskmgr_schedulers,
   {
-    task_scheduler_t *task_scheduler = queue_get(g_taskmgr_scheduler_queue, i);
+    task_scheduler_t *task_scheduler = (task_scheduler_t*)val;
+    assert(task_scheduler != NULL);
+
     if (task_scheduler->id == id)
     {
       return task_scheduler;
     }
-  }
+  })
 
   return NULL;
 }
 
 int remove_scheduler(task_scheduler_t *task_scheduler)
 {
-  if (queue_remove_object(g_taskmgr_scheduler_queue, task_scheduler))
-  {
-    return 1;
-  }
-
+  int r = deque_remove(g_taskmgr_schedulers, task_scheduler, NULL);
   free_scheduler(task_scheduler);
-  return 0;
+  return r == CC_OK;
 }
 
 int remove_scheduler_by_id(int id)
