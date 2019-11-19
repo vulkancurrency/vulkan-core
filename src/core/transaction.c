@@ -131,7 +131,7 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
 
-  crypto_hash_sha256d(hash, header, header_size);
+  crypto_hash_blake2b(hash, header, header_size);
   crypto_sign_detached(txin->signature, NULL, header, header_size, secret_key);
 
   memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
@@ -500,7 +500,7 @@ int compute_tx_id(uint8_t *tx_id, transaction_t *tx)
   memcpy(header, buffer->data, tx_header_size);
 
   buffer_free(buffer);
-  crypto_hash_sha256d(tx_id, header, tx_header_size);
+  crypto_hash_blake2b(tx_id, header, tx_header_size);
   return 0;
 }
 

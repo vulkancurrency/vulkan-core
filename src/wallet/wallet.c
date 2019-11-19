@@ -500,7 +500,7 @@ int public_key_to_address(uint8_t *address, uint8_t *pk)
 
   uint8_t address_id = parameters_get_address_id();
   address[0] = address_id;
-  crypto_hash_sha256d(address + 1, pk, crypto_sign_PUBLICKEYBYTES);
+  crypto_hash_blake2b(address + 1, pk, crypto_sign_PUBLICKEYBYTES);
   return 0;
 }
 

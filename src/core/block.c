@@ -346,7 +346,7 @@ int compute_block_hash(uint8_t *hash, block_t *block)
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
   buffer_free(buffer);
-  assert(crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE) == 0);
+  crypto_hash_blake2b(hash, header, BLOCK_HEADER_SIZE);
   return 0;
 }
 

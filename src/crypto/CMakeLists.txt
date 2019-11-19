@@ -26,12 +26,14 @@
 set(VULKAN_CRYPTO_SOURCE_FILES
   bignum_util.c
   cryptoutil.c
+  blake2b.c
   sha256d.c
 )
 
 set(VULKAN_CRYPTO_HEADER_FILES
   bignum_util.h
   cryptoutil.h
+  blake2b.h
   sha256d.h
 )
 
