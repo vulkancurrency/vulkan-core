@@ -302,7 +302,7 @@ static task_result_t report_worker_mining_status(task_t *task, va_list args)
     }
     else
     {
-      LOG_INFO("Worker[%u]: miner thread running with %u h/s", worker->id, worker->last_hashrate);
+      LOG_INFO("Worker[%u]: miner thread running [%u h/s]", worker->id, worker->last_hashrate);
     }
   }
 
@@ -370,7 +370,7 @@ int start_mining(void)
     g_miner_workers[i] = worker;
   }
 
-  LOG_INFO("Started mining on %hu threads...", g_num_worker_threads);
+  LOG_INFO("Started mining on [%hu] threads...", g_num_worker_threads);
   if (g_miner_generate_genesis)
   {
     // since we are trying to mine the genesis block, wait until
