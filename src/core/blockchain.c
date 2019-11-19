@@ -523,12 +523,12 @@ int init_blockchain(const char *blockchain_dir, int load_top_block)
   mtx_init(&g_blockchain_lock, mtx_recursive);
   if (g_blockchain_want_compression)
   {
-    LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm!",
+    LOG_INFO("Blockchain storage compression is enabled, using the `%s` compression algorithm",
       get_compression_type_str(g_blockchain_compression_type));
   }
   else
   {
-    LOG_INFO("Blockchain storage compression is disabled!");
+    LOG_INFO("Blockchain storage compression is disabled");
   }
 
   if (open_blockchain(g_blockchain_dir, load_top_block))
@@ -549,7 +549,7 @@ int init_blockchain(const char *blockchain_dir, int load_top_block)
     }
   }
 
-  LOG_INFO("Successfully initialized blockchain.");
+  LOG_INFO("Successfully initialized blockchain");
   g_blockchain_is_open = 1;
   g_blockchain_backup_is_open = 1;
   return 0;

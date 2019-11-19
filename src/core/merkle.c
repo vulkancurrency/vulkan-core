@@ -35,6 +35,7 @@
 #include "merkle.h"
 
 #include "crypto/cryptoutil.h"
+#include "crypto/blake2b.h"
 #include "crypto/sha256d.h"
 
 /*
