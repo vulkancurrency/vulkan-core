@@ -125,7 +125,6 @@ int taskmgr_tick(void)
 
 int taskmgr_run(void)
 {
-  printf("taskmgr_run\n");
   if (g_taskmgr_running)
   {
     return 1;
