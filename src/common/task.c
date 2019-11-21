@@ -109,6 +109,7 @@ int taskmgr_tick(void)
       case TASK_RESULT_WAIT:
         {
           task->delayable = 1;
+          task->timestamp = get_current_time();
           r = deque_add_last(g_taskmgr_tasks, task);
           assert(r == CC_OK);
         }
