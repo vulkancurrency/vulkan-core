@@ -35,7 +35,6 @@
 #include "merkle.h"
 
 #include "crypto/cryptoutil.h"
-#include "crypto/blake2b.h"
 #include "crypto/sha256d.h"
 
 /*
@@ -135,7 +134,7 @@ merkle_node_t *construct_merkle_node(merkle_node_t *left, merkle_node_t *right)
   memcpy(combined_hash, left->hash, HASH_SIZE);
   memcpy(combined_hash + HASH_SIZE, right->hash, HASH_SIZE);
 
-  crypto_hash_blake2b(node_hash, combined_hash, HASH_SIZE * 2);
+  crypto_hash_sha256d(node_hash, combined_hash, HASH_SIZE * 2);
 
   merkle_node_t *node = malloc(sizeof(merkle_node_t));
   assert(node != NULL);

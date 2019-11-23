@@ -46,7 +46,6 @@
 #include "merkle.h"
 
 #include "crypto/cryptoutil.h"
-#include "crypto/blake2b.h"
 #include "crypto/sha256d.h"
 
 #include "miner/miner.h"
@@ -347,7 +346,7 @@ int compute_block_hash(uint8_t *hash, block_t *block)
   memcpy(header, buffer->data, BLOCK_HEADER_SIZE);
 
   buffer_free(buffer);
-  crypto_hash_blake2b(hash, header, BLOCK_HEADER_SIZE);
+  crypto_hash_sha256d(hash, header, BLOCK_HEADER_SIZE);
   return 0;
 }
 
