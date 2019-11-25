@@ -52,8 +52,6 @@ typedef struct TransactionEntries
   transaction_entry_t *entries[MAX_NUM_TX_ENTRIES];
 } transaction_entries_t;
 
-VULKAN_API uint64_t get_total_entries_amount(transaction_entries_t transaction_entries);
-
 VULKAN_API int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_available_money, transaction_entries_t transaction_entries);
 VULKAN_API int construct_coinbase_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t block_reward);
 

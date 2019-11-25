@@ -40,12 +40,13 @@
 
 #include "wallet/wallet.h"
 
-uint64_t get_total_entries_amount(transaction_entries_t transaction_entries)
+static uint64_t get_total_entries_amount(transaction_entries_t transaction_entries)
 {
   uint64_t total_amount = 0;
   for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
   {
     transaction_entry_t *transaction_entry = transaction_entries.entries[i];
+    assert(transaction_entry != NULL);
     total_amount += transaction_entry->amount;
   }
 
