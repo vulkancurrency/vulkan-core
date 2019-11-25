@@ -1181,7 +1181,7 @@ void handle_sync_started(void)
 {
   if (get_is_miner_initialized())
   {
-    LOG_INFO("Syncronization in progress, pausing miner worker threads...");
+    LOG_INFO("Synchronization in progress, pausing miner worker threads...");
     set_workers_paused(1);
   }
 }
@@ -1201,7 +1201,7 @@ void handle_sync_completed(void)
 {
   if (get_workers_paused())
   {
-    LOG_INFO("Syncronization completed, resuming miner worker threads...");
+    LOG_INFO("Synchronization completed, resuming miner worker threads...");
     set_workers_paused(0);
   }
 }
@@ -1631,7 +1631,7 @@ int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id
   }
 
   // check the sender of the message, this would be used when we are expecting
-  // a syncronization message back from the node we have established a sync request with locally...
+  // a synchronization message back from the node we have established a sync request with locally...
   if (check_sender)
   {
     if (net_connection != g_protocol_sync_entry.net_connection)
