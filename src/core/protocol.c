@@ -1087,7 +1087,10 @@ int init_sync_request(int height, net_connection_t *net_connection)
   g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
-  vec_init(&g_protocol_sync_entry.sync_pending_blocks);
+
+  int r = deque_new(&g_protocol_sync_entry.sync_pending_blocks);
+  assert(r == CC_OK);
+
   g_protocol_sync_entry.sync_pending_blocks_count = 0;
 
   g_protocol_sync_entry.last_sync_height = 0;
@@ -1131,7 +1134,7 @@ int clear_sync_request(int sync_success)
   g_protocol_sync_entry.sync_start_height = -1;
 
   g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
-  vec_deinit(&g_protocol_sync_entry.sync_pending_blocks);
+  deque_destroy(g_protocol_sync_entry.sync_pending_blocks);
   g_protocol_sync_entry.sync_pending_blocks_count = 0;
 
   g_protocol_sync_entry.last_sync_height = 0;
@@ -1172,7 +1175,10 @@ int clear_grouped_sync_request(void)
 
   g_protocol_sync_entry.sync_pending_block = NULL;
   g_protocol_sync_entry.is_syncing_grouped_blocks = 0;
-  vec_init(&g_protocol_sync_entry.sync_pending_blocks);
+
+  int r = deque_new(&g_protocol_sync_entry.sync_pending_blocks);
+  assert(r == CC_OK);
+
   g_protocol_sync_entry.sync_pending_blocks_count = 0;
   return 0;
 }
@@ -1303,8 +1309,12 @@ int request_sync_next_block(net_connection_t *net_connection)
   }
   else
   {
-    block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
+    void *val = NULL;
+    int r = deque_remove_last(g_protocol_sync_entry.sync_pending_blocks, &val);
+    assert(r == CC_OK);
+    block_t *pending_block = (block_t*)val;
     assert(pending_block != NULL);
+
     g_protocol_sync_entry.sync_pending_blocks_count--;
     return block_header_received(net_connection, pending_block);
   }
@@ -2020,12 +2030,17 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             }
 
             assert(block != NULL);
-            assert(vec_push(&g_protocol_sync_entry.sync_pending_blocks, block) == 0);
+            int r = deque_add_first(g_protocol_sync_entry.sync_pending_blocks, block);
+            assert(r == CC_OK);
             g_protocol_sync_entry.sync_pending_blocks_count++;
           }
 
-          block_t *pending_block = (block_t*)vec_pop(&g_protocol_sync_entry.sync_pending_blocks);
+          void *val = NULL;
+          int r = deque_remove_last(g_protocol_sync_entry.sync_pending_blocks, &val);
+          assert(r == CC_OK);
+          block_t *pending_block = (block_t*)val;
           assert(pending_block != NULL);
+
           g_protocol_sync_entry.sync_pending_blocks_count--;
           if (block_header_received(net_connection, pending_block))
           {
