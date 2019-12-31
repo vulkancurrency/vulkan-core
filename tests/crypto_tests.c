@@ -184,6 +184,17 @@ TEST pow_validation_tests(void)
   ASSERT(check_proof_of_work(hash, 0x1715a35c));
   free(hash);
 
+  // expecting bad proof of work:
+  hash = hex2bin("000000000000000000088689ac9b3ff82c2668e92534206207fad3e59c8e7296", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(!check_proof_of_work(hash, 2083236893)); // nonce from: 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f
+  free(hash);
+
+  hash = hex2bin("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f", &out_size);
+  ASSERT(out_size == HASH_SIZE);
+  ASSERT(!check_proof_of_work(hash, 3800940832)); // nonce from: 000000000000000000088689ac9b3ff82c2668e92534206207fad3e59c8e7296
+  free(hash);
+
   PASS();
 }
 
