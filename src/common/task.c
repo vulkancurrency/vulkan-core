@@ -68,15 +68,10 @@ int taskmgr_tick(void)
   if (deque_size(g_taskmgr_tasks) > 0)
   {
     void *val = NULL;
-    int r = deque_get_first(g_taskmgr_tasks, &val);
+    int r = deque_remove_first(g_taskmgr_tasks, &val);
     assert(r == CC_OK);
-
     task_t *task = (task_t*)val;
     assert(task != NULL);
-
-    // remove the task from it's current place in the deque
-    r = deque_remove(g_taskmgr_tasks, task, NULL);
-    assert(r == CC_OK);
 
     if (task->delayable)
     {
