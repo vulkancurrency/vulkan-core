@@ -16,3 +16,6 @@
 [submodule "external/leveldb"]
 	path = external/leveldb
 	url = https://github.com/vulkancurrency/leveldb.git
+[submodule "external/libuv"]
+	path = external/libuv
+	url = https://github.com/vulkancurrency/libuv.git
