@@ -2,6 +2,12 @@
 
 Vulkan is a light weight, fast and efficient cryptocurrency blockchain implementation written in C11.
 
+# Coverage
+
+| Type      | Status |
+|-----------|--------|
+| Coverity  | [![Coverity Status](https://scan.coverity.com/projects/20120/badge.svg)](https://scan.coverity.com/projects/20120/)
+
 # Installing Dependencies
 
 This project comes included with submodules located in the `external` directory of the project root source code directory which contains the source code repositories for the dependencies necessary to compile the Vulkan Currency daemon, you can also install precompiled dependencies (which decreases your overall compile time) or you can just have the CMake build files build the dependency source code as mentioned earlier.
