@@ -97,23 +97,23 @@ static const block_genesis_entry_t mainnet_genesis_block_template = {
 static const output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
   {
     .amount = 6103515625,
-    .address_str = "01b15e22c4685cc8b1ea9dfbc575f76c3e6a2774f49a7e68c6668da33337155fab"
+    .address_str = "0294aaa5c230304920bf88f928523c32b9301f2d48a4e9f2a19c81e5a91ee14b9b"
   }
 };
 
 static const transaction_genesis_entry_t testnet_genesis_tx = {
-  .id_str = "5a1f16e7562c87058732764d5a356ad7a30018387be62bb6645e323fc64436a2"
+  .id_str = "445b6fc088a96b7a97ed50b3ec137d827a8983689aed05de88cfd6827c4cd668"
 };
 
 static const block_genesis_entry_t testnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
-  .hash_str = "00000000ed7426e21fe6674b75086f7f5ae4cebbd0fad6f56e9bcbf086bb5ad0",
+  .hash_str = "0000000094ca6c8e60b5a48f7d0afb3e92b56d023edd880f88c888c21c96e1c9",
   .timestamp = TESTNET_GENESIS_TIMESTAMP,
   .nonce = TESTNET_GENESIS_NONCE,
   .bits = TESTNET_GENESIS_BITS,
   .cumulative_emission = 6103515625,
-  .merkle_root_str = "5a1f16e7562c87058732764d5a356ad7a30018387be62bb6645e323fc64436a2",
+  .merkle_root_str = "445b6fc088a96b7a97ed50b3ec137d827a8983689aed05de88cfd6827c4cd668",
 };
 
 #define NUM_MAINNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(mainnet_genesis_output_txs))
