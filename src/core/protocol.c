@@ -32,6 +32,8 @@
 #include <time.h>
 #include <inttypes.h>
 
+#include <deque.h>
+
 #include "common/buffer.h"
 #include "common/logger.h"
 #include "common/mongoose.h"
