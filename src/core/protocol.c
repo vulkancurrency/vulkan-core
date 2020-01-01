@@ -2032,7 +2032,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             }
 
             assert(block != NULL);
-            int r = deque_add_first(g_protocol_sync_entry.sync_pending_blocks, block);
+            int r = deque_add_last(g_protocol_sync_entry.sync_pending_blocks, block);
             assert(r == CC_OK);
             g_protocol_sync_entry.sync_pending_blocks_count++;
           }
