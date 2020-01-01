@@ -1936,7 +1936,7 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           buffer_t *block_data_buffer = buffer_init();
           uint32_t blocks_count = 0;
           uint32_t top_block_height = MIN(message->height + MAX_GROUPED_BLOCKS_COUNT, current_block_height);
-          for (uint32_t i = top_block_height - 1; i >= message->height; i--)
+          for (uint32_t i = message->height; i < top_block_height; i++)
           {
             block_t *block = get_block_from_height(i);
             assert(block != NULL);
@@ -2021,6 +2021,12 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
           // blocks are sent in the reverse order and deserialized, placed in the
           // queue in the correct order pushing the last block right and pulling
           // the blocks from the queue left to right until the queue is empty...
+          Deque *pending_blocks;
+          size_t pending_blocks_count = 0;
+          int r = deque_new(&pending_blocks);
+          assert(r == CC_OK);
+
+          block_t *last_block = get_current_block();
           for (uint32_t i = 0; i < blocks_count; i++)
           {
             block_t *block = NULL;
@@ -2028,17 +2034,43 @@ int handle_packet(net_connection_t *net_connection, uint32_t packet_id, void *me
             {
               buffer_free(buffer);
               buffer_iterator_free(buffer_iterator);
+              deque_destroy(pending_blocks);
+              return 1;
+            }
+
+            if (!compare_hash(last_block->hash, block->previous_hash))
+            {
+              buffer_free(buffer);
+              buffer_iterator_free(buffer_iterator);
+              deque_destroy(pending_blocks);
               return 1;
             }
 
             assert(block != NULL);
-            int r = deque_add_last(g_protocol_sync_entry.sync_pending_blocks, block);
+            int r = deque_add_first(pending_blocks, block);
             assert(r == CC_OK);
-            g_protocol_sync_entry.sync_pending_blocks_count++;
+            pending_blocks_count++;
+            last_block = block;
           }
 
+          // pull all of our pending blocks from the queue and place them
+          // in the synchronization entry queue:
           void *val = NULL;
-          int r = deque_remove_last(g_protocol_sync_entry.sync_pending_blocks, &val);
+          DEQUE_FOREACH(val, pending_blocks,
+          {
+            block_t *pending_block = (block_t*)val;
+            assert(pending_block != NULL);
+
+            r = deque_add_last(g_protocol_sync_entry.sync_pending_blocks, pending_block);
+            assert(r == CC_OK);
+            g_protocol_sync_entry.sync_pending_blocks_count++;
+          })
+
+          // destroy our pending blocks queue
+          deque_destroy(pending_blocks);
+
+          // pull the first block off the queue and begin synchronizing it:
+          r = deque_remove_last(g_protocol_sync_entry.sync_pending_blocks, &val);
           assert(r == CC_OK);
           block_t *pending_block = (block_t*)val;
           assert(pending_block != NULL);
