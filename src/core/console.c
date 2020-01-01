@@ -37,6 +37,8 @@
 #include "console.h"
 #include "net.h"
 
+#include "miner/miner.h"
+
 #include "wallet/wallet.h"
 
 enum
@@ -45,7 +47,9 @@ enum
   CMD_ARG_PRINT_BC,
   CMD_ARG_PRINT_WALLET,
   CMD_ARG_HEIGHT,
-  CMD_ARG_CONNECT
+  CMD_ARG_CONNECT,
+  CMD_ARG_START_MINING,
+  CMD_ARG_STOP_MINING
 };
 
 static argument_map_t g_arguments_map[] = {
@@ -53,7 +57,9 @@ static argument_map_t g_arguments_map[] = {
   {"print_bc", CMD_ARG_PRINT_BC, "Prints all blocks from start height to end height", "<start_height, end_height>", 2},
   {"print_wallet", CMD_ARG_PRINT_WALLET, "Prints all of the details for the currently opened wallet", "", 0},
   {"height", CMD_ARG_HEIGHT, "Prints the current blockchain top block height", "", 0},
-  {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1}
+  {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1},
+  {"start_mining", CMD_ARG_START_MINING, "Resumes all mining threads", "", 0},
+  {"stop_mining", CMD_ARG_STOP_MINING, "Pauses all mining threads", "", 0},
 };
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
@@ -161,6 +167,12 @@ static int parse_console_args(int argc, char **argv)
             LOG_INFO("Failed to establish manual connection with %s:%u!", address, port);
           }
         }
+        break;
+      case CMD_ARG_START_MINING:
+        set_workers_paused(false);
+        break;
+      case CMD_ARG_STOP_MINING:
+        set_workers_paused(true);
         break;
       default:
         break;
