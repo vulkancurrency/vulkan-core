@@ -111,7 +111,7 @@ VULKAN_API uint32_t get_next_work_required_nolock(uint8_t *previous_hash);
 VULKAN_API uint32_t get_next_work_required(uint8_t *previous_hash);
 
 VULKAN_API int valid_block_median_timestamp(block_t *block);
-VULKAN_API int valid_block_emission(block_t *block, uint32_t block_height);
+VULKAN_API int valid_block_emission(block_t *block);
 
 VULKAN_API int update_unspent_transaction(uint8_t *block_hash, transaction_t *tx);
 VULKAN_API int update_unspent_transactions(block_t *block);

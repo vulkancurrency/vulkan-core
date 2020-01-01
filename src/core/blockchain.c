@@ -1133,9 +1133,12 @@ int valid_block_median_timestamp(block_t *block)
   return block->timestamp > median_timestamp;
 }
 
-int valid_block_emission(block_t *block, uint32_t block_height)
+int valid_block_emission(block_t *block)
 {
   assert(block != NULL);
+  block_t *genesis_block = get_genesis_block();
+  assert(genesis_block != NULL);
+
   transaction_t *tx = block->transactions[0];
   assert(tx != NULL);
 
@@ -1145,7 +1148,12 @@ int valid_block_emission(block_t *block, uint32_t block_height)
   uint64_t expected_block_reward = 0;
   uint64_t expected_cumulative_emission = 0;
 
-  if (block_height > 0)
+  if (compare_block(block, genesis_block))
+  {
+    expected_block_reward = get_block_reward(0, 0);
+    expected_cumulative_emission = expected_block_reward;
+  }
+  else
   {
     block_t *previous_block = get_block_from_hash(block->previous_hash);
     assert(previous_block != NULL);
@@ -1156,11 +1164,6 @@ int valid_block_emission(block_t *block, uint32_t block_height)
     expected_block_reward = get_block_reward(previous_height, previous_block->cumulative_emission);
     expected_cumulative_emission = previous_block->cumulative_emission + expected_block_reward;
     free_block(previous_block);
-  }
-  else
-  {
-    expected_block_reward = get_block_reward(0, 0);
-    expected_cumulative_emission = expected_block_reward;
   }
 
   return (txout->amount == expected_block_reward && block->cumulative_emission == expected_cumulative_emission);
@@ -1378,7 +1381,7 @@ int validate_and_insert_block_nolock(block_t *block)
   // verify the block, ensure the block is not an orphan or stale,
   // if the block is the genesis, then we do not need to validate it...
   uint32_t current_block_height = get_block_height_nolock();
-  if (valid_block(block) == 0)
+  if (!valid_block(block))
   {
     return 1;
   }
@@ -1402,14 +1405,14 @@ int validate_and_insert_block_nolock(block_t *block)
 
   // check to see if this block's timestamp is greater than the
   // last median TIMESTAMP_CHECK_WINDOW / 2 block's timestamp...
-  if (valid_block_median_timestamp(block) == 0)
+  if (!valid_block_median_timestamp(block))
   {
     LOG_DEBUG("Could not insert block into blockchain, block has expired timestamp: %u!", block->timestamp);
     goto validate_block_fail;
   }
 
   // validate the block's generation transaction
-  if (valid_block_emission(block, current_block_height) == 0)
+  if (!valid_block_emission(block))
   {
     LOG_DEBUG("Could not insert block into blockchain, block has invalid generation transaction!");
     goto validate_block_fail;
