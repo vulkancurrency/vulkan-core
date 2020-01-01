@@ -468,13 +468,25 @@ int remove_wallet(const char *wallet_dir)
 void print_wallet(wallet_t *wallet)
 {
   assert(wallet != NULL);
-  uint64_t balance = get_balance_for_address(wallet->address) / COIN;
+
+  printf("\n");
+  printf("Wallet:\n");
+
+  char *public_key_str = bin2hex(wallet->public_key, crypto_sign_PUBLICKEYBYTES);
+  printf("  Public Key: %s\n", public_key_str);
+  free(public_key_str);
+
+  assert(wallet != NULL);
+  char *secret_key_str = bin2hex(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
+  printf("  Secret Key: %s\n", secret_key_str);
+  free(secret_key_str);
 
   char *public_address_str = bin2hex(wallet->address, ADDRESS_SIZE);
-  printf("Public Address: %s\n", public_address_str);
+  printf("  Public Address: %s\n", public_address_str);
   free(public_address_str);
 
-  printf("Balance: %" PRIu64 "\n", balance);
+  uint64_t balance = get_balance_for_address(wallet->address) / COIN;
+  printf("  Balance: %" PRIu64 "\n", balance);
 }
 
 void print_public_key(wallet_t *wallet)
@@ -491,6 +503,14 @@ void print_secret_key(wallet_t *wallet)
   char *secret_key_str = bin2hex(wallet->secret_key, crypto_sign_SECRETKEYBYTES);
   printf("Secret Key: %s\n", secret_key_str);
   free(secret_key_str);
+}
+
+void print_address(wallet_t *wallet)
+{
+  assert(wallet != NULL);
+  char *address_str = bin2hex(wallet->address, ADDRESS_SIZE);
+  printf("Address: %s\n", address_str);
+  free(address_str);
 }
 
 int public_key_to_address(uint8_t *address, uint8_t *pk)

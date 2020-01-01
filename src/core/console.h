@@ -25,29 +25,13 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "common/vulkan.h"
 
-#include "vulkan.h"
+#include "wallet/wallet.h"
 
 VULKAN_BEGIN_DECL
 
-typedef struct ArgumentMap
-{
-  const char *name;
-  int16_t type;
-  const char *help;
-  const char *usage;
-  int num_args;
-} argument_map_t;
-
-enum
-{
-  CMD_ARG_UNKNOWN = -1
-};
-
-VULKAN_API int16_t argparse_get_argument_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg);
-VULKAN_API int16_t argparse_get_argument_with_prefix_from_str(argument_map_t *arg_map, uint16_t num_args, const char *arg);
-VULKAN_API argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uint16_t num_args, int16_t arg_type);
-VULKAN_API char** argparse_parse_args_from_string(char *str, size_t *argc_out);
+VULKAN_API int init_console(wallet_t *wallet);
+VULKAN_API int deinit_console(void);
 
 VULKAN_END_DECL

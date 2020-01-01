@@ -36,6 +36,8 @@
 #include <rocksdb/c.h>
 #endif
 
+#include "common/buffer.h"
+#include "common/buffer_iterator.h"
 #include "common/util.h"
 #include "common/vulkan.h"
 
@@ -77,6 +79,7 @@ VULKAN_API int remove_wallet(const char *wallet_dir);
 VULKAN_API void print_wallet(wallet_t* wallet);
 VULKAN_API void print_public_key(wallet_t *wallet);
 VULKAN_API void print_secret_key(wallet_t *wallet);
+VULKAN_API void print_address(wallet_t *wallet);
 
 VULKAN_API int compare_addresses(uint8_t *address, uint8_t *other_address);
 

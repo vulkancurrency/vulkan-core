@@ -38,6 +38,7 @@
 
 #include "core/block.h"
 #include "core/blockchain.h"
+#include "core/console.h"
 #include "core/parameters.h"
 #include "core/pow.h"
 #include "core/mempool.h"
@@ -86,27 +87,27 @@ enum
 };
 
 static argument_map_t g_arguments_map[] = {
-  {"help", CMD_ARG_HELP, "Shows the help information.", "", 0},
-  {"version", CMD_ARG_VERSION, "Shows the version information.", "", 0},
-  {"logging-filename", CMD_ARG_LOGGING_FILENAME, "Sets the logger output log filename.", "<logger_filename>.log", 1},
-  {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping.", "", 0},
-  {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address.", "<bind_address>", 1},
-  {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port.", "<bind_port>", 1},
-  {"testnet", CMD_ARG_TESTNET, "Enable testnet mode which will only allow for custom testnet only parameters separate from the mainnet...", "", 0},
-  {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer.", "<address:port>", 1},
-  {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory.", "<blockchain_dir>", 1},
-  {"repair-blockchain", CMD_ARG_REPAIR_BLOCKCHAIN, "Repair the blockchain database directory in attempt to recover the data...", "", 0},
-  {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk.", "", 0},
-  {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression.", "", 0},
-  {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use.", "<compression_method>", 1},
-  {"p2p-storage-filename", CMD_ARG_P2P_STORAGE_FILENAME, "Sets the p2p peerlist storage database filename.", "<db_storage_filename>", 1},
-  {"wallet-dir", CMD_ARG_WALLET_DIR, "Change the wallet database output directory.", "<wallet_dir>", 1},
-  {"repair-wallet", CMD_ARG_REPAIR_WALLET, "Repair the wallet database directory in attempt to recover the data...", "", 0},
-  {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk.", "", 0},
-  {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block.", "", 0},
-  {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections...", "", 0},
-  {"worker-threads", CMD_ARG_NUM_WORKER_THREADS, "Sets the number of miner worker threads to use when mining blocks.", "<num_workers>", 1},
-  {"mine", CMD_ARG_MINE, "Start mining for new blocks.", "", 0}
+  {"help", CMD_ARG_HELP, "Shows the help information", "", 0},
+  {"version", CMD_ARG_VERSION, "Shows the version information", "", 0},
+  {"logging-filename", CMD_ARG_LOGGING_FILENAME, "Sets the logger output log filename", "<logger_filename>.log", 1},
+  {"disable-port-mapping", CMD_ARG_DISABLE_PORT_MAPPING, "Disables UPnP port mapping", "", 0},
+  {"bind-address", CMD_ARG_BIND_ADDRESS, "Sets the network bind address", "<bind_address>", 1},
+  {"bind-port", CMD_ARG_BIND_PORT, "Sets the network bind port", "<bind_port>", 1},
+  {"testnet", CMD_ARG_TESTNET, "Enable testnet mode which will only allow for custom testnet only parameters separate from the mainnet", "", 0},
+  {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1},
+  {"blockchain-dir", CMD_ARG_BLOCKCHAIN_DIR, "Change the blockchain database output directory", "<blockchain_dir>", 1},
+  {"repair-blockchain", CMD_ARG_REPAIR_BLOCKCHAIN, "Repair the blockchain database directory in attempt to recover the data", "", 0},
+  {"clear-blockchain", CMD_ARG_CLEAR_BLOCKCHAIN, "Clears the blockchain data on disk", "", 0},
+  {"disable-blockchain-compression", CMD_ARG_DISABLE_BLOCKCHAIN_COMPRESSION, "Disables blockchain storage on disk compression", "", 0},
+  {"blockchain-compression-type", CMD_ARG_BLOCKCHAIN_COMPRESSION_TYPE, "Sets the blockchain compression method to use", "<compression_method>", 1},
+  {"p2p-storage-filename", CMD_ARG_P2P_STORAGE_FILENAME, "Sets the p2p peerlist storage database filename", "<db_storage_filename>", 1},
+  {"wallet-dir", CMD_ARG_WALLET_DIR, "Change the wallet database output directory", "<wallet_dir>", 1},
+  {"repair-wallet", CMD_ARG_REPAIR_WALLET, "Repair the wallet database directory in attempt to recover the data", "", 0},
+  {"clear-wallet", CMD_ARG_CLEAR_WALLET, "Clears the wallet data on disk", "", 0},
+  {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block", "", 0},
+  {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections", "", 0},
+  {"worker-threads", CMD_ARG_NUM_WORKER_THREADS, "Sets the number of miner worker threads to use when mining blocks", "<num_workers>", 1},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks", "", 0}
 };
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
@@ -408,7 +409,17 @@ int main(int argc, char **argv)
     }
   }
 
+  if (init_console(wallet))
+  {
+    return 1;
+  }
+
   if (net_run())
+  {
+    return 1;
+  }
+
+  if (deinit_console())
   {
     return 1;
   }

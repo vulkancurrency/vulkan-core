@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
@@ -75,4 +76,44 @@ argument_map_t* argparse_get_argument_map_from_type(argument_map_t *arg_map, uin
   }
 
   return NULL;
+}
+
+char** argparse_parse_args_from_string(char *str, size_t *argc_out)
+{
+  char *tok;
+  char *rest = str;
+
+  size_t argc = 0;
+  size_t argv_size = 0;
+  char **argv = NULL;
+
+  while ((tok = strtok_r(rest, " ", &rest)))
+  {
+    // strip space from line ending:
+    size_t t_size = strlen(tok);
+    if (t_size == 1 && isspace(tok[t_size - 1]))
+    {
+      break;
+    }
+
+    if (isspace(tok[t_size - 1]))
+    {
+      t_size--;
+    }
+
+    // copy the token str
+    char *t = malloc(t_size);
+    strncpy(t, tok, t_size);
+    t[t_size] = '\0';
+
+    // resize the argv array
+    argv_size += strlen(tok);
+    argv = (char**)realloc(argv, argv_size);
+
+    argv[argc] = t;
+    argc++;
+  }
+
+  *argc_out = argc;
+  return argv;
 }
