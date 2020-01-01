@@ -44,6 +44,7 @@ enum
   CMD_ARG_HELP = 0,
   CMD_ARG_PRINT_BC,
   CMD_ARG_PRINT_WALLET,
+  CMD_ARG_HEIGHT,
   CMD_ARG_CONNECT
 };
 
@@ -51,6 +52,7 @@ static argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information", "", 0},
   {"print_bc", CMD_ARG_PRINT_BC, "Prints all blocks from start height to end height", "<start_height, end_height>", 2},
   {"print_wallet", CMD_ARG_PRINT_WALLET, "Prints all of the details for the currently opened wallet", "", 0},
+  {"height", CMD_ARG_HEIGHT, "Prints the current blockchain top block height", "", 0},
   {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1}
 };
 
@@ -119,6 +121,12 @@ static int parse_console_args(int argc, char **argv)
           }
 
           printf("\n");
+        }
+        break;
+      case CMD_ARG_HEIGHT:
+        {
+          uint32_t current_block_height = get_block_height();
+          LOG_INFO("Current blockchain top block height: %llu", current_block_height);
         }
         break;
       case CMD_ARG_PRINT_WALLET:
