@@ -79,7 +79,6 @@ int check_proof_of_work(const uint8_t *hash, uint32_t bits)
 
   BIGNUM *hash_target = BN_new();
   BN_bin2bn(hash, HASH_SIZE, hash_target);
-  assert(!BN_is_zero(hash_target));
 
   // check range
   if (BN_is_zero(bn_target) || BN_cmp(bn_target, g_pow_limit_bn) == 1)
