@@ -32,6 +32,8 @@
 #include "common/util.h"
 #include "common/logger.h"
 
+#include "block.h"
+#include "blockchain.h"
 #include "console.h"
 #include "net.h"
 
@@ -40,12 +42,14 @@
 enum
 {
   CMD_ARG_HELP = 0,
+  CMD_ARG_PRINT_BC,
   CMD_ARG_PRINT_WALLET,
   CMD_ARG_CONNECT
 };
 
 static argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information", "", 0},
+  {"print_bc", CMD_ARG_PRINT_BC, "Prints all blocks from start height to end height", "<start_height, end_height>", 2},
   {"print_wallet", CMD_ARG_PRINT_WALLET, "Prints all of the details for the currently opened wallet", "", 0},
   {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1}
 };
@@ -90,6 +94,33 @@ static int parse_console_args(int argc, char **argv)
 
         printf("\n");
         return 1;
+      case CMD_ARG_PRINT_BC:
+        {
+          i++;
+          uint32_t start_height = (uint32_t)atol(argv[i]);
+          i++;
+          uint32_t end_height = (uint32_t)atol(argv[i]);
+          uint32_t current_block_height = get_block_height();
+
+          start_height = MIN(start_height, current_block_height);
+          end_height = MIN(end_height, current_block_height);
+          if (start_height == end_height)
+          {
+            return 1;
+          }
+
+          LOG_INFO("Printing blocks...");
+          for (uint32_t i = start_height; i <= end_height; i++)
+          {
+            LOG_INFO("Printing block at height: %llu", i);
+            block_t *block = get_block_from_height(i);
+            print_block(block);
+            print_block_transactions(block);
+          }
+
+          printf("\n");
+        }
+        break;
       case CMD_ARG_PRINT_WALLET:
         {
           if (g_current_wallet == NULL)
