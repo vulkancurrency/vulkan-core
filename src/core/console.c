@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "common/tinycthread.h"
 #include "common/argparse.h"
@@ -35,7 +36,10 @@
 #include "block.h"
 #include "blockchain.h"
 #include "console.h"
+#include "mempool.h"
 #include "net.h"
+#include "parameters.h"
+#include "transaction_builder.h"
 
 #include "miner/miner.h"
 
@@ -49,7 +53,8 @@ enum
   CMD_ARG_HEIGHT,
   CMD_ARG_CONNECT,
   CMD_ARG_START_MINING,
-  CMD_ARG_STOP_MINING
+  CMD_ARG_STOP_MINING,
+  CMD_ARG_XFER
 };
 
 static argument_map_t g_arguments_map[] = {
@@ -60,6 +65,7 @@ static argument_map_t g_arguments_map[] = {
   {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1},
   {"start_mining", CMD_ARG_START_MINING, "Resumes all mining threads", "", 0},
   {"stop_mining", CMD_ARG_STOP_MINING, "Pauses all mining threads", "", 0},
+  {"xfer", CMD_ARG_XFER, "Xfer money to another wallet from the currently opened wallet", "<address, amount>", 2}
 };
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
@@ -173,6 +179,34 @@ static int parse_console_args(int argc, char **argv)
         break;
       case CMD_ARG_STOP_MINING:
         set_workers_paused(true);
+        break;
+      case CMD_ARG_XFER:
+        {
+          i++;
+          char *address_str = (char*)argv[i];
+          i++;
+          uint64_t amount = (uint64_t)atol(argv[i]) * COIN;
+
+          size_t address_size = 0;
+          uint8_t *address = hex2bin(address_str, &address_size);
+          assert(address_size == ADDRESS_SIZE);
+
+          transaction_entry_t tx_entry;
+          memcpy(tx_entry.address, address, ADDRESS_SIZE);
+          tx_entry.amount = amount;
+
+          free(address);
+
+          transaction_entries_t tx_entries;
+          tx_entries.num_entries++;
+          tx_entries.entries[tx_entries.num_entries - 1] = &tx_entry;
+
+          transaction_t *tx = NULL;
+          int r = construct_spend_tx(&tx, g_current_wallet, 1, tx_entries);
+          assert(!r);
+          r = validate_and_add_tx_to_mempool(tx);
+          assert(!r);
+        }
         break;
       default:
         break;
