@@ -126,12 +126,10 @@ int sign_txin(input_transaction_t *txin, transaction_t *tx, uint8_t *public_key,
 
   uint32_t header_size = get_tx_sign_header_size(tx) + TXIN_HEADER_SIZE;
   uint8_t header[header_size];
-  uint8_t hash[HASH_SIZE];
 
   get_txin_header(header, txin);
   get_tx_sign_header(header + TXIN_HEADER_SIZE, tx);
 
-  crypto_hash_sha256d(hash, header, header_size);
   crypto_sign_detached(txin->signature, NULL, header, header_size, secret_key);
 
   memcpy(txin->public_key, public_key, crypto_sign_PUBLICKEYBYTES);
@@ -193,7 +191,7 @@ void get_txout_header(uint8_t *header, output_transaction_t *txout)
   assert(header != NULL);
   assert(txout != NULL);
 
-  memcpy(header, &txout->amount, 4);
+  memcpy(header, &txout->amount, 8);
   memcpy(header, txout->address, ADDRESS_SIZE);
 }
 
