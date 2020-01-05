@@ -72,6 +72,8 @@ VULKAN_BEGIN_DECL
 #define MAX_P2P_PEERS_COUNT 16
 #define MAX_GROUPED_BLOCKS_COUNT 6
 
+#define DEFAULT_COMPACTION_MEMTABLE_MEMORY_BUDGET (1024 * 1024 * 512) // 512mb
+
 VULKAN_API void parameters_set_use_testnet(int use_testnet);
 VULKAN_API const int parameters_get_use_testnet(void);
 

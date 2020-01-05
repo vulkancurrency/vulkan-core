@@ -320,6 +320,13 @@ int open_blockchain(const char *blockchain_dir, int load_top_block)
   leveldb_options_set_create_if_missing(options, 1);
 #else
   rocksdb_options_t *options = rocksdb_options_create();
+
+  // set the parallelism based on the number of logical cores available:
+  int total_threads = MIN(get_num_logical_cores(), 1);
+  total_threads = total_threads > 1 ? total_threads / 2 : total_threads;
+  rocksdb_options_increase_parallelism(options, total_threads);
+
+  rocksdb_options_optimize_level_style_compaction(options, DEFAULT_COMPACTION_MEMTABLE_MEMORY_BUDGET);
   rocksdb_options_set_create_if_missing(options, 1);
 #endif
 
@@ -445,6 +452,13 @@ int open_backup_blockchain(const char *blockchain_backup_dir)
   leveldb_options_set_create_if_missing(options, 1);
 #else
   rocksdb_options_t *options = rocksdb_options_create();
+
+  // set the parallelism based on the number of logical cores available:
+  int total_threads = MIN(get_num_logical_cores(), 1);
+  total_threads = total_threads > 1 ? total_threads / 2 : total_threads;
+  rocksdb_options_increase_parallelism(options, total_threads);
+
+  rocksdb_options_optimize_level_style_compaction(options, DEFAULT_COMPACTION_MEMTABLE_MEMORY_BUDGET);
   rocksdb_options_set_create_if_missing(options, 1);
 #endif
 
