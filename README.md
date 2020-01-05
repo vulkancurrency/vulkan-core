@@ -79,19 +79,7 @@ cd build
 cmake -G "Visual Studio 14 Win64" ..
 ```
 
-## Mac OS
-
-```
-git clone https://github.com/vulkancurrency/vulkan.git
-cd vulkan
-git submodule update --init --recursive
-
-mkdir build
-cd build
-cmake .. && make -j 4
-```
-
-## Linux
+## Mac OS & Linux
 
 ```
 git clone https://github.com/vulkancurrency/vulkan.git
