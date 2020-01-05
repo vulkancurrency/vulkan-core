@@ -250,21 +250,10 @@ int compare_txout(output_transaction_t *txout, output_transaction_t *other_txout
     compare_address(txout->address, other_txout->address));
 }
 
-int compare_transaction(transaction_t *transaction, transaction_t *other_transaction)
+int compare_transaction_txins(transaction_t *transaction, transaction_t *other_transaction)
 {
   assert(transaction != NULL);
   assert(other_transaction != NULL);
-  int result = (
-    compare_hash(transaction->id, other_transaction->id) &&
-    transaction->txin_count == other_transaction->txin_count &&
-    transaction->txout_count == other_transaction->txout_count);
-
-  if (result == 0)
-  {
-    return 0;
-  }
-
-  // compare tx inputs
   for (uint32_t txin_index = 0; txin_index < transaction->txin_count; txin_index++)
   {
     input_transaction_t *txin = transaction->txins[txin_index];
@@ -279,7 +268,13 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
     }
   }
 
-  // compare tx outputs
+  return 1;
+}
+
+int compare_transaction_txouts(transaction_t *transaction, transaction_t *other_transaction)
+{
+  assert(transaction != NULL);
+  assert(other_transaction != NULL);
   for (uint32_t txout_index = 0; txout_index < transaction->txout_count; txout_index++)
   {
     output_transaction_t *txout = transaction->txouts[txout_index];
@@ -295,6 +290,19 @@ int compare_transaction(transaction_t *transaction, transaction_t *other_transac
   }
 
   return 1;
+}
+
+int compare_transaction(transaction_t *transaction, transaction_t *other_transaction)
+{
+  assert(transaction != NULL);
+  assert(other_transaction != NULL);
+  int result = (
+    compare_hash(transaction->id, other_transaction->id) &&
+    transaction->txin_count == other_transaction->txin_count &&
+    transaction->txout_count == other_transaction->txout_count);
+
+  return (result && compare_transaction_txins(transaction, other_transaction) &&
+    compare_transaction_txouts(transaction, other_transaction));
 }
 
 void print_txin(uint8_t txin_index, input_transaction_t *txin)
