@@ -193,7 +193,8 @@ int remove_tx_from_mempool(transaction_t *tx)
 transaction_t* pop_tx_from_mempool_nolock(void)
 {
   void *val = NULL;
-  assert(array_remove_at(g_mempool_transactions, 0, &val) == CC_OK);
+  int r = array_remove_at(g_mempool_transactions, 0, &val);
+  assert(r == CC_OK);
 
   mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
   assert(mempool_entry != NULL);
@@ -242,7 +243,8 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
       break;
     }
 
-    assert(add_transaction_to_block(block, tx, tx_index) == 0);
+    int r = add_transaction_to_block(block, tx, tx_index);
+    assert(r == 0);
     tx_index++;
   })
 
@@ -284,7 +286,8 @@ int clear_txs_in_mempool_from_block(block_t *block)
 int clear_expired_txs_in_mempool_nolock(void)
 {
   Array *txs_to_remove;
-  assert(array_new(&txs_to_remove) == CC_OK);
+  int r = array_new(&txs_to_remove);
+  assert(r == CC_OK);
 
   void *val = NULL;
   ARRAY_FOREACH(val, g_mempool_transactions,
@@ -311,7 +314,8 @@ int clear_expired_txs_in_mempool_nolock(void)
 
     if (remove_tx)
     {
-      assert(array_add(txs_to_remove, tx) == CC_OK);
+      r = array_add(txs_to_remove, tx);
+      assert(r == CC_OK);
     }
   })
 
@@ -321,7 +325,8 @@ int clear_expired_txs_in_mempool_nolock(void)
     transaction_t *tx = (transaction_t*)val;
     assert(tx != NULL);
 
-    assert(remove_tx_from_mempool_nolock(tx) == 0);
+    r = remove_tx_from_mempool_nolock(tx);
+    assert(r == 0);
     free_transaction(tx);
   })
 
@@ -351,7 +356,8 @@ int clear_expired_txs_in_mempool(void)
 
 static task_result_t flush_mempool(task_t *task, va_list args)
 {
-  assert(clear_expired_txs_in_mempool_noblock() == 0);
+  int r = clear_expired_txs_in_mempool_noblock();
+  assert(r == 0);
   return TASK_RESULT_WAIT;
 }
 
@@ -363,7 +369,9 @@ int start_mempool(void)
   }
 
   mtx_init(&g_mempool_lock, mtx_recursive);
-  assert(array_new(&g_mempool_transactions) == CC_OK);
+
+  int r = array_new(&g_mempool_transactions);
+  assert(r == CC_OK);
 
   g_mempool_num_transactions = 0;
   g_mempool_flush_task = add_task(flush_mempool, FLUSH_MEMPOOL_TASK_DELAY);
