@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 
-#include "checkpoints.h"
+#include "checkpoint.h"
 
 static const checkpoint_entry_t CHECKPOINTS[] = {
 

@@ -44,7 +44,7 @@
 #include "common/util.h"
 #include "common/vec.h"
 
-#include "checkpoints.h"
+#include "checkpoint.h"
 #include "net.h"
 #include "p2p.h"
 #include "parameters.h"

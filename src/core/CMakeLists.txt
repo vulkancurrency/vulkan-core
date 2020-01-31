@@ -26,7 +26,7 @@
 set(VULKAN_CORE_SOURCE_FILES
   block.c
   blockchain.c
-  checkpoints.c
+  checkpoint.c
   console.c
   genesis.c
   mempool.c
@@ -44,7 +44,7 @@ set(VULKAN_CORE_HEADER_FILES
   block.h
   blockchain.h
   checkpoint_data.h
-  checkpoints.h
+  checkpoint.h
   console.h
   genesis.h
   mempool.h

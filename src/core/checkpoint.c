@@ -33,7 +33,7 @@
 #include "common/util.h"
 
 #include "checkpoint_data.h"
-#include "checkpoints.h"
+#include "checkpoint.h"
 #include "parameters.h"
 
 #include "crypto/cryptoutil.h"
