@@ -26,10 +26,11 @@
 #include <stdint.h>
 #include <sodium.h>
 
+#include <mongoose.h>
+
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/greatest.h"
-#include "common/mongoose.h"
 #include "common/util.h"
 
 #include "core/block.h"

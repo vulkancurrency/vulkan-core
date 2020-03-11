@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <inttypes.h>
 
+#include <mongoose.h>
+
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #include <upnperrors.h>
@@ -38,7 +40,6 @@
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
 #include "common/logger.h"
-#include "common/mongoose.h"
 #include "common/task.h"
 #include "common/tinycthread.h"
 #include "common/util.h"

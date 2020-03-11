@@ -34,9 +34,10 @@
 
 #include <deque.h>
 
+#include <mongoose.h>
+
 #include "common/buffer.h"
 #include "common/logger.h"
-#include "common/mongoose.h"
 #include "common/util.h"
 
 #include "blockchain.h"

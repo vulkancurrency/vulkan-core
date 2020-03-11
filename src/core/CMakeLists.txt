@@ -63,6 +63,8 @@ set(VULKAN_CORE_HEADER_FILES
 add_library(core ${VULKAN_CORE_SOURCE_FILES}
                  ${VULKAN_CORE_HEADER_FILES})
 
+target_link_libraries(core mongoose)
+
 if (SODIUM_FOUND)
  if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
    target_link_libraries(core ${SODIUM_LIBRARY_DEBUG})

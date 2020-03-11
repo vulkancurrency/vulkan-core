@@ -19,3 +19,6 @@
 [submodule "external/libuv"]
 	path = external/libuv
 	url = https://github.com/vulkancurrency/libuv.git
+[submodule "external/mongoose"]
+	path = external/mongoose
+	url = https://github.com/cesanta/mongoose.git

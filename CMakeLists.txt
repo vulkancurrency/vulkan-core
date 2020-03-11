@@ -104,8 +104,10 @@ include_directories(external/Collections-C/src/include)
 add_subdirectory(external/miniupnp/miniupnpc)
 include_directories(external/miniupnp/miniupnpc)
 
+include_directories(external/mongoose)
 include_directories(src)
 include_directories(tests)
 
+add_subdirectory(external)
 add_subdirectory(src)
 add_subdirectory(tests)

@@ -23,34 +23,12 @@
 # You should have received a copy of the MIT License
 # along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
-set(UNITTEST_SOURCE_FILES
-  block_tests.c
-  blockchain_tests.c
-  common_tests.c
-  crypto_tests.c
-  main.c
-  mempool_tests.c
-  merkle_tests.c
-  protocol_tests.c
-  transaction_tests.c
+set(MONGOOSE_SOURCE_FILES
+  mongoose/mongoose.c
 )
 
-set(UNITTEST_HEADER_FILES
-
+set(MONGOOSE_HEADER_FILES
+  mongoose/mongoose.h
 )
 
-add_executable(tests ${UNITTEST_SOURCE_FILES} ${UNITTEST_HEADER_FILES})
-
-target_link_libraries(tests mongoose)
-
-if (SODIUM_FOUND)
- if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-   target_link_libraries(tests ${SODIUM_LIBRARY_DEBUG})
- else()
-   target_link_libraries(tests ${SODIUM_LIBRARY_RELEASE})
- endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-else()
- target_link_libraries(tests libsodium_Cmake)
-endif()
-
-target_link_libraries(tests common core crypto miner wallet)
+add_library(mongoose ${MONGOOSE_SOURCE_FILES} ${MONGOOSE_HEADER_FILES})
