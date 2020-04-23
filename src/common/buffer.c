@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "byteorder.h"
 #include "buffer.h"
 
 buffer_t* buffer_make(void)
@@ -226,7 +227,7 @@ int buffer_write_uint8(buffer_t *buffer, uint8_t value)
     return 1;
   }
 
-  *(uint8_t*)(buffer->data + buffer->offset) = value;
+  *(uint8_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 1;
   return 0;
 }
@@ -239,7 +240,7 @@ int buffer_write_int8(buffer_t *buffer, int8_t value)
     return 1;
   }
 
-  *(int8_t*)(buffer->data + buffer->offset) = value;
+  *(int8_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 1;
   return 0;
 }
@@ -252,7 +253,7 @@ int buffer_write_uint16(buffer_t *buffer, uint16_t value)
     return 1;
   }
 
-  *(uint16_t*)(buffer->data + buffer->offset) = value;
+  *(uint16_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 2;
   return 0;
 }
@@ -265,7 +266,7 @@ int buffer_write_int16(buffer_t *buffer, int16_t value)
     return 1;
   }
 
-  *(int16_t*)(buffer->data + buffer->offset) = value;
+  *(int16_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 2;
   return 0;
 }
@@ -278,7 +279,7 @@ int buffer_write_uint32(buffer_t *buffer, uint32_t value)
     return 1;
   }
 
-  *(uint32_t*)(buffer->data + buffer->offset) = value;
+  *(uint32_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 4;
   return 0;
 }
@@ -291,7 +292,7 @@ int buffer_write_int32(buffer_t *buffer, int32_t value)
     return 1;
   }
 
-  *(int32_t*)(buffer->data + buffer->offset) = value;
+  *(int32_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 4;
   return 0;
 }
@@ -304,7 +305,7 @@ int buffer_write_uint64(buffer_t *buffer, uint64_t value)
     return 1;
   }
 
-  *(uint64_t*)(buffer->data + buffer->offset) = value;
+  *(uint64_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 8;
   return 0;
 }
@@ -317,7 +318,7 @@ int buffer_write_int64(buffer_t *buffer, int64_t value)
     return 1;
   }
 
-  *(int64_t*)(buffer->data + buffer->offset) = value;
+  *(int64_t*)(buffer->data + buffer->offset) = swap_le(value);
   buffer->offset += 8;
   return 0;
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2019, The Vulkan Developers.
+// Copyright (c) 2020, The Vulkan Developers.
 //
 // This file is part of Vulkan.
 //
@@ -25,40 +25,49 @@
 
 #pragma once
 
-#include <stdint.h>
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define PLATFORM_BIG_ENDIAN
+#endif
 
-static inline uint16_t swap_uint16(uint16_t val)
+#ifdef PLATFORM_BIG_ENDIAN
+
+static inline uint16_t swap_le_16(uint16_t x)
 {
-  return (val << 8) | (val >> 8);
+  return (x & 0x00ff) << 8 |
+         (x & 0xff00) >> 8;
 }
 
-static inline int16_t swap_int16(int16_t val)
+static inline uint32_t swap_le_32(uint32_t x)
 {
-  return (val << 8) | ((val >> 8) & 0xFF);
+  return (x & 0x000000ff) << 24 |
+         (x & 0x0000ff00) <<  8 |
+         (x & 0x00ff0000) >>  8 |
+         (x & 0xff000000) >> 24;
 }
 
-static inline uint32_t swap_uint32(uint32_t val)
+static inline uint64_t swap_le_64(uint64_t x)
 {
-  val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
-  return (val << 16) | (val >> 16);
+  return (x & 0x00000000000000ff) << 56 |
+         (x & 0x000000000000ff00) << 40 |
+         (x & 0x0000000000ff0000) << 24 |
+         (x & 0x00000000ff000000) <<  8 |
+         (x & 0x000000ff00000000) >>  8 |
+         (x & 0x0000ff0000000000) >> 24 |
+         (x & 0x00ff000000000000) >> 40 |
+         (x & 0xff00000000000000) >> 56;
 }
 
-static inline int32_t swap_int32(int32_t val)
-{
-  val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
-  return (val << 16) | ((val >> 16) & 0xFFFF);
-}
+#define swap_le(var) \
+( \
+  (sizeof(var) == 8) ? \
+    swap_le_64(var) : \
+  (sizeof(var) == 4) ? \
+    swap_le_32(var) : \
+  (sizeof(var) == 2) ? \
+  swap_le_16(var) : \
+  var \
+)
 
-static inline int64_t swap_int64(int64_t val)
-{
-  val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
-  val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
-  return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
-}
-
-static inline uint64_t swap_uint64(uint64_t val)
-{
-  val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
-  val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
-  return (val << 32) | (val >> 32);
-}
+#else
+#define swap_le(var) (var)
+#endif

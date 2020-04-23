@@ -41,7 +41,7 @@ set(VULKAN_COMMON_HEADER_FILES
   buffer_iterator.h
   buffer.h
   greatest.h
-  int_util.h
+  byteorder.h
   logger.h
   task.h
   tinycthread.h
