@@ -309,9 +309,8 @@ int valid_block_hash(block_t *block)
   // to see if the block has the correct corresponding hash;
   // also check to see if the block's hash target matches
   // it's corresponding proof-of-work difficulty...
-  return (
-    compare_hash(expected_block_hash, block->hash) &&
-    check_proof_of_work(block->hash, block->bits));
+  return (compare_hash(expected_block_hash, block->hash) &&
+          check_proof_of_work(block->hash, block->bits));
 }
 
 int validate_block_signatures(block_t *block)
@@ -377,16 +376,15 @@ int compare_block(block_t *block, block_t *other_block)
   assert(other_block != NULL);
 
   // compare the block structs
-  int result = (
-    block->version == other_block->version &&
-    compare_hash(block->previous_hash, other_block->previous_hash) &&
-    compare_hash(block->hash, other_block->hash) &&
-    block->timestamp == other_block->timestamp &&
-    block->nonce == other_block->nonce &&
-    block->bits == other_block->bits &&
-    block->cumulative_emission == other_block->cumulative_emission &&
-    compare_hash(block->merkle_root, other_block->merkle_root) &&
-    block->transaction_count == other_block->transaction_count);
+  int result = (block->version == other_block->version &&
+                compare_hash(block->previous_hash, other_block->previous_hash) &&
+                compare_hash(block->hash, other_block->hash) &&
+                block->timestamp == other_block->timestamp &&
+                block->nonce == other_block->nonce &&
+                block->bits == other_block->bits &&
+                block->cumulative_emission == other_block->cumulative_emission &&
+                compare_hash(block->merkle_root, other_block->merkle_root) &&
+                block->transaction_count == other_block->transaction_count);
 
   if (result == 0)
   {
@@ -435,37 +433,13 @@ int serialize_block_header(buffer_t *buffer, block_t *block)
   assert(block != NULL);
   assert(buffer != NULL);
 
-  if (buffer_write_uint32(buffer, block->version))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->timestamp))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->nonce))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->bits))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint64(buffer, block->cumulative_emission))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, block->previous_hash, HASH_SIZE))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, block->merkle_root, HASH_SIZE))
+  if (buffer_write_uint32(buffer, block->version) ||
+      buffer_write_uint32(buffer, block->timestamp) ||
+      buffer_write_uint32(buffer, block->nonce) ||
+      buffer_write_uint32(buffer, block->bits) ||
+      buffer_write_uint64(buffer, block->cumulative_emission) ||
+      buffer_write(buffer, block->previous_hash, HASH_SIZE) ||
+      buffer_write(buffer, block->merkle_root, HASH_SIZE))
   {
     return 1;
   }
@@ -478,47 +452,15 @@ int serialize_block(buffer_t *buffer, block_t *block)
   assert(block != NULL);
   assert(buffer != NULL);
 
-  if (buffer_write_uint32(buffer, block->version))
-  {
-    return 1;
-  }
-
-  if (buffer_write_bytes32(buffer, block->previous_hash, HASH_SIZE))
-  {
-    return 1;
-  }
-
-  if (buffer_write_bytes32(buffer, block->hash, HASH_SIZE))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->timestamp))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->nonce))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->bits))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint64(buffer, block->cumulative_emission))
-  {
-    return 1;
-  }
-
-  if (buffer_write_bytes32(buffer, block->merkle_root, HASH_SIZE))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, block->transaction_count))
+  if (buffer_write_uint32(buffer, block->version) ||
+      buffer_write_bytes32(buffer, block->previous_hash, HASH_SIZE) ||
+      buffer_write_bytes32(buffer, block->hash, HASH_SIZE) ||
+      buffer_write_uint32(buffer, block->timestamp) ||
+      buffer_write_uint32(buffer, block->nonce) ||
+      buffer_write_uint32(buffer, block->bits) ||
+      buffer_write_uint64(buffer, block->cumulative_emission) ||
+      buffer_write_bytes32(buffer, block->merkle_root, HASH_SIZE) ||
+      buffer_write_uint32(buffer, block->transaction_count))
   {
     return 1;
   }

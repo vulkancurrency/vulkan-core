@@ -81,12 +81,8 @@ int serialize_packet(buffer_t *buffer, packet_t *packet)
   assert(buffer != NULL);
   assert(packet != NULL);
 
-  if (buffer_write_uint32(buffer, packet->id))
-  {
-    return 1;
-  }
-
-  if (buffer_write_uint32(buffer, packet->size))
+  if (buffer_write_uint32(buffer, packet->id) ||
+      buffer_write_uint32(buffer, packet->size))
   {
     return 1;
   }
@@ -107,12 +103,8 @@ int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator)
   assert(packet != NULL);
   assert(buffer_iterator != NULL);
 
-  if (buffer_read_uint32(buffer_iterator, &packet->id))
-  {
-    return 1;
-  }
-
-  if (buffer_read_uint32(buffer_iterator, &packet->size))
+  if (buffer_read_uint32(buffer_iterator, &packet->id) ||
+      buffer_read_uint32(buffer_iterator, &packet->size))
   {
     return 1;
   }
