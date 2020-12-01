@@ -94,9 +94,8 @@ int buffer_iterator_compare(buffer_iterator_t *buffer_iterator, buffer_iterator_
   assert(other_buffer_iterator != NULL);
   assert(buffer_iterator->buffer != NULL);
   assert(other_buffer_iterator->buffer != NULL);
-  return (
-    buffer_compare((buffer_t*)buffer_iterator->buffer, (buffer_t*)other_buffer_iterator->buffer) &&
-    buffer_iterator->offset == other_buffer_iterator->offset);
+  return (buffer_compare((buffer_t*)buffer_iterator->buffer, (buffer_t*)other_buffer_iterator->buffer) &&
+          buffer_iterator->offset == other_buffer_iterator->offset);
 }
 
 void buffer_iterator_clear(buffer_iterator_t *buffer_iterator)

@@ -148,10 +148,9 @@ int buffer_compare(buffer_t *buffer, buffer_t *other_buffer)
 {
   assert(buffer != NULL);
   assert(other_buffer != NULL);
-  return (
-    memcmp(buffer->data, other_buffer->data, buffer->size) == 0 &&
-    buffer->size == other_buffer->size &&
-    buffer->offset == other_buffer->offset);
+  return (memcmp(buffer->data, other_buffer->data, buffer->size) == 0 &&
+          buffer->size == other_buffer->size &&
+          buffer->offset == other_buffer->offset);
 }
 
 void buffer_clear(buffer_t *buffer)
@@ -328,12 +327,8 @@ int buffer_write_bytes8(buffer_t *buffer, const uint8_t *bytes, uint8_t size)
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  if (buffer_write_uint8(buffer, size))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, bytes, size))
+  if (buffer_write_uint8(buffer, size) ||
+      buffer_write(buffer, bytes, size))
   {
     return 1;
   }
@@ -354,12 +349,8 @@ int buffer_write_bytes16(buffer_t *buffer, const uint8_t *bytes, uint16_t size)
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  if (buffer_write_uint16(buffer, size))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, bytes, size))
+  if (buffer_write_uint16(buffer, size) ||
+      buffer_write(buffer, bytes, size))
   {
     return 1;
   }
@@ -380,12 +371,8 @@ int buffer_write_bytes32(buffer_t *buffer, const uint8_t *bytes, uint32_t size)
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  if (buffer_write_uint32(buffer, size))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, bytes, size))
+  if (buffer_write_uint32(buffer, size) ||
+      buffer_write(buffer, bytes, size))
   {
     return 1;
   }
@@ -406,12 +393,8 @@ int buffer_write_bytes64(buffer_t *buffer, const uint8_t *bytes, uint64_t size)
   assert(buffer != NULL);
   assert(bytes != NULL);
   assert(size > 0);
-  if (buffer_write_uint64(buffer, size))
-  {
-    return 1;
-  }
-
-  if (buffer_write(buffer, bytes, size))
+  if (buffer_write_uint64(buffer, size) ||
+      buffer_write(buffer, bytes, size))
   {
     return 1;
   }
