@@ -31,7 +31,7 @@ brew install leveldb
 ### Installing RocksDB
 
 ```
-brew install leveldb
+brew install rocksdb
 ```
 
 ### Installing LibSodium
@@ -64,7 +64,7 @@ sudo apt-get install libsodium-dev
 
 # How to compile
 
-After installing all of the dependencies for this project (as specified above), you can compile the Vulkan Currency with the commands below, Vulkan Currency relies on CMake to generate the project build files,
+After installing all of the dependencies for this project (as specified above), you can compile the Vulkan Currency daemon with the commands below, Vulkan Currency relies on CMake to generate the project build files,
 follow the commands below (according to your platform you are running) to compile the daemon implementation provided by this project repository:
 
 ## Windows
