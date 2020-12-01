@@ -92,7 +92,6 @@ TEST can_construct_merkle_tree(void)
     0x49, 0x2f, 0x73, 0x5a
   };
 
-
   memcpy(hash_region, hash_a, HASH_SIZE);
   memcpy(hash_region + HASH_SIZE, hash_b, HASH_SIZE);
   memcpy(hash_region + 64, hash_c, HASH_SIZE);

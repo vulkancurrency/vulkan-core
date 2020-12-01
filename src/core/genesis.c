@@ -41,9 +41,9 @@ static block_t *g_testnet_genesis_block = NULL;
 static block_t *g_mainnet_genesis_block = NULL;
 
 static int copy_genesis_block_template(const block_genesis_entry_t block_template,
-  const transaction_genesis_entry_t tx_template, size_t num_txouts,
-  const output_transaction_genesis_entry_t output_txs_template[],
-  block_t **block_out)
+                                       const transaction_genesis_entry_t tx_template, size_t num_txouts,
+                                       const output_transaction_genesis_entry_t output_txs_template[],
+                                       block_t **block_out)
 {
   block_t *block = make_block();
   block->version = block_template.version;
@@ -88,7 +88,6 @@ static int copy_genesis_block_template(const block_genesis_entry_t block_templat
     assert(txout_genesis_entry != NULL);
 
     output_transaction_t *generation_txout = make_txout();
-
     generation_txout->amount = txout_genesis_entry->amount;
 
     uint8_t *address = hex2bin(txout_genesis_entry->address_str, &out_size);

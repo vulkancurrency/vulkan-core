@@ -38,7 +38,12 @@
 
 SUITE(transaction_suite);
 
+TEST try_double_spend_tx(void)
+{
+  PASS();
+}
+
 GREATEST_SUITE(transaction_suite)
 {
-
+  RUN_TEST(try_double_spend_tx);
 }

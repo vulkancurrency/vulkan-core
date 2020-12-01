@@ -50,7 +50,7 @@ SUITE_EXTERN(protocol_suite);
 
 GREATEST_MAIN_DEFS();
 
-int main(int argc, char **argv)
+int init_daemon(void)
 {
   if (sodium_init() == -1)
   {
@@ -83,17 +83,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  GREATEST_MAIN_BEGIN();
-  RUN_SUITE(common_suite);
-  RUN_SUITE(crypto_suite);
-  RUN_SUITE(block_suite);
-  RUN_SUITE(blockchain_suite);
-  RUN_SUITE(transaction_suite);
-  RUN_SUITE(mempool_suite);
-  RUN_SUITE(merkle_suite);
-  RUN_SUITE(protocol_suite);
-  GREATEST_MAIN_END();
+  return 0;
+}
 
+int deinit_daemon(void)
+{
   if (close_blockchain())
   {
     return 1;
@@ -120,4 +114,33 @@ int main(int argc, char **argv)
   }
 
   return 0;
+}
+
+int main(int argc, char **argv)
+{
+  if (init_daemon())
+  {
+    return 1;
+  }
+
+  GREATEST_MAIN_BEGIN();
+
+  // Utilities:
+  RUN_SUITE(common_suite);
+  RUN_SUITE(crypto_suite);
+  RUN_SUITE(merkle_suite);
+
+  // Blocks:
+  RUN_SUITE(block_suite);
+  RUN_SUITE(blockchain_suite);
+
+  // Transactions:
+  RUN_SUITE(mempool_suite);
+  RUN_SUITE(transaction_suite);
+
+  // P2P:
+  RUN_SUITE(protocol_suite);
+  GREATEST_MAIN_END();
+
+  return deinit_daemon();
 }
