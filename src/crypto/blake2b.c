@@ -24,6 +24,7 @@
 // along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
 
 #include <stdint.h>
+#include <string.h>
 
 #include <sodium.h>
 
