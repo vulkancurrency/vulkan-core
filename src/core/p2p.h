@@ -79,6 +79,8 @@ VULKAN_API int deserialize_peerlist_from_storage(buffer_t *buffer);
 VULKAN_API int broadcast_data_to_peers_nolock(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
 VULKAN_API int broadcast_data_to_peers(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
 
+VULKAN_API void print_p2p_list(void);
+
 VULKAN_API int init_p2p(void);
 VULKAN_API int deinit_p2p(void);
 

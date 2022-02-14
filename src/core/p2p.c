@@ -378,6 +378,26 @@ static task_result_t save_peerlist_storage(task_t *task)
   return TASK_RESULT_WAIT;
 }
 
+void print_p2p_list(void)
+{
+  printf("P2P List:\n");
+  void *val = NULL;
+  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+  {
+    peer_t *peer = *(peer_t**)val;
+    assert(peer != NULL);
+
+    net_connection_t *net_connection = peer->net_connection;
+    assert(net_connection != NULL);
+
+    struct mg_connection *connection = net_connection->connection;
+    assert(connection != NULL);
+
+    printf("Peer: %llu\n", peer->id);
+    printf("Connection Address: %s\n", connection->sa.sin.sin_addr);
+  })
+}
+
 int init_p2p(void)
 {
   if (g_p2p_initialized)
