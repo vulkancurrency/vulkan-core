@@ -145,7 +145,7 @@ int logger_open(void)
 
   mtx_init(&g_logger.lock, mtx_plain);
   g_logger.fp = logging_file;
-  g_logger.level = LOG_LEVEL_ERROR;
+  g_logger.level = LOG_LEVEL_FATAL;
   g_logger_is_open = 1;
 
   LOG_INFO("Successfully opened log file: %s", g_logger_log_filename);
