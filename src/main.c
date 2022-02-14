@@ -291,7 +291,15 @@ static int parse_commandline_args(int argc, char **argv)
           taskmgr_init();
           set_miner_generate_genesis(1);
           wallet_t *wallet = NULL;
-          if (init_wallet(g_wallet_dir, &wallet))
+
+          // create a temporary wallet directory to store while we are
+          // creating a new genesis block then delete it once we are finished:
+          char* current_time_str = get_current_time_str();
+          char* temp_wallet_dir = malloc(sizeof(char) * (strlen(g_wallet_dir) + 1 + strlen(current_time_str)));
+          sprintf(temp_wallet_dir, "%s-%s", g_wallet_dir, current_time_str);
+          free(current_time_str);
+
+          if (init_wallet(temp_wallet_dir, &wallet))
           {
             return 1;
           }
@@ -303,6 +311,13 @@ static int parse_commandline_args(int argc, char **argv)
             return 1;
           }
 
+          // now remove the wallet dir
+          if (remove_wallet(temp_wallet_dir))
+          {
+            return 1;
+          }
+
+          free(temp_wallet_dir);
           if (logger_close())
           {
             return 1;
