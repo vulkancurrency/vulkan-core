@@ -73,47 +73,47 @@ typedef struct BlockGenesisEntry
 // mainnnet genesis block info
 static const output_transaction_genesis_entry_t mainnet_genesis_output_txs[] = {
   {
-    .amount = 0,
-    .address_str = "000000000000000000000000000000000000000000000000000000000000000000"
+    .amount = 6103515625,
+    .address_str = "015a5ebabf78509d51f7f70b08180efd70aadddc37b3533211854c4de582549eeb"
   }
 };
 
 static const transaction_genesis_entry_t mainnet_genesis_tx = {
-  .id_str = "0000000000000000000000000000000000000000000000000000000000000000"
+  .id_str = "7c4753dcf70313be58a992a517b4d8051095d35faad91cc96e06fa037e1b0667"
 };
 
 static const block_genesis_entry_t mainnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
-  .hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
+  .hash_str = "00000000a51dc61834f2bbfbf6c045a1fa1dcc50d868e73e879a1f514985b4c9",
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
   .bits = GENESIS_BITS,
-  .cumulative_emission = 0,
-  .merkle_root_str = "0000000000000000000000000000000000000000000000000000000000000000",
+  .cumulative_emission = 6103515625,
+  .merkle_root_str = "7c4753dcf70313be58a992a517b4d8051095d35faad91cc96e06fa037e1b0667",
 };
 
 // testnet genesis block info
 static const output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
   {
-    .amount = 6103515625,
-    .address_str = "0294aaa5c230304920bf88f928523c32b9301f2d48a4e9f2a19c81e5a91ee14b9b"
+    .amount = 0,
+    .address_str = "000000000000000000000000000000000000000000000000000000000000000000"
   }
 };
 
 static const transaction_genesis_entry_t testnet_genesis_tx = {
-  .id_str = "445b6fc088a96b7a97ed50b3ec137d827a8983689aed05de88cfd6827c4cd668"
+  .id_str = "0000000000000000000000000000000000000000000000000000000000000000"
 };
 
 static const block_genesis_entry_t testnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
-  .hash_str = "0000000094ca6c8e60b5a48f7d0afb3e92b56d023edd880f88c888c21c96e1c9",
+  .hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
   .timestamp = TESTNET_GENESIS_TIMESTAMP,
   .nonce = TESTNET_GENESIS_NONCE,
   .bits = TESTNET_GENESIS_BITS,
   .cumulative_emission = 6103515625,
-  .merkle_root_str = "445b6fc088a96b7a97ed50b3ec137d827a8983689aed05de88cfd6827c4cd668",
+  .merkle_root_str = "0000000000000000000000000000000000000000000000000000000000000000",
 };
 
 #define NUM_MAINNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(mainnet_genesis_output_txs))
