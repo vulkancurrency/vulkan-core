@@ -30,6 +30,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "tinycthread.h"
 #include "logger.h"
 
 static int g_logger_is_open = 0;
