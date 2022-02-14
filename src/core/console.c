@@ -38,6 +38,7 @@
 #include "console.h"
 #include "mempool.h"
 #include "net.h"
+#include "p2p.h"
 #include "parameters.h"
 #include "transaction_builder.h"
 
@@ -54,7 +55,8 @@ enum
   CMD_ARG_CONNECT,
   CMD_ARG_START_MINING,
   CMD_ARG_STOP_MINING,
-  CMD_ARG_XFER
+  CMD_ARG_XFER,
+  CMD_ARG_PRINT_PEERLIST
 };
 
 static argument_map_t g_arguments_map[] = {
@@ -65,7 +67,8 @@ static argument_map_t g_arguments_map[] = {
   {"connect", CMD_ARG_CONNECT, "Attempts to connect to a manually specified peer", "<address:port>", 1},
   {"start_mining", CMD_ARG_START_MINING, "Resumes all mining threads", "", 0},
   {"stop_mining", CMD_ARG_STOP_MINING, "Pauses all mining threads", "", 0},
-  {"xfer", CMD_ARG_XFER, "Xfer money to another wallet from the currently opened wallet", "<address, amount>", 2}
+  {"xfer", CMD_ARG_XFER, "Xfer money to another wallet from the currently opened wallet", "<address, amount>", 2},
+  {"print_pl", CMD_ARG_PRINT_PEERLIST, "Prints all of our connected peers in the peerlist", "", 0}
 };
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
@@ -207,6 +210,9 @@ static int parse_console_args(int argc, char **argv)
           r = validate_and_add_tx_to_mempool(tx);
           assert(!r);
         }
+        break;
+      case CMD_ARG_PRINT_PEERLIST:
+        print_p2p_list();
         break;
       default:
         break;
