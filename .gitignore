@@ -52,7 +52,7 @@ Mkfile.old
 dkms.conf
 
 # Mac OS
-*.DS_Store
+.DS_Store
 
 # Build
 3rdparty/
