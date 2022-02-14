@@ -25,7 +25,7 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(vulkan LANGUAGES C ASM)
 
 cmake_policy(SET CMP0079 NEW)
