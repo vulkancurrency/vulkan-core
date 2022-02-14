@@ -93,6 +93,45 @@ cd build
 cmake .. && make -j 4
 ```
 
+# Want to fork Vulkan Currency?
+
+PLEASE DO! By all means please do fork Vulkan Currency, we encourage it! The process of forking Vulkan is a very simple one.
+
+## Step #1 - Update parameters.h
+### Choose testnet and/or mainnet and update the following definitions:
+
+#### Mainnet
+```
+#define GENESIS_NONCE 0
+#define GENESIS_BITS 0
+#define GENESIS_TIMESTAMP 0
+#define GENESIS_REWARD ((uint64_t)0)
+```
+
+#### Testnet
+```
+#define TESTNET_GENESIS_NONCE 2691906045
+#define TESTNET_GENESIS_BITS 0x1d00ffff
+#define TESTNET_GENESIS_TIMESTAMP 0
+#define TESTNET_GENESIS_REWARD ((uint64_t)0)
+```
+
+## Step #2 - Recompile the daemon and run the following commands:
+
+### Mainnet
+```
+./vulkan --worker-threads 2 --create-genesis-block --mine
+```
+
+### Testnet
+```
+./vulkan --testnet --worker-threads 2 --create-genesis-block --mine
+```
+
+## Step #3 - Take the genesis block output written to stdout and update the variables defined in the parameters.h file and the genesis.h file (take into account if you are using testnet or mainnet)
+
+## Congratulations, you have successfully forked Vulkan Currency!
+
 # License
 
 Vulkan is licensed under the "MIT License" for more info, refer to the [LICENSE](LICENSE) file.
