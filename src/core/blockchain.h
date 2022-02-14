@@ -43,15 +43,15 @@
 
 VULKAN_BEGIN_DECL
 
-#define DB_KEY_PREFIX_TX "t"
-#define DB_KEY_PREFIX_UNSPENT_TX "ut"
-#define DB_KEY_PREFIX_BLOCK "b"
-#define DB_KEY_PREFIX_TOP_BLOCK "tb"
+#define DB_KEY_PREFIX_TX "tx"
+#define DB_KEY_PREFIX_UNSPENT_TX "utx"
+#define DB_KEY_PREFIX_BLOCK "bk"
+#define DB_KEY_PREFIX_TOP_BLOCK "tbk"
 
-#define DB_KEY_PREFIX_SIZE_TX 1
-#define DB_KEY_PREFIX_SIZE_UNSPENT_TX 2
-#define DB_KEY_PREFIX_SIZE_BLOCK 1
-#define DB_KEY_PREFIX_SIZE_TOP_BLOCK 2
+#define DB_KEY_PREFIX_SIZE_TX 2
+#define DB_KEY_PREFIX_SIZE_UNSPENT_TX 3
+#define DB_KEY_PREFIX_SIZE_BLOCK 2
+#define DB_KEY_PREFIX_SIZE_TOP_BLOCK 3
 
 VULKAN_API int valid_compression_type(int compression_type);
 VULKAN_API const char* get_compression_type_str(int compression_type);
