@@ -29,14 +29,14 @@
 
 #include "common/buffer_iterator.h"
 #include "common/buffer.h"
-#include "common/buffer_database.h"
+#include "common/buffer_storage.h"
 #include "common/greatest.h"
 #include "common/task.h"
 #include "common/util.h"
 
 SUITE(common_suite);
 
-static const char *g_buffer_database_dir = "buffer_database_tests.dat";
+static const char *g_buffer_storage_dir = "buffer_storage_tests.dat";
 
 static task_result_t task1_func(task_t *task)
 {
@@ -229,10 +229,10 @@ TEST buffer_common_tests(void)
   PASS();
 }
 
-TEST buffer_database_common_tests(void)
+TEST buffer_storage_common_tests(void)
 {
   char *err = NULL;
-  buffer_database_t *buffer_database = buffer_database_open(g_buffer_database_dir, &err);
+  buffer_storage_t *buffer_storage = buffer_storage_open(g_buffer_storage_dir, &err);
   if (err != NULL)
   {
     fprintf(stderr, "%s\n", err);
@@ -255,7 +255,7 @@ TEST buffer_database_common_tests(void)
   ASSERT(buffer_write_bytes32(buffer, (uint8_t*)data2, 128) == 0);
 
   // write the buffer
-  if (buffer_database_write_buffer(buffer_database, buffer, &err))
+  if (buffer_storage_write_buffer(buffer_storage, buffer, &err))
   {
     ASSERT(err != NULL);
     fprintf(stderr, "%s\n", err);
@@ -264,7 +264,7 @@ TEST buffer_database_common_tests(void)
 
   // read buffer from the database
   buffer_t *buffer1 = NULL;
-  if (buffer_database_read_buffer(buffer_database, &buffer1, &err))
+  if (buffer_storage_read_buffer(buffer_storage, &buffer1, &err))
   {
     ASSERT(err != NULL);
     fprintf(stderr, "%s\n", err);
@@ -302,14 +302,14 @@ TEST buffer_database_common_tests(void)
   buffer_free(buffer);
   buffer_free(buffer1);
 
-  if (buffer_database_close(buffer_database))
+  if (buffer_storage_close(buffer_storage))
   {
     fprintf(stderr, "Failed to close buffer database!\n");
     FAIL();
   }
 
-  buffer_database_free(buffer_database);
-  if (buffer_database_remove(g_buffer_database_dir, &err))
+  buffer_storage_free(buffer_storage);
+  if (buffer_storage_remove(g_buffer_storage_dir, &err))
   {
     fprintf(stderr, "Failed to remove buffer database: %s\n", err);
     FAIL();
@@ -351,6 +351,6 @@ TEST task_common_tests(void)
 GREATEST_SUITE(common_suite)
 {
   RUN_TEST(buffer_common_tests);
-  RUN_TEST(buffer_database_common_tests);
+  RUN_TEST(buffer_storage_common_tests);
   RUN_TEST(task_common_tests);
 }

@@ -35,24 +35,24 @@
 
 VULKAN_BEGIN_DECL
 
-typedef struct BufferDatabase
+typedef struct BufferStorage
 {
   const char *mode;
   int open;
   FILE *fp;
-} buffer_database_t;
+} buffer_storage_t;
 
-VULKAN_API buffer_database_t* buffer_database_make(void);
-VULKAN_API void buffer_database_free(buffer_database_t *buffer_database);
+VULKAN_API buffer_storage_t* buffer_storage_make(void);
+VULKAN_API void buffer_storage_free(buffer_storage_t *buffer_storage);
 
-VULKAN_API void buffer_database_set_mode(buffer_database_t *buffer_database, const char *mode);
-VULKAN_API const char* buffer_database_get_mode(buffer_database_t *buffer_database);
+VULKAN_API void buffer_storage_set_mode(buffer_storage_t *buffer_storage, const char *mode);
+VULKAN_API const char* buffer_storage_get_mode(buffer_storage_t *buffer_storage);
 
-VULKAN_API buffer_database_t* buffer_database_open(const char *filepath, char **err);
-VULKAN_API int buffer_database_close(buffer_database_t *buffer_database);
-VULKAN_API int buffer_database_remove(const char *filepath, char **err);
+VULKAN_API buffer_storage_t* buffer_storage_open(const char *filepath, char **err);
+VULKAN_API int buffer_storage_close(buffer_storage_t *buffer_storage);
+VULKAN_API int buffer_storage_remove(const char *filepath, char **err);
 
-VULKAN_API int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *buffer, char **err);
-VULKAN_API int buffer_database_read_buffer(buffer_database_t *buffer_database, buffer_t **buffer_out, char **err);
+VULKAN_API int buffer_storage_write_buffer(buffer_storage_t *buffer_storage, buffer_t *buffer, char **err);
+VULKAN_API int buffer_storage_read_buffer(buffer_storage_t *buffer_storage, buffer_t **buffer_out, char **err);
 
 VULKAN_END_DECL

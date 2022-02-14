@@ -25,7 +25,7 @@
 
 set(VULKAN_COMMON_SOURCE_FILES
   argparse.c
-  buffer_database.c
+  buffer_storage.c
   buffer_iterator.c
   buffer.c
   logger.c
@@ -37,7 +37,7 @@ set(VULKAN_COMMON_SOURCE_FILES
 
 set(VULKAN_COMMON_HEADER_FILES
   argparse.h
-  buffer_database.h
+  buffer_storage.h
   buffer_iterator.h
   buffer.h
   greatest.h

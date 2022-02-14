@@ -33,7 +33,7 @@
 #include "common/task.h"
 #include "common/buffer.h"
 #include "common/buffer_iterator.h"
-#include "common/buffer_database.h"
+#include "common/buffer_storage.h"
 #include "common/util.h"
 #include "common/logger.h"
 
@@ -45,7 +45,7 @@ static int g_p2p_initialized = 0;
 static mtx_t g_p2p_lock;
 
 static const char *g_p2p_storage_filename = "p2p_peerlist_storage.dat";
-static buffer_database_t *g_p2p_storage_db = NULL;
+static buffer_storage_t *g_p2p_storage_db = NULL;
 
 static HashTable* g_p2p_peerlist_table = NULL;
 static int g_num_peers = 0;
@@ -369,7 +369,7 @@ static task_result_t save_peerlist_storage(task_t *task)
 
   // write the serialized peer list data to the storage db
   char *err = NULL;
-  if (buffer_database_write_buffer(g_p2p_storage_db, buffer, &err))
+  if (buffer_storage_write_buffer(g_p2p_storage_db, buffer, &err))
   {
     perror(err);
   }
@@ -389,7 +389,7 @@ int init_p2p(void)
   assert(hashtable_new(&g_p2p_peerlist_table) == CC_OK);
 
   char *err = NULL;
-  g_p2p_storage_db = buffer_database_open(g_p2p_storage_filename, &err);
+  g_p2p_storage_db = buffer_storage_open(g_p2p_storage_filename, &err);
   if (err != NULL)
   {
     LOG_ERROR("Failed to initialize P2P storage db: %s", err);
@@ -397,7 +397,7 @@ int init_p2p(void)
   }
 
   buffer_t *buffer = NULL;
-  if (buffer_database_read_buffer(g_p2p_storage_db, &buffer, &err))
+  if (buffer_storage_read_buffer(g_p2p_storage_db, &buffer, &err))
   {
     LOG_ERROR("Failed to deserialize initialize P2P storage db: %s", err);
     return 1;
@@ -425,7 +425,7 @@ int deinit_p2p(void)
   hashtable_destroy(g_p2p_peerlist_table);
   mtx_destroy(&g_p2p_lock);
 
-  if (buffer_database_close(g_p2p_storage_db))
+  if (buffer_storage_close(g_p2p_storage_db))
   {
     LOG_ERROR("Failed to close P2P storage db!");
     return 1;

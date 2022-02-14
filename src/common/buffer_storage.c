@@ -29,83 +29,83 @@
 #include <stdint.h>
 
 #include "buffer.h"
-#include "buffer_database.h"
+#include "buffer_storage.h"
 
-buffer_database_t* buffer_database_make(void)
+buffer_storage_t* buffer_storage_make(void)
 {
-  buffer_database_t *buffer_database = malloc(sizeof(buffer_database_t));
-  if (buffer_database == NULL)
+  buffer_storage_t *buffer_storage = malloc(sizeof(buffer_storage_t));
+  if (buffer_storage == NULL)
   {
     return NULL;
   }
 
-  buffer_database->mode = "ab+";
-  buffer_database->open = 0;
-  buffer_database->fp = NULL;
-  return buffer_database;
+  buffer_storage->mode = "ab+";
+  buffer_storage->open = 0;
+  buffer_storage->fp = NULL;
+  return buffer_storage;
 }
 
-void buffer_database_free(buffer_database_t *buffer_database)
+void buffer_storage_free(buffer_storage_t *buffer_storage)
 {
-  assert(buffer_database != NULL);
-  assert(buffer_database->open == 0);
-  free(buffer_database);
+  assert(buffer_storage != NULL);
+  assert(buffer_storage->open == 0);
+  free(buffer_storage);
 }
 
-void buffer_database_set_mode(buffer_database_t *buffer_database, const char *mode)
+void buffer_storage_set_mode(buffer_storage_t *buffer_storage, const char *mode)
 {
-  assert(buffer_database != NULL);
-  buffer_database->mode = mode;
+  assert(buffer_storage != NULL);
+  buffer_storage->mode = mode;
 }
 
-const char* buffer_database_get_mode(buffer_database_t *buffer_database)
+const char* buffer_storage_get_mode(buffer_storage_t *buffer_storage)
 {
-  assert(buffer_database != NULL);
-  return buffer_database->mode;
+  assert(buffer_storage != NULL);
+  return buffer_storage->mode;
 }
 
-buffer_database_t* buffer_database_open(const char *filepath, char **err)
+buffer_storage_t* buffer_storage_open(const char *filepath, char **err)
 {
-  buffer_database_t *buffer_database = buffer_database_make();
-  if (buffer_database == NULL)
+  buffer_storage_t *buffer_storage = buffer_storage_make();
+  if (buffer_storage == NULL)
   {
     *err = "Failed to open buffer database, could not allocate sufficient memory!";
     return NULL;
   }
 
   // open the file for reading and writing bytes
-  buffer_database->fp = fopen(filepath, buffer_database->mode);
-  if (buffer_database->fp == NULL)
+  buffer_storage->fp = fopen(filepath, buffer_storage->mode);
+  if (buffer_storage->fp == NULL)
   {
     *err = "Failed to open buffer database!";
     return NULL;
   }
 
-  buffer_database->open = 1;
-  return buffer_database;
+  buffer_storage->open = 1;
+  return buffer_storage;
 }
 
-int buffer_database_close(buffer_database_t *buffer_database)
+int buffer_storage_close(buffer_storage_t *buffer_storage)
 {
-  assert(buffer_database != NULL);
-  assert(buffer_database->fp != NULL);
-  if (buffer_database->open == 0)
+  assert(buffer_storage != NULL);
+  assert(buffer_storage->fp != NULL);
+  if (buffer_storage->open == 0)
   {
     return 1;
   }
 
-  if (fclose(buffer_database->fp) != 0)
+  if (fclose(buffer_storage->fp) != 0)
   {
     return 1;
   }
 
-  buffer_database->mode = NULL;
-  buffer_database->open = 0;
-  buffer_database->fp = NULL;
+  buffer_storage->mode = NULL;
+  buffer_storage->open = 0;
+  buffer_storage->fp = NULL;
   return 0;
 }
 
-int buffer_database_remove(const char *filepath, char **err)
+int buffer_storage_remove(const char *filepath, char **err)
 {
   if (remove(filepath) != 0)
   {
@@ -116,12 +116,12 @@ int buffer_database_remove(const char *filepath, char **err)
   return 0;
 }
 
-int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *buffer, char **err)
+int buffer_storage_write_buffer(buffer_storage_t *buffer_storage, buffer_t *buffer, char **err)
 {
-  assert(buffer_database != NULL);
-  assert(buffer_database->fp != NULL);
+  assert(buffer_storage != NULL);
+  assert(buffer_storage->fp != NULL);
   assert(buffer != NULL);
-  if (buffer_database->open == 0)
+  if (buffer_storage->open == 0)
   {
     *err = "Failed to write buffer database, database is not open!";
     return 1;
@@ -133,43 +133,43 @@ int buffer_database_write_buffer(buffer_database_t *buffer_database, buffer_t *b
   assert(data_len > 0);
 
   // write the data to the file
-  fseek(buffer_database->fp, 0L, SEEK_SET);
-  size_t bytes_written = fwrite(data, 1, data_len, buffer_database->fp);
+  fseek(buffer_storage->fp, 0L, SEEK_SET);
+  size_t bytes_written = fwrite(data, 1, data_len, buffer_storage->fp);
   if (bytes_written != data_len)
   {
     *err = "Failed to write buffer database, left over bytes remain!";
     return 1;
   }
 
-  fseek(buffer_database->fp, 0L, SEEK_SET);
+  fseek(buffer_storage->fp, 0L, SEEK_SET);
   return 0;
 }
 
-int buffer_database_read_buffer(buffer_database_t *buffer_database, buffer_t **buffer_out, char **err)
+int buffer_storage_read_buffer(buffer_storage_t *buffer_storage, buffer_t **buffer_out, char **err)
 {
-  assert(buffer_database != NULL);
-  assert(buffer_database->fp != NULL);
-  if (buffer_database->open == 0)
+  assert(buffer_storage != NULL);
+  assert(buffer_storage->fp != NULL);
+  if (buffer_storage->open == 0)
   {
     *err = "Failed to read buffer database, database is not open!";
     return 1;
   }
 
   // get the file size so we know how many bytes to read
-  fseek(buffer_database->fp, 0L, SEEK_END);
-  size_t data_len = ftell(buffer_database->fp);
-  fseek(buffer_database->fp, 0L, SEEK_SET);
+  fseek(buffer_storage->fp, 0L, SEEK_END);
+  size_t data_len = ftell(buffer_storage->fp);
+  fseek(buffer_storage->fp, 0L, SEEK_SET);
 
   // read the bytes from disk and place them into a buffer
   uint8_t data[data_len];
-  size_t bytes_read = fread(data, 1, data_len, buffer_database->fp);
+  size_t bytes_read = fread(data, 1, data_len, buffer_storage->fp);
   if (bytes_read != data_len)
   {
     *err = "Failed to read buffer database, did not read all bytes!";
     return 1;
   }
 
-  fseek(buffer_database->fp, 0L, SEEK_SET);
+  fseek(buffer_storage->fp, 0L, SEEK_SET);
   *buffer_out = buffer_init_data(0, data, data_len);
   return 0;
 }
