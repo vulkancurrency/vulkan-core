@@ -1,4 +1,4 @@
-# Copyright (c) 2019, The Vulkan Developers.
+# Copyright (c) 2019-2022, The Vulkan Developers.
 #
 # This file is part of Vulkan.
 #
