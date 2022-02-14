@@ -54,8 +54,8 @@
 static connection_entries_t g_connection_entries;
 static int g_enable_miner = 0;
 
-static const char *g_blockchain_data_dir = "blockchain";
-static const char *g_wallet_dir = "wallet";
+static const char *g_blockchain_data_dir = "store-blockchain";
+static const char *g_wallet_dir = "store-wallet";
 static const char *g_logger_log_filename = "daemon.log";
 
 static int g_repair_blockchain = 0;
