@@ -31,8 +31,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "tinycthread.h"
-
 #ifndef LOG_USE_COLOR
 #define LOG_USE_COLOR
 #endif
