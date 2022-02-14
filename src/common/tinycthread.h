@@ -84,6 +84,7 @@ extern "C" {
 
 /* Platform specific includes */
 #if defined(_TTHREAD_POSIX_)
+  #include <sys/time.h>
   #include <pthread.h>
 #elif defined(_TTHREAD_WIN32_)
   #ifndef WIN32_LEAN_AND_MEAN
