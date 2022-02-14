@@ -86,7 +86,7 @@ enum
   CMD_ARG_MINE
 };
 
-static argument_map_t g_arguments_map[] = {
+static const argument_map_t g_arguments_map[] = {
   {"help", CMD_ARG_HELP, "Shows the help information", "", 0},
   {"version", CMD_ARG_VERSION, "Shows the version information", "", 0},
   {"logging-filename", CMD_ARG_LOGGING_FILENAME, "Sets the logger output log filename", "<logger_filename>.log", 1},
