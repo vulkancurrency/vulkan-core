@@ -165,6 +165,23 @@ uint32_t get_current_time(void)
   return (uint32_t)time(NULL);
 }
 
+char* get_current_time_str(void)
+{
+  time_t current_time;
+  struct tm * time_info;
+  char ts[9];
+
+  time(&current_time);
+  time_info = localtime(&current_time);
+
+  strftime(ts, sizeof(ts), "%H:%M:%S", time_info);
+  puts(ts);
+
+  char* tsp = malloc(sizeof(char) * 9);
+  sprintf(tsp, "%s", ts);
+  return tsp;
+}
+
 int cmp_least_greatest(const void *a, const void *b)
 {
   int f = *((int*)a);
