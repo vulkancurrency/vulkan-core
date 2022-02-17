@@ -132,6 +132,31 @@ PLEASE DO! By all means please do fork Vulkan Currency, we encourage it! The pro
 
 ## Congratulations, you have successfully forked Vulkan Currency!
 
+# Other
+
+## Testnet Genesis Block
+
+```
+Block:
+Version: 1
+Previous Hash: 0000000000000000000000000000000000000000000000000000000000000000
+Hash: 00000000ca2796715a7515bf51295cce6715d6a6dfafe67effab4e2a7798423f
+Timestamp (epoch): 1645119298
+Nonce: 2273200037
+Bits: 486604799
+Cumulative Emission: 6103515625
+Merkle Root: 2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac
+Transaction Count: 1
+Transaction:
+Id: 2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac
+Txin Count: 0
+Txout Count: 1
+
+Txout 0:
+Amount: 6103515625
+Address: 0232dbc228de4cf289a242758eb942361ccbf6ff6fc404793cdb47ad61dac2dc1c
+```
+
 # License
 
 Vulkan is licensed under the "MIT License" for more info, refer to the [LICENSE](LICENSE) file.
