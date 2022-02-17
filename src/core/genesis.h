@@ -70,50 +70,50 @@ typedef struct BlockGenesisEntry
   char *merkle_root_str;
 } block_genesis_entry_t;
 
-// mainnnet genesis block info
+/* MAINNET genesis block info: */
 static const output_transaction_genesis_entry_t mainnet_genesis_output_txs[] = {
   {
     .amount = 6103515625,
-    .address_str = "015a5ebabf78509d51f7f70b08180efd70aadddc37b3533211854c4de582549eeb"
+    .address_str = "000000000000000000000000000000000000000000000000000000000000000000"
   }
 };
 
 static const transaction_genesis_entry_t mainnet_genesis_tx = {
-  .id_str = "7c4753dcf70313be58a992a517b4d8051095d35faad91cc96e06fa037e1b0667"
+  .id_str = "0000000000000000000000000000000000000000000000000000000000000000"
 };
 
 static const block_genesis_entry_t mainnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
-  .hash_str = "00000000a51dc61834f2bbfbf6c045a1fa1dcc50d868e73e879a1f514985b4c9",
+  .hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
   .timestamp = GENESIS_TIMESTAMP,
   .nonce = GENESIS_NONCE,
   .bits = GENESIS_BITS,
   .cumulative_emission = 6103515625,
-  .merkle_root_str = "7c4753dcf70313be58a992a517b4d8051095d35faad91cc96e06fa037e1b0667",
+  .merkle_root_str = "0000000000000000000000000000000000000000000000000000000000000000",
 };
 
-// testnet genesis block info
+/* TESTNET genesis block info: */
 static const output_transaction_genesis_entry_t testnet_genesis_output_txs[] = {
   {
-    .amount = 0,
-    .address_str = "000000000000000000000000000000000000000000000000000000000000000000"
+    .amount = 6103515625,
+    .address_str = "0232dbc228de4cf289a242758eb942361ccbf6ff6fc404793cdb47ad61dac2dc1c"
   }
 };
 
 static const transaction_genesis_entry_t testnet_genesis_tx = {
-  .id_str = "0000000000000000000000000000000000000000000000000000000000000000"
+  .id_str = "2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac"
 };
 
 static const block_genesis_entry_t testnet_genesis_block_template = {
   .version = BLOCK_VERSION,
   .previous_hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
-  .hash_str = "0000000000000000000000000000000000000000000000000000000000000000",
+  .hash_str = "00000000ca2796715a7515bf51295cce6715d6a6dfafe67effab4e2a7798423f",
   .timestamp = TESTNET_GENESIS_TIMESTAMP,
   .nonce = TESTNET_GENESIS_NONCE,
   .bits = TESTNET_GENESIS_BITS,
   .cumulative_emission = 6103515625,
-  .merkle_root_str = "0000000000000000000000000000000000000000000000000000000000000000",
+  .merkle_root_str = "2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac",
 };
 
 #define NUM_MAINNET_GENESIS_TXOUTS (sizeof(output_transaction_genesis_entry_t) / sizeof(mainnet_genesis_output_txs))
