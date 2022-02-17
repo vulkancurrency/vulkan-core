@@ -157,7 +157,7 @@ int deserialize_message(packet_t *packet, void **message)
   buffer_iterator_t *buffer_iterator = buffer_iterator_init(buffer);
   switch (packet->id)
   {
-    case PKT_TYPE_CONNECT_REQ:
+    case PKT_TYPE_CONNECT_ESTABLISH_REQ:
       {
         uint32_t host_port = 0;
         if (buffer_read_uint32(buffer_iterator, &host_port))
@@ -186,7 +186,7 @@ int deserialize_message(packet_t *packet, void **message)
           goto packet_deserialize_fail;
         }
 
-        connection_req_t *packed_message = malloc(sizeof(connection_req_t));
+        connect_establish_req_t *packed_message = malloc(sizeof(connect_establish_req_t));
         assert(packed_message != NULL);
         packed_message->host_port = host_port;
         packed_message->version_number = version_number;
@@ -195,9 +195,9 @@ int deserialize_message(packet_t *packet, void **message)
         *message = packed_message;
       }
       break;
-    case PKT_TYPE_CONNECT_RESP:
+    case PKT_TYPE_CONNECT_ESTABLISH_RESP:
       {
-        connection_resp_t *packed_message = malloc(sizeof(connection_resp_t));
+        connect_establish_resp_t *packed_message = malloc(sizeof(connect_establish_resp_t));
         assert(packed_message != NULL);
         *message = packed_message;
       }
@@ -557,7 +557,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
   buffer_t *buffer = buffer_init();
   switch (packet_id)
   {
-    case PKT_TYPE_CONNECT_REQ:
+    case PKT_TYPE_CONNECT_ESTABLISH_REQ:
       {
         uint32_t host_port = va_arg(args, uint32_t);
         uint8_t use_testnet = va_arg(args, int);
@@ -582,7 +582,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
         }
       }
       break;
-    case PKT_TYPE_CONNECT_RESP:
+    case PKT_TYPE_CONNECT_ESTABLISH_RESP:
       {
 
       }
@@ -890,17 +890,17 @@ void free_message(uint32_t packet_id, int did_packet_fail, void *message_object)
   assert(message_object != NULL);
   switch (packet_id)
   {
-    case PKT_TYPE_CONNECT_REQ:
+    case PKT_TYPE_CONNECT_ESTABLISH_REQ:
       {
-        connection_req_t *message = (connection_req_t*)message_object;
+        connect_establish_req_t *message = (connect_establish_req_t*)message_object;
         free(message->version_number);
         free(message->version_name);
         free(message);
       }
       break;
-    case PKT_TYPE_CONNECT_RESP:
+    case PKT_TYPE_CONNECT_ESTABLISH_RESP:
       {
-        connection_resp_t *message = (connection_resp_t*)message_object;
+        connect_establish_resp_t *message = (connect_establish_resp_t*)message_object;
         free(message);
       }
       break;
@@ -1585,8 +1585,8 @@ int can_packet_be_processed(net_connection_t *net_connection, uint32_t packet_id
   int check_sender = 0;
   switch (packet_id)
   {
-    case PKT_TYPE_CONNECT_REQ:
-    case PKT_TYPE_CONNECT_RESP:
+    case PKT_TYPE_CONNECT_ESTABLISH_REQ:
+    case PKT_TYPE_CONNECT_ESTABLISH_RESP:
       return 1;
 
     case PKT_TYPE_GET_BLOCK_HEIGHT_REQ:
@@ -1654,9 +1654,9 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
   assert(message_object != NULL);
   switch (packet_id)
   {
-    case PKT_TYPE_CONNECT_REQ:
+    case PKT_TYPE_CONNECT_ESTABLISH_REQ:
       {
-        connection_req_t *message = (connection_req_t*)message_object;
+        connect_establish_req_t *message = (connect_establish_req_t*)message_object;
         net_connection->host_port = message->host_port;
         net_connection->anonymous = 0;
 
@@ -1696,7 +1696,7 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
         peer_t *peer = init_peer(peer_id, net_connection);
         assert(add_peer(peer) == 0);
 
-        if (handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_RESP))
+        if (handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_ESTABLISH_RESP))
         {
           free_peer(peer);
           return 1;
@@ -1705,9 +1705,9 @@ int handle_packet_anonymous(net_connection_t *net_connection, uint32_t packet_id
         return 0;
       }
       break;
-    case PKT_TYPE_CONNECT_RESP:
+    case PKT_TYPE_CONNECT_ESTABLISH_RESP:
       {
-        connection_resp_t *message = (connection_resp_t*)message_object;
+        connect_establish_resp_t *message = (connect_establish_resp_t*)message_object;
         net_connection->anonymous = 0;
         return 0;
       }

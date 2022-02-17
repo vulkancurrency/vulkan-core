@@ -381,7 +381,7 @@ static void ev_handler(struct mg_connection *connection, int ev, void *p)
         assert(net_connection != NULL);
 
         uint8_t use_testnet = parameters_get_use_testnet();
-        assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_REQ, g_net_host_port, use_testnet) == 0);
+        assert(handle_packet_sendto(net_connection, PKT_TYPE_CONNECT_ESTABLISH_REQ, g_net_host_port, use_testnet) == 0);
       }
       break;
     case MG_EV_RECV:

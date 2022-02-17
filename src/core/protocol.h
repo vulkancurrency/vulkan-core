@@ -48,10 +48,14 @@ enum
 {
   PKT_TYPE_UNKNOWN = 0,
 
-  /* Peers: */
-  PKT_TYPE_CONNECT_REQ,
-  PKT_TYPE_CONNECT_RESP,
+  /* Connection: */
+  PKT_TYPE_CONNECT_ESTABLISH_REQ,
+  PKT_TYPE_CONNECT_ESTABLISH_RESP,
 
+  PKT_TYPE_CONNECT_PING_REQ,
+  PKT_TYPE_CONNECT_PING_RESP,
+
+  /* Peers: */
   PKT_TYPE_GET_PEERLIST_REQ,
   PKT_TYPE_GET_PEERLIST_RESP,
 
@@ -97,12 +101,22 @@ typedef struct
   char *version_number;
   char *version_name;
   uint8_t use_testnet;
-} connection_req_t;
+} connect_establish_req_t;
 
 typedef struct
 {
 
-} connection_resp_t;
+} connect_establish_resp_t;
+
+typedef struct
+{
+
+} connect_ping_req_t;
+
+typedef struct
+{
+
+} connect_ping_resp_t;
 
 typedef struct
 {
