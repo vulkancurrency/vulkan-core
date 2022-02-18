@@ -41,7 +41,8 @@ static block_t *g_testnet_genesis_block = NULL;
 static block_t *g_mainnet_genesis_block = NULL;
 
 static int copy_genesis_block_template(const block_genesis_entry_t block_template,
-                                       const transaction_genesis_entry_t tx_template, size_t num_txouts,
+                                       const transaction_genesis_entry_t tx_template,
+                                       size_t num_txouts,
                                        const output_transaction_genesis_entry_t output_txs_template[],
                                        block_t **block_out)
 {
