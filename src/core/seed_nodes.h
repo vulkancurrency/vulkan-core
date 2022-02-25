@@ -39,7 +39,7 @@ static const seed_node_entry_t SEED_NODES[] = {
 };
 
 static const seed_node_entry_t TESTNET_SEED_NODES[] = {
-  "74.208.37.50:8899"
+  {"74.208.37.50", 8899}
 };
 
 #define NUM_SEED_NODES (sizeof(SEED_NODES) / sizeof(seed_node_entry_t))
