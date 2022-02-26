@@ -394,7 +394,6 @@ void print_p2p_list(void)
     assert(connection != NULL);
 
     printf("Peer: %llu\n", peer->id);
-    printf("Connection Address: %s\n", connection->sa.sin.sin_addr);
   })
 }
 
