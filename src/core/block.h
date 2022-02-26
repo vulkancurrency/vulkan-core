@@ -79,7 +79,6 @@ VULKAN_API void print_block(block_t *block);
 VULKAN_API void print_block_transactions(block_t *block);
 
 VULKAN_API int compute_block_hash(uint8_t *hash, block_t *block);
-VULKAN_API int compute_self_block_hash(block_t *block);
 
 VULKAN_API int serialize_block_header(buffer_t *buffer, block_t *block);
 VULKAN_API int serialize_block(buffer_t *buffer, block_t *block);

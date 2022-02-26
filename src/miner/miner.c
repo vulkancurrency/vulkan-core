@@ -199,7 +199,7 @@ int compute_block(miner_worker_t *worker, block_t *block)
   while (valid_block_hash(block) == 0)
   {
     block->nonce++;
-    if (compute_self_block_hash(block))
+    if (compute_block_hash(block->hash, block))
     {
       return 1;
     }

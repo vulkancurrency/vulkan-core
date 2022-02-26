@@ -349,12 +349,6 @@ int compute_block_hash(uint8_t *hash, block_t *block)
   return 0;
 }
 
-int compute_self_block_hash(block_t *block)
-{
-  assert(block != NULL);
-  return compute_block_hash(block->hash, block);
-}
-
 uint32_t get_block_header_size(block_t *block)
 {
   assert(block != NULL);
