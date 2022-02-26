@@ -249,12 +249,6 @@ int compute_merkle_root(uint8_t *merkle_root, block_t *block)
   return 0;
 }
 
-int compute_self_merkle_root(block_t *block)
-{
-  assert(block != NULL);
-  return compute_merkle_root(block->merkle_root, block);
-}
-
 void print_block(block_t *block)
 {
   assert(block != NULL);
@@ -409,12 +403,12 @@ int compare_with_genesis_block(block_t *block)
   block_t *genesis_block = get_genesis_block();
   assert(genesis_block != NULL);
 
-  if (compute_self_block_hash(block))
+  if (compute_block_hash(block->hash, block))
   {
     return 0;
   }
 
-  if (compute_self_block_hash(genesis_block))
+  if (compute_block_hash(genesis_block->hash, genesis_block))
   {
     return 0;
   }

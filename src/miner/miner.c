@@ -165,8 +165,8 @@ block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, bl
   assert(add_transaction_to_block(block, tx, 0) == 0);
   assert(fill_block_with_txs_from_mempool(block) == 0);
 
-  assert(compute_self_merkle_root(block) == 0);
-  assert(compute_self_block_hash(block) == 0);
+  assert(compute_merkle_root(block->hash, block) == 0);
+  assert(compute_block_hash(block->hash, block) == 0);
   return block;
 }
 
@@ -188,8 +188,8 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
   assert(tx != NULL);
   assert(add_transaction_to_block(genesis_block, tx, 0) == 0);
 
-  assert(compute_self_merkle_root(genesis_block) == 0);
-  assert(compute_self_block_hash(genesis_block) == 0);
+  assert(compute_merkle_root(genesis_block->hash, genesis_block) == 0);
+  assert(compute_block_hash(genesis_block->hash, genesis_block) == 0);
   return genesis_block;
 }
 

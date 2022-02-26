@@ -73,7 +73,6 @@ VULKAN_API int valid_block(block_t *block);
 VULKAN_API int valid_merkle_root(block_t *block);
 
 VULKAN_API int compute_merkle_root(uint8_t *merkle_root, block_t *block);
-VULKAN_API int compute_self_merkle_root(block_t *block);
 
 VULKAN_API void print_block(block_t *block);
 VULKAN_API void print_block_transactions(block_t *block);
