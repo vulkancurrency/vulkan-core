@@ -77,6 +77,12 @@ static int console_initialized = 0;
 static thrd_t g_console_thread;
 static wallet_t *g_current_wallet = NULL;
 
+static task_t *g_console_loop_task = NULL;
+
+static char *_line = NULL;
+static size_t _len = 0;
+static ssize_t _read = -1;
+
 static int parse_console_args(int argc, char **argv)
 {
   for (int i = 0; i < argc; i++)
@@ -222,7 +228,7 @@ static int parse_console_args(int argc, char **argv)
   return 0;
 }
 
-static int console_mainloop()
+/*static int console_mainloop()
 {
   char *line = NULL;
   size_t len = 0;
@@ -247,6 +253,30 @@ static int console_mainloop()
   }
 
   return 0;
+}*/
+
+task_result_t console_loop(task_t *task, va_list args)
+{
+  if ((_read = getline(&_line, &_len, stdin)) != -1)
+  {
+    // pull all args from the line delimited by spaces:
+    size_t argc = 0;
+    char **argv = argparse_parse_args_from_string(_line, &argc);
+
+    // parse the arguments:
+    if (parse_console_args(argc, argv))
+    {
+
+    }
+  }
+
+  if (_read > 0)
+  {
+    free(_line);
+    _line = NULL;
+  }
+
+  return TASK_RESULT_CONT;
 }
 
 int init_console(wallet_t *wallet)
@@ -257,11 +287,13 @@ int init_console(wallet_t *wallet)
   }
 
   g_current_wallet = wallet;
-  if (thrd_create(&g_console_thread, console_mainloop, NULL) != thrd_success)
+  /*if (thrd_create(&g_console_thread, console_mainloop, NULL) != thrd_success)
   {
     LOG_ERROR("Failed to initialize console main thread!");
     return 1;
-  }
+  }*/
+
+  g_console_loop_task = add_task(console_loop, 0);
 
   console_initialized = 1;
   return 0;
@@ -274,6 +306,7 @@ int deinit_console(void)
     return 1;
   }
 
+  remove_task(g_console_loop_task);
   console_initialized = 0;
   return 0;
 }
