@@ -276,7 +276,7 @@ task_result_t console_loop(task_t *task, va_list args)
     _line = NULL;
   }
 
-  return TASK_RESULT_CONT;
+  return TASK_RESULT_WAIT;
 }
 
 int init_console(wallet_t *wallet)
@@ -293,7 +293,7 @@ int init_console(wallet_t *wallet)
     return 1;
   }*/
 
-  g_console_loop_task = add_task(console_loop, 0);
+  g_console_loop_task = add_task(console_loop, 0.05);
 
   console_initialized = 1;
   return 0;
