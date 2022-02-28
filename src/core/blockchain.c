@@ -273,6 +273,15 @@ int load_blockchain_top_block(void)
   block_t *genesis_block = get_genesis_block();
   assert(genesis_block != NULL);
 
+  if (parameters_get_use_testnet())
+  {
+    LOG_INFO("Initializing blockchain for Testnet...");
+  }
+  else
+  {
+    LOG_INFO("Initializing blockchain for Mainnet...");
+  }
+
   if (has_block_by_hash(genesis_block->hash) == 0)
   {
     if (validate_and_insert_block(genesis_block))
