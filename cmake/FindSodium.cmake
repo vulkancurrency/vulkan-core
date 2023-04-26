@@ -29,17 +29,19 @@ find_path(SODIUM_INCLUDE_DIR
     include
   PATHS
     ${SODIUMDIR}
-    ${SODIUMDIR}/src/libsodium
+    ${SODIUMDIR}/libsodium
     $ENV{SODIUMDIR}
-    $ENV{SODIUMDIR}/src/libsodium
+    $ENV{SODIUMDIR}/libsodium
     ~/Library/Frameworks
     /Library/Frameworks
     /usr/local/
     /usr/
-    /sw                # Fink
-    /opt/local/        # DarwinPorts
-    /usr/local/Cellar/ # Homebrew
-    /opt/csw/          # Blastwave
+    /sw                              # Fink
+    /opt/local/                      # DarwinPorts
+    /opt/homebrew/Cellar/            # Homebrew
+    /opt/homebrew/Cellar/libsodium/* # Homebrew
+    /usr/local/Cellar/               # Homebrew
+    /opt/csw/                        # Blastwave
     /opt/
 )
 
@@ -51,10 +53,12 @@ set(FIND_SODIUM_LIB_PATHS
   /Library/Frameworks
   /usr/local
   /usr
-  /sw                # Fink
-  /opt/local/        # DarwinPorts
-  /usr/local/Cellar/ # Homebrew
-  /opt/csw/          # Blastwave
+  /sw                               # Fink
+  /opt/local/                       # DarwinPorts
+  /opt/homebrew/Cellar/             # Homebrew
+  /opt/homebrew/Cellar/libsodium/*  # Homebrew
+  /usr/local/Cellar/                # Homebrew
+  /opt/csw/                         # Blastwave
   /opt
 )
 

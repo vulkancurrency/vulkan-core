@@ -56,6 +56,7 @@ endif()
 
 find_package(Sodium QUIET)
 if (NOT SODIUM_FOUND)
+  message(WARNING "Failed to find libsodium dependency, attempting to use libsodium-CMakes...")
   add_subdirectory(external/libsodium-CMake)
   set(${SODIUM_INCLUDE_DIR} external/libsodium-CMake/src/libsodium/include)
 endif()
@@ -63,8 +64,8 @@ include_directories(${SODIUM_INCLUDE_DIR})
 
 # ensure that we've set the openssl root and lib directory paths
 if (APPLE AND NOT DEFINED ENV{OPENSSL_ROOT_DIR})
-  set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl" "/usr/local/ssl/*" "/usr/local/Cellar/openssl/*")
-  set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib" "/usr/local/ssl/*/lib" "/usr/local/Cellar/openssl/*/lib")
+  set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl" "/usr/local/ssl/*" "/usr/local/Cellar/openssl/*" "/opt/homebrew/Cellar/openssl@3/*")
+  set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib" "/usr/local/ssl/*/lib" "/usr/local/Cellar/openssl/*/lib" "/opt/homebrew/Cellar/openssl@3/*/lib")
 endif()
 
 find_package(OpenSSL QUIET)
