@@ -150,7 +150,7 @@ block_t* construct_computable_block(miner_worker_t *worker, wallet_t *wallet, bl
   uint64_t cumulative_emission = previous_block->cumulative_emission;
   uint64_t block_reward = get_block_reward(current_block_height, cumulative_emission);
 
-  block_t *block = make_block();
+  block_t *block = create_new_block();
   memcpy(block->previous_hash, previous_block->hash, HASH_SIZE);
 
   block->timestamp = current_time;
@@ -174,7 +174,7 @@ block_t* construct_computable_genesis_block(wallet_t *wallet)
 {
   assert(wallet != NULL);
 
-  block_t *genesis_block = make_block();
+  block_t *genesis_block = create_new_block();
   genesis_block->timestamp = parameters_get_genesis_timestamp();
   genesis_block->nonce = randombytes_random();
   genesis_block->bits = get_next_work_required(NULL);

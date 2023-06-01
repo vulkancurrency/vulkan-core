@@ -57,7 +57,7 @@ static const uint8_t g_transaction_zero_hash[HASH_SIZE] = {
   0x00, 0x00, 0x00, 0x00
 };
 
-transaction_t* make_transaction(void)
+transaction_t* create_new_transaction(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
   assert(tx != NULL);
@@ -69,7 +69,7 @@ transaction_t* make_transaction(void)
   return tx;
 }
 
-input_transaction_t* make_txin(void)
+input_transaction_t* create_new_txin(void)
 {
   input_transaction_t *txin = malloc(sizeof(input_transaction_t));
   assert(txin != NULL);
@@ -80,7 +80,7 @@ input_transaction_t* make_txin(void)
   return txin;
 }
 
-output_transaction_t* make_txout(void)
+output_transaction_t* create_new_txout(void)
 {
   output_transaction_t *txout = malloc(sizeof(output_transaction_t));
   assert(txout != NULL);
@@ -554,7 +554,7 @@ int serialize_txin(buffer_t *buffer, input_transaction_t *txin)
 int deserialize_txin(buffer_iterator_t *buffer_iterator, input_transaction_t **txin_out)
 {
   assert(buffer_iterator != NULL);
-  input_transaction_t *txin = make_txin();
+  input_transaction_t *txin = create_new_txin();
   uint8_t *prev_tx_id = NULL;
   if (buffer_read_bytes32(buffer_iterator, &prev_tx_id))
   {
@@ -627,7 +627,7 @@ int serialize_txout(buffer_t *buffer, output_transaction_t *txout)
 int deserialize_txout(buffer_iterator_t *buffer_iterator, output_transaction_t **txout_out)
 {
   assert(buffer_iterator != NULL);
-  output_transaction_t *txout = make_txout();
+  output_transaction_t *txout = create_new_txout();
   txout->amount = 0;
   if (buffer_read_uint64(buffer_iterator, &txout->amount))
   {
@@ -725,7 +725,7 @@ int serialize_transaction(buffer_t *buffer, transaction_t *tx)
 int deserialize_transaction(buffer_iterator_t *buffer_iterator, transaction_t **tx_out)
 {
   assert(buffer_iterator != NULL);
-  transaction_t *tx = make_transaction();
+  transaction_t *tx = create_new_transaction();
   uint8_t *id = NULL;
   if (buffer_read_bytes32(buffer_iterator, &id))
   {

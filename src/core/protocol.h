@@ -249,7 +249,7 @@ typedef struct SyncEntry
 VULKAN_API void set_force_version_check(int force_version_check);
 VULKAN_API int get_force_version_check(void);
 
-VULKAN_API packet_t* make_packet(void);
+VULKAN_API packet_t* create_new_packet(void);
 VULKAN_API int serialize_packet(buffer_t *buffer, packet_t *packet);
 VULKAN_API int deserialize_packet(packet_t *packet, buffer_iterator_t *buffer_iterator);
 VULKAN_API void free_packet(packet_t *packet);

@@ -46,7 +46,7 @@ static int copy_genesis_block_template(const block_genesis_entry_t block_templat
                                        const output_transaction_genesis_entry_t output_txs_template[],
                                        block_t **block_out)
 {
-  block_t *block = make_block();
+  block_t *block = create_new_block();
   block->version = block_template.version;
 
   size_t out_size = 0;
@@ -71,7 +71,7 @@ static int copy_genesis_block_template(const block_genesis_entry_t block_templat
   free(merkle_root);
 
   // add the tx
-  transaction_t *generation_tx = make_transaction();
+  transaction_t *generation_tx = create_new_transaction();
   uint8_t *id = hex2bin(tx_template.id_str, &out_size);
   assert(out_size == HASH_SIZE);
   memcpy(generation_tx->id, id, HASH_SIZE);
@@ -88,7 +88,7 @@ static int copy_genesis_block_template(const block_genesis_entry_t block_templat
     const output_transaction_genesis_entry_t *txout_genesis_entry = &output_txs_template[txout_index];
     assert(txout_genesis_entry != NULL);
 
-    output_transaction_t *generation_txout = make_txout();
+    output_transaction_t *generation_txout = create_new_txout();
     generation_txout->amount = txout_genesis_entry->amount;
 
     uint8_t *address = hex2bin(txout_genesis_entry->address_str, &out_size);

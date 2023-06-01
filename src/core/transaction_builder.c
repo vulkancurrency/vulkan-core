@@ -76,7 +76,7 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
   uint32_t num_unspent_txs = 0;
   assert(get_unspent_transactions_for_address(wallet->address, &unspent_txs, &num_unspent_txs) == 0);
 
-  transaction_t *tx = make_transaction();
+  transaction_t *tx = create_new_transaction();
   for (uint16_t i = 0; i < transaction_entries.num_entries; i++)
   {
     transaction_entry_t *transaction_entry = transaction_entries.entries[i];
@@ -105,14 +105,14 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
         if (unspent_txout->amount >= transaction_entry->amount)
         {
           // construct the txin
-          input_transaction_t *txin = make_txin();
+          input_transaction_t *txin = create_new_txin();
           memcpy(txin->transaction, unspent_tx->id, HASH_SIZE);
           txin->txout_index = index;
           assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
           assert(add_txin_to_transaction(tx, txin, txout_index) == 0);
 
           // construct the txout
-          output_transaction_t *txout = make_txout();
+          output_transaction_t *txout = create_new_txout();
           memcpy(txout->address, transaction_entry->address, ADDRESS_SIZE);
           txout->amount = transaction_entry->amount;
           assert(add_txout_to_transaction(tx, txout, txout_index) == 0);
@@ -121,7 +121,7 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
           uint64_t change_leftover = unspent_txout->amount - transaction_entry->amount;
           if (change_leftover > 0)
           {
-            output_transaction_t *change_txout = make_txout();
+            output_transaction_t *change_txout = create_new_txout();
             memcpy(change_txout->address, wallet->address, ADDRESS_SIZE);
             change_txout->amount = change_leftover;
             assert(add_txout_to_transaction(tx, change_txout, txout_index + 1) == 0);
@@ -139,14 +139,14 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
           }
 
           // construct the txin
-          input_transaction_t *txin = make_txin();
+          input_transaction_t *txin = create_new_txin();
           memcpy(txin->transaction, unspent_tx->id, HASH_SIZE);
           txin->txout_index = index;
           assert(sign_txin(txin, tx, wallet->public_key, wallet->secret_key) == 0);
           assert(add_txin_to_transaction(tx, txin, txout_index) == 0);
 
           // construct the txout
-          output_transaction_t *txout = make_txout();
+          output_transaction_t *txout = create_new_txout();
           memcpy(txout->address, transaction_entry->address, ADDRESS_SIZE);
           txout->amount = unspent_txout->amount;
           assert(add_txout_to_transaction(tx, txout, txout_index) == 0);
@@ -161,7 +161,7 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
             uint64_t change_leftover = money_already_spent - transaction_entry->amount;
             assert(change_leftover > 0);
 
-            output_transaction_t *change_txout = make_txout();
+            output_transaction_t *change_txout = create_new_txout();
             memcpy(change_txout->address, wallet->address, ADDRESS_SIZE);
             change_txout->amount = change_leftover;
             assert(add_txout_to_transaction(tx, change_txout, txout_index + 1) == 0);
@@ -198,10 +198,10 @@ int construct_spend_tx(transaction_t **out_tx, wallet_t *wallet, int check_avail
 int construct_coinbase_tx(transaction_t **out_tx, wallet_t *wallet, uint64_t block_reward)
 {
   assert(wallet != NULL);
-  transaction_t *tx = make_transaction();
+  transaction_t *tx = create_new_transaction();
 
   // construct the txout
-  output_transaction_t *txout = make_txout();
+  output_transaction_t *txout = create_new_txout();
   memcpy(txout->address, wallet->address, ADDRESS_SIZE);
   txout->amount = block_reward;
   assert(add_txout_to_transaction(tx, txout, 0) == 0);

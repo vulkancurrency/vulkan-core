@@ -104,9 +104,9 @@ typedef struct UnspentTransaction
   unspent_output_transaction_t **unspent_txouts;
 } unspent_transaction_t;
 
-VULKAN_API transaction_t* make_transaction(void);
-VULKAN_API input_transaction_t* make_txin(void);
-VULKAN_API output_transaction_t* make_txout(void);
+VULKAN_API transaction_t* create_new_transaction(void);
+VULKAN_API input_transaction_t* create_new_txin(void);
+VULKAN_API output_transaction_t* create_new_txout(void);
 VULKAN_API unspent_output_transaction_t* make_unspent_txout(void);
 VULKAN_API unspent_transaction_t* make_unspent_transaction(void);
 

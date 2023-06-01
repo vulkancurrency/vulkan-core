@@ -256,7 +256,7 @@ static int process_packet(net_connection_t *net_connection, buffer_iterator_t *b
   assert(net_connection != NULL);
   assert(buffer_iterator != NULL);
 
-  packet_t *packet = make_packet();
+  packet_t *packet = create_new_packet();
   if (deserialize_packet(packet, buffer_iterator))
   {
     LOG_DEBUG("Failed to deserialize incoming packet!");
@@ -333,7 +333,7 @@ void data_received(net_connection_t *net_connection, const uint8_t *data, size_t
   }
   else
   {
-    packet_t *packet = make_packet();
+    packet_t *packet = create_new_packet();
     if (deserialize_packet(packet, buffer_iterator))
     {
       assert(close_net_connection(net_connection) == 0);

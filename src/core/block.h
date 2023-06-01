@@ -58,7 +58,7 @@ typedef struct Block
   transaction_t **transactions;
 } block_t;
 
-VULKAN_API block_t* make_block(void);
+VULKAN_API block_t* create_new_block(void);
 
 VULKAN_API uint32_t get_block_header_size(block_t *block);
 

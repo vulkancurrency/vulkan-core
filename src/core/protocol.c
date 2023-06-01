@@ -66,7 +66,7 @@ int get_force_version_check(void)
   return g_protocol_force_version_check;
 }
 
-packet_t* make_packet(void)
+packet_t* create_new_packet(void)
 {
   packet_t *packet = malloc(sizeof(packet_t));
   assert(packet != NULL);
@@ -866,7 +866,7 @@ int serialize_message(packet_t **packet, uint32_t packet_id, va_list args)
   const uint8_t *data = buffer_get_data(buffer);
   uint32_t data_len = buffer_get_size(buffer);
 
-  packet_t *serialized_packet = make_packet();
+  packet_t *serialized_packet = create_new_packet();
   serialized_packet->id = packet_id;
   serialized_packet->size = data_len;
   if (data_len > 0)

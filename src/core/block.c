@@ -54,7 +54,7 @@
  *
  * Later to be free'd with `free_block`
  */
-block_t* make_block(void)
+block_t* create_new_block(void)
 {
   block_t *block = malloc(sizeof(block_t));
   assert(block != NULL);
@@ -459,7 +459,7 @@ int serialize_block(buffer_t *buffer, block_t *block)
 int deserialize_block(buffer_iterator_t *buffer_iterator, block_t **block_out)
 {
   assert(buffer_iterator != NULL);
-  block_t *block = make_block();
+  block_t *block = create_new_block();
   assert(block != NULL);
 
   if (buffer_read_uint32(buffer_iterator, &block->version))
