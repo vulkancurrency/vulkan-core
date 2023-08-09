@@ -100,7 +100,7 @@ static int parse_console_args(int argc, char **argv)
     int num_args = (argc - 1) - i;
     if (num_args < argument_map->num_args)
     {
-      LOG_ERROR("Bad usage of console argument: %s, expected usage: %s", argument_map->name, argument_map->usage);
+      LOG_ERROR("Bad usage of console command: %s, expected usage: %s", argument_map->name, argument_map->usage);
       return 1;
     }
 

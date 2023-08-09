@@ -66,6 +66,13 @@ transaction_t* create_new_transaction(void)
   tx->txout_count = 0;
   tx->txins = NULL;
   tx->txouts = NULL;
+
+  // this is apart of the proof of stake system where users can stake a transaction
+  // if the transaction is staked, it should always be returned to them selves and does
+  // not require a fee to send. Maximum stake timeframe is 50 years, in increments of
+  // one month and/or 1 year:
+  tx->is_staked = 0;
+  tx->txmaturity = NULL;
   return tx;
 }
 
@@ -1231,6 +1238,12 @@ void free_transaction(transaction_t *tx)
   assert(tx != NULL);
   free_txins(tx);
   free_txouts(tx);
+  if (tx->is_staked)
+  {
+    assert(tx->txmaturity != NULL);
+    free(tx->txmaturity);
+  }
+
   free(tx);
 }
 

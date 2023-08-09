@@ -80,11 +80,19 @@ typedef struct OutputTransaction
   uint8_t address[ADDRESS_SIZE];
 } output_transaction_t;
 
+typedef struct TransactionMaturity
+{
+  uint8_t num_months;
+  uint8_t num_years;
+} transaction_maturity_t;
+
 typedef struct Transaction
 {
   uint8_t id[HASH_SIZE];
   uint32_t txin_count;
   uint32_t txout_count;
+  uint8_t is_staked;
+  transaction_maturity_t *txmaturity;
   input_transaction_t **txins;
   output_transaction_t **txouts;
 } transaction_t;

@@ -68,7 +68,7 @@ merkle_tree_t *construct_merkle_tree_from_leaves(uint8_t *hashes, uint32_t num_o
 }
 
 /*
- * Loops through all of the hashes, and creates leave nodes for each hash.
+ * Loops through all of the hashes, and creates nodes for each hash.
  */
 int construct_merkle_leaves_from_hashes(merkle_node_t **nodes, uint32_t *num_of_nodes, uint8_t *hashes, uint32_t num_of_hashes)
 {
