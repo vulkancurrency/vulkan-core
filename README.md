@@ -97,7 +97,7 @@ cmake .. && make -j 4
 
 ```
 arch -x86_64 /usr/local/bin/cmake ..
-arch -x86_64 make -j NUMBER_OF_THREADS_HERE
+make -j NUMBER_OF_THREADS_HERE
 ```
 
 ## Installing libsodium on arm Macbook's

@@ -42,8 +42,11 @@ set(CMAKE_C_FLAGS "-Wall")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+# we currently do not support building on native ARM, need to use x86_64 (rosetta)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+endif()
 
 option(WITH_ROCKSDB "Build with RocksDB support" ON)
 option(WITH_LEVELDB "Build with LevelDB support" OFF)
