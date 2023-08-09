@@ -28,7 +28,7 @@
 #include <assert.h>
 #include <time.h>
 
-#include <array.h>
+#include <cc_array.h>
 
 #include "common/logger.h"
 #include "common/task.h"
@@ -42,7 +42,7 @@
 static mtx_t g_mempool_lock;
 static int g_mempool_initialized = 0;
 
-static Array *g_mempool_transactions = NULL;
+static CC_Array *g_mempool_transactions = NULL;
 static int g_mempool_num_transactions = 0;
 
 static task_t *g_mempool_flush_task = NULL;
@@ -64,10 +64,13 @@ void free_mempool_entry(mempool_entry_t *mempool_entry)
 
 mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)
 {
-  void *val = NULL;
-  ARRAY_FOREACH(val, g_mempool_transactions,
+  CC_ArrayIter iter;
+  cc_array_iter_init(&iter, g_mempool_transactions);
+
+  void *el;
+  while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
@@ -77,7 +80,7 @@ mempool_entry_t* get_mempool_entry_from_mempool(uint8_t *tx_hash)
     {
       return mempool_entry;
     }
-  })
+  }
 
   return NULL;
 }
@@ -114,7 +117,7 @@ int add_tx_to_mempool_nolock(transaction_t *tx)
   mempool_entry->tx = tx;
   mempool_entry->received_ts = get_current_time();
 
-  if (array_add(g_mempool_transactions, mempool_entry) != CC_OK)
+  if (cc_array_add(g_mempool_transactions, mempool_entry) != CC_OK)
   {
     free_mempool_entry(mempool_entry);
     return 1;
@@ -172,7 +175,7 @@ int remove_tx_from_mempool_nolock(transaction_t *tx)
   mempool_entry_t *mempool_entry = get_mempool_entry_from_mempool(tx->id);
   assert(mempool_entry != NULL);
 
-  if (array_remove(g_mempool_transactions, mempool_entry, NULL) != CC_OK)
+  if (cc_array_remove(g_mempool_transactions, mempool_entry, NULL) != CC_OK)
   {
     return 1;
   }
@@ -193,7 +196,7 @@ int remove_tx_from_mempool(transaction_t *tx)
 transaction_t* pop_tx_from_mempool_nolock(void)
 {
   void *val = NULL;
-  int r = array_remove_at(g_mempool_transactions, 0, &val);
+  int r = cc_array_remove_at(g_mempool_transactions, 0, &val);
   assert(r == CC_OK);
 
   mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
@@ -227,10 +230,13 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
   // skip over the generation tx
   uint32_t tx_index = 1;
 
-  void *val = NULL;
-  ARRAY_FOREACH(val, g_mempool_transactions,
+  CC_ArrayIter iter;
+  cc_array_iter_init(&iter, g_mempool_transactions);
+
+  void *el;
+  while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
@@ -246,7 +252,7 @@ int fill_block_with_txs_from_mempool_nolock(block_t *block)
     int r = add_transaction_to_block(block, tx, tx_index);
     assert(r == 0);
     tx_index++;
-  })
+  }
 
   return 0;
 }
@@ -285,14 +291,17 @@ int clear_txs_in_mempool_from_block(block_t *block)
 
 int clear_expired_txs_in_mempool_nolock(void)
 {
-  Array *txs_to_remove;
-  int r = array_new(&txs_to_remove);
+  CC_Array *txs_to_remove;
+  int r = cc_array_new(&txs_to_remove);
   assert(r == CC_OK);
 
-  void *val = NULL;
-  ARRAY_FOREACH(val, g_mempool_transactions,
+  CC_ArrayIter iter;
+  cc_array_iter_init(&iter, g_mempool_transactions);
+
+  void *el;
+  while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    mempool_entry_t *mempool_entry = (mempool_entry_t*)val;
+    mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
     assert(mempool_entry != NULL);
 
     transaction_t *tx = mempool_entry->tx;
@@ -314,23 +323,23 @@ int clear_expired_txs_in_mempool_nolock(void)
 
     if (remove_tx)
     {
-      r = array_add(txs_to_remove, tx);
+      r = cc_array_add(txs_to_remove, tx);
       assert(r == CC_OK);
     }
-  })
+  }
 
-  val = NULL;
-  ARRAY_FOREACH(val, txs_to_remove,
+  cc_array_iter_init(&iter, txs_to_remove);
+  while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    transaction_t *tx = (transaction_t*)val;
+    transaction_t *tx = (transaction_t*)el;
     assert(tx != NULL);
 
     r = remove_tx_from_mempool_nolock(tx);
     assert(r == 0);
     free_transaction(tx);
-  })
+  }
 
-  array_destroy(txs_to_remove);
+  cc_array_destroy(txs_to_remove);
   return 0;
 }
 
@@ -370,7 +379,7 @@ int start_mempool(void)
 
   mtx_init(&g_mempool_lock, mtx_recursive);
 
-  int r = array_new(&g_mempool_transactions);
+  int r = cc_array_new(&g_mempool_transactions);
   assert(r == CC_OK);
 
   g_mempool_num_transactions = 0;
@@ -388,7 +397,7 @@ int stop_mempool(void)
 
   remove_task(g_mempool_flush_task);
   mtx_destroy(&g_mempool_lock);
-  array_destroy(g_mempool_transactions);
+  cc_array_destroy(g_mempool_transactions);
 
   g_mempool_num_transactions = 0;
   g_mempool_flush_task = NULL;

@@ -40,7 +40,7 @@ endif()
 find_path(_ROCKSDB_INCLUDE_DIR rocksdb/db.h
   HINTS ${CMAKE_SOURCE_DIR}/../../.. $ENV{ROCKSDB_ROOT} ${ROCKSDB_ROOT}
   PATH_SUFFIXES include
-  PATHS /usr /usr/local /opt /opt/local)
+  PATHS /opt/homebrew /opt/homebrew/Cellar /opt /opt/local /usr /usr/local)
 
 if(EXISTS "${_ROCKSDB_INCLUDE_DIR}/rocksdb/version.h")
   set(_ROCKSDB_Version_file "${_ROCKSDB_INCLUDE_DIR}/rocksdb/version.h")
@@ -124,6 +124,7 @@ if(_ROCKSDB_EPIC_FAIL)
   set(_ROCKSDB_INCLUDE_DIR)
   set(ROCKSDB_INCLUDE_DIRS)
   set(ROCKSDB_LIBRARIES)
+  message(FATAL_ERROR "Failed to find rocksdb, EPIC FAIL!")
 else()
   set(ROCKSDB_INCLUDE_DIRS ${_ROCKSDB_INCLUDE_DIR})
   set(ROCKSDB_LIBRARIES ${ROCKSDB_LIBRARY})

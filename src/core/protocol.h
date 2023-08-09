@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include <deque.h>
+#include <cc_deque.h>
 
 #include "common/task.h"
 #include "common/vulkan.h"
@@ -232,7 +232,7 @@ typedef struct SyncEntry
   int32_t sync_start_height;
 
   int is_syncing_grouped_blocks;
-  Deque *sync_pending_blocks;
+  CC_Deque *sync_pending_blocks;
   size_t sync_pending_blocks_count;
 
   uint32_t last_sync_height;

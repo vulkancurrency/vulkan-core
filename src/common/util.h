@@ -57,4 +57,6 @@ VULKAN_API uint32_t convert_str_to_ip(const char* address);
 VULKAN_API char* convert_ip_to_str(uint32_t ip);
 VULKAN_API char* convert_to_addr_str(const char* address, uint32_t port);
 
+#define DEQUE_FOREACH(VAL, DEQUE, FUNC)
+
 VULKAN_END_DECL

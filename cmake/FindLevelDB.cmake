@@ -40,7 +40,7 @@ endif()
 find_path(_LEVELDB_INCLUDE_DIR leveldb/db.h
   HINTS ${CMAKE_SOURCE_DIR}/../../.. $ENV{LEVELDB_ROOT} ${LEVELDB_ROOT}
   PATH_SUFFIXES include
-  PATHS /usr /usr/local /opt /opt/local)
+  PATHS /opt/homebrew /opt/homebrew/Cellar /opt /opt/local /usr /usr/local)
 
 if(EXISTS "${_LEVELDB_INCLUDE_DIR}/leveldb/version.h")
   set(_LEVELDB_Version_file "${_LEVELDB_INCLUDE_DIR}/leveldb/version.h")

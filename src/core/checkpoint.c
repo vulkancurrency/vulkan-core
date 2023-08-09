@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include <hashtable.h>
+#include <cc_hashtable.h>
 
 #include "common/logger.h"
 #include "common/util.h"
@@ -39,13 +39,13 @@
 #include "crypto/cryptoutil.h"
 
 static int g_checkpoints_initialized = 0;
-static HashTable *g_checkpoints_table = NULL;
+static CC_HashTable *g_checkpoints_table = NULL;
 static int g_num_checkpoints = 0;
 
 int get_checkpoint_hash_from_height(uint32_t height, uint8_t **hash_out)
 {
   void *val = NULL;
-  if (hashtable_get(g_checkpoints_table, &height, &val) != CC_OK)
+  if (cc_hashtable_get(g_checkpoints_table, &height, &val) != CC_OK)
   {
     return 1;
   }
@@ -62,7 +62,7 @@ int has_checkpoint_hash_by_height(uint32_t height)
 
 int add_checkpoint(uint32_t height, uint8_t *hash)
 {
-  if (hashtable_add(g_checkpoints_table, &height, (void*)hash) != CC_OK)
+  if (cc_hashtable_add(g_checkpoints_table, &height, (void*)hash) != CC_OK)
   {
     return 1;
   }
@@ -73,7 +73,7 @@ int add_checkpoint(uint32_t height, uint8_t *hash)
 
 int remove_checkpoint(uint32_t height)
 {
-  if (hashtable_remove(g_checkpoints_table, &height, NULL) != CC_OK)
+  if (cc_hashtable_remove(g_checkpoints_table, &height, NULL) != CC_OK)
   {
     return 1;
   }
@@ -106,7 +106,7 @@ int init_checkpoints(void)
     return 1;
   }
 
-  assert(hashtable_new(&g_checkpoints_table) == CC_OK);
+  assert(cc_hashtable_new(&g_checkpoints_table) == CC_OK);
   if (parameters_get_use_testnet())
   {
     for (int i = 0; i < NUM_TESTNET_CHECKPOINTS; i++)
@@ -135,7 +135,7 @@ int deinit_checkpoints(void)
     return 1;
   }
 
-  hashtable_destroy(g_checkpoints_table);
+  cc_hashtable_destroy(g_checkpoints_table);
   g_checkpoints_initialized = 0;
   return 0;
 }

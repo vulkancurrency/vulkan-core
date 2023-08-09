@@ -93,6 +93,19 @@ cd build
 cmake .. && make -j 4
 ```
 
+## Building on arm Macbook's
+
+```
+arch -x86_64 /usr/local/bin/cmake ..
+arch -x86_64 make -j NUMBER_OF_THREADS_HERE
+```
+
+## Installing libsodium on arm Macbook's
+
+```
+arch -x86_64 /usr/local/bin/brew install libsodium
+```
+
 # Want to fork Vulkan Currency?
 
 PLEASE DO! By all means please do fork Vulkan Currency, we encourage it! The process of forking Vulkan is a very simple one.

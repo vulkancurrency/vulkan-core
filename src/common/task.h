@@ -30,7 +30,6 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "queue.h"
 #include "tinycthread.h"
 
 typedef enum TaskResult

@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include <hashtable.h>
+#include <cc_hashtable.h>
 
 #include "common/task.h"
 #include "common/buffer.h"
@@ -47,7 +47,7 @@ static mtx_t g_p2p_lock;
 static const char *g_p2p_storage_filename = "p2p_peerlist_storage.dat";
 static buffer_storage_t *g_p2p_storage_db = NULL;
 
-static HashTable* g_p2p_peerlist_table = NULL;
+static CC_HashTable* g_p2p_peerlist_table = NULL;
 static int g_num_peers = 0;
 static task_t *g_p2p_storage_save_task = NULL;
 
@@ -79,17 +79,20 @@ void free_peer(peer_t *peer)
 
 peer_t* get_peer_nolock(uint64_t peer_id)
 {
-  void *val = NULL;
-  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+  CC_HashTableIter iter;
+  cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+
+  void *el;
+  while (cc_hashtable_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    peer_t *peer = *(peer_t**)val;
+    peer_t *peer = *(peer_t**)el;
     assert(peer != NULL);
 
     if (peer->id == peer_id)
     {
       return peer;
     }
-  })
+  }
 
   return NULL;
 }
@@ -105,17 +108,20 @@ peer_t* get_peer(uint64_t peer_id)
 peer_t* get_peer_from_net_connection_nolock(net_connection_t *net_connection)
 {
   assert(net_connection != NULL);
-  void *val = NULL;
-  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+  CC_HashTableIter iter;
+  cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+
+  void *el;
+  while (cc_hashtable_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    peer_t *peer = *(peer_t**)val;
+    peer_t *peer = *(peer_t**)el;
     assert(peer != NULL);
 
     if (peer->net_connection == net_connection)
     {
       return peer;
     }
-  })
+  }
 
   return NULL;
 }
@@ -159,7 +165,7 @@ int add_peer_nolock(peer_t *peer)
     return 1;
   }
 
-  assert(hashtable_add(g_p2p_peerlist_table, &peer->id, peer) == CC_OK);
+  assert(cc_hashtable_add(g_p2p_peerlist_table, &peer->id, peer) == CC_OK);
   g_num_peers++;
   return 0;
 }
@@ -180,7 +186,7 @@ int remove_peer_nolock(peer_t *peer)
     return 1;
   }
 
-  assert(hashtable_remove(g_p2p_peerlist_table, &peer->id, NULL) == CC_OK);
+  assert(cc_hashtable_remove(g_p2p_peerlist_table, &peer->id, NULL) == CC_OK);
   g_num_peers--;
   return 0;
 }
@@ -201,10 +207,13 @@ int serialize_peerlist_nolock(buffer_t *buffer)
     return 1;
   }
 
-  void *val = NULL;
-  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+  CC_HashTableIter iter;
+  cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+
+  void *el;
+  while (cc_hashtable_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    peer_t *peer = *(peer_t**)val;
+    peer_t *peer = *(peer_t**)el;
     assert(peer != NULL);
 
     net_connection_t *net_connection = peer->net_connection;
@@ -223,7 +232,7 @@ int serialize_peerlist_nolock(buffer_t *buffer)
     {
       return 1;
     }
-  })
+  }
 
   return 0;
 }
@@ -330,10 +339,14 @@ int broadcast_data_to_peers_nolock(net_connection_t *net_connection, const uint8
 {
   assert(net_connection != NULL);
   assert(data != NULL);
-  void *val = NULL;
-  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+
+  CC_HashTableIter iter;
+  cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+
+  void *el;
+  while (cc_hashtable_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    peer_t *peer = *(peer_t**)val;
+    peer_t *peer = *(peer_t**)el;
     assert(peer != NULL);
 
     if (peer->net_connection == net_connection)
@@ -345,7 +358,7 @@ int broadcast_data_to_peers_nolock(net_connection_t *net_connection, const uint8
     {
       return 1;
     }
-  })
+  }
 
   return 0;
 }
@@ -381,10 +394,14 @@ static task_result_t save_peerlist_storage(task_t *task)
 void print_p2p_list(void)
 {
   printf("P2P List:\n");
-  void *val = NULL;
-  HASHTABLE_FOREACH(val, g_p2p_peerlist_table,
+
+  CC_HashTableIter iter;
+  cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+
+  void *el;
+  while (cc_hashtable_iter_next(&iter, (void*) &el) != CC_ITER_END)
   {
-    peer_t *peer = *(peer_t**)val;
+    peer_t *peer = *(peer_t**)el;
     assert(peer != NULL);
 
     net_connection_t *net_connection = peer->net_connection;
@@ -394,7 +411,7 @@ void print_p2p_list(void)
     assert(connection != NULL);
 
     printf("Peer: %llu\n", peer->id);
-  })
+  }
 }
 
 int init_p2p(void)
@@ -405,7 +422,7 @@ int init_p2p(void)
   }
 
   mtx_init(&g_p2p_lock, mtx_recursive);
-  assert(hashtable_new(&g_p2p_peerlist_table) == CC_OK);
+  assert(cc_hashtable_new(&g_p2p_peerlist_table) == CC_OK);
 
   char *err = NULL;
   g_p2p_storage_db = buffer_storage_open(g_p2p_storage_filename, &err);
@@ -441,7 +458,7 @@ int deinit_p2p(void)
   }
 
   remove_task(g_p2p_storage_save_task);
-  hashtable_destroy(g_p2p_peerlist_table);
+  cc_hashtable_destroy(g_p2p_peerlist_table);
   mtx_destroy(&g_p2p_lock);
 
   if (buffer_storage_close(g_p2p_storage_db))
