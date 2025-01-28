@@ -83,6 +83,11 @@ extern "C" {
 #include <time.h>
 
 /* Platform specific includes */
+
+#if defined(__MACH__)
+    typedef int clockid_t;
+#endif
+
 #if defined(_TTHREAD_POSIX_)
   #include <sys/time.h>
   #include <pthread.h>
