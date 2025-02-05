@@ -1,36 +1,13 @@
-// Copyright (c) 2019-2022, The Vulkan Developers.
-//
-// This file is part of Vulkan.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
-// You should have received a copy of the MIT License
-// along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
+#include
+#include
+#include
+#include
+#include
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-
-#include <openssl/bn.h>
+#include
 
 #include "common/util.h"
+#include "common/logger.h"
 
 #include "pow.h"
 
@@ -44,16 +21,45 @@ int init_pow(void)
 {
   if (g_pow_limit_bn != NULL)
   {
+    LOG_WARN("Proof-of-work already initialized.");
     return 1;
   }
 
   size_t out_size = 0;
   uint8_t *pow_limit_bin = hex2bin(g_pow_limit_str, &out_size);
-  assert(out_size == HASH_SIZE);
+  if (out_size != HASH_SIZE)
+  {
+    LOG_ERROR("Hex to binary conversion size mismatch.");
+    free(pow_limit_bin);
+    return 1;
+  }
 
   g_pow_limit_bn = BN_new();
-  BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit_bn);
-  assert(!BN_is_zero(g_pow_limit_bn));
+  if (g_pow_limit_bn == NULL)
+  {
+    LOG_ERROR("Failed to allocate BIGNUM for POW limit.");
+    free(pow_limit_bin);
+    return 1;
+  }
+
+  if (BN_bin2bn(pow_limit_bin, HASH_SIZE, g_pow_limit_bn) == NULL)
+  {
+    LOG_ERROR("Failed to convert binary to BIGNUM for POW limit.");
+    BN_free(g_pow_limit_bn);
+    g_pow_limit_bn = NULL;
+    free(pow_limit_bin);
+    return 1;
+  }
+
+  if (BN_is_zero(g_pow_limit_bn))
+  {
+    LOG_ERROR("POW limit BIGNUM is zero.");
+    BN_clear_free(g_pow_limit_bn);
+    g_pow_limit_bn = NULL;
+    free(pow_limit_bin);
+    return 1;
+  }
+
   free(pow_limit_bin);
   return 0;
 }
@@ -62,9 +68,11 @@ int deinit_pow(void)
 {
   if (g_pow_limit_bn == NULL)
   {
+    LOG_WARN("Proof-of-work not initialized.");
     return 1;
   }
 
+  // Clear and free the BIGNUM to securely remove it from memory
   BN_clear_free(g_pow_limit_bn);
   g_pow_limit_bn = NULL;
   return 0;
@@ -72,23 +80,49 @@ int deinit_pow(void)
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits)
 {
-  assert(!BN_is_zero(g_pow_limit_bn));
+  if (g_pow_limit_bn == NULL)
+  {
+    LOG_ERROR("Proof-of-work not initialized.");
+    return 0;
+  }
+
+  if (BN_is_zero(g_pow_limit_bn))
+  {
+    LOG_ERROR("POW limit BIGNUM is zero.");
+    return 0;
+  }
 
   BIGNUM *bn_target = BN_new();
-  bignum_set_compact(bn_target, bits);
-
   BIGNUM *hash_target = BN_new();
-  BN_bin2bn(hash, HASH_SIZE, hash_target);
 
-  // check range
+  if (bn_target == NULL || hash_target == NULL)
+  {
+    LOG_ERROR("Failed to allocate BIGNUM for target or hash.");
+    BN_free(bn_target);
+    BN_free(hash_target);
+    return 0;
+  }
+
+  bignum_set_compact(bn_target, bits);
+  if (BN_bin2bn(hash, HASH_SIZE, hash_target) == NULL)
+  {
+    LOG_ERROR("Failed to convert hash to BIGNUM.");
+    BN_clear_free(bn_target);
+    BN_free(hash_target);
+    return 0;
+  }
+
+  // Check range
   if (BN_is_zero(bn_target) || BN_cmp(bn_target, g_pow_limit_bn) == 1)
   {
+    LOG_WARN("Invalid target difficulty.");
     goto pow_check_fail;
   }
 
-  // check proof of work
+  // Check proof of work
   if (BN_cmp(hash_target, bn_target) == 1)
   {
+    LOG_DEBUG("Hash does not meet proof-of-work requirement.");
     goto pow_check_fail;
   }
 
