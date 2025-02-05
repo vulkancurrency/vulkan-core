@@ -85,7 +85,9 @@ extern "C" {
 /* Platform specific includes */
 #if defined(_TTHREAD_POSIX_)
   #include <sys/time.h>
-  typedef int clockid_t;
+  #ifndef __APPLE__ // clockid_t is already defined in time.h on macOS
+    typedef int clockid_t;
+  #endif
   #include <pthread.h>
 #elif defined(_TTHREAD_WIN32_)
   #ifndef WIN32_LEAN_AND_MEAN
