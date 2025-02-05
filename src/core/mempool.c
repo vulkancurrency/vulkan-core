@@ -113,6 +113,40 @@ int is_tx_in_mempool(transaction_t *tx)
 int add_tx_to_mempool_nolock(transaction_t *tx)
 {
   assert(tx != NULL);
+
+  // Check for double spending attempts from the same address
+  for (uint32_t i = 0; i < tx->txin_count; i++)
+  {
+    input_transaction_t *txin = tx->txins[i];
+    assert(txin != NULL);
+
+    CC_ArrayIter iter;
+    cc_array_iter_init(&iter, g_mempool_transactions);
+
+    void *el;
+    while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END)
+    {
+      mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
+      assert(mempool_entry != NULL);
+
+      transaction_t *mempool_tx = mempool_entry->tx;
+      assert(mempool_tx != NULL);
+
+      for (uint32_t j = 0; j < mempool_tx->txin_count; j++)
+      {
+        input_transaction_t *mempool_txin = mempool_tx->txins[j];
+        assert(mempool_txin != NULL);
+
+        if (compare_hash(txin->transaction, mempool_txin->transaction) == 0 &&
+            txin->txout_index == mempool_txin->txout_index)
+        {
+          // Transaction attempts to spend an input already in use in the mempool
+          return 1;
+        }
+      }
+    }
+  }
+
   mempool_entry_t *mempool_entry = init_mempool_entry();
   mempool_entry->tx = tx;
   mempool_entry->received_ts = get_current_time();
