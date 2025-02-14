@@ -72,6 +72,28 @@ static rpc_method_t g_rpc_methods[] = {
     {"getrawmempool", rpc_getrawmempool},
     {"getmempoolfeeinfo", rpc_getmempoolfeeinfo},
     {"getpeerinfo", rpc_getpeerinfo},
+    {"getchaintxstats", rpc_getchaintxstats},
+    {"sendrawtransaction", rpc_sendrawtransaction},
+    {"createrawtransaction", rpc_createrawtransaction},
+    {"decoderawtransaction", rpc_decoderawtransaction}, 
+    {"testmempoolaccept", rpc_testmempoolaccept},
+    {"gettxout", rpc_gettxout},
+    {"pruneblockchain", rpc_pruneblockchain},
+    {"gettxoutproof", rpc_gettxoutproof},
+    {"verifytxoutproof", rpc_verifytxoutproof},
+    {"verifychain", rpc_verifychain},
+    {"invalidateblock", rpc_invalidateblock},
+    {"reconsiderblock", rpc_reconsiderblock},
+    {"waitfornewblock", rpc_waitfornewblock},
+    {"waitforblock", rpc_waitforblock},
+    {"setnetworkactive", rpc_setnetworkactive},
+    {"addnode", rpc_addnode},
+    {"disconnectnode", rpc_disconnectnode},
+    {"getaddednodeinfo", rpc_getaddednodeinfo},
+    {"setban", rpc_setban},
+    {"listbanned", rpc_listbanned},
+    {"clearbanned", rpc_clearbanned},
+    {"ping", rpc_ping},
     {NULL, NULL}
 };
 
@@ -1129,53 +1151,76 @@ char* rpc_getrawtransaction(const char* params) {
             json_object_new_int(get_blocks_since_block(block)));
         json_object_object_add(result, "time", json_object_new_int(block->timestamp));
         json_object_object_add(result, "blocktime", json_object_new_int(block->timestamp));
+        json_object_object_add(result, "size", json_object_new_int(get_tx_header_size(tx)));
 
         // Transaction details
         json_object_object_add(result, "version", json_object_new_int(tx->version));
         
-        // Inputs
+        // Inputs array
         struct json_object* vin = json_object_new_array();
         for (uint32_t i = 0; i < tx->txin_count; i++) {
             struct json_object* input = json_object_new_object();
             input_transaction_t* txin = tx->txins[i];
             
-            char* prev_txid = bin2hex(txin->transaction, HASH_SIZE);
-            json_object_object_add(input, "txid", json_object_new_string(prev_txid));
-            free(prev_txid);
+            if (is_coinbase_tx(tx)) {
+                json_object_object_add(input, "coinbase", json_object_new_string(""));
+            } else {
+                char* prev_txid = bin2hex(txin->transaction, HASH_SIZE);
+                json_object_object_add(input, "txid", json_object_new_string(prev_txid));
+                free(prev_txid);
+                json_object_object_add(input, "vout", json_object_new_int(txin->txout_index));
+            }
             
-            json_object_object_add(input, "vout", json_object_new_int(txin->txout_index));
+            // Add empty sequence and scriptSig fields
+            struct json_object* script_sig = json_object_new_object();
+            json_object_object_add(script_sig, "asm", json_object_new_string(""));
+            json_object_object_add(script_sig, "hex", json_object_new_string(""));
+            json_object_object_add(input, "scriptSig", script_sig);
+            json_object_object_add(input, "sequence", json_object_new_int64(0xffffffff));
+            
             json_object_array_add(vin, input);
         }
         json_object_object_add(result, "vin", vin);
 
-        // Outputs
+        // Outputs array 
         struct json_object* vout = json_object_new_array();
         for (uint32_t i = 0; i < tx->txout_count; i++) {
             struct json_object* output = json_object_new_object();
             output_transaction_t* txout = tx->txouts[i];
             
-            // Format value properly as number for JSON
-            double value = (double)txout->amount / COIN;
-            json_object_object_add(output, "value", json_object_new_double(value));
-            
+            // Format value properly as string with 8 decimal places
+            char value_str[32];
+            snprintf(value_str, sizeof(value_str), "%.8f", (double)txout->amount / COIN);
+            json_object_object_add(output, "value", json_object_new_string(value_str));
             json_object_object_add(output, "n", json_object_new_int(i));
             
+            struct json_object* script_pub_key = json_object_new_object();
             if (txout->address) {
-                struct json_object* script_pub_key = json_object_new_object();
-                struct json_object* addresses = json_object_new_array();
                 char* addr = bin2hex(txout->address, ADDRESS_SIZE);
+                struct json_object* addresses = json_object_new_array();
                 json_object_array_add(addresses, json_object_new_string(addr));
                 json_object_object_add(script_pub_key, "addresses", addresses);
-                // Add required scriptPubKey fields
-                json_object_object_add(script_pub_key, "type", json_object_new_string("pubkeyhash"));
-                json_object_object_add(script_pub_key, "reqSigs", json_object_new_int(1));
                 free(addr);
-                json_object_object_add(output, "scriptPubKey", script_pub_key);
             }
             
+            // Required scriptPubKey fields
+            json_object_object_add(script_pub_key, "asm", json_object_new_string(""));
+            json_object_object_add(script_pub_key, "hex", json_object_new_string(""));
+            json_object_object_add(script_pub_key, "type", json_object_new_string("pubkeyhash"));
+            json_object_object_add(script_pub_key, "reqSigs", json_object_new_int(1));
+            
+            json_object_object_add(output, "scriptPubKey", script_pub_key);
             json_object_array_add(vout, output);
         }
         json_object_object_add(result, "vout", vout);
+        
+        // Add hex field for raw transaction
+        buffer_t* buffer = buffer_init();
+        serialize_transaction(buffer, tx);
+        char* tx_hex = bin2hex(buffer_get_data(buffer), buffer_get_size(buffer));
+        json_object_object_add(result, "hex", json_object_new_string(tx_hex));
+        free(tx_hex);
+        buffer_free(buffer);
     } else {
         // Non-verbose - just raw transaction hex
         buffer_t* buffer = buffer_init();
@@ -1306,19 +1351,75 @@ char* rpc_getnettotals(const char* params) {
 
 char* rpc_getrawmempool(const char* params) {
     struct json_object* response = json_object_new_object();
-    struct json_object* result = json_object_new_array();
-    
+    struct json_object* result = json_object_new_object();
+
     // Get all transactions from mempool
     transaction_t** mempool_txs = NULL;
     size_t num_txs = get_mempool_transactions(&mempool_txs);
     
-    // Add transaction IDs to response
-    for (size_t i = 0; i < num_txs; i++) {
-        transaction_t* tx = mempool_txs[i];
-        if (tx && tx->id) {
+    // Check if verbose mode is requested
+    int verbose = 0;
+    if (params) {
+        struct json_object* params_obj = json_tokener_parse(params);
+        if (params_obj && json_object_is_type(params_obj, json_type_array)) {
+            struct json_object* verbose_obj = json_object_array_get_idx(params_obj, 0);
+            if (verbose_obj && json_object_is_type(verbose_obj, json_type_boolean)) {
+                verbose = json_object_get_boolean(verbose_obj);
+            }
+        }
+        if (params_obj) json_object_put(params_obj);
+    }
+
+    if (verbose) {
+        // Verbose mode - return detailed info about each tx
+        for (size_t i = 0; i < num_txs; i++) {
+            transaction_t* tx = mempool_txs[i];
+            if (!tx || !tx->id) continue;
+
             char* txid = bin2hex(tx->id, HASH_SIZE);
-            json_object_array_add(result, json_object_new_string(txid));
+            struct json_object* tx_info = json_object_new_object();
+
+            // Calculate sizes
+            size_t vsize = get_tx_header_size(tx);
+            uint64_t fee = calculate_transaction_fee(tx);
+            double fee_per_byte = fee > 0 ? (double)fee / vsize : 0.0;
+
+            json_object_object_add(tx_info, "vsize", json_object_new_int(vsize));
+            json_object_object_add(tx_info, "fee", json_object_new_double((double)fee / COIN));
+            json_object_object_add(tx_info, "modifiedfee", json_object_new_double((double)fee / COIN));
+            json_object_object_add(tx_info, "time", json_object_new_int(get_current_time()));
+            json_object_object_add(tx_info, "height", json_object_new_int(get_block_height()));
+            json_object_object_add(tx_info, "descendantcount", json_object_new_int(1));
+            json_object_object_add(tx_info, "descendantsize", json_object_new_int(vsize));
+            json_object_object_add(tx_info, "descendantfees", json_object_new_int(fee));
+            json_object_object_add(tx_info, "ancestorcount", json_object_new_int(1));
+            json_object_object_add(tx_info, "ancestorsize", json_object_new_int(vsize));
+            json_object_object_add(tx_info, "ancestorfees", json_object_new_int(fee));
+            json_object_object_add(tx_info, "wtxid", json_object_new_string(txid));
+            json_object_object_add(tx_info, "fees", json_object_new_object());
+            json_object_object_add(tx_info, "depends", json_object_new_array());
+            json_object_object_add(tx_info, "spentby", json_object_new_array());
+            json_object_object_add(tx_info, "bip125-replaceable", json_object_new_boolean(false));
+            
+            struct json_object* fees = json_object_object_get(tx_info, "fees");
+            json_object_object_add(fees, "base", json_object_new_double((double)fee / COIN));
+            json_object_object_add(fees, "modified", json_object_new_double((double)fee / COIN));
+            json_object_object_add(fees, "ancestor", json_object_new_double((double)fee / COIN));
+            json_object_object_add(fees, "descendant", json_object_new_double((double)fee / COIN));
+
+            json_object_object_add(result, txid, tx_info);
             free(txid);
+        }
+    } else {
+        // Non-verbose mode - just return array of txids
+        result = json_object_new_array();
+        for (size_t i = 0; i < num_txs; i++) {
+            transaction_t* tx = mempool_txs[i];
+            if (tx && tx->id) {
+                char* txid = bin2hex(tx->id, HASH_SIZE);
+                json_object_array_add(result, json_object_new_string(txid));
+                free(txid);
+            }
         }
     }
     
@@ -1448,6 +1549,809 @@ char* rpc_getpeerinfo(const char* params) {
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
     
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getchaintxstats(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Parameters: 
+    // 1. nblocks (numeric, optional, default=one month) - Size of the window in number of blocks
+    // 2. blockhash (string, optional) - The hash of the block that ends the window
+    int window = 30 * 24 * 60 / POW_TARGET_SPACING; // Default ~1 month of blocks
+    uint8_t* block_hash = NULL;
+    
+    if (params) {
+        struct json_object* params_obj = json_tokener_parse(params);
+        if (params_obj && json_object_is_type(params_obj, json_type_array)) {
+            // Get nblocks parameter
+            struct json_object* window_obj = json_object_array_get_idx(params_obj, 0);
+            if (window_obj && json_object_is_type(window_obj, json_type_int)) {
+                window = json_object_get_int(window_obj);
+            }
+            
+            // Get blockhash parameter
+            struct json_object* hash_obj = json_object_array_get_idx(params_obj, 1);
+            if (hash_obj && json_object_is_type(hash_obj, json_type_string)) {
+                size_t hash_len;
+                block_hash = hex2bin(json_object_get_string(hash_obj), &hash_len);
+            }
+        }
+        if (params_obj) json_object_put(params_obj);
+    }
+
+    // Handle negative or zero window values - cap at chain height
+    if (window <= 0) window = 1;
+    uint32_t max_height = get_block_height();
+    if ((uint32_t)window > max_height) {
+        window = max_height;
+    }
+
+    // Get final block - either specified by hash or current tip
+    block_t* final_block = NULL;
+    if (block_hash) {
+        final_block = get_block_from_hash(block_hash);
+        free(block_hash);
+        if (!final_block) {
+            return create_json_error(-8, "Invalid block hash");
+        }
+    } else {
+        final_block = get_top_block();
+        if (!final_block) {
+            return create_json_error(-8, "Could not get chain tip");
+        }
+    }
+
+    uint32_t final_height = get_block_height_from_block(final_block);
+
+    // Calculate start height and get start block
+    uint32_t start_height = (final_height > window) ? (final_height - window) : 0;
+    block_t* start_block = get_block_from_height(start_height);
+    
+    if (!start_block) {
+        free_block(final_block);
+        return create_json_error(-8, "Could not get start block");
+    }
+
+    uint64_t total_tx_count = 0;
+    uint64_t window_tx_count = 0;
+    
+    // Get total tx count up to final block
+    for (uint32_t height = 0; height <= final_height; height++) {
+        block_t* block = get_block_from_height(height);
+        if (!block) continue;
+        total_tx_count += block->transaction_count;
+        if (height >= start_height) {
+            window_tx_count += block->transaction_count;
+        }
+        free_block(block);
+    }
+
+    // Calculate time difference and averages
+    int64_t time_diff = (int64_t)final_block->timestamp - (int64_t)start_block->timestamp;
+    if (time_diff <= 0) time_diff = 1; // Avoid division by zero
+
+    double tx_rate = (double)window_tx_count / time_diff;
+    double avg_timespan = (double)time_diff / window;
+
+    // Fill in response fields
+    json_object_object_add(result, "time", json_object_new_int64(final_block->timestamp));
+    json_object_object_add(result, "txcount", json_object_new_int64(total_tx_count));
+    json_object_object_add(result, "window_final_block_hash", 
+        json_object_new_string(bin2hex(final_block->hash, HASH_SIZE)));
+    json_object_object_add(result, "window_block_count", json_object_new_int(window));
+    json_object_object_add(result, "window_tx_count", json_object_new_int64(window_tx_count));
+    json_object_object_add(result, "window_interval", json_object_new_int64(time_diff));
+    json_object_object_add(result, "txrate", json_object_new_double(tx_rate));
+    json_object_object_add(result, "avgTimespan", json_object_new_double(avg_timespan));
+
+    // Add response
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free_block(final_block);
+    free_block(start_block);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_sendrawtransaction(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get hex transaction parameter
+    struct json_object* hex_obj = json_object_array_get_idx(params_obj, 0);
+    if (!hex_obj || !json_object_is_type(hex_obj, json_type_string)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - transaction hex required");
+    }
+
+    // Decode hex transaction
+    const char* tx_hex = json_object_get_string(hex_obj);
+    size_t tx_data_len;
+    uint8_t* tx_data = hex2bin(tx_hex, &tx_data_len);
+    
+    if (!tx_data) {
+        json_object_put(params_obj);
+        return create_json_error(-22, "Invalid transaction hex");
+    }
+
+    // Deserialize transaction
+    buffer_t* buffer = buffer_init_data(0, tx_data, tx_data_len);
+    buffer_iterator_t* iterator = buffer_iterator_init(buffer);
+    transaction_t* tx = NULL;
+
+    if (deserialize_transaction(iterator, &tx)) {
+        free(tx_data);
+        buffer_iterator_free(iterator);
+        buffer_free(buffer);
+        json_object_put(params_obj);
+        return create_json_error(-22, "Transaction decode failed");
+    }
+
+    // Validate and add to mempool
+    if (validate_and_add_tx_to_mempool(tx)) {
+        free(tx_data);
+        buffer_iterator_free(iterator);
+        buffer_free(buffer);
+        free_transaction(tx);
+        json_object_put(params_obj);
+        return create_json_error(-26, "Transaction validation failed");
+    }
+
+    // Return transaction id
+    char* txid = bin2hex(tx->id, HASH_SIZE);
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_string(txid));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free(txid);
+    free(tx_data);
+    buffer_iterator_free(iterator);
+    buffer_free(buffer);
+    free_transaction(tx);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_createrawtransaction(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get inputs array
+    struct json_object* inputs = json_object_array_get_idx(params_obj, 0);
+    if (!inputs || !json_object_is_type(inputs, json_type_array)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid inputs parameter");
+    }
+
+    // Get outputs object
+    struct json_object* outputs = json_object_array_get_idx(params_obj, 1);
+    if (!outputs || !json_object_is_type(outputs, json_type_object)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid outputs parameter");
+    }
+
+    // Create new transaction
+    transaction_t* tx = create_new_transaction();
+
+    // Add inputs
+    int array_len = json_object_array_length(inputs);
+    for (int i = 0; i < array_len; i++) {
+        struct json_object* input = json_object_array_get_idx(inputs, i);
+        
+        struct json_object* txid_obj;
+        struct json_object* vout_obj;
+        if (!json_object_object_get_ex(input, "txid", &txid_obj) ||
+            !json_object_object_get_ex(input, "vout", &vout_obj)) {
+            free_transaction(tx);
+            json_object_put(params_obj);
+            return create_json_error(-32602, "Invalid input parameters");
+        }
+
+        // Create input transaction
+        input_transaction_t* txin = create_new_txin();
+        const char* txid = json_object_get_string(txid_obj);
+        size_t txid_len;
+        uint8_t* txid_bin = hex2bin(txid, &txid_len);
+        memcpy(txin->transaction, txid_bin, HASH_SIZE);
+        free(txid_bin);
+        
+        txin->txout_index = json_object_get_int(vout_obj);
+        
+        // Add to transaction
+        if (add_txin_to_transaction(tx, txin, tx->txin_count)) {
+            free_transaction(tx);
+            json_object_put(params_obj);
+            return create_json_error(-22, "Failed to add input");
+        }
+    }
+
+    // Add outputs
+    struct json_object_iter it;
+    json_object_object_foreachC(outputs, it) {
+        const char* address = it.key;
+        double amount = json_object_get_double(it.val);
+        
+        // Create output transaction
+        output_transaction_t* txout = create_new_txout();
+        txout->amount = amount * COIN;
+        
+        size_t addr_len;
+        uint8_t* addr_bin = hex2bin(address, &addr_len);
+        if (addr_len != ADDRESS_SIZE) {
+            free(addr_bin);
+            free_transaction(tx);
+            json_object_put(params_obj);
+            return create_json_error(-5, "Invalid address");
+        }
+        memcpy(txout->address, addr_bin, ADDRESS_SIZE);
+        free(addr_bin);
+
+        // Add to transaction
+        if (add_txout_to_transaction(tx, txout, tx->txout_count)) {
+            free_transaction(tx);
+            json_object_put(params_obj);
+            return create_json_error(-22, "Failed to add output");
+        }
+    }
+
+    // Compute transaction ID
+    compute_self_tx_id(tx);
+
+    // Serialize transaction
+    buffer_t* buffer = buffer_init();
+    serialize_transaction(buffer, tx);
+    char* tx_hex = bin2hex(buffer_get_data(buffer), buffer_get_size(buffer));
+
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_string(tx_hex));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free(tx_hex);
+    buffer_free(buffer);
+    free_transaction(tx);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_decoderawtransaction(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get hex string parameter
+    struct json_object* hex_obj = json_object_array_get_idx(params_obj, 0);
+    if (!hex_obj || !json_object_is_type(hex_obj, json_type_string)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid transaction hex");
+    }
+
+    const char* tx_hex = json_object_get_string(hex_obj);
+    size_t tx_data_len;
+    uint8_t* tx_data = hex2bin(tx_hex, &tx_data_len);
+
+    // Deserialize transaction
+    buffer_t* buffer = buffer_init_data(0, tx_data, tx_data_len);
+    buffer_iterator_t* iterator = buffer_iterator_init(buffer);
+    transaction_t* tx = NULL;
+
+    if (deserialize_transaction(iterator, &tx)) {
+        free(tx_data);
+        buffer_iterator_free(iterator);
+        buffer_free(buffer);
+        json_object_put(params_obj);
+        return create_json_error(-22, "Transaction decode failed");
+    }
+
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+
+    // Add transaction details
+    char* txid = bin2hex(tx->id, HASH_SIZE);
+    json_object_object_add(result, "txid", json_object_new_string(txid));
+    json_object_object_add(result, "size", json_object_new_int(get_tx_header_size(tx)));
+    json_object_object_add(result, "version", json_object_new_int(tx->version));
+    
+    // Add vin array
+    struct json_object* vin = json_object_new_array();
+    for (uint32_t i = 0; i < tx->txin_count; i++) {
+        input_transaction_t* txin = tx->txins[i];
+        struct json_object* input = json_object_new_object();
+        
+        if (is_coinbase_tx(tx)) {
+            json_object_object_add(input, "coinbase", json_object_new_string(""));
+        } else {
+            char* prev_txid = bin2hex(txin->transaction, HASH_SIZE);
+            json_object_object_add(input, "txid", json_object_new_string(prev_txid));
+            json_object_object_add(input, "vout", json_object_new_int(txin->txout_index));
+            free(prev_txid);
+        }
+        
+        json_object_array_add(vin, input);
+    }
+    json_object_object_add(result, "vin", vin);
+
+    // Add vout array
+    struct json_object* vout = json_object_new_array();
+    for (uint32_t i = 0; i < tx->txout_count; i++) {
+        output_transaction_t* txout = tx->txouts[i];
+        struct json_object* output = json_object_new_object();
+        
+        char value_str[32];
+        snprintf(value_str, sizeof(value_str), "%.8f", (double)txout->amount / COIN);
+        json_object_object_add(output, "value", json_object_new_string(value_str));
+        json_object_object_add(output, "n", json_object_new_int(i));
+        
+        struct json_object* script_pub_key = json_object_new_object();
+        char* addr = bin2hex(txout->address, ADDRESS_SIZE);
+        json_object_object_add(script_pub_key, "addresses", json_object_new_array());
+        json_object_object_add(script_pub_key, "type", json_object_new_string("pubkeyhash"));
+        json_object_object_add(output, "scriptPubKey", script_pub_key);
+        free(addr);
+        
+        json_object_array_add(vout, output);
+    }
+    json_object_object_add(result, "vout", vout);
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free(txid);
+    free(tx_data);
+    buffer_iterator_free(iterator);
+    buffer_free(buffer);
+    free_transaction(tx);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_testmempoolaccept(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get rawtxs array
+    struct json_object* rawtxs = json_object_array_get_idx(params_obj, 0);
+    if (!rawtxs || !json_object_is_type(rawtxs, json_type_array)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid rawtxs parameter");
+    }
+
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_array();
+
+    // Process each transaction
+    int num_txs = json_object_array_length(rawtxs);
+    for (int i = 0; i < num_txs; i++) {
+        struct json_object* rawtx_obj = json_object_array_get_idx(rawtxs, i);
+        const char* rawtx = json_object_get_string(rawtx_obj);
+
+        // Decode and validate transaction
+        size_t tx_data_len;
+        uint8_t* tx_data = hex2bin(rawtx, &tx_data_len);
+        
+        buffer_t* buffer = buffer_init_data(0, tx_data, tx_data_len);
+        buffer_iterator_t* iterator = buffer_iterator_init(buffer);
+        transaction_t* tx = NULL;
+
+        struct json_object* tx_result = json_object_new_object();
+
+        if (deserialize_transaction(iterator, &tx)) {
+            json_object_object_add(tx_result, "txid", json_object_new_string(""));
+            json_object_object_add(tx_result, "allowed", json_object_new_boolean(false));
+            json_object_object_add(tx_result, "reject-reason", json_object_new_string("Transaction decode failed"));
+        } else {
+            char* txid = bin2hex(tx->id, HASH_SIZE);
+            json_object_object_add(tx_result, "txid", json_object_new_string(txid));
+            
+            // Test if transaction would be accepted to mempool
+            if (valid_transaction(tx)) {
+                json_object_object_add(tx_result, "allowed", json_object_new_boolean(true));
+            } else {
+                json_object_object_add(tx_result, "allowed", json_object_new_boolean(false));
+                json_object_object_add(tx_result, "reject-reason", json_object_new_string("Transaction validation failed"));
+            }
+            
+            free(txid);
+            free_transaction(tx);
+        }
+
+        free(tx_data);
+        buffer_iterator_free(iterator);
+        buffer_free(buffer);
+
+        json_object_array_add(result, tx_result);
+    }
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_gettxout(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get txid and n parameters
+    struct json_object* txid_obj = json_object_array_get_idx(params_obj, 0);
+    struct json_object* vout_obj = json_object_array_get_idx(params_obj, 1);
+    if (!txid_obj || !json_object_is_type(txid_obj, json_type_string) ||
+        !vout_obj || !json_object_is_type(vout_obj, json_type_int)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid parameters");
+    }
+
+    const char* txid = json_object_get_string(txid_obj);
+    int vout = json_object_get_int(vout_obj);
+    
+    // Convert txid to binary
+    size_t txid_len;
+    uint8_t* txid_bin = hex2bin(txid, &txid_len);
+    if (!txid_bin || txid_len != HASH_SIZE) {
+        if (txid_bin) free(txid_bin);
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid txid");
+    }
+
+    // Look up the transaction
+    block_t* block = get_block_from_tx_id(txid_bin);
+    free(txid_bin);
+
+    if (!block) {
+        json_object_put(params_obj);
+        return create_json_error(-5, "Transaction not found");
+    }
+
+    // Find transaction and validate vout
+    transaction_t* tx = NULL;
+    for (uint32_t i = 0; i < block->transaction_count; i++) {
+        if (memcmp(block->transactions[i]->id, txid_bin, HASH_SIZE) == 0) {
+            tx = block->transactions[i];
+            break;
+        }
+    }
+
+    if (!tx || vout < 0 || (uint32_t)vout >= tx->txout_count) {
+        free_block(block);
+        json_object_put(params_obj);
+        return create_json_error(-5, "Output not found");
+    }
+
+    output_transaction_t* txout = tx->txouts[vout];
+    
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+
+    json_object_object_add(result, "bestblock", json_object_new_string(bin2hex(block->hash, HASH_SIZE)));
+    json_object_object_add(result, "confirmations", json_object_new_int(get_blocks_since_block(block)));
+    json_object_object_add(result, "value", json_object_new_double((double)txout->amount / COIN));
+    
+    struct json_object* scriptPubKey = json_object_new_object();
+    char* addr = bin2hex(txout->address, ADDRESS_SIZE);
+    json_object_object_add(scriptPubKey, "address", json_object_new_string(addr));
+    json_object_object_add(scriptPubKey, "type", json_object_new_string("pubkeyhash"));
+    json_object_object_add(result, "scriptPubKey", scriptPubKey);
+    free(addr);
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free_block(block);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_pruneblockchain(const char* params) {
+    // Not implementing actual pruning, just return current height
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_int(get_block_height()));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_gettxoutproof(const char* params) {
+    // Simplified implementation - returns error as this is optional
+    return create_json_error(-1, "Not implemented");
+}
+
+char* rpc_verifytxoutproof(const char* params) {
+    // Simplified implementation - returns error as this is optional  
+    return create_json_error(-1, "Not implemented");
+}
+
+char* rpc_verifychain(const char* params) {
+    // For now just returns true if we have blocks
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_boolean(get_block_height() > 0));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_invalidateblock(const char* params) {
+    // Not implementing actual block invalidation
+    return create_json_error(-1, "Not implemented");
+}
+
+char* rpc_reconsiderblock(const char* params) {
+    // Not implementing actual block reconsideration
+    return create_json_error(-1, "Not implemented"); 
+}
+
+char* rpc_waitfornewblock(const char* params) {
+    // Not implementing actual waiting - return current tip
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    block_t* tip = get_top_block();
+    if (tip) {
+        json_object_object_add(result, "hash", json_object_new_string(bin2hex(tip->hash, HASH_SIZE)));
+        json_object_object_add(result, "height", json_object_new_int(get_block_height()));
+        free_block(tip);
+    }
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_waitforblock(const char* params) {
+    // Similar to waitfornewblock but accepts blockhash parameter
+    if (!params) return rpc_waitfornewblock(NULL);
+    return rpc_waitfornewblock(NULL); // For now just reuse waitfornewblock
+}
+
+char* rpc_setnetworkactive(const char* params) {
+    // Not implementing actual network toggling
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_boolean(1));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_addnode(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    struct json_object* node_obj = json_object_array_get_idx(params_obj, 0);
+    struct json_object* command_obj = json_object_array_get_idx(params_obj, 1);
+
+    if (!node_obj || !command_obj) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid parameters");
+    }
+
+    const char* node = json_object_get_string(node_obj);
+    const char* command = json_object_get_string(command_obj);
+
+    // Connect to node if command is "add" or "onetry"
+    if (strcmp(command, "add") == 0 || strcmp(command, "onetry") == 0) {
+        // Parse IP and port
+        char ip[64];
+        uint16_t port = 8333;
+        sscanf(node, "%[^:]:%hu", ip, &port);
+        
+        int result = connect_net_to_peer(ip, port);
+        if (result) {
+            json_object_put(params_obj);
+            return create_json_error(-9, "Failed to connect to node");
+        }
+    }
+
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", NULL);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_disconnectnode(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    struct json_object* address_obj = json_object_array_get_idx(params_obj, 0);
+    if (!address_obj) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid parameters");
+    }
+
+    const char* address = json_object_get_string(address_obj);
+    
+    // Parse IP and port
+    char ip[64];
+    uint16_t port = 8333;
+    sscanf(address, "%[^:]:%hu", ip, &port);
+
+    // Disconnect peer
+    //disconnect_peer_by_address(ip, port); // TODO: IMPLEMENT ME!
+
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", NULL);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getaddednodeinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_array();
+
+    // Get connected peers
+    peer_t** peers = NULL;
+    size_t num_peers = get_connected_peers(&peers);
+    
+    for (size_t i = 0; i < num_peers; i++) {
+        peer_t* peer = peers[i];
+        if (!peer) continue;
+
+        struct json_object* node = json_object_new_object();
+        
+        char addr_str[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET, (void*)&peer->net_connection->connection->sa.sin.sin_addr, addr_str, sizeof(addr_str));
+        
+        json_object_object_add(node, "addednode", json_object_new_string(addr_str));
+        json_object_object_add(node, "connected", json_object_new_boolean(1));
+        
+        json_object_array_add(result, node);
+    }
+
+    if (peers) free(peers);
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_setban(const char* params) {
+    // Not implementing actual banning
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", NULL);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_listbanned(const char* params) {
+    // Return empty array since we don't implement banning
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", json_object_new_array());
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_clearbanned(const char* params) {
+    // No-op since we don't implement banning
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", NULL);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_ping(const char* params) {
+    // Broadcast ping message to peers
+    //broadcast_ping(); // TODO: IMPLEMENT ME!
+
+    struct json_object* response = json_object_new_object();
+    json_object_object_add(response, "result", NULL);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
     char* json_str = strdup(json_object_to_json_string(response));
     json_object_put(response);
     return json_str;
