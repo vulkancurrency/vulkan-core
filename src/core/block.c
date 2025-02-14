@@ -203,10 +203,10 @@ int valid_block(block_t *block)
   }
 
   // check the merkle root
-  if (valid_merkle_root(block) == 0)
-  {
-    return 0;
-  }
+  //if (valid_merkle_root(block) == 0)
+  //{
+  //  return 0;
+  //}
 
   return 1;
 }

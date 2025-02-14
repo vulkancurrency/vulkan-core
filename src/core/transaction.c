@@ -61,6 +61,7 @@ transaction_t* create_new_transaction(void)
 {
   transaction_t *tx = malloc(sizeof(transaction_t));
   assert(tx != NULL);
+  tx->version = 0;
   memset(tx->id, 0, HASH_SIZE);
   tx->txin_count = 0;
   tx->txout_count = 0;

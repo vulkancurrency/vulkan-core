@@ -450,6 +450,37 @@ int init_p2p(void)
   return 0;
 }
 
+size_t get_connected_peers(peer_t*** out_peers) {
+    mtx_lock(&g_p2p_lock);
+    
+    size_t num_peers = get_num_peers();
+    if (num_peers == 0) {
+        mtx_unlock(&g_p2p_lock);
+        *out_peers = NULL;
+        return 0;
+    }
+    
+    // Allocate array for peer pointers
+    peer_t** peers = malloc(sizeof(peer_t*) * num_peers);
+    size_t idx = 0;
+    
+    // Copy connected peers from hashtable
+    CC_HashTableIter iter;
+    cc_hashtable_iter_init(&iter, g_p2p_peerlist_table);
+    
+    void* el;
+    while (cc_hashtable_iter_next(&iter, (void*)&el) != CC_ITER_END) {
+        peer_t* peer = *(peer_t**)el;
+        if (peer) {
+            peers[idx++] = peer;
+        }
+    }
+    
+    mtx_unlock(&g_p2p_lock);
+    *out_peers = peers;
+    return idx;
+}
+
 int deinit_p2p(void)
 {
   if (g_p2p_initialized == 0)

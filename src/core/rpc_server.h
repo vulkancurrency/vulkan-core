@@ -43,7 +43,7 @@ typedef struct rpc_server {
     char* username;
     char* password;
     int running;
-    thrd_t server_thread;  // Changed from pthread_t to thrd_t
+    thrd_t server_thread;
     mtx_t lock;           // Added mutex for thread safety
 } rpc_server_t;
 
@@ -75,3 +75,11 @@ char* rpc_getmempoolinfo(const char* params);
 char* rpc_estimatesmartfee(const char* params);
 char* rpc_getblockheader(const char* params);
 char* rpc_getblockstats(const char* params);
+char* rpc_getrawtransaction(const char* params);
+char* rpc_gettxoutsetinfo(const char* params);
+char* rpc_getdeploymentinfo(const char* params);
+char* rpc_uptime(const char* params);
+char* rpc_getnettotals(const char* params);
+char* rpc_getrawmempool(const char* params);
+char* rpc_getmempoolfeeinfo(const char* params);
+char* rpc_getpeerinfo(const char* params);

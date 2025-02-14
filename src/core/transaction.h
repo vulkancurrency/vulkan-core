@@ -88,6 +88,7 @@ typedef struct TransactionMaturity
 
 typedef struct Transaction
 {
+  uint8_t version;
   uint8_t id[HASH_SIZE];
   uint32_t txin_count;
   uint32_t txout_count;

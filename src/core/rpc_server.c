@@ -47,7 +47,7 @@
 #include "protocol.h"
 #include "version.h"
 
-static rpc_method_t rpc_methods[] = {
+static rpc_method_t g_rpc_methods[] = {
     {"getblocktemplate", rpc_getblocktemplate},
     {"submitblock", rpc_submitblock},
     {"getwork", rpc_getwork}, 
@@ -64,8 +64,18 @@ static rpc_method_t rpc_methods[] = {
     {"estimatesmartfee", rpc_estimatesmartfee},
     {"getblockheader", rpc_getblockheader},
     {"getblockstats", rpc_getblockstats},
+    {"getrawtransaction", rpc_getrawtransaction},
+    {"gettxoutsetinfo", rpc_gettxoutsetinfo},
+    {"getdeploymentinfo", rpc_getdeploymentinfo},
+    {"uptime", rpc_uptime},
+    {"getnettotals", rpc_getnettotals}, 
+    {"getrawmempool", rpc_getrawmempool},
+    {"getmempoolfeeinfo", rpc_getmempoolfeeinfo},
+    {"getpeerinfo", rpc_getpeerinfo},
     {NULL, NULL}
 };
+
+static time_t g_start_time = 0;
 
 static char* create_json_error(int code, const char* message) {
     struct json_object* response = json_object_new_object();
@@ -89,6 +99,20 @@ static int handle_client_thread(void* arg) {
     if (bytes_read > 0) {
         buffer[bytes_read] = '\0';
         
+        // Add OPTIONS request handling for CORS preflight
+        if (strncmp(buffer, "OPTIONS", 7) == 0) {
+            const char* resp = "HTTP/1.1 200 OK\r\n"
+                             "Access-Control-Allow-Origin: *\r\n"
+                             "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+                             "Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token\r\n"
+                             "Access-Control-Allow-Credentials: true\r\n"
+                             "Content-Length: 0\r\n"
+                             "Connection: close\r\n\r\n";
+            write(client_fd, resp, strlen(resp));
+            close(client_fd);
+            return 0;
+        }
+
         // Check if HTTP request contains basic auth
         char* auth = strstr(buffer, "Authorization: Basic ");
         if (!auth) {
@@ -144,7 +168,7 @@ static int handle_client_thread(void* arg) {
         int id = id_obj ? json_object_get_int(id_obj) : 1;
 
         // Find and execute the RPC method
-        rpc_method_t* method = rpc_methods;
+        rpc_method_t* method = g_rpc_methods;
         while (method->name) {
             if (strcmp(method->name, method_name) == 0) {
                 LOG_DEBUG("RPC call: %s", method_name);;
@@ -168,8 +192,9 @@ static int handle_client_thread(void* arg) {
                     "Content-Type: application/json\r\n"
                     "Content-Length: %zu\r\n"
                     "Access-Control-Allow-Origin: *\r\n"
-                    "Access-Control-Allow-Methods: POST\r\n"
-                    "Access-Control-Allow-Headers: Authorization, Content-Type\r\n"
+                    "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+                    "Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token\r\n"
+                    "Access-Control-Allow-Credentials: true\r\n"
                     "Connection: close\r\n"
                     "\r\n"
                     "%s", strlen(result), result);
@@ -1019,6 +1044,410 @@ char* rpc_getblockstats(const char* params) {
     free_block(block);
     json_object_put(params_obj);
 
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getrawtransaction(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get txid parameter
+    struct json_object* txid_obj = json_object_array_get_idx(params_obj, 0);
+    if (!txid_obj || !json_object_is_type(txid_obj, json_type_string)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid txid parameter");
+    }
+
+    // Get verbose flag (optional)
+    int verbose = 0;
+    struct json_object* verbose_obj = json_object_array_get_idx(params_obj, 1);
+    if (verbose_obj && json_object_is_type(verbose_obj, json_type_int)) {
+        verbose = json_object_get_int(verbose_obj);
+    }
+
+    const char* txid_str = json_object_get_string(txid_obj);
+    size_t hash_len;
+    uint8_t* tx_hash = hex2bin(txid_str, &hash_len);
+    if (!tx_hash || hash_len != HASH_SIZE) {
+        json_object_put(params_obj);
+        if (tx_hash) free(tx_hash);
+        return create_json_error(-32602, "Invalid transaction hash");
+    }
+
+    // Find block containing transaction
+    block_t* block = get_block_from_tx_id(tx_hash);
+    if (!block) {
+        free(tx_hash);
+        json_object_put(params_obj);
+        return create_json_error(-5, "Transaction not found");
+    }
+
+    // Find transaction in block
+    transaction_t* tx = NULL;
+    for (uint32_t i = 0; i < block->transaction_count; i++) {
+        if (memcmp(block->transactions[i]->id, tx_hash, HASH_SIZE) == 0) {
+            tx = block->transactions[i];
+            break;
+        }
+    }
+
+    free(tx_hash);
+
+    if (!tx) {
+        free_block(block);
+        json_object_put(params_obj);
+        return create_json_error(-5, "Transaction not found in block");
+    }
+
+    struct json_object* response = json_object_new_object();
+    struct json_object* result;
+
+    if (verbose) {
+        // Verbose output - detailed transaction info
+        result = json_object_new_object();
+        
+        // Transaction hash
+        char* txid = bin2hex(tx->id, HASH_SIZE);
+        json_object_object_add(result, "txid", json_object_new_string(txid));
+        free(txid);
+
+        // Block info
+        char* block_hash = bin2hex(block->hash, HASH_SIZE);
+        json_object_object_add(result, "blockhash", json_object_new_string(block_hash));
+        free(block_hash);
+        
+        json_object_object_add(result, "confirmations", 
+            json_object_new_int(get_blocks_since_block(block)));
+        json_object_object_add(result, "time", json_object_new_int(block->timestamp));
+        json_object_object_add(result, "blocktime", json_object_new_int(block->timestamp));
+
+        // Transaction details
+        json_object_object_add(result, "version", json_object_new_int(tx->version));
+        
+        // Inputs
+        struct json_object* vin = json_object_new_array();
+        for (uint32_t i = 0; i < tx->txin_count; i++) {
+            struct json_object* input = json_object_new_object();
+            input_transaction_t* txin = tx->txins[i];
+            
+            char* prev_txid = bin2hex(txin->transaction, HASH_SIZE);
+            json_object_object_add(input, "txid", json_object_new_string(prev_txid));
+            free(prev_txid);
+            
+            json_object_object_add(input, "vout", json_object_new_int(txin->txout_index));
+            json_object_array_add(vin, input);
+        }
+        json_object_object_add(result, "vin", vin);
+
+        // Outputs
+        struct json_object* vout = json_object_new_array();
+        for (uint32_t i = 0; i < tx->txout_count; i++) {
+            struct json_object* output = json_object_new_object();
+            output_transaction_t* txout = tx->txouts[i];
+            
+            // Format value properly as number for JSON
+            double value = (double)txout->amount / COIN;
+            json_object_object_add(output, "value", json_object_new_double(value));
+            
+            json_object_object_add(output, "n", json_object_new_int(i));
+            
+            if (txout->address) {
+                struct json_object* script_pub_key = json_object_new_object();
+                struct json_object* addresses = json_object_new_array();
+                char* addr = bin2hex(txout->address, ADDRESS_SIZE);
+                json_object_array_add(addresses, json_object_new_string(addr));
+                json_object_object_add(script_pub_key, "addresses", addresses);
+                // Add required scriptPubKey fields
+                json_object_object_add(script_pub_key, "type", json_object_new_string("pubkeyhash"));
+                json_object_object_add(script_pub_key, "reqSigs", json_object_new_int(1));
+                free(addr);
+                json_object_object_add(output, "scriptPubKey", script_pub_key);
+            }
+            
+            json_object_array_add(vout, output);
+        }
+        json_object_object_add(result, "vout", vout);
+    } else {
+        // Non-verbose - just raw transaction hex
+        buffer_t* buffer = buffer_init();
+        serialize_transaction(buffer, tx);
+        
+        char* tx_hex = bin2hex(buffer_get_data(buffer), buffer_get_size(buffer));
+        result = json_object_new_string(tx_hex);
+        
+        free(tx_hex);
+        buffer_free(buffer);
+    }
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    free_block(block);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_gettxoutsetinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Required fields for txoutset info
+    json_object_object_add(result, "height", json_object_new_int(get_block_height()));
+    json_object_object_add(result, "bestblock", json_object_new_string(bin2hex(get_current_block_hash(), HASH_SIZE)));
+    
+    // Count transactions and total amount
+    uint64_t total_amount = 0;
+    uint64_t transactions = 0;
+    uint64_t txouts = 0;
+    
+    // Iterate through all blocks
+    uint32_t height = get_block_height();
+    for (uint32_t i = 0; i <= height; i++) {
+        block_t* block = get_block_from_height(i);
+        if (!block) continue;
+        
+        for (uint32_t j = 0; j < block->transaction_count; j++) {
+            transaction_t* tx = block->transactions[j];
+            transactions++;
+            
+            for (uint32_t k = 0; k < tx->txout_count; k++) {
+                output_transaction_t* txout = tx->txouts[k];
+                if (txout) {
+                    total_amount += txout->amount;
+                    txouts++;
+                }
+            }
+        }
+        free_block(block);
+    }
+    
+    // Add statistics
+    json_object_object_add(result, "transactions", json_object_new_int64(transactions));
+    json_object_object_add(result, "txouts", json_object_new_int64(txouts));
+    json_object_object_add(result, "total_amount", json_object_new_double((double)total_amount / COIN));
+    
+    // Add to response
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL); 
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getdeploymentinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Create deployments info (empty since we don't have any active deployments)
+    struct json_object* deployments = json_object_new_object();
+    
+    json_object_object_add(result, "deployments", deployments);
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_uptime(const char* params) {
+    struct json_object* response = json_object_new_object();
+    
+    // Calculate uptime in seconds
+    time_t uptime = 0;
+    if (g_start_time == 0) {
+        g_start_time = time(NULL);
+    } else {
+        uptime = time(NULL) - g_start_time;
+    }
+    
+    json_object_object_add(response, "result", json_object_new_int64(uptime));
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getnettotals(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Network statistics
+    json_object_object_add(result, "totalbytesrecv", json_object_new_int64(0));
+    json_object_object_add(result, "totalbytessent", json_object_new_int64(0));
+    json_object_object_add(result, "timemillis", json_object_new_int64(time(NULL) * 1000));
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getrawmempool(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_array();
+    
+    // Get all transactions from mempool
+    transaction_t** mempool_txs = NULL;
+    size_t num_txs = get_mempool_transactions(&mempool_txs);
+    
+    // Add transaction IDs to response
+    for (size_t i = 0; i < num_txs; i++) {
+        transaction_t* tx = mempool_txs[i];
+        if (tx && tx->id) {
+            char* txid = bin2hex(tx->id, HASH_SIZE);
+            json_object_array_add(result, json_object_new_string(txid));
+            free(txid);
+        }
+    }
+    
+    // Free temporary array
+    if (mempool_txs) {
+        free(mempool_txs);
+    }
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getmempoolfeeinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    struct json_object* buckets = json_object_new_array();
+
+    // Get transactions from mempool
+    transaction_t** mempool_txs = NULL;
+    size_t num_txs = get_mempool_transactions(&mempool_txs);
+
+    // Create fee buckets (in sats/byte)
+    double fee_buckets[] = {1, 2, 3, 4, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250};
+    int num_buckets = sizeof(fee_buckets) / sizeof(fee_buckets[0]);
+    int* bucket_counts = calloc(num_buckets, sizeof(int));
+
+    // Count transactions in each fee bucket
+    for (size_t i = 0; i < num_txs; i++) {
+        transaction_t* tx = mempool_txs[i];
+        if (!tx) continue;
+
+        uint64_t fee = calculate_transaction_fee(tx);
+        size_t tx_size = get_tx_header_size(tx);
+        
+        if (tx_size > 0) {
+            double fee_rate = (double)fee / tx_size;
+            
+            // Find appropriate bucket
+            for (int j = 0; j < num_buckets; j++) {
+                if (fee_rate <= fee_buckets[j]) {
+                    bucket_counts[j]++;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Create bucket objects
+    for (int i = 0; i < num_buckets; i++) {
+        struct json_object* bucket = json_object_new_object();
+        json_object_object_add(bucket, "fee", json_object_new_double(fee_buckets[i]));
+        json_object_object_add(bucket, "count", json_object_new_int(bucket_counts[i]));
+        json_object_array_add(buckets, bucket);
+    }
+
+    // Free resources
+    if (mempool_txs) {
+        free(mempool_txs);
+    }
+    free(bucket_counts);
+
+    // Build response
+    json_object_object_add(result, "buckets", buckets);
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getpeerinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_array();
+    
+    // Get connected peers
+    peer_t** peers = NULL;
+    size_t num_peers = get_connected_peers(&peers);
+    
+    // Add peer info to response
+    for (size_t i = 0; i < num_peers; i++) {
+        peer_t* peer = peers[i];
+        if (!peer) continue;
+        
+        struct json_object* peer_obj = json_object_new_object();
+        
+        // Add basic peer info
+        char addr_str[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET, (void*)&peer->net_connection->connection->sa.sin.sin_addr, addr_str, sizeof(addr_str));
+        json_object_object_add(peer_obj, "addr", json_object_new_string(addr_str));
+        json_object_object_add(peer_obj, "port", json_object_new_int(ntohs((void*)&peer->net_connection->connection->sa.sin.sin_port)));
+        
+        // Connection info
+        json_object_object_add(peer_obj, "conntime", json_object_new_int64(peer->connect_time));
+        json_object_object_add(peer_obj, "lastsend", json_object_new_int64(peer->last_send));
+        json_object_object_add(peer_obj, "lastrecv", json_object_new_int64(peer->last_recv));
+        json_object_object_add(peer_obj, "version", json_object_new_int(peer->version));
+        json_object_object_add(peer_obj, "subver", json_object_new_string(peer->user_agent ? peer->user_agent : ""));
+        json_object_object_add(peer_obj, "inbound", json_object_new_boolean(peer->inbound));
+        json_object_object_add(peer_obj, "startingheight", json_object_new_int(peer->start_height));
+        json_object_object_add(peer_obj, "synced_headers", json_object_new_int(peer->sync_height));
+        json_object_object_add(peer_obj, "synced_blocks", json_object_new_int(peer->sync_height));
+        
+        // Network stats
+        json_object_object_add(peer_obj, "bytessent", json_object_new_int64(peer->bytes_sent));  
+        json_object_object_add(peer_obj, "bytesrecv", json_object_new_int64(peer->bytes_received));
+        
+        // Add peer state info
+        json_object_object_add(peer_obj, "banscore", json_object_new_int(peer->misbehaving));
+        json_object_object_add(peer_obj, "relaytxes", json_object_new_boolean(1));
+        
+        json_object_array_add(result, peer_obj);
+    }
+    
+    // Free temporary array 
+    if (peers) {
+        free(peers);
+    }
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
     char* json_str = strdup(json_object_to_json_string(response));
     json_object_put(response);
     return json_str;

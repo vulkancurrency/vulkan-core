@@ -41,6 +41,18 @@ typedef struct Peer
 {
   uint64_t id;
   net_connection_t *net_connection;
+  int connected;
+  int inbound;
+  uint32_t version;
+  char* user_agent;
+  time_t connect_time;
+  time_t last_send;
+  time_t last_recv; 
+  uint32_t start_height;
+  uint32_t sync_height;
+  uint64_t bytes_sent;
+  uint64_t bytes_received;
+  uint32_t misbehaving;
 } peer_t;
 
 #define SAVE_PEER_LIST_STORAGE_DELAY 60
@@ -80,6 +92,8 @@ VULKAN_API int broadcast_data_to_peers_nolock(net_connection_t *net_connection, 
 VULKAN_API int broadcast_data_to_peers(net_connection_t *net_connection, const uint8_t *data, size_t data_len);
 
 VULKAN_API void print_p2p_list(void);
+
+VULKAN_API size_t get_connected_peers(peer_t*** out_peers);
 
 VULKAN_API int init_p2p(void);
 VULKAN_API int deinit_p2p(void);

@@ -589,6 +589,37 @@ size_t get_mempool_usage(void) {
     return total_usage;
 }
 
+size_t get_mempool_transactions(transaction_t*** out_txs) {
+    mtx_lock(&g_mempool_lock);
+    
+    size_t num_txs = get_mempool_size();
+    if (num_txs == 0) {
+        mtx_unlock(&g_mempool_lock);
+        *out_txs = NULL;
+        return 0;
+    }
+    
+    // Allocate array for transaction pointers
+    transaction_t** txs = malloc(sizeof(transaction_t*) * num_txs);
+    size_t idx = 0;
+    
+    // Copy transactions from mempool
+    CC_ArrayIter iter;
+    cc_array_iter_init(&iter, g_mempool_transactions);
+    
+    void* el;
+    while (cc_array_iter_next(&iter, (void*)&el) != CC_ITER_END) {
+        mempool_entry_t* entry = (mempool_entry_t*)el;
+        if (entry && entry->tx) {
+            txs[idx++] = entry->tx;
+        }
+    }
+    
+    mtx_unlock(&g_mempool_lock);
+    *out_txs = txs;
+    return idx;
+}
+
 int start_mempool(void)
 {
   if (g_mempool_initialized)

@@ -223,7 +223,7 @@ static int worker_mining_thread(void *arg)
   {
     block_t *genesis_block = construct_computable_genesis_block(g_current_wallet);
     assert(genesis_block != NULL);
-
+    
     if (compute_block(NULL, genesis_block))
     {
       char *block_hash_str = bin2hex(genesis_block->hash, HASH_SIZE);

@@ -38,4 +38,8 @@ VULKAN_API int init_pow(void);
 VULKAN_API int deinit_pow(void);
 VULKAN_API int check_proof_of_work(const uint8_t *hash, uint32_t bits);
 
+// Testing mode flag
+VULKAN_API void set_testing_mode(int enabled);
+VULKAN_API int get_testing_mode(void);
+
 VULKAN_END_DECL
