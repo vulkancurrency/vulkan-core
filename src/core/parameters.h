@@ -74,6 +74,8 @@ VULKAN_BEGIN_DECL
 
 #define DEFAULT_COMPACTION_MEMTABLE_MEMORY_BUDGET (1024 * 1024 * 512) // 512mb
 
+#define MAX_MEMPOOL_SIZE (1024 * 1024 * 300) // 300MB max mempool size
+
 VULKAN_API void parameters_set_use_testnet(int use_testnet);
 VULKAN_API const int parameters_get_use_testnet(void);
 

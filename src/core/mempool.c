@@ -522,6 +522,73 @@ int add_transactions_from_mempool(block_t *block) {
   return 0;
 }
 
+size_t get_mempool_size(void) {
+    mtx_lock(&g_mempool_lock);
+    size_t size = g_mempool_num_transactions;
+    mtx_unlock(&g_mempool_lock);
+    return size;
+}
+
+size_t get_mempool_bytes(void) {
+    mtx_lock(&g_mempool_lock);
+    size_t total_bytes = 0;
+    
+    CC_ArrayIter iter;
+    cc_array_iter_init(&iter, g_mempool_transactions);
+    
+    void *el;
+    while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END) {
+        mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
+        assert(mempool_entry != NULL);
+        
+        transaction_t *tx = mempool_entry->tx;
+        assert(tx != NULL);
+        
+        // Calculate transaction size
+        buffer_t *buffer = buffer_init();
+        serialize_transaction(buffer, tx);
+        total_bytes += buffer_get_size(buffer);
+        buffer_free(buffer);
+    }
+    
+    mtx_unlock(&g_mempool_lock);
+    return total_bytes;
+}
+
+size_t get_mempool_usage(void) {
+    mtx_lock(&g_mempool_lock);
+    size_t total_usage = 0;
+    
+    // Base memory usage for mempool management structures
+    total_usage += sizeof(g_mempool_transactions);
+    total_usage += sizeof(mtx_t); // For g_mempool_lock
+    
+    CC_ArrayIter iter;
+    cc_array_iter_init(&iter, g_mempool_transactions);
+    
+    void *el;
+    while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END) {
+        mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
+        assert(mempool_entry != NULL);
+        
+        // Add mempool entry structure size
+        total_usage += sizeof(mempool_entry_t);
+        
+        transaction_t *tx = mempool_entry->tx;
+        assert(tx != NULL);
+        
+        // Add transaction structure size
+        total_usage += sizeof(transaction_t);
+        
+        // Add size of transaction inputs and outputs
+        total_usage += tx->txin_count * sizeof(input_transaction_t);
+        total_usage += tx->txout_count * sizeof(output_transaction_t);
+    }
+    
+    mtx_unlock(&g_mempool_lock);
+    return total_usage;
+}
+
 int start_mempool(void)
 {
   if (g_mempool_initialized)

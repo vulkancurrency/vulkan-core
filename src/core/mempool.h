@@ -87,6 +87,10 @@ VULKAN_API static int compare_tx_fee(const void *a, const void *b);
 VULKAN_API uint64_t calculate_transaction_fee(transaction_t *tx);
 VULKAN_API int add_transactions_from_mempool(block_t *block);
 
+VULKAN_API size_t get_mempool_size(void);
+VULKAN_API size_t get_mempool_bytes(void);
+VULKAN_API size_t get_mempool_usage(void);
+
 VULKAN_API int start_mempool(void);
 VULKAN_API int stop_mempool(void);
 

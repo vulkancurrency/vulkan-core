@@ -1,3 +1,28 @@
+// Copyright (c) 2025, The Vulkan Developers.
+//
+// This file is part of Vulkan.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// You should have received a copy of the MIT License
+// along with Vulkan. If not, see <https://opensource.org/licenses/MIT>.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +42,10 @@
 #include "block.h"
 #include "mempool.h"
 #include "pow.h"
+#include "net.h"
+#include "p2p.h"
+#include "protocol.h"
+#include "version.h"
 
 static rpc_method_t rpc_methods[] = {
     {"getblocktemplate", rpc_getblocktemplate},
@@ -28,6 +57,12 @@ static rpc_method_t rpc_methods[] = {
     {"getblockcount", rpc_getblockcount},
     {"getblockhash", rpc_getblockhash},
     {"getblock", rpc_getblock},
+    {"getnetworkinfo", rpc_getnetworkinfo},
+    {"getblockchaininfo", rpc_getblockchaininfo},
+    {"getindexinfo", rpc_getindexinfo},
+    {"getmempoolinfo", rpc_getmempoolinfo},
+    {"estimatesmartfee", rpc_estimatesmartfee},
+    {"getblockheader", rpc_getblockheader},
     {NULL, NULL}
 };
 
@@ -53,40 +88,96 @@ static int handle_client_thread(void* arg) {
     if (bytes_read > 0) {
         buffer[bytes_read] = '\0';
         
-        struct json_object* request = json_tokener_parse(buffer);
+        // Check if HTTP request contains basic auth
+        char* auth = strstr(buffer, "Authorization: Basic ");
+        if (!auth) {
+            // Send 401 Unauthorized response
+            const char* resp = "HTTP/1.1 401 Unauthorized\r\n"
+                             "WWW-Authenticate: Basic realm=\"RPC Access\"\r\n"
+                             "Content-Length: 0\r\n"
+                             "Connection: close\r\n\r\n";
+            write(client_fd, resp, strlen(resp));
+            close(client_fd);
+            return 0;
+        }
+
+        // Find the actual JSON-RPC request body after HTTP headers
+        char* body = strstr(buffer, "\r\n\r\n");
+        if (!body) {
+            close(client_fd);
+            return 0;
+        }
+        body += 4; // Skip \r\n\r\n
+
+        // Parse the JSON-RPC request
+        struct json_object* request = json_tokener_parse(body);
         if (!request) {
             char* error = create_json_error(-32700, "Parse error");
-            write(client_fd, error, strlen(error));
+            char http_response[RPC_BUFFER_SIZE];
+            snprintf(http_response, sizeof(http_response),
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: application/json\r\n"
+                "Content-Length: %zu\r\n"
+                "Access-Control-Allow-Origin: *\r\n"
+                "Access-Control-Allow-Methods: POST\r\n"
+                "Access-Control-Allow-Headers: Authorization, Content-Type\r\n"
+                "Connection: close\r\n"
+                "\r\n"
+                "%s", strlen(error), error);
+            write(client_fd, http_response, strlen(http_response));
             free(error);
             close(client_fd);
             return 0;
         }
-        
-        struct json_object* method_obj;
+
+        // Extract method and id
+        struct json_object* method_obj = NULL;
+        struct json_object* id_obj = NULL;
         json_object_object_get_ex(request, "method", &method_obj);
-        const char* method_name = json_object_get_string(method_obj);
+        json_object_object_get_ex(request, "id", &id_obj);
         
-        struct json_object* params_obj;
-        json_object_object_get_ex(request, "params", &params_obj);
-        const char* params = json_object_get_string(params_obj);
-        
+        const char* method_name = method_obj ? json_object_get_string(method_obj) : NULL;
+        int id = id_obj ? json_object_get_int(id_obj) : 1;
+
         // Find and execute the RPC method
         rpc_method_t* method = rpc_methods;
         while (method->name) {
             if (strcmp(method->name, method_name) == 0) {
-                char* result = method->handler(params);
-                write(client_fd, result, strlen(result));
+                char* result = method->handler(NULL);
+                
+                // Always ensure we have a valid JSON response
+                if (!result || strlen(result) == 0) {
+                    struct json_object* response = json_object_new_object();
+                    struct json_object* result_obj = json_object_new_object();
+                    json_object_object_add(result_obj, "chain", json_object_new_string(parameters_get_use_testnet() ? "test" : "main"));
+                    json_object_object_add(response, "result", result_obj);
+                    json_object_object_add(response, "error", NULL);
+                    json_object_object_add(response, "id", json_object_new_int(id));
+                    result = strdup(json_object_to_json_string(response));
+                    json_object_put(response);
+                }
+                
+                char http_response[RPC_BUFFER_SIZE];
+                snprintf(http_response, sizeof(http_response),
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/json\r\n"
+                    "Content-Length: %zu\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
+                    "Access-Control-Allow-Methods: POST\r\n"
+                    "Access-Control-Allow-Headers: Authorization, Content-Type\r\n"
+                    "Connection: close\r\n"
+                    "\r\n"
+                    "%s", strlen(result), result);
+                write(client_fd, http_response, strlen(http_response));
                 free(result);
+                json_object_put(request);
                 close(client_fd);
                 return 0;
             }
             method++;
         }
         
-        // Method not found
-        char* error = create_json_error(-32601, "Method not found");
-        write(client_fd, error, strlen(error));
-        free(error);
+        json_object_put(request);
     }
     
     close(client_fd);
@@ -381,24 +472,52 @@ char* rpc_getblockcount(const char* params) {
 }
 
 char* rpc_getblockhash(const char* params) {
-    struct json_object* request = json_tokener_parse(params);
-    int height = json_object_get_int(request);
-    
+    if (!params) {
+        return create_json_error(-32602, "Invalid params - height required");
+    }
+
+    // Parse params array from JSON string
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get first array element (height)
+    struct json_object* height_obj = json_object_array_get_idx(params_obj, 0);
+    if (!height_obj || !json_object_is_type(height_obj, json_type_int)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - height must be integer");
+    }
+
+    int height = json_object_get_int(height_obj);
+    if (height < 0) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - height must be non-negative");
+    }
+
     uint8_t* block_hash = get_block_hash_from_height(height);
     if (!block_hash) {
+        json_object_put(params_obj);
         return create_json_error(-5, "Block height out of range");
     }
-    
+
+    // Convert hash to hex string
     char* hash_hex = bin2hex(block_hash, HASH_SIZE);
     free(block_hash);
-    
+
+    // Create response
     struct json_object* response = json_object_new_object();
     json_object_object_add(response, "result", json_object_new_string(hash_hex));
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
-    
+
     free(hash_hex);
-    return strdup(json_object_to_json_string(response));
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
 }
 
 char* rpc_getblock(const char* params) {
@@ -443,4 +562,215 @@ char* rpc_getblock(const char* params) {
     
     free_block(block);
     return strdup(json_object_to_json_string(response));
+}
+
+char* rpc_getnetworkinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Version info
+    json_object_object_add(result, "chain", json_object_new_string(parameters_get_use_testnet() ? "test" : "main"));
+    json_object_object_add(result, "version", json_object_new_int(atoi(APPLICATION_VERSION)));
+    json_object_object_add(result, "subversion", json_object_new_string(APPLICATION_RELEASE_NAME));
+    json_object_object_add(result, "protocolversion", json_object_new_int(APPLICATION_VERSION_PROTOCOL));
+    
+    // Network settings
+    json_object_object_add(result, "blocks", json_object_new_int(get_block_height()));
+    json_object_object_add(result, "testnet", json_object_new_boolean(parameters_get_use_testnet()));
+
+    // Connection info  
+    int num_connections = get_num_peers();
+    json_object_object_add(result, "connections", json_object_new_int(num_connections));
+    json_object_object_add(result, "networkactive", json_object_new_boolean(1));
+    json_object_object_add(result, "connections_in", json_object_new_int(num_connections));
+    json_object_object_add(result, "connections_out", json_object_new_int(0));
+
+    // Other required fields
+    json_object_object_add(result, "difficulty", json_object_new_double(get_network_difficulty()));
+    json_object_object_add(result, "relayfee", json_object_new_double(0.00001));
+    json_object_object_add(result, "warnings", json_object_new_string(""));
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getblockchaininfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Chain info
+    json_object_object_add(result, "chain", json_object_new_string(parameters_get_use_testnet() ? "test" : "main"));
+    json_object_object_add(result, "blocks", json_object_new_int(get_block_height()));
+    json_object_object_add(result, "headers", json_object_new_int(get_block_height()));
+    
+    // Best block info
+    block_t* top_block = get_top_block();
+    if (top_block) {
+        char* best_hash = bin2hex(top_block->hash, HASH_SIZE);
+        json_object_object_add(result, "bestblockhash", json_object_new_string(best_hash));
+        free(best_hash);
+        free_block(top_block);
+    } else {
+        json_object_object_add(result, "bestblockhash", json_object_new_string(""));
+    }
+    
+    // Difficulty
+    json_object_object_add(result, "difficulty", json_object_new_double(get_network_difficulty()));
+    json_object_object_add(result, "mediantime", json_object_new_int(get_current_time()));
+    
+    // Verification status
+    json_object_object_add(result, "verificationprogress", json_object_new_double(1.0));
+    json_object_object_add(result, "initialblockdownload", json_object_new_boolean(0));
+    
+    // Chain statistics
+    json_object_object_add(result, "chainwork", json_object_new_string(""));
+    json_object_object_add(result, "size_on_disk", json_object_new_int64(0));
+    json_object_object_add(result, "pruned", json_object_new_boolean(0));
+    
+    // Add warnings if any
+    json_object_object_add(result, "warnings", json_object_new_string(""));
+
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getindexinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Create txindex info
+    struct json_object* txindex = json_object_new_object();
+    json_object_object_add(txindex, "synced", json_object_new_boolean(1));
+    json_object_object_add(txindex, "best_block_height", json_object_new_int(get_block_height()));
+    
+    // Add indexes info
+    json_object_object_add(result, "txindex", txindex);
+    
+    // Create default response
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getmempoolinfo(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Get mempool info
+    json_object_object_add(result, "size", json_object_new_int(get_mempool_size()));
+    json_object_object_add(result, "bytes", json_object_new_int64(get_mempool_bytes()));
+    json_object_object_add(result, "usage", json_object_new_int64(get_mempool_usage()));
+    json_object_object_add(result, "maxmempool", json_object_new_int64(MAX_MEMPOOL_SIZE));
+    json_object_object_add(result, "mempoolminfee", json_object_new_double(0.00001)); // 1 sat/byte minimum
+    json_object_object_add(result, "minrelaytxfee", json_object_new_double(0.00001));
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_estimatesmartfee(const char* params) {
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // For now return conservative fixed fee estimate
+    json_object_object_add(result, "feerate", json_object_new_double(0.00001)); // 1 sat/byte
+    json_object_object_add(result, "blocks", json_object_new_int(6));
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getblockheader(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params - block hash required");
+    }
+
+    // Parse params array from JSON string
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get block hash from params
+    struct json_object* hash_obj = json_object_array_get_idx(params_obj, 0);
+    if (!hash_obj || !json_object_is_type(hash_obj, json_type_string)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - block hash must be string");
+    }
+
+    const char* block_hash_hex = json_object_get_string(hash_obj);
+    size_t hash_len;
+    uint8_t* block_hash = hex2bin(block_hash_hex, &hash_len);
+    
+    block_t* block = get_block_from_hash(block_hash);
+    free(block_hash);
+    
+    if (!block) {
+        json_object_put(params_obj);
+        return create_json_error(-5, "Block not found");
+    }
+
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+    
+    // Only include header info
+    json_object_object_add(result, "hash", json_object_new_string(bin2hex(block->hash, HASH_SIZE)));
+    json_object_object_add(result, "confirmations", json_object_new_int(get_blocks_since_block(block)));
+    json_object_object_add(result, "height", json_object_new_int(get_block_height_from_block(block)));
+    json_object_object_add(result, "version", json_object_new_int(block->version));
+    json_object_object_add(result, "merkleroot", json_object_new_string(bin2hex(block->merkle_root, HASH_SIZE)));
+    json_object_object_add(result, "time", json_object_new_int(block->timestamp));
+    json_object_object_add(result, "nonce", json_object_new_int(block->nonce));
+    json_object_object_add(result, "bits", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
+    json_object_object_add(result, "difficulty", json_object_new_double(get_block_difficulty(block)));
+    
+    if (block->previous_hash) {
+        json_object_object_add(result, "previousblockhash", 
+            json_object_new_string(bin2hex(block->previous_hash, HASH_SIZE)));
+    }
+
+    // Get next block hash if it exists
+    uint32_t current_height = get_block_height_from_block(block);
+    block_t* next_block = get_block_from_height(current_height + 1);
+    if (next_block) {
+        json_object_object_add(result, "nextblockhash",
+            json_object_new_string(bin2hex(next_block->hash, HASH_SIZE)));
+        free_block(next_block);
+    }
+    
+    json_object_object_add(response, "result", result);
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+    
+    free_block(block);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
 }
