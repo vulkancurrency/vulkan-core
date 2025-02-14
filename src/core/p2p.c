@@ -61,20 +61,39 @@ const char *get_p2p_storage_filename(void)
   return g_p2p_storage_filename;
 }
 
-peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection)
-{
-  assert(net_connection != NULL);
-  peer_t *peer = malloc(sizeof(peer_t));
-  assert(peer != NULL);
-  peer->id = peer_id;
-  peer->net_connection = net_connection;
-  return peer;
+peer_t* init_peer(uint64_t peer_id, net_connection_t *net_connection) {
+    assert(net_connection != NULL);
+    peer_t *peer = malloc(sizeof(peer_t));
+    assert(peer != NULL);
+
+    peer->id = peer_id;
+    peer->net_connection = net_connection;
+    peer->connect_time = time(NULL);
+    peer->last_send = 0;
+    peer->last_recv = 0;
+    peer->version = 0;
+    peer->inbound = 0; // Set based on connection type
+    peer->start_height = 0;
+    peer->sync_height = 0;
+    peer->user_agent = "";
+    peer->bytes_sent = 0;
+    peer->bytes_received = 0;
+    peer->misbehaving = 0;
+    return peer;
 }
 
-void free_peer(peer_t *peer)
-{
-  assert(peer != NULL);
-  free(peer);
+void free_peer(peer_t *peer) {
+    assert(peer != NULL);
+    
+    // Free the user agent string if allocated
+    if (peer->user_agent) {
+        free(peer->user_agent);
+        peer->user_agent = NULL;
+    }
+
+    // Note: We don't free net_connection here as it's managed separately
+    
+    free(peer);
 }
 
 peer_t* get_peer_nolock(uint64_t peer_id)
