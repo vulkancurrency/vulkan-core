@@ -2,9 +2,11 @@
 
 #include <stdint.h>
 
+#include "common/tinycthread.h"
+#include "common/util.h"
+
 #include "core/blockchain.h"
 #include "core/block.h"
-#include "common/util.h"
 
 #define RPC_DEFAULT_PORT 8332
 #define RPC_MAX_CONNECTIONS 128
@@ -16,6 +18,8 @@ typedef struct rpc_server {
     char* username;
     char* password;
     int running;
+    thrd_t server_thread;  // Changed from pthread_t to thrd_t
+    mtx_t lock;           // Added mutex for thread safety
 } rpc_server_t;
 
 // Core RPC methods required for mining

@@ -5,11 +5,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <pthread.h>
-
 #include <json-c/json.h>
 
 #include "common/logger.h"
+#include "common/tinycthread.h"
 
 #include "crypto/cryptoutil.h"
 
@@ -46,7 +45,8 @@ static char* create_json_error(int code, const char* message) {
     return strdup(json_object_to_json_string(response));
 }
 
-static void handle_client(int client_fd, rpc_server_t* server) {
+static int handle_client_thread(void* arg) {
+    int client_fd = (intptr_t)arg;
     char buffer[RPC_BUFFER_SIZE];
     ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
     
@@ -59,7 +59,7 @@ static void handle_client(int client_fd, rpc_server_t* server) {
             write(client_fd, error, strlen(error));
             free(error);
             close(client_fd);
-            return;
+            return 0;
         }
         
         struct json_object* method_obj;
@@ -78,7 +78,7 @@ static void handle_client(int client_fd, rpc_server_t* server) {
                 write(client_fd, result, strlen(result));
                 free(result);
                 close(client_fd);
-                return;
+                return 0;
             }
             method++;
         }
@@ -90,6 +90,29 @@ static void handle_client(int client_fd, rpc_server_t* server) {
     }
     
     close(client_fd);
+    return 0;
+}
+
+static int server_thread_func(void* arg) {
+    rpc_server_t* server = (rpc_server_t*)arg;
+    
+    while (server->running) {
+        struct sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        
+        int client_fd = accept(server->socket_fd, (struct sockaddr*)&client_addr, &client_len);
+        if (client_fd < 0) continue;
+        
+        // Create thread using tinycthread
+        thrd_t client_thread;
+        if (thrd_create(&client_thread, handle_client_thread, (void*)(intptr_t)client_fd) == thrd_success) {
+            thrd_detach(client_thread);
+        } else {
+            close(client_fd);
+        }
+    }
+    
+    return 0;
 }
 
 int rpc_server_init(rpc_server_t* server, uint16_t port, const char* username, const char* password) {
@@ -98,8 +121,14 @@ int rpc_server_init(rpc_server_t* server, uint16_t port, const char* username, c
     server->password = strdup(password);
     server->running = 0;
     
+    // Initialize mutex
+    if (mtx_init(&server->lock, mtx_plain) != thrd_success) {
+        return -1;
+    }
+    
     server->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->socket_fd < 0) {
+        mtx_destroy(&server->lock);
         return -1;
     }
     
@@ -127,27 +156,27 @@ int rpc_server_start(rpc_server_t* server) {
         return -1;
     }
     
-    while (server->running) {
-        struct sockaddr_in client_addr;
-        socklen_t client_len = sizeof(client_addr);
-        
-        int client_fd = accept(server->socket_fd, (struct sockaddr*)&client_addr, &client_len);
-        if (client_fd < 0) continue;
-        
-        // Handle client in a new thread
-        pthread_t thread;
-        pthread_create(&thread, NULL, (void*)handle_client, (void*)client_fd);
-        pthread_detach(thread);
+    // Create server thread using tinycthread
+    if (thrd_create(&server->server_thread, server_thread_func, server) != thrd_success) {
+        server->running = 0;
+        return -1;
     }
     
     return 0;
 }
 
 void rpc_server_stop(rpc_server_t* server) {
+    mtx_lock(&server->lock);
     server->running = 0;
+    mtx_unlock(&server->lock);
+    
+    // Wait for server thread to finish
+    thrd_join(server->server_thread, NULL);
+    
     close(server->socket_fd);
     free(server->username);
     free(server->password);
+    mtx_destroy(&server->lock);
 }
 
 // Implement the required RPC methods
