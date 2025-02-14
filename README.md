@@ -1,26 +1,18 @@
-# Vulkan Cryptocurrency
+# Vulkan Core
 
 ## Overview
+Vulkan is a high-performance cryptocurrency implementation written in C that focuses on efficiency and modularity. The codebase features a complete RPC server interface, peer-to-peer networking, and blockchain management systems.
 
-Vulkan is a robust and high-performance cryptocurrency blockchain designed to ensure efficiency and scalability. Unlike many existing blockchains, Vulkan focuses on lightweight performance and adaptability, making it an ideal choice for diverse applications, from enterprise-level systems to embedded devices. Written entirely from scratch in C++, Vulkan takes advantage of Cython to provide Python bindings, making it a versatile and portable solution. Vulkan supports a wide array of platforms, including macOS, Windows, Android, and even embedded systems. By leveraging RocksDB/LevelDB for efficient storage, Vulkan minimizes RAM usage and optimizes disk space utilization for better performance.
+## Core Components
 
-## Features
+### RPC Server
+- Full Bitcoin-compatible JSON-RPC API implementation
+- Supports all standard mining and blockchain query operations
+- Thread-safe request handling with connection pooling
+- CORS support for web integrations
+- Comprehensive error handling and logging
 
-- **Lightweight and Fast:** Designed for optimal speed and minimal resource usage.
-- **Cross-Platform Compatibility:** Supports macOS, Windows, Android, and embedded systems.
-- **Efficient Storage:** Utilizes RocksDB/LevelDB for optimized blockchain data storage.
-- **Advanced Security:** Implements SHA256 Proof of Work (PoW), with plans for Proof of Activity (PoA) in future updates.
-- **Scalability:** Vulkan’s design enables efficient scaling to support a growing number of transactions and users.
-- **Customizable:** Developers can easily fork and customize Vulkan for specific use cases.
-- **Energy Efficient:** Future implementations aim to optimize energy consumption while maintaining security.
-
-## Current Implementations
-
-- **SHA256 Proof of Work (PoW):** Vulkan employs the same SHA256-based PoW mechanism as Bitcoin to secure its network.
-- **Future-Proofing with Proof of Activity (PoA):** Vulkan aims to adopt PoA to improve security and incentivize participation.
-
-## Key Technical Highlights from Vulkan Source Code
-
+Key RPC methods:
 ### Compression and Storage Options
 Vulkan supports both RocksDB and LevelDB for efficient data storage. Developers can choose RocksDB for high write throughput or LevelDB for simplicity and smaller memory footprints, depending on the use case. It provides customizable compression options, including:
 - **Snappy Compression**
