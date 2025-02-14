@@ -32,9 +32,9 @@ add_subdirectory(wallet)
 add_executable(${PROJECT_NAME} main.c)
 
 # link all of the vulkan libraries:
-target_link_libraries(core common crypto miner wallet)
-target_link_libraries(miner common crypto core wallet)
-target_link_libraries(wallet common crypto core)
+target_link_libraries(core common crypto miner wallet ${JSONC_LIBRARIES})
+target_link_libraries(miner common crypto core wallet ${JSONC_LIBRARIES})
+target_link_libraries(wallet common crypto core ${JSONC_LIBRARIES})
 
 # link the vulkan executable:
 if (SODIUM_FOUND)
@@ -47,4 +47,4 @@ else()
  target_link_libraries(${PROJECT_NAME} libsodium_Cmake)
 endif()
 
-target_link_libraries(${PROJECT_NAME} common core crypto miner wallet)
+target_link_libraries(${PROJECT_NAME} common core crypto miner wallet ${JSONC_LIBRARIES})

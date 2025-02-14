@@ -45,6 +45,11 @@ typedef struct MempoolEntry
   uint32_t received_ts;
 } mempool_entry_t;
 
+typedef struct MempoolFeeEntry {
+  transaction_t *tx;
+  double fee_per_byte;
+} mempool_tx_fee_entry_t;
+
 VULKAN_API mempool_entry_t* init_mempool_entry(void);
 VULKAN_API void free_mempool_entry(mempool_entry_t *mempool_entry);
 
@@ -77,6 +82,10 @@ VULKAN_API int clear_txs_in_mempool_from_block(block_t *block);
 VULKAN_API int clear_expired_txs_in_mempool_nolock(void);
 VULKAN_API int clear_expired_txs_in_mempool_noblock(void);
 VULKAN_API int clear_expired_txs_in_mempool(void);
+
+VULKAN_API static int compare_tx_fee(const void *a, const void *b);
+VULKAN_API uint64_t calculate_transaction_fee(transaction_t *tx);
+VULKAN_API int add_transactions_from_mempool(block_t *block);
 
 VULKAN_API int start_mempool(void);
 VULKAN_API int stop_mempool(void);

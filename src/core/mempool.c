@@ -38,6 +38,7 @@
 #include "block.h"
 #include "mempool.h"
 #include "transaction.h"
+#include "blockchain.h"
 
 static mtx_t g_mempool_lock;
 static int g_mempool_initialized = 0;
@@ -402,6 +403,123 @@ static task_result_t flush_mempool(task_t *task, va_list args)
   int r = clear_expired_txs_in_mempool_noblock();
   assert(r == 0);
   return TASK_RESULT_WAIT;
+}
+
+static int compare_tx_fee(const void *a, const void *b) {
+  const mempool_tx_fee_entry_t *entry_a = (const mempool_tx_fee_entry_t*)a;
+  const mempool_tx_fee_entry_t *entry_b = (const mempool_tx_fee_entry_t*)b;
+  
+  if (entry_a->fee_per_byte > entry_b->fee_per_byte) return -1;
+  if (entry_a->fee_per_byte < entry_b->fee_per_byte) return 1;
+  return 0;
+}
+
+uint64_t calculate_transaction_fee(transaction_t *tx) {
+  assert(tx != NULL);
+  
+  // Coinbase transactions don't have fees
+  if (is_coinbase_tx(tx)) {
+      return 0;
+  }
+  
+  uint64_t total_input = 0;
+  uint64_t total_output = 0;
+  
+  // Calculate total input amount
+  for (uint32_t i = 0; i < tx->txin_count; i++) {
+      input_transaction_t *txin = tx->txins[i];
+      assert(txin != NULL);
+      
+      // Get the referenced output transaction
+      block_t *block = get_block_from_tx_id(txin->transaction); // get the block that contains the txin previous transaction
+      transaction_t *prev_tx = get_tx_by_hash_from_block(block, txin->transaction); // now get the transaction it's self
+      if (prev_tx == NULL) {
+          return 0; // Invalid transaction, can't calculate fee
+      }
+      
+      // Ensure output index is valid
+      if (txin->txout_index >= prev_tx->txout_count) {
+          return 0; // Invalid output index
+      }
+      
+      output_transaction_t *prev_txout = prev_tx->txouts[txin->txout_index];
+      assert(prev_txout != NULL);
+      
+      total_input += prev_txout->amount;
+  }
+  
+  // Calculate total output amount
+  for (uint32_t i = 0; i < tx->txout_count; i++) {
+      output_transaction_t *txout = tx->txouts[i];
+      assert(txout != NULL);
+      total_output += txout->amount;
+  }
+  
+  // Fee is the difference between inputs and outputs
+  // Return 0 if outputs exceed inputs (invalid transaction)
+  return total_input > total_output ? total_input - total_output : 0;
+}
+
+int add_transactions_from_mempool(block_t *block) {
+  assert(block != NULL);
+  
+  mtx_lock(&g_mempool_lock);
+  
+  // Create array to store transactions with their fees
+  mempool_tx_fee_entry_t *tx_entries = malloc(sizeof(mempool_tx_fee_entry_t) * g_mempool_num_transactions);
+  size_t num_entries = 0;
+  
+  // Calculate fees for all transactions in mempool
+  CC_ArrayIter iter;
+  cc_array_iter_init(&iter, g_mempool_transactions);
+  
+  void *el;
+  while (cc_array_iter_next(&iter, (void*) &el) != CC_ITER_END) {
+      mempool_entry_t *mempool_entry = (mempool_entry_t*)el;
+      transaction_t *tx = mempool_entry->tx;
+      
+      // Skip invalid or expired transactions
+      if (!valid_transaction(tx)) {
+          continue;
+      }
+      
+      uint64_t tx_size = get_tx_header_size(tx);
+      uint64_t tx_fee = calculate_transaction_fee(tx);
+      
+      if (tx_size > 0 && tx_fee > 0) {
+          tx_entries[num_entries].tx = tx;
+          tx_entries[num_entries].fee_per_byte = (double)tx_fee / tx_size;
+          num_entries++;
+      }
+  }
+  
+  // Sort transactions by fee per byte
+  qsort(tx_entries, num_entries, sizeof(mempool_tx_fee_entry_t), compare_tx_fee);
+  
+  // Add transactions to block, starting with highest fee per byte
+  uint32_t tx_index = 1; // Skip coinbase transaction
+  uint32_t current_block_size = get_block_header_size(block);
+  
+  for (size_t i = 0; i < num_entries; i++) {
+      transaction_t *tx = tx_entries[i].tx;
+      uint32_t tx_size = get_tx_header_size(tx);
+      
+      // Check if adding this transaction would exceed block size limit
+      if (current_block_size + tx_size >= MAX_BLOCK_SIZE) {
+          continue;
+      }
+      
+      // Add transaction to block and remove from mempool
+      if (add_transaction_to_block(block, tx, tx_index) == 0) {
+          remove_tx_from_mempool_nolock(tx);
+          current_block_size += tx_size;
+          tx_index++;
+      }
+  }
+  
+  free(tx_entries);
+  mtx_unlock(&g_mempool_lock);
+  return 0;
 }
 
 int start_mempool(void)

@@ -61,3 +61,6 @@ build/
 deps/
 blockchain/
 !test/deps
+
+# Visual Studio
+.vscode/

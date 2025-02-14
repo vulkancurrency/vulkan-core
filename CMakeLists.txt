@@ -101,6 +101,23 @@ else()
   message(FATAL_ERROR "No blockchain storage database backend was specified!")
 endif()
 
+# Find JSON-C
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONC REQUIRED json-c)
+
+if(JSONC_FOUND)
+    include_directories(${JSONC_INCLUDE_DIRS})
+    link_directories(${JSONC_LIBRARY_DIRS})
+    
+    message(STATUS "Found JSON-C:")
+    message(STATUS "  Version: ${JSONC_VERSION}")
+    message(STATUS "  Include Dirs: ${JSONC_INCLUDE_DIRS}")
+    message(STATUS "  Library Dirs: ${JSONC_LIBRARY_DIRS}")
+    message(STATUS "  Libraries: ${JSONC_LIBRARIES}")
+else()
+    message(FATAL_ERROR "json-c not found")
+endif()
+
 if (WITH_NET_QUEUE)
   add_definitions(-DUSE_NET_QUEUE)
 endif()

@@ -105,6 +105,7 @@ Install the necessary packages using Homebrew:
 brew install leveldb
 brew install rocksdb
 brew install libsodium
+brew install json-c
 ```
 
 #### Linux
@@ -114,6 +115,7 @@ Install the required dependencies using `apt-get`:
 ```bash
 sudo apt-get install librocksdb-dev
 sudo apt-get install libsodium-dev
+sudo apt-get install libjson-c-dev
 ```
 
 ## Compilation Instructions

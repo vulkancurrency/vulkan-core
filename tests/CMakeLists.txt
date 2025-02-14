@@ -53,4 +53,4 @@ else()
  target_link_libraries(tests libsodium_Cmake)
 endif()
 
-target_link_libraries(tests crypto common core miner wallet)
+target_link_libraries(tests crypto common core miner wallet ${JSONC_LIBRARIES})

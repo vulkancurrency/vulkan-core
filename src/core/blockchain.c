@@ -2641,3 +2641,101 @@ uint64_t get_balance_for_address(uint8_t *address)
   mtx_unlock(&g_blockchain_lock);
   return balance;
 }
+
+double get_network_difficulty(void) {
+    block_t* current = get_current_block();
+    if (!current) return 0.0;
+    
+    uint32_t bits = current->bits;
+    free_block(current);
+    
+    // Convert difficulty bits to double
+    uint32_t nShift = (bits >> 24) & 0xff;
+    double dDiff = (double)0x0000ffff / (double)(bits & 0x00ffffff);
+    while (nShift < 29) {
+        dDiff *= 256.0;
+        nShift++;
+    }
+    while (nShift > 29) {
+        dDiff /= 256.0;
+        nShift--;
+    }
+    return dDiff;
+}
+
+double get_network_hashrate(void) {
+    block_t* current = get_current_block();
+    if (!current) return 0.0;
+    
+    // Get block from 144 blocks ago (~24 hours)
+    uint32_t current_height = get_block_height_from_block(current);
+    free_block(current);
+    
+    if (current_height < 144) return 0.0;
+    
+    block_t* past = get_block_from_height(current_height - 144);
+    if (!past) return 0.0;
+    
+    // Calculate time difference
+    uint32_t time_diff = current->timestamp - past->timestamp;
+    if (time_diff == 0) return 0.0;
+    
+    // Calculate average difficulty over period
+    double avg_difficulty = (get_block_difficulty(current) + get_block_difficulty(past)) / 2;
+    
+    free_block(past);
+    
+    // Network hashrate = difficulty * 2^32 / time
+    return avg_difficulty * 4294967296.0 / time_diff;
+}
+
+double get_block_difficulty(block_t* block) {
+    assert(block != NULL);
+    
+    uint32_t bits = block->bits;
+    
+    // Convert difficulty bits to double
+    uint32_t nShift = (bits >> 24) & 0xff;
+    double dDiff = (double)0x0000ffff / (double)(bits & 0x00ffffff);
+    while (nShift < 29) {
+        dDiff *= 256.0;
+        nShift++;
+    }
+    while (nShift > 29) {
+        dDiff /= 256.0;
+        nShift--;
+    }
+    return dDiff;
+}
+
+uint32_t get_block_size(block_t* block) {
+    assert(block != NULL);
+    
+    buffer_t* buffer = buffer_init();
+    serialize_block(buffer, block);
+    uint32_t size = buffer_get_size(buffer);
+    buffer_free(buffer);
+    
+    return size;
+}
+
+uint32_t get_block_version(void) {
+    return BLOCK_VERSION;
+}
+
+transaction_t* create_coinbase_transaction(uint64_t reward) {
+    transaction_t* tx = create_new_transaction();
+    
+    // Create input
+    input_transaction_t* input_tx = create_new_txin();
+    memset(input_tx->transaction, 0, HASH_SIZE);
+    
+    // Create output
+    output_transaction_t* output_tx = create_new_txout();
+    output_tx->amount = reward;
+    
+    // Add to transaction
+    add_txin_to_transaction(tx, input_tx, tx->txin_count + 1);
+    add_txout_to_transaction(tx, output_tx, tx->txout_count + 1);
+    return tx;
+}

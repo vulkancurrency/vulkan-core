@@ -38,6 +38,7 @@ set(VULKAN_CORE_SOURCE_FILES
   protocol.c
   transaction_builder.c
   transaction.c
+  rpc_server.c
 )
 
 set(VULKAN_CORE_HEADER_FILES
@@ -57,6 +58,7 @@ set(VULKAN_CORE_HEADER_FILES
   seed_nodes.h
   transaction_builder.h
   transaction.h
+  rpc_server.h
   version.h
 )
 
@@ -96,3 +98,5 @@ if (BUILD_STATIC)
 else()
   target_link_libraries(core libminiupnpc)
 endif()
+
+target_link_libraries(core ${JSONC_LIBRARIES})

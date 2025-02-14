@@ -46,6 +46,7 @@
 #include "core/p2p.h"
 #include "core/protocol.h"
 #include "core/version.h"
+#include "core/rpc_server.h"
 
 #include "miner/miner.h"
 
@@ -60,6 +61,13 @@ static const char *g_logger_log_filename = "daemon.log";
 
 static int g_repair_blockchain = 0;
 static int g_repair_wallet = 0;
+
+static bool g_run_rpc_server = false;
+static uint16_t g_rpc_port = 0;
+static char *g_rpc_username = "";
+static char *g_rpc_password = "";
+static rpc_server_t *g_our_rpc_server = NULL;
+static thrd_t g_rpc_server_thread;
 
 enum
 {
@@ -83,7 +91,8 @@ enum
   CMD_ARG_FORCE_VERSION_CHECK,
   CMD_ARG_TESTNET,
   CMD_ARG_NUM_WORKER_THREADS,
-  CMD_ARG_MINE
+  CMD_ARG_MINE,
+  CMD_ARG_RUN_RPC_SERVER
 };
 
 static const argument_map_t g_arguments_map[] = {
@@ -107,8 +116,8 @@ static const argument_map_t g_arguments_map[] = {
   {"create-genesis-block", CMD_ARG_CREATE_GENESIS_BLOCK, "Creates and mine a new genesis block", "", 0},
   {"force-protocol-version-check", CMD_ARG_FORCE_VERSION_CHECK, "Forces protocol version check when accepting new incoming peer connections", "", 0},
   {"worker-threads", CMD_ARG_NUM_WORKER_THREADS, "Sets the number of miner worker threads to use when mining blocks", "<num_workers>", 1},
-  {"mine", CMD_ARG_MINE, "Start mining for new blocks", "", 0}
-};
+  {"run-rpc-server", CMD_ARG_RUN_RPC_SERVER, "Runs an instance of the RPC Server in a new thread", "<rpc_server_port>", 3},
+  {"mine", CMD_ARG_MINE, "Start mining for new blocks", "", 0}};
 
 #define NUM_ARGUMENTS (sizeof(g_arguments_map) / sizeof(argument_map_t))
 
@@ -280,6 +289,17 @@ static int parse_commandline_args(int argc, char **argv)
       case CMD_ARG_CLEAR_WALLET:
         assert(remove_wallet(g_wallet_dir) == 0);
         break;
+      case CMD_ARG_RUN_RPC_SERVER:
+        {
+          i++;
+          g_rpc_port = (uint16_t)atoi(argv[i]);
+          i++;
+          g_rpc_username = (char*)argv[i];
+          i++;
+          g_rpc_password = (char*)argv[i];
+          g_run_rpc_server = true;
+        }
+        break;
       case CMD_ARG_CREATE_GENESIS_BLOCK:
         {
           logger_set_log_filename(g_logger_log_filename);
@@ -403,6 +423,18 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  // instantiate the rpc server if it's enabled
+  if (g_run_rpc_server)
+  {
+    g_our_rpc_server = malloc(sizeof(rpc_server_t));
+    rpc_server_init(g_our_rpc_server, g_rpc_port, g_rpc_username, g_rpc_password);
+    if (thrd_create(&g_rpc_server_thread, rpc_server_start, g_our_rpc_server) != thrd_success)
+    {
+      fprintf(stderr, "Failed to instantiate RPC Server thread, an error has occurred!\n");
+      return 1;
+    }
+  }
+
   wallet_t *wallet = NULL;
   if (g_enable_miner)
   {
@@ -432,6 +464,14 @@ int main(int argc, char **argv)
   if (net_run())
   {
     return 1;
+  }
+
+  if (g_run_rpc_server)
+  {
+    thrd_join(&g_rpc_server_thread, NULL);
+    rpc_server_stop(g_our_rpc_server);
+    free(g_our_rpc_server);
+    g_our_rpc_server = NULL;
   }
 
   if (deinit_console())

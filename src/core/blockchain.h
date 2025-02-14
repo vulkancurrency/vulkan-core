@@ -194,4 +194,12 @@ VULKAN_API int get_unspent_transactions_for_address(uint8_t *address, vec_void_t
 VULKAN_API uint64_t get_balance_for_address_nolock(uint8_t *address);
 VULKAN_API uint64_t get_balance_for_address(uint8_t *address);
 
+VULKAN_API double get_network_difficulty(void);
+VULKAN_API double get_network_hashrate(void);
+VULKAN_API double get_block_difficulty(block_t* block);
+VULKAN_API uint32_t get_block_size(block_t* block);
+VULKAN_API uint32_t get_block_version(void);
+VULKAN_API transaction_t* create_coinbase_transaction(uint64_t reward);
+VULKAN_API uint32_t get_current_time(void);
+
 VULKAN_END_DECL
