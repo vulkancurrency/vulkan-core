@@ -74,3 +74,4 @@ char* rpc_getindexinfo(const char* params);
 char* rpc_getmempoolinfo(const char* params);
 char* rpc_estimatesmartfee(const char* params);
 char* rpc_getblockheader(const char* params);
+char* rpc_getblockstats(const char* params);

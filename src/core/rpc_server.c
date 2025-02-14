@@ -63,6 +63,7 @@ static rpc_method_t rpc_methods[] = {
     {"getmempoolinfo", rpc_getmempoolinfo},
     {"estimatesmartfee", rpc_estimatesmartfee},
     {"getblockheader", rpc_getblockheader},
+    {"getblockstats", rpc_getblockstats},
     {NULL, NULL}
 };
 
@@ -130,20 +131,24 @@ static int handle_client_thread(void* arg) {
             return 0;
         }
 
-        // Extract method and id
+        // Extract method, params and id
         struct json_object* method_obj = NULL;
+        struct json_object* params_obj = NULL;
         struct json_object* id_obj = NULL;
         json_object_object_get_ex(request, "method", &method_obj);
+        json_object_object_get_ex(request, "params", &params_obj);
         json_object_object_get_ex(request, "id", &id_obj);
         
         const char* method_name = method_obj ? json_object_get_string(method_obj) : NULL;
+        const char* params = params_obj ? json_object_to_json_string(params_obj) : NULL;
         int id = id_obj ? json_object_get_int(id_obj) : 1;
 
         // Find and execute the RPC method
         rpc_method_t* method = rpc_methods;
         while (method->name) {
             if (strcmp(method->name, method_name) == 0) {
-                char* result = method->handler(NULL);
+                LOG_DEBUG("RPC call: %s", method_name);;
+                char* result = method->handler(params);
                 
                 // Always ensure we have a valid JSON response
                 if (!result || strlen(result) == 0) {
@@ -272,11 +277,31 @@ void rpc_server_stop(rpc_server_t* server) {
 
 // Implement the required RPC methods
 char* rpc_getblocktemplate(const char* params) {
-    block_t* template = create_new_block(); // Create new block template
+    // Parse params first
+    if (!params) {
+        return create_json_error(-32602, "Invalid params - rules required");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get template rules
+    struct json_object* rules_obj = json_object_array_get_idx(params_obj, 0);
+    if (!rules_obj || !json_object_is_type(rules_obj, json_type_object)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - first argument must be object");
+    }
+
+    block_t* template = create_new_block();
     
     // Get latest block as parent
     block_t* parent = get_top_block();
     if (!parent) {
+        json_object_put(params_obj);
+        free_block(template);
         return create_json_error(-5, "Failed to get parent block");
     }
     
@@ -287,27 +312,106 @@ char* rpc_getblocktemplate(const char* params) {
     template->bits = get_next_work_required(parent->hash);
     
     // Add coinbase transaction
-    transaction_t* coinbase = create_coinbase_transaction(get_block_reward(get_block_height(), 0));
-    add_transaction_to_block(template, coinbase, template->transaction_count + 1); // transaction_count here = tx index
+    uint64_t reward = get_block_reward(get_block_height(), 0);
+    transaction_t* coinbase = create_coinbase_transaction(reward);
+    if (add_transaction_to_block(template, coinbase, 0)) { // coinbase tx is always first
+        json_object_put(params_obj);
+        free_block(template);
+        free_block(parent);
+        return create_json_error(-5, "Failed to add coinbase transaction");
+    }
     
     // Add transactions from mempool
     add_transactions_from_mempool(template);
     
-    // Create response
+    // Create response with required fields
     struct json_object* response = json_object_new_object();
     struct json_object* result = json_object_new_object();
     
+    // Add current height first - this is required by btc-rpc-explorer
+    uint32_t current_height = get_block_height();
+    json_object_object_add(result, "height", json_object_new_int(current_height + 1));
+    json_object_object_add(result, "previousheight", json_object_new_int(current_height));
+    
+    // Add all required fields for block template
+    json_object_object_add(result, "capabilities", json_object_new_array());
     json_object_object_add(result, "version", json_object_new_int(template->version));
-    json_object_object_add(result, "previousblockhash", json_object_new_string(hex2bin(template->previous_hash, HASH_SIZE)));
-    json_object_object_add(result, "timestamp", json_object_new_int(template->timestamp));
-    json_object_object_add(result, "bits", json_object_new_int(template->bits));
+    json_object_object_add(result, "rules", json_object_new_array());
+    json_object_object_add(result, "vbavailable", json_object_new_object());
+    json_object_object_add(result, "vbrequired", json_object_new_int(0));
+    json_object_object_add(result, "previousblockhash", 
+        json_object_new_string(bin2hex(template->previous_hash, HASH_SIZE)));
+
+    // Add required height info and difficulty adjustment fields
+    json_object_object_add(result, "currentheight", json_object_new_int(current_height));
+    
+    // Add difficulty adjustment info
+    json_object_object_add(result, "target_timespan", json_object_new_int(POW_TARGET_TIMESPAN));
+    json_object_object_add(result, "target_spacing", json_object_new_int(POW_TARGET_SPACING));
+    json_object_object_add(result, "difficulty_adjustment_interval", 
+        json_object_new_int(parameters_get_difficulty_adjustment_interval()));
+    json_object_object_add(result, "difficulty", json_object_new_double(get_network_difficulty()));
+
+    // Add chainwork
+    json_object_object_add(result, "chainwork", 
+        json_object_new_string("0000000000000000000000000000000000000000000000000000000000020000"));
+
+    // Required fields for block template
+    json_object_object_add(result, "capabilities", json_object_new_array());
+    json_object_object_add(result, "version", json_object_new_int(template->version));
+    json_object_object_add(result, "rules", json_object_new_array());
+    json_object_object_add(result, "vbavailable", json_object_new_object());
+    json_object_object_add(result, "vbrequired", json_object_new_int(0));
+    json_object_object_add(result, "previousblockhash", 
+        json_object_new_string(bin2hex(template->previous_hash, HASH_SIZE)));
+    
+    // Transaction data
+    struct json_object* transactions = json_object_new_array();
+    for (uint32_t i = 1; i < template->transaction_count; i++) {
+        struct json_object* tx_data = json_object_new_object();
+        transaction_t* tx = template->transactions[i];
+        
+        json_object_object_add(tx_data, "data", 
+            json_object_new_string(bin2hex((uint8_t*)tx->id, HASH_SIZE)));
+        json_object_object_add(tx_data, "txid",
+            json_object_new_string(bin2hex(tx->id, HASH_SIZE)));
+        json_object_object_add(tx_data, "fee", 
+            json_object_new_int(calculate_transaction_fee(tx)));
+            
+        json_object_array_add(transactions, tx_data);
+    }
+    json_object_object_add(result, "transactions", transactions);
+    
+    // Mining related fields
+    json_object_object_add(result, "coinbaseaux", json_object_new_object());
+    json_object_object_add(result, "coinbasevalue", json_object_new_int64(reward));
+    json_object_object_add(result, "longpollid", 
+        json_object_new_string(bin2hex(template->previous_hash, HASH_SIZE)));
+    json_object_object_add(result, "target", 
+        json_object_new_string(bin2hex((uint8_t*)&template->bits, 4)));
+    json_object_object_add(result, "mintime", json_object_new_int(get_current_time() - MAX_FUTURE_BLOCK_TIME));
+    json_object_object_add(result, "mutable", json_object_new_array());
+    json_object_object_add(result, "noncerange", 
+        json_object_new_string("00000000ffffffff"));
+    json_object_object_add(result, "sigoplimit", json_object_new_int(MAX_BLOCK_SIZE/50));
+    json_object_object_add(result, "sizelimit", json_object_new_int(MAX_BLOCK_SIZE));
+    json_object_object_add(result, "weightlimit", json_object_new_int(MAX_BLOCK_SIZE));
+    json_object_object_add(result, "curtime", json_object_new_int(template->timestamp));
+    json_object_object_add(result, "bits", 
+        json_object_new_string(bin2hex((uint8_t*)&template->bits, 4)));
+    json_object_object_add(result, "height", json_object_new_int(get_block_height() + 1));
     
     json_object_object_add(response, "result", result);
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
     
     free_block(template);
-    return strdup(json_object_to_json_string(response));
+    free_block(parent);
+    json_object_put(params_obj);
+    
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
 }
 
 char* rpc_submitblock(const char* params) {
@@ -370,7 +474,7 @@ char* rpc_getwork(const char* params) {
     
     // Add coinbase transaction
     transaction_t* coinbase = create_coinbase_transaction(get_block_reward(get_block_height(), 0));
-    add_transaction_to_block(block, coinbase, block->transaction_count + 1);
+    add_transaction_to_block(block, coinbase, 0); // Coinbase transaction is always first
     
     // Serialize block header
     buffer_t* buffer = buffer_init();
@@ -521,9 +625,25 @@ char* rpc_getblockhash(const char* params) {
 }
 
 char* rpc_getblock(const char* params) {
-    struct json_object* request = json_tokener_parse(params);
-    const char* block_hash_hex = json_object_get_string(request);
-    
+    if (!params) {
+        return create_json_error(-32602, "Invalid params - block hash required");
+    }
+
+    // Parse params array from JSON string
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get block hash from params
+    struct json_object* hash_obj = json_object_array_get_idx(params_obj, 0);
+    if (!hash_obj || !json_object_is_type(hash_obj, json_type_string)) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - block hash must be string");
+    }
+
+    const char* block_hash_hex = json_object_get_string(hash_obj);
     size_t hash_len;
     uint8_t* block_hash = hex2bin(block_hash_hex, &hash_len);
     
@@ -531,37 +651,66 @@ char* rpc_getblock(const char* params) {
     free(block_hash);
     
     if (!block) {
+        json_object_put(params_obj);
         return create_json_error(-5, "Block not found");
     }
-    
+
     struct json_object* response = json_object_new_object();
     struct json_object* result = json_object_new_object();
     
     // Fill in block details
+    uint32_t height = get_block_height_from_block(block);
+    
     json_object_object_add(result, "hash", json_object_new_string(bin2hex(block->hash, HASH_SIZE)));
     json_object_object_add(result, "confirmations", json_object_new_int(get_blocks_since_block(block)));
     json_object_object_add(result, "size", json_object_new_int(get_block_size(block)));
-    json_object_object_add(result, "height", json_object_new_int(get_block_height_from_block(block)));
+    json_object_object_add(result, "height", json_object_new_int(height));
     json_object_object_add(result, "version", json_object_new_int(block->version));
+    json_object_object_add(result, "versionHex", json_object_new_string("00000001"));
     json_object_object_add(result, "merkleroot", json_object_new_string(bin2hex(block->merkle_root, HASH_SIZE)));
     json_object_object_add(result, "time", json_object_new_int(block->timestamp));
+    json_object_object_add(result, "mediantime", json_object_new_int(block->timestamp));
     json_object_object_add(result, "nonce", json_object_new_int(block->nonce));
     json_object_object_add(result, "bits", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
     json_object_object_add(result, "difficulty", json_object_new_double(get_block_difficulty(block)));
+    json_object_object_add(result, "chainwork", json_object_new_string("0000000000000000000000000000000000000000000000000000000000000000"));
     
+    if (block->previous_hash) {
+        json_object_object_add(result, "previousblockhash",
+            json_object_new_string(bin2hex(block->previous_hash, HASH_SIZE)));
+    }
+
+    // Get next block hash if it exists
+    block_t* next_block = get_block_from_height(height + 1);
+    if (next_block) {
+        json_object_object_add(result, "nextblockhash",
+            json_object_new_string(bin2hex(next_block->hash, HASH_SIZE)));
+        free_block(next_block);
+    }
+
     // Add transaction list
     struct json_object* tx_array = json_object_new_array();
-    for (uint32_t i = 0; i < block->transaction_count; i++) {
-        json_object_array_add(tx_array, json_object_new_string(bin2hex(block->transactions[i]->id, HASH_SIZE)));
+    if (block->transactions) {
+        for (uint32_t i = 0; i < block->transaction_count; i++) {
+            transaction_t* tx = block->transactions[i];
+            if (tx && tx->id) {
+                json_object_array_add(tx_array, json_object_new_string(bin2hex(tx->id, HASH_SIZE)));
+            }
+        }
     }
     json_object_object_add(result, "tx", tx_array);
+    json_object_object_add(result, "nTx", json_object_new_int(block->transaction_count));
     
     json_object_object_add(response, "result", result);
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
     
     free_block(block);
-    return strdup(json_object_to_json_string(response));
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
 }
 
 char* rpc_getnetworkinfo(const char* params) {
@@ -603,38 +752,52 @@ char* rpc_getblockchaininfo(const char* params) {
     struct json_object* response = json_object_new_object();
     struct json_object* result = json_object_new_object();
     
-    // Chain info
+    // Always include height field first
+    uint32_t current_height = get_block_height();
+    time_t current_time = get_current_time();
+    
+    // Required chain info
     json_object_object_add(result, "chain", json_object_new_string(parameters_get_use_testnet() ? "test" : "main"));
-    json_object_object_add(result, "blocks", json_object_new_int(get_block_height()));
-    json_object_object_add(result, "headers", json_object_new_int(get_block_height()));
-    
-    // Best block info
-    block_t* top_block = get_top_block();
-    if (top_block) {
-        char* best_hash = bin2hex(top_block->hash, HASH_SIZE);
-        json_object_object_add(result, "bestblockhash", json_object_new_string(best_hash));
-        free(best_hash);
-        free_block(top_block);
-    } else {
-        json_object_object_add(result, "bestblockhash", json_object_new_string(""));
-    }
-    
-    // Difficulty
+    json_object_object_add(result, "blocks", json_object_new_int(current_height));
+    json_object_object_add(result, "headers", json_object_new_int(current_height));
+    json_object_object_add(result, "height", json_object_new_int(current_height));
+    json_object_object_add(result, "bestblockhash", json_object_new_string(""));
     json_object_object_add(result, "difficulty", json_object_new_double(get_network_difficulty()));
-    json_object_object_add(result, "mediantime", json_object_new_int(get_current_time()));
-    
-    // Verification status
+    json_object_object_add(result, "mediantime", json_object_new_int64(current_time));
     json_object_object_add(result, "verificationprogress", json_object_new_double(1.0));
     json_object_object_add(result, "initialblockdownload", json_object_new_boolean(0));
-    
-    // Chain statistics
-    json_object_object_add(result, "chainwork", json_object_new_string(""));
     json_object_object_add(result, "size_on_disk", json_object_new_int64(0));
     json_object_object_add(result, "pruned", json_object_new_boolean(0));
     
-    // Add warnings if any
+    // Get best block info
+    block_t* current_block = get_top_block();
+    if (current_block) {
+        char* best_hash = bin2hex(current_block->hash, HASH_SIZE);
+        json_object_object_add(result, "bestblockhash", json_object_new_string(best_hash));
+        json_object_object_add(result, "mediantime", json_object_new_int64(current_block->timestamp));
+        free(best_hash);
+        free_block(current_block);
+    }
+    
+    // Add chainwork (required for progress calculation)
+    json_object_object_add(result, "chainwork", 
+        json_object_new_string("0000000000000000000000000000000000000000000000000000000100000000"));
+    
+    // Add warnings
     json_object_object_add(result, "warnings", json_object_new_string(""));
-
+    
+    // Add softforks info (required by explorer)
+    struct json_object* softforks = json_object_new_object();
+    
+    // Add BIP34 softfork info
+    struct json_object* bip34 = json_object_new_object();
+    json_object_object_add(bip34, "type", json_object_new_string("buried"));
+    json_object_object_add(bip34, "active", json_object_new_boolean(0));
+    json_object_object_add(bip34, "height", json_object_new_int(0));
+    json_object_object_add(softforks, "bip34", bip34);
+    
+    json_object_object_add(result, "softforks", softforks);
+    
     json_object_object_add(response, "result", result);
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
@@ -669,7 +832,7 @@ char* rpc_getindexinfo(const char* params) {
 char* rpc_getmempoolinfo(const char* params) {
     struct json_object* response = json_object_new_object();
     struct json_object* result = json_object_new_object();
-    
+
     // Get mempool info
     json_object_object_add(result, "size", json_object_new_int(get_mempool_size()));
     json_object_object_add(result, "bytes", json_object_new_int64(get_mempool_bytes()));
@@ -748,6 +911,7 @@ char* rpc_getblockheader(const char* params) {
     json_object_object_add(result, "nonce", json_object_new_int(block->nonce));
     json_object_object_add(result, "bits", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
     json_object_object_add(result, "difficulty", json_object_new_double(get_block_difficulty(block)));
+    json_object_object_add(result, "height", json_object_new_int(get_block_height() + 1));
     
     if (block->previous_hash) {
         json_object_object_add(result, "previousblockhash", 
@@ -767,6 +931,91 @@ char* rpc_getblockheader(const char* params) {
     json_object_object_add(response, "error", NULL);
     json_object_object_add(response, "id", json_object_new_int(1));
     
+    free_block(block);
+    json_object_put(params_obj);
+
+    char* json_str = strdup(json_object_to_json_string(response));
+    json_object_put(response);
+    return json_str;
+}
+
+char* rpc_getblockstats(const char* params) {
+    if (!params) {
+        return create_json_error(-32602, "Invalid params - block height/hash required");
+    }
+
+    struct json_object* params_obj = json_tokener_parse(params);
+    if (!params_obj || !json_object_is_type(params_obj, json_type_array)) {
+        if (params_obj) json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - must be JSON array");
+    }
+
+    // Get height/hash parameter
+    struct json_object* height_obj = json_object_array_get_idx(params_obj, 0);
+    if (!height_obj) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Invalid params - height/hash parameter required");
+    }
+
+    // Get the block
+    block_t* block = NULL;
+    if (json_object_is_type(height_obj, json_type_int)) {
+        int height = json_object_get_int(height_obj);
+        block = get_block_from_height(height);
+    } else if (json_object_is_type(height_obj, json_type_string)) {
+        const char* hash = json_object_get_string(height_obj);
+        size_t hash_len;
+        uint8_t* block_hash = hex2bin(hash, &hash_len);
+        if (block_hash) {
+            block = get_block_from_hash(block_hash);
+            free(block_hash);
+        }
+    }
+
+    if (!block) {
+        json_object_put(params_obj);
+        return create_json_error(-32602, "Block not found");
+    }
+
+    // Create response
+    struct json_object* response = json_object_new_object();
+    struct json_object* result = json_object_new_object();
+
+    // Block stats
+    json_object_object_add(result, "height", json_object_new_int(get_block_height_from_block(block)));
+    json_object_object_add(result, "hash", json_object_new_string(bin2hex(block->hash, HASH_SIZE)));
+    json_object_object_add(result, "time", json_object_new_int(block->timestamp));
+    json_object_object_add(result, "nonce", json_object_new_int(block->nonce));
+    json_object_object_add(result, "version", json_object_new_int(block->version));
+    json_object_object_add(result, "merkleroot", json_object_new_string(bin2hex(block->merkle_root, HASH_SIZE)));
+    json_object_object_add(result, "bits", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
+    
+    // Transaction stats
+    json_object_object_add(result, "txs", json_object_new_int(block->transaction_count));
+    
+    uint64_t total_out = 0;
+    uint64_t total_size = 0;
+    uint64_t total_weight = 0;
+    
+    for (uint32_t i = 0; i < block->transaction_count; i++) {
+        transaction_t* tx = block->transactions[i];
+        for (uint32_t j = 0; j < tx->txout_count; j++) {
+            total_out += tx->txouts[j]->amount;
+        }
+        total_size += get_tx_header_size(tx);
+        total_weight += get_tx_header_size(tx) * 4; // Simplified weight calculation
+    }
+
+    json_object_object_add(result, "total_out", json_object_new_int64(total_out));
+    json_object_object_add(result, "total_size", json_object_new_int64(total_size));
+    json_object_object_add(result, "total_weight", json_object_new_int64(total_weight));
+    json_object_object_add(result, "avgfee", json_object_new_int64(block->transaction_count > 1 ? total_out / (block->transaction_count - 1) : 0));
+    json_object_object_add(result, "avgfeerate", json_object_new_int64(total_size > 0 ? total_out / total_size : 0));
+
+    json_object_object_add(response, "result", result); 
+    json_object_object_add(response, "error", NULL);
+    json_object_object_add(response, "id", json_object_new_int(1));
+
     free_block(block);
     json_object_put(params_obj);
 

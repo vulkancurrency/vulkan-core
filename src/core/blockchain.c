@@ -2735,7 +2735,7 @@ transaction_t* create_coinbase_transaction(uint64_t reward) {
     output_tx->amount = reward;
     
     // Add to transaction
-    add_txin_to_transaction(tx, input_tx, tx->txin_count + 1);
-    add_txout_to_transaction(tx, output_tx, tx->txout_count + 1);
+    add_txin_to_transaction(tx, input_tx, 0); // index is always 0 for coinbase
+    add_txout_to_transaction(tx, output_tx, 0); // index is always 0 for coinbase
     return tx;
 }

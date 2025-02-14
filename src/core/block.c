@@ -350,7 +350,10 @@ uint32_t get_block_header_size(block_t *block)
   for (uint32_t i = 0; i < block->transaction_count; i++)
   {
     transaction_t *tx = block->transactions[i];
-    assert(tx != NULL);
+    if (tx == NULL)
+    {
+      continue; // this will probably only happen when the rpc server is using this function?
+    }
 
     block_header_size += get_tx_header_size(tx);
   }
@@ -755,7 +758,10 @@ void free_block_transactions(block_t *block)
     for (uint32_t i = 0; i < block->transaction_count; i++)
     {
       transaction_t *tx = block->transactions[i];
-      assert(tx != NULL);
+      if (tx == NULL)
+      {
+        continue; // this will probably only happen when the rpc server is using this function?
+      }
 
       free_transaction(tx);
     }

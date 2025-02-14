@@ -1060,31 +1060,19 @@ int get_unspent_txouts_from_unspent_tx(unspent_transaction_t *unspent_tx, vec_vo
   return 0;
 }
 
-int add_txin_to_transaction(transaction_t* tx, input_transaction_t* txin, uint32_t txin_index) {
-    assert(tx != NULL);
-    assert(txin != NULL);
-    assert(txin_index > 0);
-    
-    // Adjust index to be 0-based
-    txin_index--;
-    
-    // Ensure we have space
-    if (txin_index >= tx->txin_count) {
-        uint32_t new_count = txin_index + 1;
-        tx->txins = realloc(tx->txins, new_count * sizeof(input_transaction_t*));
-        assert(tx->txins != NULL);
-        
-        // Initialize new slots to NULL
-        for (uint32_t i = tx->txin_count; i < new_count; i++) {
-            tx->txins[i] = NULL;
-        }
-        
-        tx->txin_count = new_count;
-    }
-    
-    // Store the transaction input
-    tx->txins[txin_index] = txin;
-    return 0;
+int add_txin_to_transaction(transaction_t *tx, input_transaction_t *txin, uint32_t txin_index)
+{
+  assert(tx != NULL);
+  assert(txin != NULL);
+  
+  tx->txin_count++;
+  assert(txin_index == tx->txin_count - 1);
+  
+  tx->txins = realloc(tx->txins, sizeof(input_transaction_t) * tx->txin_count);
+  assert(tx->txins != NULL);
+  
+  tx->txins[txin_index] = txin;
+  return 0;
 }
 
 int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uint32_t txout_index)
@@ -1093,7 +1081,7 @@ int add_txout_to_transaction(transaction_t *tx, output_transaction_t *txout, uin
   assert(txout != NULL);
 
   tx->txout_count++;
-  //assert(txout_index == tx->txout_count - 1); // TODO: FIXME???? Do we need this???
+  assert(txout_index == tx->txout_count - 1);
 
   tx->txouts = realloc(tx->txouts, sizeof(output_transaction_t) * tx->txout_count);
   assert(tx->txouts != NULL);
