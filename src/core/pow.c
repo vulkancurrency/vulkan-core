@@ -40,7 +40,7 @@
 static const char *g_pow_limit_str = "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 BIGNUM *g_pow_limit_bn = NULL;
 
-static int g_testing_mode = 1;
+static int g_testing_mode = 0;
 
 int init_pow(void)
 {
@@ -82,20 +82,20 @@ int get_testing_mode(void) {
 
 int check_proof_of_work(const uint8_t *hash, uint32_t bits) {
     if (get_testing_mode()) {
-        // In test mode, still require basic PoW check but with minimum difficulty
+        // In test mode, use the bits parameter to check against the low test difficulty
+        BIGNUM *bn_target = BN_new();
+        bignum_set_compact(bn_target, bits);
+        
         BIGNUM *hash_target = BN_new();
         BN_bin2bn(hash, HASH_SIZE, hash_target);
         
-        // Use very low difficulty in test mode
-        BIGNUM *min_target = BN_new();
-        BN_hex2bn(&min_target, "00000000ffff0000000000000000000000000000000000000000000000000000");
+        // Check if hash is less than or equal to target
+        int result = (BN_cmp(hash_target, bn_target) <= 0);
         
-        int result = (BN_cmp(hash_target, min_target) <= 0);
+        BN_clear_free(bn_target);
+        BN_clear_free(hash_target);
         
-        BN_free(hash_target);
-        BN_free(min_target);
-        
-        return 1;
+        return result;
     }
 
     assert(!BN_is_zero(g_pow_limit_bn));

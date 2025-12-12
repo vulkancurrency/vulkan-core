@@ -373,6 +373,11 @@ static int parse_commandline_args(int argc, char **argv)
   return 0;
 }
 
+static int rpc_server_start_wrapper(void *arg)
+{
+  return rpc_server_start((rpc_server_t*)arg);
+}
+
 int main(int argc, char **argv)
 {
   signal(SIGINT, perform_shutdown);
@@ -428,7 +433,7 @@ int main(int argc, char **argv)
   {
     g_our_rpc_server = malloc(sizeof(rpc_server_t));
     rpc_server_init(g_our_rpc_server, g_rpc_port, g_rpc_username, g_rpc_password);
-    if (thrd_create(&g_rpc_server_thread, rpc_server_start, g_our_rpc_server) != thrd_success)
+    if (thrd_create(&g_rpc_server_thread, rpc_server_start_wrapper, g_our_rpc_server) != thrd_success)
     {
       fprintf(stderr, "Failed to instantiate RPC Server thread, an error has occurred!\n");
       return 1;

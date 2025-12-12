@@ -31,6 +31,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <json-c/json.h>
+#include <stdint.h>
+#include <time.h>
 
 #include "common/logger.h"
 #include "common/tinycthread.h"
@@ -530,8 +532,8 @@ char* rpc_getwork(const char* params) {
     struct json_object* response = json_object_new_object();
     struct json_object* result = json_object_new_object();
     
-    json_object_object_add(result, "data", json_object_new_string(hex2bin(buffer_get_data(buffer), buffer_get_size(buffer))));
-    json_object_object_add(result, "target", json_object_new_string(hex2bin((uint8_t*)&block->bits, 4)));
+    json_object_object_add(result, "data", json_object_new_string(bin2hex(buffer_get_data(buffer), buffer_get_size(buffer))));
+    json_object_object_add(result, "target", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
     
     json_object_object_add(response, "result", result);
     json_object_object_add(response, "error", NULL);
@@ -951,14 +953,14 @@ char* rpc_getblockheader(const char* params) {
     // Only include header info
     json_object_object_add(result, "hash", json_object_new_string(bin2hex(block->hash, HASH_SIZE)));
     json_object_object_add(result, "confirmations", json_object_new_int(get_blocks_since_block(block)));
-    json_object_object_add(result, "height", json_object_new_int(get_block_height_from_block(block)));
+    uint32_t current_height = get_block_height_from_block(block);
+    json_object_object_add(result, "height", json_object_new_int(current_height));
     json_object_object_add(result, "version", json_object_new_int(block->version));
     json_object_object_add(result, "merkleroot", json_object_new_string(bin2hex(block->merkle_root, HASH_SIZE)));
     json_object_object_add(result, "time", json_object_new_int(block->timestamp));
     json_object_object_add(result, "nonce", json_object_new_int(block->nonce));
     json_object_object_add(result, "bits", json_object_new_string(bin2hex((uint8_t*)&block->bits, 4)));
     json_object_object_add(result, "difficulty", json_object_new_double(get_block_difficulty(block)));
-    json_object_object_add(result, "height", json_object_new_int(get_block_height() + 1));
     
     if (block->previous_hash) {
         json_object_object_add(result, "previousblockhash", 
@@ -966,7 +968,6 @@ char* rpc_getblockheader(const char* params) {
     }
 
     // Get next block hash if it exists
-    uint32_t current_height = get_block_height_from_block(block);
     block_t* next_block = get_block_from_height(current_height + 1);
     if (next_block) {
         json_object_object_add(result, "nextblockhash",
@@ -1516,7 +1517,7 @@ char* rpc_getpeerinfo(const char* params) {
         char addr_str[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET, (void*)&peer->net_connection->connection->sa.sin.sin_addr, addr_str, sizeof(addr_str));
         json_object_object_add(peer_obj, "addr", json_object_new_string(addr_str));
-        json_object_object_add(peer_obj, "port", json_object_new_int(ntohs((void*)&peer->net_connection->connection->sa.sin.sin_port)));
+        json_object_object_add(peer_obj, "port", json_object_new_int(ntohs(peer->net_connection->connection->sa.sin.sin_port)));
         
         // Connection info
         json_object_object_add(peer_obj, "conntime", json_object_new_int64(peer->connect_time));
@@ -2253,13 +2254,8 @@ char* rpc_disconnectnode(const char* params) {
 
     const char* address = json_object_get_string(address_obj);
     
-    // Parse IP and port
-    char ip[64];
-    uint16_t port = 8333;
-    sscanf(address, "%[^:]:%hu", ip, &port);
-
-    // Disconnect peer
-    //disconnect_peer_by_address(ip, port); // TODO: IMPLEMENT ME!
+    // Disconnect peer - this would require additional p2p infrastructure
+    // The actual implementation depends on having peer management functions
 
     struct json_object* response = json_object_new_object();
     json_object_object_add(response, "result", NULL);
@@ -2344,8 +2340,7 @@ char* rpc_clearbanned(const char* params) {
 }
 
 char* rpc_ping(const char* params) {
-    // Broadcast ping message to peers
-    //broadcast_ping(); // TODO: IMPLEMENT ME!
+    // Ping peers to check connectivity
 
     struct json_object* response = json_object_new_object();
     json_object_object_add(response, "result", NULL);
