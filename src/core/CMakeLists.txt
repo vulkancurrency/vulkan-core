@@ -28,6 +28,7 @@ set(VULKAN_CORE_SOURCE_FILES
   blockchain.c
   checkpoint.c
   console.c
+  genesis_block_loader.c
   genesis.c
   mempool.c
   merkle.c
@@ -47,6 +48,7 @@ set(VULKAN_CORE_HEADER_FILES
   checkpoint_data.h
   checkpoint.h
   console.h
+  genesis_block_loader.h
   genesis.h
   mempool.h
   merkle.h

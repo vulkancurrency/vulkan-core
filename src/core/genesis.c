@@ -27,13 +27,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "common/util.h"
 #include "common/vulkan.h"
+#include "common/logger.h"
 
 #include "block.h"
 #include "transaction.h"
 #include "genesis.h"
+#include "genesis_block_loader.h"
 
 #include "crypto/cryptoutil.h"
 
@@ -112,18 +115,52 @@ block_t *get_genesis_block(void)
   // from the genesis block template to the new genesis block
   if (g_testnet_genesis_block == NULL)
   {
-    int result = copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
-      NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block);
-
-    ASSERT_WITH_MESS(result == 0, "Failed to copy testnet genesis block template!");
+    block_genesis_entry_t testnet_config = {0};
+    const char *network = "testnet";
+    
+    // Try to load from genesis_block.json file
+    int load_result = load_genesis_block_from_file("genesis_block.json", network, &testnet_config);
+    
+    if (load_result == 0)
+    {
+      LOG_INFO("Using testnet genesis block from genesis_block.json");
+      int result = copy_genesis_block_template(testnet_config, testnet_genesis_tx,
+        NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block);
+      free_genesis_block_entry(&testnet_config);
+      ASSERT_WITH_MESS(result == 0, "Failed to copy testnet genesis block from config!");
+    }
+    else
+    {
+      LOG_INFO("Failed to load testnet genesis block from file, using compiled defaults");
+      int result = copy_genesis_block_template(testnet_genesis_block_template, testnet_genesis_tx,
+        NUM_TESTNET_GENESIS_TXOUTS, testnet_genesis_output_txs, &g_testnet_genesis_block);
+      ASSERT_WITH_MESS(result == 0, "Failed to copy testnet genesis block template!");
+    }
   }
 
   if (g_mainnet_genesis_block == NULL)
   {
-    int result = copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
-      NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block);
-
-    ASSERT_WITH_MESS(result == 0, "Failed to copy mainnet genesis block template!");
+    block_genesis_entry_t mainnet_config = {0};
+    const char *network = "mainnet";
+    
+    // Try to load from genesis_block.json file
+    int load_result = load_genesis_block_from_file("genesis_block.json", network, &mainnet_config);
+    
+    if (load_result == 0)
+    {
+      LOG_INFO("Using mainnet genesis block from genesis_block.json");
+      int result = copy_genesis_block_template(mainnet_config, mainnet_genesis_tx,
+        NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block);
+      free_genesis_block_entry(&mainnet_config);
+      ASSERT_WITH_MESS(result == 0, "Failed to copy mainnet genesis block from config!");
+    }
+    else
+    {
+      LOG_INFO("Failed to load mainnet genesis block from file, using compiled defaults");
+      int result = copy_genesis_block_template(mainnet_genesis_block_template, mainnet_genesis_tx,
+        NUM_MAINNET_GENESIS_TXOUTS, mainnet_genesis_output_txs, &g_mainnet_genesis_block);
+      ASSERT_WITH_MESS(result == 0, "Failed to copy mainnet genesis block template!");
+    }
   }
 
   return parameters_get_use_testnet() ? g_testnet_genesis_block : g_mainnet_genesis_block;

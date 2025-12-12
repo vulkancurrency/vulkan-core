@@ -1,0 +1,45 @@
+{
+  "comment": "Genesis block configuration file. Paste the output from 'create-genesis-block' command here.",
+  "mainnet": {
+    "version": 1,
+    "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "timestamp": 1558382400,
+    "nonce": 0,
+    "bits": 545259519,
+    "cumulative_emission": 6103515625,
+    "merkle_root": "0000000000000000000000000000000000000000000000000000000000000000",
+    "transactions": [
+      {
+        "id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "outputs": [
+          {
+            "amount": 6103515625,
+            "address": "000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      }
+    ]
+  },
+  "testnet": {
+    "version": 1,
+    "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "00000000ca2796715a7515bf51295cce6715d6a6dfafe67effab4e2a7798423f",
+    "timestamp": 1565395200,
+    "nonce": 0,
+    "bits": 545259519,
+    "cumulative_emission": 6103515625,
+    "merkle_root": "2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac",
+    "transactions": [
+      {
+        "id": "2e14eb0db055d9ad1951dafde363eac845d4903e93367481b6576efdc8bfafac",
+        "outputs": [
+          {
+            "amount": 6103515625,
+            "address": "0232dbc228de4cf289a242758eb942361ccbf6ff6fc404793cdb47ad61dac2dc1c"
+          }
+        ]
+      }
+    ]
+  }
+}
